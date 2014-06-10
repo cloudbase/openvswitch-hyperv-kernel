@@ -1,0 +1,265 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Win8.1 Debug|x64">
+      <Configuration>Win8.1 Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Win8 Debug|x64">
+      <Configuration>Win8 Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Win8.1 Release|x64">
+      <Configuration>Win8.1 Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Win8 Release|x64">
+      <Configuration>Win8 Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="PropertySheets">
+    <DriverType>WDM</DriverType>
+    <ConfigurationType>Driver</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Label="Globals">
+    <VCTargetsPath Condition="'$(VCTargetsPath11)' != '' and '$(VisualStudioVersion)' == '11.0'">$(VCTargetsPath11)</VCTargetsPath>
+    <Configuration>Win8 Debug</Configuration>
+    <Platform Condition="'$(Platform)' == ''">Win32</Platform>
+    <SampleGuid>{251B6D91-DE05-4251-B1F4-8C8B39ADCED3}</SampleGuid>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{D63C4B45-D8C0-4E97-9C7C-DC8E3101A9BB}</ProjectGuid>
+    <RootNamespace>$(MSBuildProjectName)</RootNamespace>
+    <ProjectName>OVS Hyper-V Extension</ProjectName>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Win8.1 Debug|x64'">
+    <TargetVersion>WindowsV6.3</TargetVersion>
+    <UseDebugLibraries>True</UseDebugLibraries>
+    <PlatformToolset>WindowsKernelModeDriver8.1</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Win8 Debug|x64'">
+    <TargetVersion>Win8</TargetVersion>
+    <UseDebugLibraries>True</UseDebugLibraries>
+    <PlatformToolset>WindowsKernelModeDriver8.1</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Win8.1 Release|x64'">
+    <TargetVersion>WindowsV6.3</TargetVersion>
+    <UseDebugLibraries>False</UseDebugLibraries>
+    <PlatformToolset>WindowsKernelModeDriver8.1</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Win8 Release|x64'">
+    <TargetVersion>Win8</TargetVersion>
+    <UseDebugLibraries>False</UseDebugLibraries>
+    <PlatformToolset>WindowsKernelModeDriver8.1</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <PropertyGroup>
+    <OutDir>$(IntDir)</OutDir>
+  </PropertyGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Win8 Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Win8.1 Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Win8 Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Win8.1 Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" />
+  </ImportGroup>
+  <PropertyGroup>
+    <TargetName>openvswitch</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8.1 Debug|x64'">
+    <IncludePath>$(WindowsSDK_IncludePath);.\Winl;.\Transfer;.\SwitchObjInfo;.\Protocol;.\OID;.\OpenFlow;.\Core;;$(IncludePath)</IncludePath>
+    <SourcePath>$(SourcePath)</SourcePath>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Debug|x64'">
+    <IncludePath>$(WindowsSDK_IncludePath);.\Winl;.\Transfer;.\SwitchObjInfo;.\Protocol;.\OID;.\OpenFlow;.\Core;;$(IncludePath)</IncludePath>
+    <SourcePath>$(SourcePath)</SourcePath>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8.1 Release|x64'">
+    <IncludePath>$(WindowsSDK_IncludePath);.\Winl;.\Transfer;.\SwitchObjInfo;.\Protocol;.\OID;.\OpenFlow;.\Core;;$(IncludePath)</IncludePath>
+    <SourcePath>$(SourcePath)</SourcePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Release|x64'">
+    <IncludePath>$(WindowsSDK_IncludePath);.\Winl;.\Transfer;.\SwitchObjInfo;.\Protocol;.\OID;.\OpenFlow;.\Core;;$(IncludePath)</IncludePath>
+    <SourcePath>$(SourcePath)</SourcePath>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);NDIS_WDM=1;NDIS630=1</PreprocessorDefinitions>
+    </ClCompile>
+    <Midl>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);NDIS_WDM=1;NDIS630=1</PreprocessorDefinitions>
+    </Midl>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);NDIS_WDM=1;NDIS630=1</PreprocessorDefinitions>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup>
+    <Link>
+      <AdditionalDependencies>%(AdditionalDependencies);$(DDK_LIB_PATH)\ndis.lib;$(DDK_LIB_PATH)\netio.lib;$(DDK_LIB_PATH)\Wdmsec.lib</AdditionalDependencies>
+    </Link>
+    <ClCompile>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <WarningLevel>Level4</WarningLevel>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Win8 Debug|x64'">CompileAsC</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Win8 Release|x64'">CompileAsC</CompileAs>
+      <EnablePREfast Condition="'$(Configuration)|$(Platform)'=='Win8 Debug|x64'">false</EnablePREfast>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Win8.1 Debug|x64'">CompileAsC</CompileAs>
+      <EnablePREfast Condition="'$(Configuration)|$(Platform)'=='Win8.1 Debug|x64'">false</EnablePREfast>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="Core\Debug.c" />
+    <ClCompile Include="OpenFlow\OFFlowTable.c" />
+    <ClCompile Include="precompsrc.c">
+      <AdditionalIncludeDirectories>;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreCompiledHeaderFile>precomp.h</PreCompiledHeaderFile>
+      <PreCompiledHeader>Create</PreCompiledHeader>
+      <PreCompiledHeaderOutputFile>$(IntDir)\precomp.h.pch</PreCompiledHeaderOutputFile>
+    </ClCompile>
+    <ClCompile Include="OpenFlow\OFAction.c" />
+    <ClCompile Include="Protocol\Vlan.c" />
+    <ClCompile Include="SwitchObjInfo\Sctx_Port.c" />
+    <ClCompile Include="Winl\ArgToAttribute.c" />
+    <ClCompile Include="Winl\AttrToArgument.c" />
+    <ClCompile Include="Winl\BufferControl.c" />
+    <ClCompile Include="Winl\FlowToMessage.c" />
+    <ClCompile Include="Winl\Argument.c" />
+    <ClCompile Include="Winl\MessageToFlowMatch.c" />
+    <ClCompile Include="Winl\Message.c" />
+    <ClCompile Include="Winl\WinlDatapath.c" />
+    <ClCompile Include="Winl\WinlDevice.c" />
+    <ClCompile Include="Winl\WinlFlow.c" />
+    <ClCompile Include="Winl\WinlPacket.c" />
+    <ClCompile Include="Winl\WinlOFPort.c" />
+    <ClCompile Include="Protocol\Arp.c" />
+    <ClCompile Include="Protocol\Ethernet.c" />
+    <ClCompile Include="Protocol\Checksum.c" />
+    <ClCompile Include="Protocol\Igmp.c" />
+    <ClCompile Include="Protocol\Frame.c" />
+    <ClCompile Include="Protocol\Icmp.c" />
+    <ClCompile Include="Protocol\Icmp6.c" />
+    <ClCompile Include="Protocol\Ipv4.c" />
+    <ClCompile Include="Protocol\Ipv6.c" />
+    <ClCompile Include="Protocol\Sctp.c" />
+    <ClCompile Include="Protocol\Tcp.c" />
+    <ClCompile Include="Protocol\Udp.c" />
+    <ClCompile Include="Transfer\Vxlan.c" />
+    <ClCompile Include="Transfer\Encapsulator.c" />
+    <ClCompile Include="Transfer\Gre.c" />
+    <ClCompile Include="Transfer\Nbls.c" />
+    <ClCompile Include="Transfer\NblsEgress.c" />
+    <ClCompile Include="Transfer\NblsIngress.c" />
+    <ClCompile Include="Transfer\NormalTransfer.c" />
+    <ClCompile Include="Transfer\OvsNetBuffer.c" />
+    <ClCompile Include="Transfer\SendIngressBasic.c" />
+    <ClCompile Include="Core\Driver.c">
+      <AdditionalIncludeDirectories>;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreCompiledHeaderFile>precomp.h</PreCompiledHeaderFile>
+      <PreCompiledHeader>Use</PreCompiledHeader>
+      <PreCompiledHeaderOutputFile>$(IntDir)\precomp.h.pch</PreCompiledHeaderOutputFile>
+    </ClCompile>
+    <ClCompile Include="Core\OvsCore.c" />
+    <ClCompile Include="Core\NdisFilter.c" />
+    <ClCompile Include="Core\Random.c" />
+    <ClCompile Include="OpenFlow\OFDatapath.c" />
+    <ClCompile Include="OpenFlow\OFFlow.c" />
+    <ClCompile Include="OpenFlow\PacketInfo.c" />
+    <ClCompile Include="OpenFlow\PersistentPort.c" />
+    <ClCompile Include="OpenFlow\OFPort.c" />
+    <ClCompile Include="OID\OIDRequest.c" />
+    <ClCompile Include="OID\OidNic.c" />
+    <ClCompile Include="OID\OidPort.c" />
+    <ClCompile Include="SwitchObjInfo\Sctx_Nic.c" />
+    <ClCompile Include="SwitchObjInfo\StatusIndication.c" />
+    <ClCompile Include="SwitchObjInfo\Switch.c" />
+    <ClCompile Include="SwitchObjInfo\SwitchContext.c" />
+    <ResourceCompile Include="OpenVSwitch.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Inf Exclude="@(Inf)" Include="*.inf" />
+    <FilesToPackage Include="$(TargetPath)" />
+    <Inf Include="openvswitch.inf" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Exclude="@(None)" Include="*.ico;*.cur;*.bmp;*.dlg;*.rct;*.gif;*.jpg;*.jpeg;*.wav;*.jpe;*.tiff;*.tif;*.png;*.rc2" />
+    <None Exclude="@(None)" Include="*.def;*.bat;*.hpj;*.asmx" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Core\Debug.h" />
+    <ClInclude Include="OpenFlow\OFFlowTable.h" />
+    <ClInclude Include="precomp.h" />
+    <ClInclude Include="OpenFlow\OFAction.h" />
+    <ClInclude Include="Protocol\Vlan.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="SwitchObjInfo\Sctx_Port.h" />
+    <ClInclude Include="Winl\ArgToAttribute.h" />
+    <ClInclude Include="Winl\ArgumentType.h" />
+    <ClInclude Include="Winl\Attribute.h" />
+    <ClInclude Include="Winl\AttrToArgument.h" />
+    <ClInclude Include="Winl\BufferControl.h" />
+    <ClInclude Include="Winl\FlowToMessage.h" />
+    <ClInclude Include="Winl\Argument.h" />
+    <ClInclude Include="Winl\MessageToFlowMatch.h" />
+    <ClInclude Include="Winl\Message.h" />
+    <ClInclude Include="Winl\Upcall.h" />
+    <ClInclude Include="Winl\Winetlink.h" />
+    <ClInclude Include="Winl\WinlDatapath.h" />
+    <ClInclude Include="Winl\WinlDevice.h" />
+    <ClInclude Include="Winl\WinlFlow.h" />
+    <ClInclude Include="Winl\WinlPacket.h" />
+    <ClInclude Include="Winl\WinlOFPort.h" />
+    <ClInclude Include="Winl\Buffer.h" />
+    <ClInclude Include="Transfer\Encapsulator.h" />
+    <ClInclude Include="Transfer\Nbls.h" />
+    <ClInclude Include="Transfer\NblsEgress.h" />
+    <ClInclude Include="Transfer\NblsIngress.h" />
+    <ClInclude Include="Transfer\NormalTransfer.h" />
+    <ClInclude Include="Transfer\OvsNetBuffer.h" />
+    <ClInclude Include="Transfer\SendIngressBasic.h" />
+    <ClInclude Include="Transfer\Vxlan.h" />
+    <ClInclude Include="Transfer\Gre.h" />
+    <ClInclude Include="Core\Error.h" />
+    <ClInclude Include="Core\List.h" />
+    <ClInclude Include="Core\OvsCore.h" />
+    <ClInclude Include="Core\Driver.h" />
+    <ClInclude Include="Core\NdisFilter.h" />
+    <ClInclude Include="Core\Random.h" />
+    <ClInclude Include="Protocol\Arp.h" />
+    <ClInclude Include="Protocol\Checksum.h" />
+    <ClInclude Include="Protocol\Ethernet.h" />
+    <ClInclude Include="Protocol\Frame.h" />
+    <ClInclude Include="Protocol\Icmp.h" />
+    <ClInclude Include="Protocol\Icmp6.h" />
+    <ClInclude Include="Protocol\Igmp.h" />
+    <ClInclude Include="Protocol\Ipv4.h" />
+    <ClInclude Include="Protocol\Ipv6.h" />
+    <ClInclude Include="Protocol\Sctp.h" />
+    <ClInclude Include="Protocol\Tcp.h" />
+    <ClInclude Include="Protocol\Udp.h" />
+    <ClInclude Include="OpenFlow\OFDatapath.h" />
+    <ClInclude Include="OpenFlow\OFFlow.h" />
+    <ClInclude Include="OpenFlow\PacketInfo.h" />
+    <ClInclude Include="OID\OidNic.h" />
+    <ClInclude Include="OID\OIDRequest.h" />
+    <ClInclude Include="OID\OidPort.h" />
+    <ClInclude Include="OpenFlow\PersistentPort.h" />
+    <ClInclude Include="OpenFlow\OFPort.h" />
+    <ClInclude Include="SwitchObjInfo\Sctx_Nic.h" />
+    <ClInclude Include="SwitchObjInfo\StatusIndication.h" />
+    <ClInclude Include="SwitchObjInfo\Switch.h" />
+    <ClInclude Include="SwitchObjInfo\SwitchContext.h" />
+    <ClInclude Include="Core\Types.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

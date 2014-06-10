@@ -1,0 +1,404 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="precompsrc.c" />
+    <ClCompile Include="Core\NdisFilter.c">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Driver.c">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\OvsCore.c">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Random.c">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="SwitchObjInfo\Sctx_Nic.c">
+      <Filter>SwitchObjInfo</Filter>
+    </ClCompile>
+    <ClCompile Include="SwitchObjInfo\SwitchContext.c">
+      <Filter>SwitchObjInfo</Filter>
+    </ClCompile>
+    <ClCompile Include="Transfer\NblsEgress.c">
+      <Filter>Transfer</Filter>
+    </ClCompile>
+    <ClCompile Include="Transfer\OvsNetBuffer.c">
+      <Filter>Transfer</Filter>
+    </ClCompile>
+    <ClCompile Include="Transfer\NblsIngress.c">
+      <Filter>Transfer</Filter>
+    </ClCompile>
+    <ClCompile Include="Transfer\SendIngressBasic.c">
+      <Filter>Transfer</Filter>
+    </ClCompile>
+    <ClCompile Include="Transfer\Gre.c">
+      <Filter>Transfer</Filter>
+    </ClCompile>
+    <ClCompile Include="Transfer\Nbls.c">
+      <Filter>Transfer</Filter>
+    </ClCompile>
+    <ClCompile Include="Transfer\NormalTransfer.c">
+      <Filter>Transfer</Filter>
+    </ClCompile>
+    <ClCompile Include="Transfer\Encapsulator.c">
+      <Filter>Transfer</Filter>
+    </ClCompile>
+    <ClCompile Include="Protocol\Frame.c">
+      <Filter>Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="Protocol\Icmp.c">
+      <Filter>Protocol</Filter>
+    </ClCompile>
+	<ClCompile Include="Protocol\Vlan.c">
+      <Filter>Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="Protocol\Icmp6.c">
+      <Filter>Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="Protocol\Ethernet.c">
+      <Filter>Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="Protocol\Ipv4.c">
+      <Filter>Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="Protocol\Tcp.c">
+      <Filter>Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="Protocol\Udp.c">
+      <Filter>Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="Protocol\Checksum.c">
+      <Filter>Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="Protocol\ipv6.c">
+      <Filter>Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="Protocol\Sctp.c">
+      <Filter>Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="Protocol\Igmp.c">
+      <Filter>Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="Protocol\Arp.c">
+      <Filter>Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="Winl\WinlDevice.c">
+      <Filter>Winl</Filter>
+    </ClCompile>
+    <ClCompile Include="Winl\WinlPacket.c">
+      <Filter>Winl</Filter>
+    </ClCompile>
+    <ClCompile Include="Winl\WinlFlow.c">
+      <Filter>Winl</Filter>
+    </ClCompile>
+    <ClCompile Include="Winl\WinlDatapath.c">
+      <Filter>Winl</Filter>
+    </ClCompile>
+    <ClCompile Include="Winl\Argument.c">
+      <Filter>Winl</Filter>
+    </ClCompile>
+    <ClCompile Include="Winl\Message.c">
+      <Filter>Winl</Filter>
+    </ClCompile>
+    <ClCompile Include="Winl\FlowToMessage.c">
+      <Filter>Winl</Filter>
+    </ClCompile>
+    <ClCompile Include="Winl\WinlOFPort.c">
+      <Filter>Winl</Filter>
+    </ClCompile>
+    <ClCompile Include="Winl\AttrToArgument.c">
+      <Filter>Winl</Filter>
+    </ClCompile>
+    <ClCompile Include="Winl\ArgToAttribute.c">
+      <Filter>Winl</Filter>
+    </ClCompile>
+    <ClCompile Include="Winl\BufferControl.c">
+      <Filter>Winl</Filter>
+    </ClCompile>
+    <ClCompile Include="Winl\MessageToFlowMatch.c">
+      <Filter>Winl</Filter>
+    </ClCompile>
+    <ClCompile Include="OpenFlow\OFFlow.c">
+      <Filter>OpenFlow</Filter>
+    </ClCompile>
+	<ClCompile Include="OpenFlow\OFFlowTable.c">
+      <Filter>OpenFlow</Filter>
+    </ClCompile>
+    <ClCompile Include="OpenFlow\PacketInfo.c">
+      <Filter>OpenFlow</Filter>
+    </ClCompile>
+    <ClCompile Include="OpenFlow\OFAction.c">
+      <Filter>OpenFlow</Filter>
+    </ClCompile>
+    <ClCompile Include="OpenFlow\OFDatapath.c">
+      <Filter>OpenFlow</Filter>
+    </ClCompile>
+    <ClCompile Include="SwitchObjInfo\StatusIndication.c">
+      <Filter>SwitchObjInfo</Filter>
+    </ClCompile>
+    <ClCompile Include="SwitchObjInfo\Switch.c">
+      <Filter>SwitchObjInfo</Filter>
+    </ClCompile>
+    <ClCompile Include="Transfer\Vxlan.c">
+      <Filter>Transfer</Filter>
+    </ClCompile>
+    <ClCompile Include="OID\OidNic.c">
+      <Filter>OID</Filter>
+    </ClCompile>
+    <ClCompile Include="OID\OidPort.c">
+      <Filter>OID</Filter>
+    </ClCompile>
+    <ClCompile Include="OID\OIDRequest.c">
+      <Filter>OID</Filter>
+    </ClCompile>
+    <ClCompile Include="OpenFlow\OFPort.c">
+      <Filter>OpenFlow</Filter>
+    </ClCompile>
+    <ClCompile Include="OpenFlow\PersistentPort.c">
+      <Filter>OpenFlow</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Debug.c">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="SwitchObjInfo\Sctx_Port.c">
+      <Filter>SwitchObjInfo</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="precomp.h" />
+    <ClInclude Include="Core\NdisFilter.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Driver.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\OvsCore.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Cache.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\List.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Random.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Error.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="SwitchObjInfo\Sctx_Nic.h">
+      <Filter>SwitchObjInfo</Filter>
+    </ClInclude>
+    <ClInclude Include="SwitchObjInfo\SwitchContext.h">
+      <Filter>SwitchObjInfo</Filter>
+    </ClInclude>
+    <ClInclude Include="SwitchObjInfo\StatusIndication.h">
+      <Filter>SwitchObjInfo</Filter>
+    </ClInclude>
+    <ClInclude Include="SwitchObjInfo\Switch.h">
+      <Filter>SwitchObjInfo</Filter>
+    </ClInclude>
+    <ClInclude Include="Transfer\NblsEgress.h">
+      <Filter>Transfer</Filter>
+    </ClInclude>
+    <ClInclude Include="Transfer\NblsIngress.h">
+      <Filter>Transfer</Filter>
+    </ClInclude>
+    <ClInclude Include="Transfer\SendIngressBasic.h">
+      <Filter>Transfer</Filter>
+    </ClInclude>
+    <ClInclude Include="Transfer\Gre.h">
+      <Filter>Transfer</Filter>
+    </ClInclude>
+    <ClInclude Include="Transfer\Nbls.h">
+      <Filter>Transfer</Filter>
+    </ClInclude>
+    <ClInclude Include="Transfer\ProcessNBLs.h">
+      <Filter>Transfer</Filter>
+    </ClInclude>
+    <ClInclude Include="Transfer\Vxlan.h">
+      <Filter>Transfer</Filter>
+    </ClInclude>
+    <ClInclude Include="Transfer\NormalTransfer.h">
+      <Filter>Transfer</Filter>
+    </ClInclude>
+    <ClInclude Include="Transfer\OvsNetBuffer.h">
+      <Filter>Transfer</Filter>
+    </ClInclude>
+    <ClInclude Include="Transfer\Encapsulator.h">
+      <Filter>Transfer</Filter>
+    </ClInclude>
+    <ClInclude Include="Protocol\Frame.h">
+      <Filter>Protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="Protocol\Ethernet.h">
+      <Filter>Protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="Protocol\Ipv4.h">
+      <Filter>Protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="Protocol\Icmp.h">
+      <Filter>Protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="Protocol\Arp.h">
+      <Filter>Protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="Protocol\Ipv6.h">
+      <Filter>Protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="Protocol\Udp.h">
+      <Filter>Protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="Protocol\Tcp.h">
+      <Filter>Protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="Protocol\Igmp.h">
+      <Filter>Protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="Protocol\Icmp6.h">
+      <Filter>Protocol</Filter>
+    </ClInclude>
+	<ClInclude Include="Protocol\Vlan.h">
+      <Filter>Protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="Protocol\Sctp.h">
+      <Filter>Protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="Protocol\Checksum.h">
+      <Filter>Protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenFlow\OFFlow.h">
+      <Filter>OpenFlow</Filter>
+    </ClInclude>
+	<ClInclude Include="OpenFlow\OFFlowTable.h">
+      <Filter>OpenFlow</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenFlow\PacketInfo.h">
+      <Filter>OpenFlow</Filter>
+    </ClInclude>
+    <ClInclude Include="Winl\WinlDevice.h">
+      <Filter>Winl</Filter>
+    </ClInclude>
+    <ClInclude Include="Winl\WinlPacket.h">
+      <Filter>Winl</Filter>
+    </ClInclude>
+    <ClInclude Include="Winl\WinlFlow.h">
+      <Filter>Winl</Filter>
+    </ClInclude>
+    <ClInclude Include="Winl\WinlDatapath.h">
+      <Filter>Winl</Filter>
+    </ClInclude>
+    <ClInclude Include="Winl\Argument.h">
+      <Filter>Winl</Filter>
+    </ClInclude>
+    <ClInclude Include="Winl\Message.h">
+      <Filter>Winl</Filter>
+    </ClInclude>
+    <ClInclude Include="Winl\Buffer.h">
+      <Filter>Winl</Filter>
+    </ClInclude>
+    <ClInclude Include="Winl\FlowToMessage.h">
+      <Filter>Winl</Filter>
+    </ClInclude>
+    <ClInclude Include="Winl\Upcall.h">
+      <Filter>Winl</Filter>
+    </ClInclude>
+    <ClInclude Include="Winl\ArgumentType.h">
+      <Filter>Winl</Filter>
+    </ClInclude>
+    <ClInclude Include="Winl\WinlOFPort.h">
+      <Filter>Winl</Filter>
+    </ClInclude>
+    <ClInclude Include="Winl\Winetlink.h">
+      <Filter>Winl</Filter>
+    </ClInclude>
+    <ClInclude Include="Winl\AttrToArgument.h">
+      <Filter>Winl</Filter>
+    </ClInclude>
+    <ClInclude Include="Winl\ArgToAttribute.h">
+      <Filter>Winl</Filter>
+    </ClInclude>
+    <ClInclude Include="Winl\Attribute.h">
+      <Filter>Winl</Filter>
+    </ClInclude>
+    <ClInclude Include="Winl\BufferControl.h">
+      <Filter>Winl</Filter>
+    </ClInclude>
+    <ClInclude Include="Winl\MessageToFlowMatch.h">
+      <Filter>Winl</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenFlow\OFAction.h">
+      <Filter>OpenFlow</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenFlow\OFDatapath.h">
+      <Filter>OpenFlow</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenFlow\OFPort.h">
+      <Filter>OpenFlow</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenFlow\PersistentPort.h">
+      <Filter>OpenFlow</Filter>
+    </ClInclude>
+    <ClInclude Include="OID\OidNic.h">
+      <Filter>OID</Filter>
+    </ClInclude>
+    <ClInclude Include="OID\OidPort.h">
+      <Filter>OID</Filter>
+    </ClInclude>
+    <ClInclude Include="OID\OIDRequest.h">
+      <Filter>OID</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Types.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Debug.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="SwitchObjInfo\Sctx_Port.h">
+      <Filter>SwitchObjInfo</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="OpenVSwitch.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Inf Include="*.inf" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Transfer">
+      <UniqueIdentifier>{eacabf94-739b-4346-b041-2a49d6dce7dc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Protocol">
+      <UniqueIdentifier>{88c52791-8e4f-4dc8-b558-7035ea423356}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core">
+      <UniqueIdentifier>{3cc9f69b-c382-42c8-9672-a6dd3db1d51f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Winl">
+      <UniqueIdentifier>{3ad97c1b-5f4c-42fc-b4f1-54f91cf1bc01}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="OpenFlow">
+      <UniqueIdentifier>{18839738-e344-470c-bfeb-4403cdec50db}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="OpenFlow">
+      <UniqueIdentifier>{7b25a9c4-d340-49b0-94fa-6ce2db9cf71b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="OpenFlow">
+      <UniqueIdentifier>{4965411c-dc57-4325-aaf2-85b10dba1b22}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="OpenFlow">
+      <UniqueIdentifier>{f9652597-5c8d-4469-9ecf-64d8d0d2283e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SwitchObjInfo">
+      <UniqueIdentifier>{3cde3c67-57f7-46c8-961f-7e806cd24628}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="OID">
+      <UniqueIdentifier>{90b976b5-2e54-4281-8f40-691cf4b0b1f7}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Forwarding.htm" />
+  </ItemGroup>
+</Project>
