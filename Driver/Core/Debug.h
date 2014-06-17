@@ -54,8 +54,14 @@ extern ULONG g_debugLevel;
 
 #if OVS_USE_ASSERTS
 #define OVS_CHECK(x) ASSERT(x)
+#define OVS_CHECK_OR(x, expr) { ASSERT(x); if (!(x)) expr; }
+#define OVS_CHECK_BREAK(x) { ASSERT(x); if (!(x)) break; }
+#define OVS_CHECK_RET(x, value) { ASSERT(x); if (!(x)) return value; }
 #else
 #define OVS_CHECK(x)
+#define OVS_CHECK_OR(x, expr) { if (!(x)) expr; }
+#define OVS_CHECK_BREAK(x) { if (!(x)) break; }
+#define OVS_CHECK_RET(x, value) { if (!(x)) return value; }
 #endif //OVS_USE_ASSERTS
 
 #else

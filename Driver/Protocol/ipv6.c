@@ -530,7 +530,8 @@ VOID FillTransportPseudoHeader_FromIpv6(_In_ const BYTE srcIp[16], _In_ const BY
 
     OVS_CHECK(proto == OVS_IPPROTO_TCP ||
         proto == OVS_IPPROTO_UDP ||
-        proto == OVS_IPPROTO_SCTP);
+        proto == OVS_IPPROTO_SCTP ||
+		proto == OVS_IPV6_EXTH_ICMP6);
 
     RtlCopyMemory(pPseudoHeader->srcIp, srcIp, 16);
     RtlCopyMemory(pPseudoHeader->destIp, dstIp, 16);
