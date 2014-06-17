@@ -261,8 +261,7 @@ OVS_ERROR OFPort_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     {
         if (!pPersPort->pOptions)
         {
-            pPersPort->pOptions = ExAllocatePoolWithTag(NonPagedPool, sizeof(OVS_TUNNELING_PORT_OPTIONS), g_extAllocationTag);
-
+            pPersPort->pOptions = KZAlloc(sizeof(OVS_TUNNELING_PORT_OPTIONS));
             if (!pPersPort->pOptions)
             {
                 error = OVS_ERROR_INVAL;
@@ -382,8 +381,7 @@ OVS_ERROR OFPort_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     {
         if (!pPersPort->pOptions)
         {
-            pPersPort->pOptions = ExAllocatePoolWithTag(NonPagedPool, sizeof(OVS_TUNNELING_PORT_OPTIONS), g_extAllocationTag);
-
+            pPersPort->pOptions = KZAlloc(sizeof(OVS_TUNNELING_PORT_OPTIONS));
             if (!pPersPort->pOptions)
             {
                 error = OVS_ERROR_INVAL;
