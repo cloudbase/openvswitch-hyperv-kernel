@@ -208,168 +208,197 @@ LE16 ComputeTransportChecksum(VOID* transportBuffer, VOID* protocolBuffer, LE16 
     return 0;
 }
 
+static VOID _HandleChecksumOffload_Ipv4(_Inout_ VOID* netHeader, _Inout_ NDIS_TCP_IP_CHECKSUM_NET_BUFFER_LIST_INFO* pChecksumOffloadInfo)
+{
+	OVS_IPV4_HEADER* pIpv4Header = (OVS_IPV4_HEADER*)netHeader;
+
+	pIpv4Header->HeaderChecksum = (UINT16)ComputeIpChecksum((BYTE*)pIpv4Header, pIpv4Header->HeaderLength * sizeof(DWORD));
+	pIpv4Header->HeaderChecksum = RtlUshortByteSwap(pIpv4Header->HeaderChecksum);
+
+	pChecksumOffloadInfo->Transmit.IpHeaderChecksum = 0;
+}
+
+static VOID _HandleChecksumOffload_Tcp(LE16 ethType, ULONG ethSize, ULONG encapsSize, ULONG mtu,
+	_Inout_ BYTE* netHeader, _Inout_ NDIS_TCP_IP_CHECKSUM_NET_BUFFER_LIST_INFO* pChecksumOffloadInfo)
+{
+	UINT16 checksum = 0;
+	UINT16 tcpFlags = 0;
+	OVS_TCP_HEADER* pTcpHeader = NULL;
+
+	if (ethType == OVS_ETHERTYPE_IPV4)
+	{
+		OVS_CHECK(pChecksumOffloadInfo->Transmit.TcpHeaderOffset > 0);
+		OVS_CHECK(pChecksumOffloadInfo->Transmit.IsIPv4);
+
+		ULONG offset = pChecksumOffloadInfo->Transmit.TcpHeaderOffset - ethSize;
+		pTcpHeader = (OVS_TCP_HEADER*)(netHeader + offset);
+
+#ifdef DBG
+		{
+			OVS_TCP_HEADER* pTestTcpHeader = (OVS_TCP_HEADER*)AdvanceIpv4Header((OVS_IPV4_HEADER*)netHeader);
+			OVS_CHECK(pTcpHeader == pTestTcpHeader);
+			UNREFERENCED_PARAMETER(pTestTcpHeader);
+		}
+#endif
+	}
+
+	else
+	{
+		OVS_CHECK(pChecksumOffloadInfo->Transmit.IsIPv6);
+		pTcpHeader = Ipv6_FindExtensionHeader((OVS_IPV6_HEADER*)netHeader, OVS_IPV6_EXTH_TCP, /*ext lens*/ NULL);
+	}
+
+	tcpFlags = GetTcpFlags(pTcpHeader->flagsAndOffset);
+	//0x02 is  syn flag
+	if (tcpFlags & 0x02)
+	{
+		UINT16 tcpDataOffset = GetTcpDataOffset(pTcpHeader->flagsAndOffset);
+		UINT16 tcpHeaderSize = tcpDataOffset * sizeof(DWORD);
+		if (tcpHeaderSize >= sizeof(OVS_TCP_HEADER))
+		{
+			UINT optionsLen = tcpHeaderSize - sizeof(OVS_TCP_HEADER);
+			BYTE* pOption = (BYTE*)pTcpHeader + sizeof(OVS_TCP_HEADER);
+			ULONG bytesAdvanced = 0, bytesToAdvance = 0;
+			BYTE optionKind = 0;
+
+			while (bytesAdvanced < optionsLen)
+			{
+				optionKind = *pOption;
+
+				if (optionKind == TcpOptionKind_EndOfOptions)
+				{
+					break;
+				}
+
+				if (optionKind == TcpOptionKind_NoOperation)
+				{
+					//no option -- padding
+					bytesToAdvance = 1;
+				}
+				else if (optionKind == TcpOptionKind_MSS)
+				{
+					BYTE optionLen = *(pOption + 1);
+					UINT16* pMss = NULL, mss = 0;
+
+					UNREFERENCED_PARAMETER(optionLen);
+					OVS_CHECK(optionLen == 4);
+
+					pMss = (UINT16*)(pOption + 2);//rtl ushort
+					mss = RtlUshortByteSwap(*pMss);
+
+					if (encapsSize > 0)
+					{
+						if (mss >= mtu - 40) //for mtu = 1500, mss is 1460 for max packet: ip + tcp headers
+						{
+							mss -= (UINT16)encapsSize;
+							*pMss = RtlUshortByteSwap(mss);
+						}
+					}
+
+					OVS_CHECK(mss > tcpHeaderSize);
+
+					break;
+				}
+				else
+				{
+					BYTE optionLen = *(pOption + 1);
+					bytesToAdvance += optionLen;
+				}
+
+				pOption += bytesToAdvance;
+				bytesAdvanced += bytesToAdvance;
+			}
+		}
+	}
+
+	pTcpHeader->checksum = 0;
+	checksum = ComputeTransportChecksum(pTcpHeader, netHeader, ethType);
+	checksum = RtlUshortByteSwap(checksum);
+
+	pTcpHeader->checksum = checksum;
+
+	pChecksumOffloadInfo->Transmit.TcpChecksum = 0;
+	pChecksumOffloadInfo->Transmit.TcpHeaderOffset = 0;
+}
+
+static VOID _HandleChecksumOffload_Udp(LE16 ethType, BYTE* netHeader, _Inout_ NDIS_TCP_IP_CHECKSUM_NET_BUFFER_LIST_INFO* pChecksumOffloadInfo)
+{
+	OVS_UDP_HEADER* pUdpHeader = NULL;
+
+	if (ethType == OVS_ETHERTYPE_IPV4)
+	{
+		OVS_CHECK(pChecksumOffloadInfo->Transmit.IsIPv4);
+
+		pUdpHeader = (OVS_UDP_HEADER*)AdvanceIpv4Header((OVS_IPV4_HEADER*)netHeader);
+	}
+	else
+	{
+		OVS_CHECK(pChecksumOffloadInfo->Transmit.IsIPv6);
+
+		pUdpHeader = Ipv6_FindExtensionHeader((OVS_IPV6_HEADER*)netHeader, OVS_IPV6_EXTH_UDP, /*ext lens*/ NULL);
+	}
+
+	UINT16 checksum = 0;
+	pUdpHeader->checksum = 0;
+
+	checksum = ComputeTransportChecksum(pUdpHeader, netHeader, ethType);
+	checksum = RtlUshortByteSwap(checksum);
+
+	pUdpHeader->checksum = checksum;
+
+	pChecksumOffloadInfo->Transmit.UdpChecksum = 0;
+	pChecksumOffloadInfo->Transmit.TcpHeaderOffset = 0;
+}
+
 //eth type: ipv4 / ipv6? (for computing pseudo header checksum)
 //eth size: the size of the eth_h in pOvsNb
 //encapsSize, mtu: if encaps > 0 && mss overflows mtu if we add encaps => tcp mss must be decreased
 VOID HandleChecksumOffload(_In_ OVS_NET_BUFFER* pOvsNb, BOOLEAN isFromExternal, ULONG encapsSize, ULONG mtu)
 {
     NDIS_TCP_IP_CHECKSUM_NET_BUFFER_LIST_INFO* pChecksumOffloadInfo = NULL;
+	BYTE* netBuffer = NULL;
+	ULONG ethSize = 0;
+	OVS_ETHERNET_HEADER* pEthHeader = NULL;
+	BYTE* netHeader = NULL;
+	LE16 ethType = 0;
 
-    //TODO: _WATCH_FOR_PSEUDO_HEADER__IT_IS_ALREADY_COMPUTED;
+	//NOTE: pChecksumOffloadInfo has valid values for checksum offloading (i.e. pChecksumOffloadInfo->Transmit) only when the src port id != external
+	//when src is external, we have pChecksumOffloadInfo->Receive, which does not concern us
+	if (isFromExternal)
+		return;
+
+	netBuffer = ONB_GetData(pOvsNb);
+	pEthHeader = GetEthernetHeader(netBuffer, &ethSize);
+	ethType = RtlUshortByteSwap(pEthHeader->type);
+
+    //TODO: WATCH FOR PSEUDO HEADER - IT IS ALREADY COMPUTED!
 
     //if have tcp / udp csum offloading and we need to encapsulate: disable tcp / udp csum offloading, compute checksum for tcp / udp
     pChecksumOffloadInfo = GetChecksumOffloadInfo(pOvsNb->pNbl);
 
-    //NOTE: pChecksumOffloadInfo has valid values for checksum offloading (i.e. pChecksumOffloadInfo->Transmit) only when the src port id != external
-    //when src is external, we have pChecksumOffloadInfo->Receive, which does not concern us
-    if (!isFromExternal)
-    {
-        if (pChecksumOffloadInfo->Value)
-        {
-            if (pChecksumOffloadInfo->Transmit.IsIPv4 || pChecksumOffloadInfo->Transmit.IsIPv6)
-            {
-                BYTE* netBuffer = ONB_GetData(pOvsNb);
-                ULONG ethSize = 0;
-                OVS_ETHERNET_HEADER* pEthHeader = GetEthernetHeader(netBuffer, &ethSize);
-                BYTE* netHeader = NULL;
-                LE16 ethType = RtlUshortByteSwap(pEthHeader->type);
+	if (pChecksumOffloadInfo->Value == 0)
+		return;
 
-                netHeader = AdvanceEthernetHeader(pEthHeader, ethSize);
+	if (!pChecksumOffloadInfo->Transmit.IsIPv4 && !pChecksumOffloadInfo->Transmit.IsIPv6)
+		return;
 
-                if (ethType == OVS_ETHERTYPE_IPV4 && pChecksumOffloadInfo->Transmit.IpHeaderChecksum)
-                {
-                    OVS_IPV4_HEADER* pIpv4Header = (OVS_IPV4_HEADER*)netHeader;
+	netHeader = AdvanceEthernetHeader(pEthHeader, ethSize);
 
-                    pIpv4Header->HeaderChecksum = (UINT16)ComputeIpChecksum((BYTE*)pIpv4Header, pIpv4Header->HeaderLength * sizeof(DWORD));
-                    pIpv4Header->HeaderChecksum = RtlUshortByteSwap(pIpv4Header->HeaderChecksum);
+	if (ethType == OVS_ETHERTYPE_IPV4 && pChecksumOffloadInfo->Transmit.IpHeaderChecksum)
+	{
+		_HandleChecksumOffload_Ipv4(netHeader, pChecksumOffloadInfo);
+	}
 
-                    pChecksumOffloadInfo->Transmit.IpHeaderChecksum = 0;
-                }
+	if (pChecksumOffloadInfo->Transmit.TcpChecksum)
+	{
+		_HandleChecksumOffload_Tcp(ethType, ethSize, encapsSize, mtu, netHeader, pChecksumOffloadInfo);
+	}
 
-                if (pChecksumOffloadInfo->Transmit.TcpChecksum)
-                {
-                    UINT16 checksum = 0;
-                    UINT16 tcpFlags = 0;
-                    OVS_TCP_HEADER* pTcpHeader = NULL;
+	else if (pChecksumOffloadInfo->Transmit.UdpChecksum)
+	{
+		_HandleChecksumOffload_Udp(ethType, netHeader, pChecksumOffloadInfo);
+	}
 
-                    if (ethType == OVS_ETHERTYPE_IPV4)
-                    {
-                        OVS_CHECK(pChecksumOffloadInfo->Transmit.TcpHeaderOffset > 0);
-
-                        ULONG offset = pChecksumOffloadInfo->Transmit.TcpHeaderOffset - ethSize;
-                        pTcpHeader = (OVS_TCP_HEADER*)(netHeader + offset);
-
-#ifdef DBG
-                        {
-                            OVS_TCP_HEADER* pTestTcpHeader = (OVS_TCP_HEADER*)AdvanceIpv4Header((OVS_IPV4_HEADER*)netHeader);
-                            OVS_CHECK(pTcpHeader == pTestTcpHeader);
-                            UNREFERENCED_PARAMETER(pTestTcpHeader);
-                        }
-#endif
-                    }
-                    else
-                    {
-                        OVS_CHECK(pChecksumOffloadInfo->Transmit.TcpHeaderOffset == 0);
-                        pTcpHeader = Ipv6_FindExtensionHeader((OVS_IPV6_HEADER*)netHeader, OVS_IPV6_EXTH_TCP, /*ext lens*/ NULL);
-                    }
-
-                    tcpFlags = GetTcpFlags(pTcpHeader->flagsAndOffset);
-                    if (tcpFlags & 0x02) // syn
-                    {
-                        UINT16 tcpDataOffset = GetTcpDataOffset(pTcpHeader->flagsAndOffset);
-                        UINT16 tcpHeaderSize = tcpDataOffset * sizeof(DWORD);
-                        if (tcpHeaderSize >= sizeof(OVS_TCP_HEADER))
-                        {
-                            UINT optionsLen = tcpHeaderSize - sizeof(OVS_TCP_HEADER);
-                            BYTE* pOption = (BYTE*)pTcpHeader + sizeof(OVS_TCP_HEADER);
-                            ULONG bytesAdvanced = 0, bytesToAdvance = 0;
-                            BYTE optionKind = 0;
-
-                            while (bytesAdvanced < optionsLen)
-                            {
-                                optionKind = *pOption;
-
-                                if (optionKind == TcpOptionKind_EndOfOptions)
-                                {
-                                    break;
-                                }
-
-                                if (optionKind == TcpOptionKind_NoOperation)
-                                {
-                                    //no option -- padding
-                                    bytesToAdvance = 1;
-                                }
-                                else if (optionKind == TcpOptionKind_MSS)
-                                {
-                                    BYTE optionLen = *(pOption + 1);
-                                    UINT16* pMss = NULL, mss = 0;
-
-                                    UNREFERENCED_PARAMETER(optionLen);
-                                    OVS_CHECK(optionLen == 4);
-
-                                    pMss = (UINT16*)(pOption + 2);//rtl ushort
-                                    mss = RtlUshortByteSwap(*pMss);
-
-                                    if (encapsSize > 0)
-                                    {
-                                        if (mss >= mtu - 40) //for mtu = 1500, mss is 1460 for max packet: ip + tcp headers
-                                        {
-                                            mss -= (UINT16)encapsSize;
-                                            *pMss = RtlUshortByteSwap(mss);
-                                        }
-                                    }
-
-                                    OVS_CHECK(mss > tcpHeaderSize);
-
-                                    break;
-                                }
-                                else
-                                {
-                                    BYTE optionLen = *(pOption + 1);
-                                    bytesToAdvance += optionLen;
-                                }
-
-                                pOption += bytesToAdvance;
-                                bytesAdvanced += bytesToAdvance;
-                            }
-                        }
-                    }
-                    /************/
-
-                    pTcpHeader->checksum = 0;
-                    checksum = ComputeTransportChecksum(pTcpHeader, netHeader, ethType);
-                    checksum = RtlUshortByteSwap(checksum);
-
-                    pTcpHeader->checksum = checksum;
-
-                    pChecksumOffloadInfo->Transmit.TcpChecksum = 0;
-                    pChecksumOffloadInfo->Transmit.TcpHeaderOffset = 0;
-                }
-                else if (pChecksumOffloadInfo->Transmit.UdpChecksum)
-                {
-                    OVS_UDP_HEADER* pUdpHeader = NULL;
-
-                    if (ethType == OVS_ETHERTYPE_IPV4)
-                    {
-                        pUdpHeader = (OVS_UDP_HEADER*)AdvanceIpv4Header((OVS_IPV4_HEADER*)netHeader);
-                    }
-                    else
-                    {
-                        pUdpHeader = Ipv6_FindExtensionHeader((OVS_IPV6_HEADER*)netHeader, OVS_IPV6_EXTH_UDP, /*ext lens*/ NULL);
-                    }
-
-                    UINT16 checksum = 0;
-                    pUdpHeader->checksum = 0;
-
-                    checksum = ComputeTransportChecksum(pUdpHeader, netHeader, ethType);
-                    checksum = RtlUshortByteSwap(checksum);
-
-                    pUdpHeader->checksum = checksum;
-
-                    pChecksumOffloadInfo->Transmit.UdpChecksum = 0;
-                    pChecksumOffloadInfo->Transmit.TcpHeaderOffset = 0;
-                }
-            }
-        }
-    }
+	//reset checksum value to 0: this NET_BUFFER_LIST info is disabled.
+	pChecksumOffloadInfo->Value = 0;
 }

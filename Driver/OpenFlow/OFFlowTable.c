@@ -67,7 +67,7 @@ VOID FlowTable_Destroy(OVS_FLOW_TABLE* pFlowTable)
     }
     ExFreePoolWithTag(pFlowTable->pFlowList, g_extAllocationTag);
 
-    OVS_CHECK(IsListEmpty(pTable->pMaskList));
+    OVS_CHECK(IsListEmpty(pFlowTable->pMaskList));
     ExFreePoolWithTag(pFlowTable->pMaskList, g_extAllocationTag);
 
     ExFreePoolWithTag(pFlowTable, g_extAllocationTag);

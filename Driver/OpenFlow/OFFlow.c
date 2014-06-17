@@ -46,7 +46,7 @@ VOID FlowMask_DeleteReference(OVS_FLOW_MASK* pFlowMask)
         return;
     }
 
-    OVS_CHECK(mask->refCount);
+	OVS_CHECK(pFlowMask->refCount);
     pFlowMask->refCount--;
 
     if (!pFlowMask->refCount)
