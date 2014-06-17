@@ -315,6 +315,8 @@ BYTE* Ipv4_CopyHeaderOptions(_In_ const OVS_IPV4_HEADER* pIpv4Header, _Inout_ UL
     {
         ULONG optSize = Ipv4_GetOptionLength(pOption);
 
+		OVS_CHECK_OR(optSize > 0, break);
+
         if (IPV4_GET_OPTION_COPIED(optionType))
         {
             //alignment on 4 bytes boundary

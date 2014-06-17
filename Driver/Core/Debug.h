@@ -54,8 +54,10 @@ extern ULONG g_debugLevel;
 
 #if OVS_USE_ASSERTS
 #define OVS_CHECK(x) ASSERT(x)
+#define OVS_CHECK_OR(x, expr) { ASSERT(x); if (!(x)) expr; }
 #else
 #define OVS_CHECK(x)
+#define OVS_CHECK_OR(x, expr) { if (!(x)) expr; }
 #endif //OVS_USE_ASSERTS
 
 #else
