@@ -171,7 +171,7 @@ static BOOLEAN _WriteEncapsulation(_In_ const OVS_ENCAPSULATOR* pEncapsulator, _
     {
         pIpv4PayloadHeader = (OVS_IPV4_HEADER*)writeBuffer;
 
-        pIpv4PayloadHeader->DontFragment = (pTunnelInfo->tunnelFlags & OVS_TUNNEL_FLAG_DONT_FRAGMENT ? 1 : 0);;
+		pIpv4PayloadHeader->DontFragment = (pTunnelInfo->tunnelFlags & OVS_TUNNEL_FLAG_DONT_FRAGMENT ? 1 : 0);
 
         //NORMALLY we wouldn't worry about the payload ip header's checksum, because the checksum offloading mechanism requires the
         //NET_BUFFER_LIST to have NDIS_TCP_IP_CHECKSUM_NET_BUFFER_LIST_INFO field completed CORRECTLY.
@@ -203,7 +203,7 @@ static BOOLEAN _Encaps_EncapsulateNb(_In_ const OVS_ENCAPSULATOR* pEncapsulator,
     NDIS_STATUS status = STATUS_SUCCESS;
     ULONG deltaSize = 0;
     BOOLEAN ok = TRUE;
-    NET_BUFFER* pNb;
+    NET_BUFFER* pNb = 0;
 
     pNb = pData->pNb;
 
@@ -240,6 +240,9 @@ static BOOLEAN _Encaps_EncapsulateNb(_In_ const OVS_ENCAPSULATOR* pEncapsulator,
     return TRUE;
 }
 
+//there must be one NET_BUFFER_LIST in pOvsNb, with one NET_BUFFER (if the packet was not fragmented)
+//or one NET_BUFFER_LIST with multiple NET_BUFFER-s, for the case where the packet was fragmented by us
+//its buffer must begin with the ethernet header.
 _Use_decl_annotations_
 BOOLEAN Encaps_EncapsulateOnb(const OVS_ENCAPSULATOR* pEncapsulator, OVS_OUTER_ENCAPSULATION_DATA* pData)
 {
@@ -250,7 +253,6 @@ BOOLEAN Encaps_EncapsulateOnb(const OVS_ENCAPSULATOR* pEncapsulator, OVS_OUTER_E
     LE16 ethType = 0;
 
     pOvsNb = pData->pOvsNb;
-    OVS_CHECK(pOvsNb->pNbl->FirstNetBuffer->Next == NULL);
     OVS_CHECK(pOvsNb->pNbl->Next == NULL);
 
     innerData.pPayloadEthHeader = pData->pPayloadEthHeader;
@@ -263,7 +265,8 @@ BOOLEAN Encaps_EncapsulateOnb(const OVS_ENCAPSULATOR* pEncapsulator, OVS_OUTER_E
 
     len = ONB_GetDataLength(pOvsNb);
 
-    OVS_CHECK(len + innerData.encBytesNeeded <= pData->mtu);
+    //NOTE: we assume the eth header of the payload is not vlan (i.e. vlan header must have been extracted, if it existed)
+    OVS_CHECK(len + innerData.encBytesNeeded <= pData->mtu + sizeof(OVS_ETHERNET_HEADER));
 
     ethType = ReadEthernetType(pData->pPayloadEthHeader);
 
