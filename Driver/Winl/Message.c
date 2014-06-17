@@ -181,8 +181,22 @@ BOOLEAN ParseReceivedMessage(VOID* buffer, UINT16 length, _Out_ OVS_NLMSGHDR** p
 
     if (length >= sizeof(OVS_NLMSGHDR))
     {
-        pNlMessage = KAlloc(length);
+		OVS_NLMSGHDR* pOriginalHeader = (OVS_NLMSGHDR*)buffer;
 
+		switch (pOriginalHeader->type)
+		{
+		case OVS_MESSAGE_TARGET_DATAPATH:
+		case OVS_MESSAGE_TARGET_FLOW:
+		case OVS_MESSAGE_TARGET_PORT:
+		case OVS_MESSAGE_TARGET_PACKET:
+			length = sizeof(OVS_MESSAGE);
+			break;
+
+		default:
+			break;
+		}
+
+		pNlMessage = KAlloc(length);
         if (!pNlMessage)
         {
             return FALSE;
