@@ -160,7 +160,7 @@ OVS_NET_BUFFER* ONB_CreateFromBuffer(_In_ const OVS_BUFFER* pBuffer, ULONG addSi
 OVS_NET_BUFFER* ONB_Duplicate(_In_ const OVS_NET_BUFFER* pOriginalOnb);
 
 BOOLEAN ONB_OriginateIcmpPacket_Ipv4_Type3Code4(_Inout_ OVS_NET_BUFFER* pOvsNb, ULONG mtu, OVS_NIC_INFO* pDestinationNic);
-BOOLEAN ONB_OriginateIcmp6Packet_Type2Code0(_Inout_ OVS_NET_BUFFER* pOvsNb, ULONG mtu, OVS_NIC_INFO* pDestinationNic);
+BOOLEAN ONB_OriginateIcmp6Packet_Type2Code0(_Inout_ OVS_NET_BUFFER* pOvsNb, ULONG mtu, _In_ const OVS_NIC_INFO* pDestinationNic);
 
 OVS_NET_BUFFER* ONB_Create(ULONG bufSize);
 

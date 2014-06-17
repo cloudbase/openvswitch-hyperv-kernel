@@ -623,7 +623,7 @@ BOOLEAN ONB_OriginateIcmpPacket_Ipv4_Type3Code4(OVS_NET_BUFFER* pOvsNb, ULONG mt
 }
 
 _Use_decl_annotations_
-BOOLEAN ONB_OriginateIcmp6Packet_Type2Code0(OVS_NET_BUFFER* pOvsNb, ULONG mtu, OVS_NIC_INFO* pDestinationNic)
+BOOLEAN ONB_OriginateIcmp6Packet_Type2Code0(OVS_NET_BUFFER* pOvsNb, ULONG mtu, _In_ const OVS_NIC_INFO* pDestinationNic)
 {
     OVS_NET_BUFFER* pIcmp6Packet = NULL;
     OVS_NBL_FAIL_REASON failReason = { 0 };
@@ -636,8 +636,11 @@ BOOLEAN ONB_OriginateIcmp6Packet_Type2Code0(OVS_NET_BUFFER* pOvsNb, ULONG mtu, O
     LE16 ethType = 0;
     OVS_SWITCH_INFO* pSwitchInfo = pOvsNb->pSwitchInfo;
 
-    ULONG bufSize = sizeof(OVS_ETHERNET_HEADER) + sizeof(OVS_IPV6_HEADER) + OVS_ICMP6_PACKET_TOO_BIG_SIZE_BARE;
-    ULONG payloadSize;
+	//the payload of the "icmp6 packet too big" must be: 
+	//As much of invoking packet as possible without the ICMPv6 packet exceeding the minimum IPv6 MTU
+    ULONG destBufSize = sizeof(OVS_ETHERNET_HEADER) + sizeof(OVS_IPV6_HEADER) + OVS_ICMP6_PACKET_TOO_BIG_SIZE_BARE;
+	//payload to attached ipv6 frame
+    ULONG payloadSize = 0;
 
     OVS_CHECK(pDestinationNic);
 
@@ -646,14 +649,18 @@ BOOLEAN ONB_OriginateIcmp6Packet_Type2Code0(OVS_NET_BUFFER* pOvsNb, ULONG mtu, O
     ethType = ReadEthernetType(pOriginalEthHeader);
     pOriginalIpv6Header = AdvanceEthernetHeader((OVS_ETHERNET_HEADER*)originalBuffer, ethSize);
 
-    bufSize += sizeof(OVS_IPV6_HEADER);
-    OVS_CHECK(OVS_IPV6_MINIMUM_MTU > bufSize);
-    payloadSize = min(RtlUshortByteSwap(pOriginalIpv6Header->payloadLength), OVS_IPV6_MINIMUM_MTU - bufSize);
-    //+8
+	//attached ipv6 header (in icmp6)
+	destBufSize += sizeof(OVS_IPV6_HEADER);
+	OVS_CHECK(OVS_IPV6_MINIMUM_MTU > destBufSize);
+	payloadSize = min(RtlUshortByteSwap(pOriginalIpv6Header->payloadLength), OVS_IPV6_MINIMUM_MTU - destBufSize);
+    
+	//ATM destBufSize is size of: eth + ipv6 + icmp6 + attached ipv6 headers.
+	//we need to add the payload of the attached ipv6 frame
+	destBufSize += payloadSize;
 
     OVS_CHECK(pOriginalEthHeader->type == RtlUshortByteSwap(OVS_ETHERTYPE_IPV6));
 
-    pIcmp6Packet = ONB_Create(bufSize);
+	pIcmp6Packet = ONB_Create(destBufSize);
     newBuffer = ONB_GetData(pIcmp6Packet);
 
     //1. fill eth
@@ -668,7 +675,7 @@ BOOLEAN ONB_OriginateIcmp6Packet_Type2Code0(OVS_NET_BUFFER* pOvsNb, ULONG mtu, O
     pNewIpv6Header->vcf = 0;
     SetIpv6Version(6, &pNewIpv6Header->vcf);
 
-    pNewIpv6Header->payloadLength = RtlUshortByteSwap(bufSize - sizeof(OVS_ETHERNET_HEADER) - sizeof(OVS_IPV6_HEADER));
+	pNewIpv6Header->payloadLength = RtlUshortByteSwap(destBufSize - sizeof(OVS_ETHERNET_HEADER)-sizeof(OVS_IPV6_HEADER));
     pNewIpv6Header->nextHeader = OVS_IPV6_EXTH_ICMP6;
     pNewIpv6Header->hopLimit = pOriginalIpv6Header->hopLimit;//TODO
 
@@ -695,7 +702,7 @@ BOOLEAN ONB_OriginateIcmp6Packet_Type2Code0(OVS_NET_BUFFER* pOvsNb, ULONG mtu, O
     pAttachedIpv6Header = (OVS_IPV6_HEADER*)((UINT8*)(pIcmp6Header)+OVS_ICMP6_PACKET_TOO_BIG_SIZE_BARE);
     RtlCopyMemory(pAttachedIpv6Header, pOriginalIpv6Header, sizeof(OVS_IPV6_HEADER) + payloadSize);
 
-    pIcmp6Header->checksum = ComputeTransportChecksum(pIcmp6Header, pOriginalIpv6Header, OVS_ETHERTYPE_IPV6);
+	pIcmp6Header->checksum = ComputeTransportChecksum(pIcmp6Header, pNewIpv6Header, OVS_ETHERTYPE_IPV6);
     pIcmp6Header->checksum = RtlUshortByteSwap(pIcmp6Header->checksum);
 
     OVS_CHECK(pDestinationNic);
