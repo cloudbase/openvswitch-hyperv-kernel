@@ -157,11 +157,16 @@ static __inline ULONG GetTransportLength_FromIpv4(_In_ const OVS_IPV4_HEADER* pI
 
 static __inline VOID Ipv4_SetFragmentOffset(OVS_IPV4_HEADER* pIpv4Header, UINT16 offset)
 {
+	UINT16 allFlags = 0xE0;
+
     OVS_CHECK(offset <= 0x1FFF); //i.e. 13 bits
 
     //cccb bbba 000d dddc -> 000d dddc cccb bbba
     offset = RtlUshortByteSwap(offset);
+	//we clear the old offset
+	pIpv4Header->FlagsAndOffset &= allFlags;
 
+	//set new offset
     pIpv4Header->FlagsAndOffset |= offset;
 }
 
@@ -174,6 +179,18 @@ static __inline UINT16 Ipv4_GetFragmentOffset(_In_ const OVS_IPV4_HEADER* pIpv4H
     offset &= 0x1FFF; //i.e. remove flags: FFFd -> 000d
 
     return offset;
+}
+
+static __inline LONG Ipv4_GetHeaderSize(_In_ const OVS_IPV4_HEADER* pIpv4Header)
+{
+	ULONG headerLength = 0;
+
+	OVS_CHECK(pIpv4Header);
+
+	headerLength = pIpv4Header->HeaderLength * sizeof(DWORD);
+	OVS_CHECK(headerLength >= sizeof(OVS_IPV4_HEADER));
+
+	return headerLength;
 }
 
 //copies the header options that have the copied flag set. returns ptr to buffer; pFragHeaderSize = on return it is the size of the buffer
