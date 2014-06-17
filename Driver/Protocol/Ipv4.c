@@ -240,8 +240,8 @@ BYTE* VerifyIpv4Frame(BYTE* buffer, ULONG* pLength, BYTE* pProtoType)
     }
 
     //The IPv4 TL can be 0 if the packet is used on LSO
-    if (RtlUshortByteSwap(pIpv4Header->TotalLength) < ipv4Size ||
-        pIpv4Header->TotalLength == 0)
+    if (RtlUshortByteSwap(pIpv4Header->TotalLength) < ipv4Size &&
+        pIpv4Header->TotalLength != 0)
     {
         DEBUGP(LOG_ERROR, "TL = 0x%x < ipv4 header size = 0x%x", RtlUshortByteSwap(pIpv4Header->TotalLength), ipv4Size);
         return NULL;
