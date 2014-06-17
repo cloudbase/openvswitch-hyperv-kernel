@@ -38,6 +38,7 @@ limitations under the License.
 #include "NormalTransfer.h"
 #include "PersistentPort.h"
 #include "OFFlowTable.h"
+#include "Checksum.h"
 
 static BOOLEAN _GetSourceInfo(_In_ const OVS_GLOBAL_FORWARD_INFO* pForwardInfo, _In_ NET_BUFFER_LIST* pNetBufferLists, _Out_ OVS_NIC_INFO* pSourceInfo,
     _Inout_ OVS_NBL_FAIL_REASON* failReason)
@@ -301,18 +302,28 @@ VOID _ComputePacketsAndBytesSent(NET_BUFFER_LIST* pNbl, _Out_ ULONG* pBytesSent,
 static BOOLEAN _FragmentAndEncapsulateIpv4Packet(_In_ OVS_NET_BUFFER* pOvsNb, OVS_ENCAPSULATOR* pEncapsulator, OVS_OUTER_ENCAPSULATION_DATA* pEncapsData)
 {
     NET_BUFFER_LIST* pFragmentedNbl = NULL;
-    ULONG newMtu = 0, nbLen = 0;
-    ULONG encapBytesNeeded = 0;
     NDIS_STATUS status = NDIS_STATUS_SUCCESS;
     PNDIS_SWITCH_FORWARDING_DETAIL_NET_BUFFER_LIST_INFO pFwdDetail = NULL;
     BOOLEAN ok = TRUE;
+	//max ipv4 packet size (i.e. not including eth header), and not including the encapsulation bytes
+	ULONG maxIpPacketSize = 0;
+	//the amount of bytes to reserve, for encapsulation. For gre, it is: eth delivery + ipv4 delivery + gre + eth payload.
+	ULONG dataOffset = 0;
 
-    nbLen = ONB_GetDataLength(pOvsNb);
-    newMtu = pEncapsData->mtu - pEncapsData->encapsHeadersSize;
-    //encaps bytes needed: e.g. gre_h size + outer ipv4_h size + outer eth_h size
-    encapBytesNeeded = pEncapsData->encapsHeadersSize + nbLen - pEncapsData->mtu;
+	maxIpPacketSize = pEncapsData->mtu - pEncapsData->encapsHeadersSize;
+	dataOffset = pEncapsData->encapsHeadersSize + sizeof(OVS_ETHERNET_HEADER);
 
-    pFragmentedNbl = ONB_FragmentBuffer_Ipv4(pOvsNb, newMtu, pEncapsData->pPayloadEthHeader, sizeof(OVS_ETHERNET_HEADER), encapBytesNeeded);
+	HandleChecksumOffload(pOvsNb, pEncapsData->isFromExternal, pEncapsData->encapsHeadersSize, pEncapsData->mtu);
+	//TODO: we do not currently support fragmentation of LSO packets
+	//NOTE that TCP packets should normally not be concerned with LSO because Tcp's MSS is being negociated
+	OVS_CHECK(!NblIsLso(pOvsNb->pNbl));
+
+	//This function will fragment the ipv4 packet, having dataOffset bytes as unused bytes in the beginning of the packet.
+	pFragmentedNbl = ONB_FragmentBuffer_Ipv4(pOvsNb, maxIpPacketSize, pEncapsData->pPayloadEthHeader, dataOffset);
+	if (!pFragmentedNbl)
+	{
+		return FALSE;
+	}
 
     status = pOvsNb->pSwitchInfo->switchHandlers.CopyNetBufferListInfo(pOvsNb->pSwitchInfo->switchContext, pFragmentedNbl, pOvsNb->pNbl, 0);
     if (status != NDIS_STATUS_SUCCESS)
@@ -329,9 +340,7 @@ static BOOLEAN _FragmentAndEncapsulateIpv4Packet(_In_ OVS_NET_BUFFER* pOvsNb, OV
     ONB_DestroyNbl(pOvsNb);
     pOvsNb->pNbl = pFragmentedNbl;
 
-    NdisAdvanceNetBufferListDataStart(pOvsNb->pNbl, sizeof(OVS_ETHERNET_HEADER), FALSE, NULL);
-
-    //2. encapsulate the buffer
+    //encapsulate the buffer
     ok = Encaps_EncapsulateOnb(pEncapsulator, pEncapsData);
     if (!ok)
     {
