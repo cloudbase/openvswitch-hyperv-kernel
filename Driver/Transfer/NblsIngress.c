@@ -473,8 +473,10 @@ static BOOLEAN _OutputPacketToPort_Encaps(OVS_NET_BUFFER* pOvsNb)
     encapData.pPayloadEthHeader = &payloadEthHeader;
     encapData.pOvsNb = pOvsNb;
     encapData.isFromExternal = (pOvsNb->pSourceNic->portId == externalNicInfo.portId);
-
     encapData.encapsHeadersSize = encapsulator.BytesNeeded(pOvsNb->pTunnelInfo->tunnelFlags);
+
+	//TODO: should we use the DF of the packet to see if we should fragment or not,
+	//or use the tunnel info's flag DON'T FRAGMENT?
 
     //try to encapsulate. if it fails, and the cause is encaps_size + payload size > mtu:
     //		if ipv4:
@@ -488,8 +490,6 @@ static BOOLEAN _OutputPacketToPort_Encaps(OVS_NET_BUFFER* pOvsNb)
 
     else
     {
-        OVS_CHECK(pOvsNb->pOriginalPacketInfo->ethInfo.type == RtlUshortByteSwap(OVS_ETHERTYPE_IPV4));
-
         if (nbLen + encapData.encapsHeadersSize > encapData.mtu)
         {
             //nblen = 1500; mtu = 1500; bytes required = (encap + payload) 1550
@@ -500,7 +500,7 @@ static BOOLEAN _OutputPacketToPort_Encaps(OVS_NET_BUFFER* pOvsNb)
 
             if (RtlUshortByteSwap(pOriginalEthHeader->type) == OVS_ETHERTYPE_IPV6)
             {
-                ONB_OriginateIcmp6Packet_Type2Code0(pOvsNb, newMtu, &externalNicInfo);
+				ONB_OriginateIcmp6Packet_Type2Code0(pOvsNb, newMtu, pOvsNb->pSourceNic);
 
                 DEBUGP(LOG_ERROR, "encapsulation failed. originated icmp error. now returning FALSE\n");
                 return FALSE;
@@ -509,9 +509,10 @@ static BOOLEAN _OutputPacketToPort_Encaps(OVS_NET_BUFFER* pOvsNb)
             else if (RtlUshortByteSwap(pOriginalEthHeader->type) == OVS_ETHERTYPE_IPV4)
             {
                 OVS_IPV4_HEADER* pIpv4Header = AdvanceEthernetHeader(pOriginalEthHeader, sizeof(OVS_ETHERNET_HEADER));
+
                 if (pIpv4Header->DontFragment)
                 {
-                    ONB_OriginateIcmpPacket_Ipv4_Type3Code4(pOvsNb, newMtu, &externalNicInfo);
+					ONB_OriginateIcmpPacket_Ipv4_Type3Code4(pOvsNb, newMtu, pOvsNb->pSourceNic);
 
                     DEBUGP(LOG_ERROR, "encapsulation failed. originated icmp error. now returning FALSE\n");
                     return FALSE;
