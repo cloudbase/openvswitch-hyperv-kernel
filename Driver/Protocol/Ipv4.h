@@ -94,7 +94,9 @@ static __inline ULONG Ipv4_GetOptionLength(BYTE* pOption)
 {
     BYTE optionType = *pOption;
 
-    optionType &= 0xEF; //remove the copy flag
+	//remove the copy flag, so we can compare the option type
+	//(the copy flag is normally part of the option type)
+    optionType &= 0x7F;
 
     switch (optionType)
     {
@@ -175,7 +177,7 @@ static __inline UINT16 Ipv4_GetFragmentOffset(_In_ const OVS_IPV4_HEADER* pIpv4H
 }
 
 //copies the header options that have the copied flag set. returns ptr to buffer; pFragHeaderSize = on return it is the size of the buffer
-BYTE* Ipv4_CopyHeaderOptions(_In_ const OVS_IPV4_HEADER* pIpv4Header, _Inout_ ULONG* pFragHeaderSize);
+BYTE* Ipv4_CopyHeaderOptions(_In_ const OVS_IPV4_HEADER* pIpv4Header, _Inout_ ULONG* pOptionsSize);
 
 #ifdef DBG
 void DbgPrintIpv4(_In_ const OVS_IPV4_HEADER* pIpv4Header);

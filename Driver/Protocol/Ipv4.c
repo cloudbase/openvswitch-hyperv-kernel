@@ -280,7 +280,7 @@ VOID FillTransportPseudoHeader_FromIpv4(_In_ const OVS_IPV4_HEADER* pIpv4Header,
     pPseudoHeader->tcpLen = RtlUshortByteSwap(tcpLen);
 }
 
-BYTE* Ipv4_CopyHeaderOptions(_In_ const OVS_IPV4_HEADER* pIpv4Header, _Inout_ ULONG* pFragHeaderSize)
+BYTE* Ipv4_CopyHeaderOptions(_In_ const OVS_IPV4_HEADER* pIpv4Header, _Inout_ ULONG* pOptionsSize)
 {
     ULONG headerSize = 0;
     ULONG inOptionsSize = 0, outOptionsSize = 0;
@@ -291,6 +291,7 @@ BYTE* Ipv4_CopyHeaderOptions(_In_ const OVS_IPV4_HEADER* pIpv4Header, _Inout_ UL
     OVS_CHECK(pIpv4Header);
     outOptionsSize = 0;
 
+	//if ipv4 header length == 5 => there are no options
     if (pIpv4Header->HeaderLength == 5)
     {
         return NULL;
@@ -301,7 +302,7 @@ BYTE* Ipv4_CopyHeaderOptions(_In_ const OVS_IPV4_HEADER* pIpv4Header, _Inout_ UL
     pOption = (BYTE*)pIpv4Header + sizeof(OVS_IPV4_HEADER);
     optionType = *pOption;
 
-    pOptionBuffer = ExAllocatePoolWithTag(NonPagedPool, inOptionsSize, g_extAllocationTag);
+    pOptionBuffer = KAlloc(inOptionsSize);
     if (!pOptionBuffer)
     {
         return NULL;
@@ -342,7 +343,13 @@ BYTE* Ipv4_CopyHeaderOptions(_In_ const OVS_IPV4_HEADER* pIpv4Header, _Inout_ UL
         outOptionsSize += paddingBytes;
     }
 
-    *pFragHeaderSize = outOptionsSize;
+	if (outOptionsSize == 0)
+	{
+		KFree(pOptionBuffer);
+		pOptionBuffer = NULL;
+	}
+
+	*pOptionsSize = outOptionsSize;
 
     return pOptionBuffer;
 }
