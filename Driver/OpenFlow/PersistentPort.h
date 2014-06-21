@@ -62,9 +62,6 @@ typedef struct _OVS_PERSISTENT_PORTS_INFO {
 
 typedef struct _OF_PI_IPV4_TUNNEL OF_PI_IPV4_TUNNEL;
 
-//i.e. internal or external
-BOOLEAN PersPort_CreateInternalPort_Unsafe(const char* name, UINT32 upcallPortId, NDIS_SWITCH_PORT_TYPE portType);
-
 OVS_PERSISTENT_PORT* PersPort_Create_Unsafe(_In_opt_ const char* portName, _In_opt_ const UINT16* pPortNumber, OVS_OFPORT_TYPE portType);
 
 BOOLEAN PersPort_CForEach_Unsafe(_In_ const OVS_PERSISTENT_PORTS_INFO* pPorts, VOID* pContext, BOOLEAN(*Action)(int, OVS_PERSISTENT_PORT*, VOID*));

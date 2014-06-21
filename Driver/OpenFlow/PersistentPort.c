@@ -629,35 +629,6 @@ VOID PersPort_Uninitialize()
     //TODO: Implement unitialize
 }
 
-BOOLEAN PersPort_CreateInternalPort_Unsafe(const char* name, UINT32 upcallPortId, NDIS_SWITCH_PORT_TYPE portType)
-{
-    OVS_PERSISTENT_PORT* pPersPort = NULL;
-    UINT16 portNumber = OVS_LOCAL_PORT_NUMBER;
-
-    UNREFERENCED_PARAMETER(portType);
-
-    OVS_CHECK(g_pSwitchInfo);
-    OVS_CHECK(g_pSwitchInfo->pForwardInfo);
-    OVS_CHECK(g_pSwitchInfo->pForwardInfo->pRwLock);
-    OVS_CHECK(name);
-
-    OVS_CHECK(portType == NdisSwitchPortTypeInternal);
-
-    pPersPort = PersPort_Create_Unsafe(name, &portNumber, OVS_OFPORT_TYPE_MANAG_OS);
-    if (pPersPort)
-    {
-        g_haveInternal = TRUE;
-    }
-    else
-    {
-        return FALSE;
-    }
-
-    pPersPort->upcallPortId = upcallPortId;
-
-    return (pPersPort != NULL);
-}
-
 BOOLEAN PersPort_CForEach_Unsafe(_In_ const OVS_PERSISTENT_PORTS_INFO* pPorts, VOID* pContext, BOOLEAN(*Action)(int, OVS_PERSISTENT_PORT*, VOID*))
 {
     ULONG countProcessed = 0;
