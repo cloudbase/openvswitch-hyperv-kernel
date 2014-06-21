@@ -34,6 +34,6 @@ VOID FlowTable_Destroy(OVS_FLOW_TABLE* pFlowTable);
 OVS_FLOW* FlowTable_FindFlowMatchingMaskedPI(OVS_FLOW_TABLE* pFlowTable, const OVS_OFPACKET_INFO* pPacketInfo);
 OVS_FLOW_MASK* FlowTable_FindFlowMask(const OVS_FLOW_TABLE* pFlowTable, const OVS_FLOW_MASK* pFlowMask);
 void FlowTable_InsertFlowMask(OVS_FLOW_TABLE* pFlowTable, OVS_FLOW_MASK* pFlowMask);
-void FlowTable_InsertFlow_Unsafe(OVS_FLOW_TABLE* pFlowTable, OVS_FLOW* pFlow);
+void FlowTable_InsertFlow_Unsafe(_Inout_ OVS_FLOW_TABLE* pFlowTable, _In_ OVS_FLOW* pFlow);
 void FlowTable_RemoveFlow(OVS_FLOW_TABLE* pFlowTable, OVS_FLOW* pFlow);
 OVS_FLOW_TABLE* FlowTable_Create();

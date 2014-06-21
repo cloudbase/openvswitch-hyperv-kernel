@@ -209,7 +209,7 @@ Cleanup:
     }
 }
 
-static OVS_ERROR _QueueUserspacePacket(NET_BUFFER* pNb, const OVS_UPCALL_INFO* pUpcallInfo)
+static OVS_ERROR _QueueUserspacePacket(_In_ NET_BUFFER* pNb, _In_ const OVS_UPCALL_INFO* pUpcallInfo)
 {
     BOOLEAN dbgPrintPacket = FALSE;
     OVS_ERROR error = OVS_ERROR_NOERROR;
@@ -357,7 +357,7 @@ Out:
     return error;
 }
 
-BOOLEAN QueuePacketToUserspace(NET_BUFFER* pNb, const OVS_UPCALL_INFO* pUpcallInfo)
+BOOLEAN QueuePacketToUserspace(_In_ NET_BUFFER* pNb, _In_ const OVS_UPCALL_INFO* pUpcallInfo)
 {
     int dpifindex = 0;
     BOOLEAN ok = TRUE;

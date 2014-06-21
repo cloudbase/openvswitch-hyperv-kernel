@@ -43,7 +43,7 @@ limitations under the License.
 
 #define OVS_ACTION_SAMPLE_MAX_DEPTH		3
 
-static BOOLEAN _ExecuteAction_OutToUserspace(NET_BUFFER* pNb, OVS_OFPACKET_INFO* pPacketInfo, const OVS_ARGUMENT_GROUP* pArguments)
+static BOOLEAN _ExecuteAction_OutToUserspace(_In_ NET_BUFFER* pNb, _In_ const OVS_OFPACKET_INFO* pPacketInfo, _In_ const OVS_ARGUMENT_GROUP* pArguments)
 {
     OVS_UPCALL_INFO upcallInfo = { 0 };
     BOOLEAN ok = FALSE;

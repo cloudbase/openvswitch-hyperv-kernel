@@ -1295,7 +1295,7 @@ static UINT64 _TicksToMiliseconds(UINT64 tickCount)
 }
 
 //TODO: should we put OVS_MESSAGE_FLAG_MULTIPART for Flow_Dump?
-BOOLEAN CreateMsgFromFlow(OVS_FLOW* pFlow, UINT8 command, _Inout_ OVS_MESSAGE* pMsg, UINT32 sequence, UINT32 dpIfIndex, UINT32 portId)
+BOOLEAN CreateMsgFromFlow(_In_ const OVS_FLOW* pFlow, UINT8 command, _Inout_ OVS_MESSAGE* pMsg, UINT32 sequence, UINT32 dpIfIndex, UINT32 portId)
 {
     OVS_ARGUMENT_GROUP* pFlowGroup = NULL;
     OVS_ARGUMENT* pPIArg, *pMasksArg, *pTimeUsedArg, *pFlowStats, *pTcpFlags, *pActionsArg;

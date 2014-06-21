@@ -118,7 +118,7 @@ void FlowTable_InsertFlowMask(OVS_FLOW_TABLE* pFlowTable, OVS_FLOW_MASK* pFlowMa
     InsertHeadList(pFlowTable->pMaskList, &pFlowMask->listEntry);
 }
 
-void FlowTable_InsertFlow_Unsafe(OVS_FLOW_TABLE* pFlowTable, OVS_FLOW* pFlow)
+void FlowTable_InsertFlow_Unsafe(_Inout_ OVS_FLOW_TABLE* pFlowTable, _In_ OVS_FLOW* pFlow)
 {
     InsertHeadList(pFlowTable->pFlowList, &pFlow->entryInTable);
     pFlowTable->countFlows++;
