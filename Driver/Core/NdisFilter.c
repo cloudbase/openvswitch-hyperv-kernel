@@ -109,7 +109,7 @@ NTSTATUS DriverEntry(PDRIVER_OBJECT pDriverObject, PUNICODE_STRING pRegistryPath
 
     InitializeListHead(&g_extensionList);
 
-    pDriverObject->DriverUnload = FilterUnload;
+    pDriverObject->DriverUnload = DriverUnload;
 
     status = NdisFRegisterFilterDriver(pDriverObject, (NDIS_HANDLE)g_driverObject, &driverChars, &g_driverHandle);
 
@@ -149,7 +149,7 @@ Cleanup:
 /***************************************************************/
 
 _Use_decl_annotations_
-VOID FilterUnload(PDRIVER_OBJECT pDriverObject)
+VOID DriverUnload(PDRIVER_OBJECT pDriverObject)
 {
     UNREFERENCED_PARAMETER(pDriverObject);
 
