@@ -123,7 +123,7 @@ Cleanup:
 }
 /************************/
 
-static BOOLEAN _CreateMsgFromPersistentPort(int i, _In_ const OVS_PERSISTENT_PORT* pPersistentPort, PORT_FETCH_CTXT* pContext)
+static BOOLEAN _CreateMsgFromPersistentPort(int i, _In_ const OVS_PERSISTENT_PORT* pPort, PORT_FETCH_CTXT* pContext)
 {
     OVS_WINL_PORT port;
     BOOLEAN ok = TRUE;
@@ -132,12 +132,12 @@ static BOOLEAN _CreateMsgFromPersistentPort(int i, _In_ const OVS_PERSISTENT_POR
     UNREFERENCED_PARAMETER(i);
 
     RtlZeroMemory(&port, sizeof(OVS_WINL_PORT));
-    port.number = pPersistentPort->ovsPortNumber;
-    port.pOptions = _OFPort_OptionsToGroup(pPersistentPort->pOptions);
-    port.type = pPersistentPort->ofPortType;
-    port.name = pPersistentPort->ovsPortName;
-    port.stats = pPersistentPort->stats;
-    port.upcallId = pPersistentPort->upcallPortId;
+	port.number = pPort->ovsPortNumber;
+	port.pOptions = _OFPort_OptionsToGroup(pPort->pOptions);
+	port.type = pPort->ofPortType;
+	port.name = pPort->ovsPortName;
+	port.stats = pPort->stats;
+	port.upcallId = pPort->upcallPortId;
 
     ok = CreateMsgFromOFPort(&port, pContext->sequence, OVS_MESSAGE_COMMAND_NEW, &replyMsg, pContext->dpIfIndex, pContext->pid);
     if (!ok)
