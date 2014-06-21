@@ -824,7 +824,7 @@ Cleanup:
 
 Cleanup_NoUnlock:
 
-    Rwlock_LockWrite(pDatapath->pRwLock, &lockState);
+    DATAPATH_LOCK_WRITE(pDatapath, &lockState);
 
     if (pFlow)
     {
@@ -836,7 +836,7 @@ Cleanup_NoUnlock:
         ++pDatapath->statistics.flowTableMissed;
     }
 
-    Rwlock_Unlock(pDatapath->pRwLock, &lockState);
+    DATAPATH_UNLOCK(pDatapath, &lockState);
 
     return sent;
 }

@@ -65,7 +65,7 @@ OVS_ERROR Datapath_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     upcallPid = GET_ARG_DATA(pArgUpcallPid, UINT32);
 
     Rwlock_LockWrite(g_pSwitchInfo->pForwardInfo->pRwLock, &fwdLockState);
-    Rwlock_LockWrite(pDatapath->pRwLock, &lockState);
+    DATAPATH_LOCK_WRITE(pDatapath, &lockState);
 
     if (!pDatapath->deleted || pDatapath->name)
     {
@@ -90,7 +90,7 @@ OVS_ERROR Datapath_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
     pDatapath->switchIfIndex = g_pSwitchInfo->datapathIfIndex;
 
-    Rwlock_Unlock(pDatapath->pRwLock, &lockState);
+    DATAPATH_UNLOCK(pDatapath, &lockState);
     Rwlock_Unlock(g_pSwitchInfo->pForwardInfo->pRwLock, &fwdLockState);
 
     if (0 == pDatapath->switchIfIndex)
@@ -151,7 +151,7 @@ OVS_ERROR Datapath_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObjec
         goto Cleanup;
     }
 
-    Rwlock_LockWrite(pDatapath->pRwLock, &lockState);
+    DATAPATH_LOCK_WRITE(pDatapath, &lockState);
 
     RtlZeroMemory(&replyMsg, sizeof(replyMsg));
     if (!CreateMsgFromDatapath(pDatapath, pMsg->sequence, OVS_MESSAGE_COMMAND_DELETE, &replyMsg, pDatapath->switchIfIndex, pMsg->pid))
@@ -171,7 +171,7 @@ OVS_ERROR Datapath_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObjec
     ExFreePoolWithTag(pDatapath->name, g_extAllocationTag);
     pDatapath->name = NULL;
 
-    Rwlock_Unlock(pDatapath->pRwLock, &lockState);
+    DATAPATH_UNLOCK(pDatapath, &lockState);
 
     if (error != OVS_ERROR_NOERROR)
     {

@@ -397,11 +397,11 @@ Cleanup:
     {
         LOCK_STATE_EX lockState = { 0 };
 
-        Rwlock_LockWrite(pDatapath->pRwLock, &lockState);
+        DATAPATH_LOCK_WRITE(pDatapath, &lockState);
 
         ++pDatapath->statistics.countLost;
 
-        Rwlock_Unlock(pDatapath->pRwLock, &lockState);
+        DATAPATH_UNLOCK(pDatapath, &lockState);
     }
 
     return ok;

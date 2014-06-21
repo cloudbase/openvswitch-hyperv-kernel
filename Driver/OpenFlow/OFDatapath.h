@@ -48,6 +48,10 @@ typedef struct _OVS_DATAPATH
     OVS_DATAPATH_STATS	statistics;
 }OVS_DATAPATH, *POVS_DATAPATH;
 
+#define DATAPATH_LOCK_READ(pDatapath, pLockState) NdisAcquireRWLockRead(pDatapath->pRwLock, pLockState, 0)
+#define DATAPATH_LOCK_WRITE(pDatapath, pLockState) NdisAcquireRWLockWrite(pDatapath->pRwLock, pLockState, 0)
+#define DATAPATH_UNLOCK(pDatapath, pLockState) NdisReleaseRWLock(pDatapath->pRwLock, pLockState)
+
 BOOLEAN CreateMsgFromDatapath(OVS_DATAPATH* pDatapath, UINT32 sequence, UINT8 cmd, _Inout_ OVS_MESSAGE* pMsg, UINT32 dpIfIndex, UINT32 pid);
 
 OVS_DATAPATH* GetDefaultDatapath();
