@@ -50,7 +50,7 @@ static BOOLEAN _RemovePersPort_Logical(LIST_ENTRY* pList, _In_ const OVS_PERSIST
 {
     OVS_LOGICAL_PORT_ENTRY* pPortEntry = NULL;
 
-    LIST_FOR_EACH_ENTRY(pPortEntry, pList, listEntry, OVS_LOGICAL_PORT_ENTRY)
+	LIST_FOR_EACH(OVS_LOGICAL_PORT_ENTRY, pPortEntry, pList)
     {
         if (pPortEntry->pPort == pPort)
         {
@@ -93,7 +93,7 @@ static OVS_PERSISTENT_PORT* _PersPort_FindTunnel(_In_ const LIST_ENTRY* pList, _
         OVS_CHECK(pTunnelOptions);
     }
 
-    LIST_FOR_EACH_ENTRY(pPortEntry, pList, listEntry, OVS_LOGICAL_PORT_ENTRY)
+	LIST_FOR_EACH(OVS_LOGICAL_PORT_ENTRY, pPortEntry, pList)
     {
         if (pList == &g_grePorts)
         {
@@ -499,7 +499,7 @@ OVS_PERSISTENT_PORT* PersPort_FindExternal_Unsafe()
     ULONG countProcessed = 0;
     OVS_PERSISTENT_PORTS_INFO* pPorts = NULL;
     BOOLEAN ok = TRUE;
-    OVS_PERSISTENT_PORT* pPort = NULL;
+    OVS_PERSISTENT_PORT* pOutPort = NULL;
 
     OVS_CHECK(g_pSwitchInfo);
     OVS_CHECK(g_pSwitchInfo->pForwardInfo->pRwLock);
@@ -519,7 +519,7 @@ OVS_PERSISTENT_PORT* PersPort_FindExternal_Unsafe()
         {
             if (pCurPort->pNicListEntry && pCurPort->pNicListEntry->nicType == NdisSwitchNicTypeExternal)
             {
-                pPort = pCurPort;
+				pOutPort = pCurPort;
                 goto Cleanup;
             }
 
@@ -535,7 +535,7 @@ OVS_PERSISTENT_PORT* PersPort_FindExternal_Unsafe()
     OVS_CHECK(countProcessed == pPorts->count);
 
 Cleanup:
-    return pPort;
+	return pOutPort;
 }
 
 _Use_decl_annotations_
@@ -544,7 +544,7 @@ OVS_PERSISTENT_PORT* PersPort_FindInternal_Unsafe()
     ULONG countProcessed = 0;
     OVS_PERSISTENT_PORTS_INFO* pPorts = NULL;
     BOOLEAN ok = TRUE;
-    OVS_PERSISTENT_PORT* pPort = NULL;
+	OVS_PERSISTENT_PORT* pOutPort = NULL;
 
     OVS_CHECK(g_pSwitchInfo);
     OVS_CHECK(g_pSwitchInfo->pForwardInfo->pRwLock);
@@ -564,7 +564,7 @@ OVS_PERSISTENT_PORT* PersPort_FindInternal_Unsafe()
         {
             if (pCurPort->pNicListEntry && pCurPort->pNicListEntry->nicType == NdisSwitchNicTypeInternal)
             {
-                pPort = pCurPort;
+				pOutPort = pCurPort;
                 goto Cleanup;
             }
 
@@ -580,7 +580,7 @@ OVS_PERSISTENT_PORT* PersPort_FindInternal_Unsafe()
     OVS_CHECK(countProcessed == pPorts->count);
 
 Cleanup:
-    return pPort;
+	return pOutPort;
 }
 
 _Use_decl_annotations_
@@ -600,7 +600,7 @@ OVS_PERSISTENT_PORT* PersPort_FindVxlanByDestPort(LE16 udpDestPort)
 {
     OVS_LOGICAL_PORT_ENTRY* pPortEntry = NULL;
 
-    LIST_FOR_EACH_ENTRY(pPortEntry, &g_vxlanPorts, listEntry, OVS_LOGICAL_PORT_ENTRY)
+	LIST_FOR_EACH(OVS_LOGICAL_PORT_ENTRY, pPortEntry, &g_vxlanPorts)
     {
         OVS_TUNNELING_PORT_OPTIONS* pOptions = NULL;
 
@@ -660,7 +660,7 @@ OVS_PERSISTENT_PORT* PersPort_FindByName_Unsafe(const char* ofPortName)
     ULONG countProcessed = 0;
     OVS_PERSISTENT_PORTS_INFO* pPorts = NULL;
     BOOLEAN ok = TRUE;
-    OVS_PERSISTENT_PORT* pPort = NULL;
+	OVS_PERSISTENT_PORT* pOutPort = NULL;
 
     OVS_CHECK(g_pSwitchInfo);
     OVS_CHECK(g_pSwitchInfo->pForwardInfo->pRwLock);
@@ -674,11 +674,13 @@ OVS_PERSISTENT_PORT* PersPort_FindByName_Unsafe(const char* ofPortName)
 
     for (ULONG i = 0; i < OVS_MAX_PORTS; ++i)
     {
-        if (pPorts->portsArray[i])
+		OVS_PERSISTENT_PORT* pCurPort = pPorts->portsArray[i];
+
+		if (pCurPort)
         {
-            if (0 == strcmp(pPorts->portsArray[i]->ovsPortName, ofPortName))
+			if (0 == strcmp(pCurPort->ovsPortName, ofPortName))
             {
-                pPort = pPorts->portsArray[i];
+				pOutPort = pCurPort;
                 goto Cleanup;
             }
 
@@ -694,7 +696,7 @@ OVS_PERSISTENT_PORT* PersPort_FindByName_Unsafe(const char* ofPortName)
     OVS_CHECK(countProcessed == pPorts->count);
 
 Cleanup:
-    return pPort;
+	return pOutPort;
 }
 
 OVS_PERSISTENT_PORT* PersPort_FindById_Unsafe(NDIS_SWITCH_PORT_ID portId, BOOLEAN lookInNic)
@@ -702,7 +704,7 @@ OVS_PERSISTENT_PORT* PersPort_FindById_Unsafe(NDIS_SWITCH_PORT_ID portId, BOOLEA
     ULONG countProcessed = 0;
     OVS_PERSISTENT_PORTS_INFO* pPorts = NULL;
     BOOLEAN ok = TRUE;
-    OVS_PERSISTENT_PORT* pPort = NULL;
+	OVS_PERSISTENT_PORT* pOutPort = NULL;
 
     OVS_CHECK(portId != NDIS_SWITCH_DEFAULT_PORT_ID);
     OVS_CHECK(g_pSwitchInfo);
@@ -717,15 +719,17 @@ OVS_PERSISTENT_PORT* PersPort_FindById_Unsafe(NDIS_SWITCH_PORT_ID portId, BOOLEA
 
     for (ULONG i = 0; i < OVS_MAX_PORTS; ++i)
     {
-        if (pPorts->portsArray[i])
+		OVS_PERSISTENT_PORT* pCurPort = pPorts->portsArray[i];
+
+        if (pCurPort)
         {
             if (lookInNic)
             {
-                if (pPorts->portsArray[i]->pNicListEntry)
+				if (pCurPort->pNicListEntry)
                 {
-                    if (pPorts->portsArray[i]->pNicListEntry->portId == portId)
+					if (pCurPort->pNicListEntry->portId == portId)
                     {
-                        pPort = pPorts->portsArray[i];
+						pOutPort = pCurPort;
                         goto Cleanup;
                     }
                 }
@@ -733,11 +737,11 @@ OVS_PERSISTENT_PORT* PersPort_FindById_Unsafe(NDIS_SWITCH_PORT_ID portId, BOOLEA
 
             else
             {
-                if (pPorts->portsArray[i]->pPortListEntry)
+				if (pCurPort->pPortListEntry)
                 {
-                    if (pPorts->portsArray[i]->pPortListEntry->portId == portId)
+					if (pCurPort->pPortListEntry->portId == portId)
                     {
-                        pPort = pPorts->portsArray[i];
+						pOutPort = pCurPort;
                         goto Cleanup;
                     }
                 }
@@ -753,7 +757,7 @@ OVS_PERSISTENT_PORT* PersPort_FindById_Unsafe(NDIS_SWITCH_PORT_ID portId, BOOLEA
     OVS_CHECK(countProcessed == pPorts->count);
 
 Cleanup:
-    return pPort;
+	return pOutPort;
 }
 
 OVS_PERSISTENT_PORT* PersPort_FindByNumber_Unsafe(UINT16 portNumber)
@@ -761,7 +765,7 @@ OVS_PERSISTENT_PORT* PersPort_FindByNumber_Unsafe(UINT16 portNumber)
     ULONG countProcessed = 0;
     OVS_PERSISTENT_PORTS_INFO* pPorts = NULL;
     BOOLEAN ok = TRUE;
-    OVS_PERSISTENT_PORT* pPort = NULL;
+	OVS_PERSISTENT_PORT* pOutPort = NULL;
 
     OVS_CHECK(g_pSwitchInfo);
     OVS_CHECK(g_pSwitchInfo->pForwardInfo->pRwLock);
@@ -775,11 +779,13 @@ OVS_PERSISTENT_PORT* PersPort_FindByNumber_Unsafe(UINT16 portNumber)
 
     for (ULONG i = 0; i < OVS_MAX_PORTS; ++i)
     {
-        if (pPorts->portsArray[i])
+		OVS_PERSISTENT_PORT* pCurPort = pPorts->portsArray[i];
+
+		if (pCurPort)
         {
-            if (pPorts->portsArray[i]->ovsPortNumber == portNumber)
+			if (pCurPort->ovsPortNumber == portNumber)
             {
-                pPort = pPorts->portsArray[i];
+				pOutPort = pCurPort;
                 goto Cleanup;
             }
 
@@ -795,7 +801,7 @@ OVS_PERSISTENT_PORT* PersPort_FindByNumber_Unsafe(UINT16 portNumber)
     OVS_CHECK(countProcessed == pPorts->count);
 
 Cleanup:
-    return pPort;
+	return pOutPort;
 }
 
 BOOLEAN PersPort_Delete_Unsafe(OVS_PERSISTENT_PORT* pPort)
