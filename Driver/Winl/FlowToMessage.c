@@ -1306,10 +1306,28 @@ BOOLEAN CreateMsgFromFlow(_In_ const OVS_FLOW* pFlow, UINT8 command, _Inout_ OVS
     UINT64 tickCount = 0;
     UINT8 tcpFlags = 0;
     UINT16 argsDataSize = 0;
+	LOCK_STATE_EX lockState = { 0 };
+
+	OVS_OFPACKET_INFO unmaskedPacketInfo = { 0 };
+	OVS_OFPACKET_INFO maskedPacketInfo = { 0 };
+	OVS_OFPACKET_INFO packetInfoMask = { 0 };
 
     OVS_CHECK(pMsg);
 
     pPIArg = pMasksArg = pTimeUsedArg = pFlowStats = pTcpFlags = pActionsArg = NULL;
+
+	FLOW_LOCK_READ(pFlow, &lockState);
+
+	unmaskedPacketInfo = pFlow->unmaskedPacketInfo;
+	maskedPacketInfo = pFlow->maskedPacketInfo;
+	packetInfoMask = pFlow->pMask->packetInfo;
+
+	tickCount = pFlow->stats.lastUsedTime;
+	stats.noOfMatchedPackets = pFlow->stats.packetsMached;
+	stats.noOfMatchedBytes = pFlow->stats.bytesMatched;
+	tcpFlags = pFlow->stats.tcpFlags;
+
+	FLOW_UNLOCK(pFlow, &lockState);
 
     //2. INIT OVS_MESSAGE
     pMsg->length = sizeof(OVS_MESSAGE);
@@ -1324,13 +1342,6 @@ BOOLEAN CreateMsgFromFlow(_In_ const OVS_FLOW* pFlow, UINT8 command, _Inout_ OVS
 
     pMsg->dpIfIndex = dpIfIndex;
 
-    //NdisAcquireSpinLock(&pFlow->spinLock);
-    tickCount = pFlow->stats.lastUsedTime;
-    stats.noOfMatchedPackets = pFlow->stats.packetsMached;
-    stats.noOfMatchedBytes = pFlow->stats.bytesMatched;
-    tcpFlags = pFlow->stats.tcpFlags;
-    //NdisReleaseSpinLock(&pFlow->spinLock);
-
     //3. OVS_ARGUMENT_GROUP
     pFlowGroup = AllocArgumentGroup();
     if (!pFlowGroup)
@@ -1339,7 +1350,7 @@ BOOLEAN CreateMsgFromFlow(_In_ const OVS_FLOW* pFlow, UINT8 command, _Inout_ OVS
     }
 
     //3.1. Packet Info
-    pPIArg = CreateArgFromPacketInfo(&pFlow->unmaskedPacketInfo, NULL, OVS_ARGTYPE_GROUP_PI);
+    pPIArg = CreateArgFromPacketInfo(&unmaskedPacketInfo, NULL, OVS_ARGTYPE_GROUP_PI);
     if (!pPIArg)
     {
         ok = FALSE;
@@ -1350,7 +1361,7 @@ BOOLEAN CreateMsgFromFlow(_In_ const OVS_FLOW* pFlow, UINT8 command, _Inout_ OVS
     ++curArg;
 
     //3.2. Packet Info Mask
-    pMasksArg = CreateArgFromPacketInfo(&pFlow->maskedPacketInfo, &pFlow->pMask->packetInfo, OVS_ARGTYPE_GROUP_MASK);
+    pMasksArg = CreateArgFromPacketInfo(&maskedPacketInfo, &packetInfoMask, OVS_ARGTYPE_GROUP_MASK);
     if (!pMasksArg)
     {
         ok = FALSE;
@@ -1407,7 +1418,13 @@ BOOLEAN CreateMsgFromFlow(_In_ const OVS_FLOW* pFlow, UINT8 command, _Inout_ OVS
         ++curArg;
     }
 
-    pActionsArg = _CreateActionsGroup(pFlow->pActions);
+	FLOW_LOCK_READ(pFlow, &lockState);
+	//NOTE: we don't need to use OVS_REFERENCE for pFlow->pActions here
+	//because the actions cannot be deleted while under the lock of pFlow
+	//pFlow is here referenced, so it and its Actions cannot be deleted
+    pActionsArg = _CreateActionsGroup(pFlow->pActions->pActionGroup);
+	FLOW_UNLOCK(pFlow, &lockState);
+
     if (!pActionsArg)
     {
         return FALSE;

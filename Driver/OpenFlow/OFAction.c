@@ -234,7 +234,7 @@ static OVS_PERSISTENT_PORT* _FindDestPort(_In_ const OVS_PERSISTENT_PORT* pSourc
 BOOLEAN ExecuteActions(_Inout_ OVS_NET_BUFFER* pOvsNb, _In_ const OutputToPortCallback outputToPort)
 {
     BOOLEAN ok = TRUE;
-    const OVS_ARGUMENT_GROUP *pActionArgs = pOvsNb->pFlow->pActions;
+	const OVS_ARGUMENT_GROUP* pActionArgs = pOvsNb->pActions->pActionGroup;
     OVS_PERSISTENT_PORT* pDestPersPort = NULL;
     UINT32 persPortNumber = (UINT32)-1;
 

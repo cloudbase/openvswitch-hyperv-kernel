@@ -20,7 +20,6 @@ limitations under the License.
 //pUnmaskedPacketInfo: extracted packet info
 static OVS_FLOW* _FindFlowMatchingMaskedPI(OVS_FLOW_TABLE* pFlowTable, const OVS_OFPACKET_INFO* pUnmaskedPacketInfo, OVS_FLOW_MASK* pFlowMask)
 {
-    OVS_FLOW* pFlow = NULL;
     SIZE_T startRange = pFlowMask->piRange.startRange;
     SIZE_T endRange = pFlowMask->piRange.endRange;
     OVS_OFPACKET_INFO maskedPacketInfo = { 0 };
@@ -33,15 +32,24 @@ static OVS_FLOW* _FindFlowMatchingMaskedPI(OVS_FLOW_TABLE* pFlowTable, const OVS
 
     while (pFlowEntry != pFlowTable->pFlowList)
     {
-		pFlow = CONTAINING_RECORD(pFlowEntry, OVS_FLOW, listEntry);
+		LOCK_STATE_EX lockState = { 0 };
+		OVS_FLOW* pFlow = NULL;
+
+        pFlow = CONTAINING_RECORD(pFlowEntry, OVS_FLOW, listEntry);
+
+		FLOW_LOCK_READ(pFlow, &lockState);
 
         if (pFlow->pMask == pFlowMask)
         {
             if (PacketInfo_EqualAtRange(&pFlow->maskedPacketInfo, &maskedPacketInfo, startRange, endRange))
             {
-                return pFlow;
+				FLOW_UNLOCK(pFlow, &lockState);
+
+				return pFlow;
             }
         }
+
+		FLOW_UNLOCK(pFlow, &lockState);
 
         pFlowEntry = pFlowEntry->Flink;
     }

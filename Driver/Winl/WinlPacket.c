@@ -63,7 +63,8 @@ VOID Packet_Execute(_In_ OVS_ARGUMENT_GROUP* pArgGroup, const FILE_OBJECT* pFile
     OVS_NIC_INFO sourcePort = { 0 };
     ULONG additionalSize = max(Gre_BytesNeeded(0xFFFF), Vxlan_BytesNeeded(0xFFFF));
     OVS_ARGUMENT* pArg = NULL;
-    OVS_ARGUMENT_GROUP* pPacketInfoArgs = NULL, *pActionsArgs = NULL, *pTargetActions = NULL;
+    OVS_ARGUMENT_GROUP* pPacketInfoArgs = NULL, *pActionsArgs = NULL;
+	OVS_ACTIONS* pTargetActions = NULL;
 
     UNREFERENCED_PARAMETER(pFileObject);
 
@@ -125,21 +126,20 @@ VOID Packet_Execute(_In_ OVS_ARGUMENT_GROUP* pArgGroup, const FILE_OBJECT* pFile
         goto Cleanup;
     }
 
-    pTargetActions = AllocArgumentGroup();
+	pTargetActions = Actions_Create();
     if (NULL == pTargetActions)
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " fail: could not alloc group for target actions!\n");
-        return;
+        goto Cleanup;
     }
 
-    if (!CopyArgumentGroup(pTargetActions, pActionsArgs, /*actionsToAdd*/0))
+    if (!CopyArgumentGroup(pTargetActions->pActionGroup, pActionsArgs, /*actionsToAdd*/0))
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " fail: could not copy actions group\n");
-        DestroyArgumentGroup(pTargetActions);
-        return;
+        goto Cleanup;
     }
 
-    ok = ProcessReceivedActions(pTargetActions, &pFlow->maskedPacketInfo, /*recursivity depth*/0);
+    ok = ProcessReceivedActions(pTargetActions->pActionGroup, &pFlow->maskedPacketInfo, /*recursivity depth*/0);
     if (!ok)
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ "ProcessReceivedActions failed!\n");
@@ -148,7 +148,8 @@ VOID Packet_Execute(_In_ OVS_ARGUMENT_GROUP* pArgGroup, const FILE_OBJECT* pFile
 
     pFlow->pActions = pTargetActions;
 
-    pOvsNb->pFlow = pFlow;
+	//while we will process the packet, we do not allow its actions to be destroyed
+	pOvsNb->pActions = OVS_RCU_REFERENCE(pTargetActions);
     pOvsNb->pOriginalPacketInfo = &pFlow->maskedPacketInfo;
     pOvsNb->packetPriority = pFlow->maskedPacketInfo.physical.packetPriority;
     pOvsNb->packetMark = pFlow->maskedPacketInfo.physical.packetMark;
@@ -195,6 +196,8 @@ VOID Packet_Execute(_In_ OVS_ARGUMENT_GROUP* pArgGroup, const FILE_OBJECT* pFile
     FlowTable_Unlock(&lockState);
 
 Cleanup:
+	OVS_RCU_DEREFERENCE(pTargetActions);
+
     Flow_DestroyNow_Unsafe(pFlow);
 
     if (ok)
@@ -206,6 +209,12 @@ Cleanup:
     else
     {
         ONB_Destroy(g_pSwitchInfo, &pOvsNb);
+
+		if (pTargetActions)
+		{
+			OVS_RCU_DEREFERENCE_ONLY(pTargetActions);
+			OVS_RCU_DESTROY(pTargetActions);
+		}
     }
 }
 

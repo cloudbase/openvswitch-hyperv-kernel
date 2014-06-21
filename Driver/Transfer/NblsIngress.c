@@ -786,7 +786,6 @@ static BOOLEAN _ProcessPacket(OVS_NET_BUFFER* pOvsNb, _In_ const OVS_PERSISTENT_
     FlowTable_LockRead(&lockState);
     pFlow = FlowTable_FindFlowMatchingMaskedPI(pDatapath->pFlowTable, &packetInfo);
 
-    pOvsNb->pFlow = pFlow;
     pOvsNb->pOriginalPacketInfo = &packetInfo;
 
     if (!pFlow)
@@ -808,7 +807,13 @@ static BOOLEAN _ProcessPacket(OVS_NET_BUFFER* pOvsNb, _In_ const OVS_PERSISTENT_
         goto Cleanup;
     }
 
-    Flow_UpdateTimeUsed(pOvsNb->pFlow, pOvsNb);
+	FLOW_LOCK_READ(pFlow, &lockState);
+
+	pOvsNb->pActions = OVS_RCU_REFERENCE(pFlow->pActions);
+
+	Flow_UpdateTimeUsed_Unsafe(pFlow, pOvsNb);
+
+	FLOW_UNLOCK(pFlow, &lockState);
 
     if (dbgPrintPacket)
     {
@@ -829,6 +834,11 @@ Cleanup_NoUnlock:
     if (pFlow)
     {
         ++pDatapath->statistics.flowTableMatches;
+
+		//we don't use the pActions anymore
+		//the actions are not modified, once set in a flow, so there's no need to lock the pFlow to dereference pActions
+		OVS_RCU_DEREFERENCE(pOvsNb->pActions);
+		pOvsNb->pActions = NULL;
     }
 
     else

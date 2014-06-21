@@ -68,10 +68,9 @@ VOID Flow_DestroyNow_Unsafe(OVS_FLOW* pFlow)
 
     FlowMask_DeleteReference(pFlow->pMask);
 
-    if (pFlow->pActions)
-    {
-        DestroyArgumentGroup(pFlow->pActions);
-    }
+	if (pFlow->pActions) {
+		OVS_RCU_DESTROY(pFlow->pActions);
+	}
 
     KFree(pFlow);
 }
@@ -138,7 +137,7 @@ OVS_FLOW_MASK* FlowMask_Create()
     return pFlowMask;
 }
 
-void Flow_UpdateTimeUsed(OVS_FLOW* pFlow, OVS_NET_BUFFER* pOvsNb)
+void Flow_UpdateTimeUsed_Unsafe(OVS_FLOW* pFlow, OVS_NET_BUFFER* pOvsNb)
 {
     UINT8 tcpFlags = 0;
     ULONG bufferLen = 0;
@@ -750,7 +749,9 @@ void DbgPrintAllFlows()
             ULONG startRange = (ULONG)pFlow->pMask->piRange.startRange;
             ULONG endRange = (ULONG)pFlow->pMask->piRange.endRange;
 
-            DbgPrintFlowWithActions("flow dump: ", &pFlow->unmaskedPacketInfo, &pFlow->pMask->packetInfo, startRange, endRange, pFlow->pActions);
+			FLOW_LOCK_READ(pFlow, &lockState);
+            DbgPrintFlowWithActions("flow dump: ", &pFlow->unmaskedPacketInfo, &pFlow->pMask->packetInfo, startRange, endRange, pFlow->pActions->pActionGroup);
+			FLOW_UNLOCK(pFlow, &lockState);
 
             ++i;
             pCurItem = pCurItem->Flink;

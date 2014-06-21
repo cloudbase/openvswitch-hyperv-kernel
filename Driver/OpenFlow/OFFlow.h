@@ -25,6 +25,7 @@ typedef struct _OVS_ARGUMENT OVS_ARGUMENT;
 typedef struct _OVS_ARGUMENT_GROUP OVS_ARGUMENT_GROUP;
 typedef struct _OVS_NET_BUFFER OVS_NET_BUFFER;
 typedef struct _OVS_MESSAGE OVS_MESSAGE;
+typedef struct _OVS_ACTIONS OVS_ACTIONS;
 
 typedef struct _OVS_PI_RANGE {
     SIZE_T startRange;
@@ -67,7 +68,8 @@ typedef struct _OVS_FLOW
 	//once set, cannot be modified, nor the ptr changed
     OVS_FLOW_MASK*	pMask;
 
-    OVS_ARGUMENT_GROUP* pActions;
+	//once set in a flow, the actions can only be replaced, but the struct OVS_ARGUMENT_GROUP itself cannot be modified
+	OVS_ACTIONS*	pActions;
 
 	OVS_FLOW_STATS	stats;
 }OVS_FLOW, *POVS_FLOW;
@@ -105,7 +107,9 @@ static __inline SIZE_T RoundDown(SIZE_T a, SIZE_T b)
 OVS_FLOW* Flow_Create();
 VOID Flow_DestroyNow_Unsafe(OVS_FLOW* pFlow);
 
-static __inline void Flow_ClearStats(OVS_FLOW* pFlow)
+//NOTE: must lock with pFlow's lock
+//TODO: remove this function and use RtlZeroMemory instead
+static __inline void Flow_ClearStats_Unsafe(OVS_FLOW* pFlow)
 {
     pFlow->stats.lastUsedTime = 0;
     pFlow->stats.tcpFlags = 0;
@@ -113,7 +117,7 @@ static __inline void Flow_ClearStats(OVS_FLOW* pFlow)
     pFlow->stats.bytesMatched = 0;
 }
 
-void Flow_UpdateTimeUsed(OVS_FLOW* pFlow, OVS_NET_BUFFER* pOvsNb);
+void Flow_UpdateTimeUsed_Unsafe(OVS_FLOW* pFlow, OVS_NET_BUFFER* pOvsNb);
 
 /*********************************** FLOW MATCH ***********************************/
 void FlowMatch_Initialize(OVS_FLOW_MATCH* pFlowMatch, OVS_OFPACKET_INFO* pPacketInfo, OVS_FLOW_MASK* pFlowMask);

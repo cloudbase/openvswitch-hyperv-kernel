@@ -121,7 +121,7 @@ void ONB_Destroy(const OVS_SWITCH_INFO* pSwitchInfo, OVS_NET_BUFFER** ppOvsNb)
 
     NdisFreeNetBufferList(pOvsNb->pNbl);
 
-    pOvsNb->pFlow = NULL;
+	pOvsNb->pActions = NULL;
     pOvsNb->pOriginalPacketInfo = NULL;
     pOvsNb->pTunnelInfo = NULL;
 
@@ -275,7 +275,7 @@ OVS_NET_BUFFER* ONB_Duplicate(const OVS_NET_BUFFER* pOriginalOnb)
     pDuplicateOnb->packetMark = pOriginalOnb->packetMark;
     pDuplicateOnb->packetPriority = pOriginalOnb->packetPriority;
 
-    pDuplicateOnb->pFlow = pOriginalOnb->pFlow;
+	pDuplicateOnb->pActions = pOriginalOnb->pActions;
     pDuplicateOnb->pOriginalPacketInfo = pOriginalOnb->pOriginalPacketInfo;
     pDuplicateOnb->pTunnelInfo = pOriginalOnb->pTunnelInfo;
     //pSource can be shared: it is used as a ptr to a local variable
