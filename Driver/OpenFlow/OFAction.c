@@ -179,6 +179,58 @@ static BOOLEAN _ExecuteAction_Sample(_Inout_ OVS_NET_BUFFER *pOvsNb, _In_ const 
     return ExecuteActions(pOvsNb, outputToPort);
 }
 
+static OVS_PERSISTENT_PORT* _FindDestPort(_In_ const OVS_PERSISTENT_PORT* pSourcePort, UINT32 persPortNumber)
+{
+	UINT16 validPortNumber = OVS_INVALID_PORT_NUMBER;
+	OVS_PERSISTENT_PORT* pDestPersPort = NULL;
+
+	validPortNumber = (UINT16)persPortNumber;
+
+	pDestPersPort = PersPort_FindByNumber_Unsafe(validPortNumber);
+	if (!pDestPersPort)
+	{
+		DEBUGP(LOG_ERROR, "could not find pers port: %u!\n", validPortNumber);
+	}
+
+	//if we know from now that the dest port is not connected (i.e. has no associated NIC), we won't attempt to send through the port
+	else if (!pDestPersPort->pNicListEntry &&
+		(pDestPersPort->ofPortType == OVS_OFPORT_TYPE_PHYSICAL || pDestPersPort->ofPortType == OVS_OFPORT_TYPE_MANAG_OS))
+	{
+		pDestPersPort = NULL;
+	}
+
+	//if the src port = internal / external, we won't output to gre / vxlan:
+	//for external: we would be sending the packet back whence it came
+	//for internal: when outputting via NORMAL from hypervisor to hypervisor, we don't want to send to the hypervisor both via external and gre
+	else if (pDestPersPort->ofPortType == OVS_OFPORT_TYPE_GRE || pDestPersPort->ofPortType == OVS_OFPORT_TYPE_VXLAN)
+	{
+		if (pSourcePort->pNicListEntry)
+		{
+			if (pSourcePort->pNicListEntry->nicType == NdisSwitchNicTypeExternal ||
+				pSourcePort->pNicListEntry->nicType == NdisSwitchNicTypeInternal)
+			{
+				pDestPersPort = NULL;
+			}
+		}
+	}
+
+	//if the src port = gre / vxlan, we must not send to internal, nor to external (we would be sending back to the same hyper-v switch port)
+	if (pSourcePort->ofPortType == OVS_OFPORT_TYPE_GRE ||
+		pSourcePort->ofPortType == OVS_OFPORT_TYPE_VXLAN)
+	{
+		if (pDestPersPort && pDestPersPort->pNicListEntry)
+		{
+			if (pDestPersPort->pNicListEntry->nicType == NdisSwitchNicTypeExternal ||
+				pDestPersPort->pNicListEntry->nicType == NdisSwitchNicTypeInternal)
+			{
+				pDestPersPort = NULL;
+			}
+		}
+	}
+
+	return pDestPersPort;
+}
+
 BOOLEAN ExecuteActions(_Inout_ OVS_NET_BUFFER* pOvsNb, _In_ const OutputToPortCallback outputToPort)
 {
     BOOLEAN ok = TRUE;
@@ -226,61 +278,18 @@ BOOLEAN ExecuteActions(_Inout_ OVS_NET_BUFFER* pOvsNb, _In_ const OutputToPortCa
         {
         case OVS_ARGTYPE_ACTION_OUTPUT_TO_PORT:
         {
-            UINT16 validPortNumber = 0;
-            persPortNumber = GET_ARG_DATA(pArg, UINT32);
+			persPortNumber = GET_ARG_DATA(pArg, UINT32);
 
-            if (persPortNumber < OVS_MAX_PORTS)
-            {
-                validPortNumber = (UINT16)persPortNumber;
+			if (persPortNumber < OVS_MAX_PORTS)
+			{
+				pDestPersPort = _FindDestPort(pOvsNb->pSourcePort, persPortNumber);
+			}
 
-                pDestPersPort = PersPort_FindByNumber_Unsafe(validPortNumber);
-                if (!pDestPersPort)
-                {
-                    DEBUGP(LOG_ERROR, "could not find pers port: %u!\n", validPortNumber);
-                }
-
-                //if we know from now that the dest port is not connected (i.e. has no associated NIC), we won't attempt to send through the port
-                else if (!pDestPersPort->pNicListEntry &&
-                    (pDestPersPort->ofPortType == OVS_OFPORT_TYPE_PHYSICAL || pDestPersPort->ofPortType == OVS_OFPORT_TYPE_MANAG_OS))
-                {
-                    pDestPersPort = NULL;
-                }
-
-                //if the src port = internal / external, we won't output to gre / vxlan:
-                //for external: we would be sending the packet back whence it came
-                //for internal: when outputting via NORMAL from hypervisor to hypervisor, we don't want to send to the hypervisor both via external and gre
-                else if (pDestPersPort->ofPortType == OVS_OFPORT_TYPE_GRE || pDestPersPort->ofPortType == OVS_OFPORT_TYPE_VXLAN)
-                {
-                    if (pOvsNb->pSourcePort->pNicListEntry)
-                    {
-                        if (pOvsNb->pSourcePort->pNicListEntry->nicType == NdisSwitchNicTypeExternal ||
-                            pOvsNb->pSourcePort->pNicListEntry->nicType == NdisSwitchNicTypeInternal)
-                        {
-                            pDestPersPort = NULL;
-                        }
-                    }
-                }
-
-                //if the src port = gre / vxlan, we must not send to internal, nor to external (we would be sending back to the same hyper-v switch port)
-                if (pOvsNb->pSourcePort->ofPortType == OVS_OFPORT_TYPE_GRE ||
-                    pOvsNb->pSourcePort->ofPortType == OVS_OFPORT_TYPE_VXLAN)
-                {
-                    if (pDestPersPort && pDestPersPort->pNicListEntry)
-                    {
-                        if (pDestPersPort->pNicListEntry->nicType == NdisSwitchNicTypeExternal ||
-                            pDestPersPort->pNicListEntry->nicType == NdisSwitchNicTypeInternal)
-                        {
-                            pDestPersPort = NULL;
-                        }
-                    }
-                }
-            }
-
-            else
-            {
-                DEBUGP(LOG_ERROR, __FUNCTION__ " invalid port number from userspace: %u\n", persPortNumber);
-                ok = FALSE;
-            }
+			else
+			{
+				DEBUGP(LOG_ERROR, __FUNCTION__ " invalid port number from userspace: %u\n", persPortNumber);
+				ok = FALSE;
+			}
         }
             break;
 
