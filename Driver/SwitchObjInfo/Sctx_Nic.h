@@ -75,44 +75,6 @@ static __inline VOID NicListEntry_To_NicInfo(_In_ const OVS_NIC_LIST_ENTRY* pNic
     pNicInfo->mtu = pNicListEntry->mtu;
 }
 
-static __inline BOOLEAN HaveNdisPortExternal(_In_ const OVS_GLOBAL_FORWARD_INFO* pForwardInfo)
-{
-    BOOLEAN ok = FALSE;
-    LOCK_STATE_EX lockState = { 0 };
-
-    OVS_CHECK(pForwardInfo);
-
-    FWDINFO_LOCK_READ(pForwardInfo, &lockState);
-
-    ok = (pForwardInfo->pExternalNic ? TRUE : FALSE);
-
-    if (pForwardInfo->pExternalNic)
-    {
-        OVS_CHECK(pForwardInfo->pExternalNic->nicIndex != NDIS_SWITCH_DEFAULT_NIC_INDEX);
-        OVS_CHECK(pForwardInfo->pExternalNic->portId != NDIS_SWITCH_DEFAULT_PORT_ID);
-    }
-
-    FWDINFO_UNLOCK(pForwardInfo, &lockState);
-
-    return ok;
-}
-
-static __inline BOOLEAN HaveNdisPortInternal_Unsafe(_In_ const OVS_GLOBAL_FORWARD_INFO* pForwardInfo)
-{
-    BOOLEAN ok = FALSE;
-
-    OVS_CHECK(pForwardInfo);
-
-    ok = (pForwardInfo->pInternalNic ? TRUE : FALSE);
-
-    if (pForwardInfo->pInternalNic)
-    {
-        OVS_CHECK(pForwardInfo->pInternalNic->portId != NDIS_SWITCH_DEFAULT_PORT_ID);
-    }
-
-    return ok;
-}
-
 /*****************************************************/
 
 VOID Sctx_ClearNicListUnsafe(_Inout_ OVS_GLOBAL_FORWARD_INFO* pForwardInfo);
