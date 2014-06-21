@@ -52,6 +52,11 @@ extern ULONG g_debugLevel;
 
 #ifdef DBG
 
+#define OVS_USE_RCU_CALL_STACK		1
+
+#undef OVS_USE_ASSERTS
+#define OVS_USE_ASSERTS				1
+
 #if OVS_USE_ASSERTS
 #define OVS_CHECK(x) ASSERT(x)
 #define OVS_CHECK_OR(x, expr) { ASSERT(x); if (!(x)) expr; }
@@ -65,6 +70,8 @@ extern ULONG g_debugLevel;
 #endif //OVS_USE_ASSERTS
 
 #else
+#define OVS_USE_RCU_CALL_STACK	0
+
 #define OVS_CHECK(x)
 
 //we won't verify WINL messages on release mode
