@@ -42,6 +42,13 @@ typedef struct _OVS_FLOW_MASK {
     OVS_OFPACKET_INFO		packetInfo;
 }OVS_FLOW_MASK, *POVS_FLOW_MASK;
 
+typedef struct _OVS_FLOW_STATS {
+	UINT64 lastUsedTime;
+	UINT64 packetsMached;
+	UINT64 bytesMatched;
+	UINT8 tcpFlags;
+}OVS_FLOW_STATS, *POVS_FLOW_STATS;
+
 typedef struct _OVS_FLOW {
     //list entry in OVS_FLOW_TABLE
     LIST_ENTRY			listEntry;
@@ -55,12 +62,7 @@ typedef struct _OVS_FLOW {
     //locks the values below
     NDIS_SPIN_LOCK	spinLock;
 
-    struct  {
-        UINT64 lastUsedTime;
-        UINT64 packetsMached;
-        UINT64 bytesMatched;
-        UINT8 tcpFlags;
-    } stats;
+	OVS_FLOW_STATS	stats;
 }OVS_FLOW, *POVS_FLOW;
 
 //a match is a pair (packet info, mask), with PI range = to apply mask and compare [startRange, endRange]
