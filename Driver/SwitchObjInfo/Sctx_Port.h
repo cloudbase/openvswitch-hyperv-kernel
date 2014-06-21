@@ -25,6 +25,9 @@ typedef struct _OVS_PERSISTENT_PORT OVS_PERSISTENT_PORT;
 
 typedef struct _OVS_PORT_LIST_ENTRY
 {
+	//must be the first field in the struct
+	OVS_RCU							rcu;
+
     LIST_ENTRY						listEntry;
 
     NDIS_SWITCH_PORT_ID				portId;
@@ -37,6 +40,8 @@ typedef struct _OVS_PORT_LIST_ENTRY
 
 OVS_PORT_LIST_ENTRY* Sctx_FindPortById_Unsafe(_In_ const OVS_GLOBAL_FORWARD_INFO* pForwardIno, _In_ NDIS_SWITCH_PORT_ID portId);
 NDIS_STATUS Sctx_AddPort_Unsafe(_Inout_ OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH_PORT_PARAMETERS* pCurPort, _Inout_opt_ OVS_PORT_LIST_ENTRY** ppPortEntry);
+
+VOID PortEntry_DestroyNow_Unsafe(OVS_PORT_LIST_ENTRY* pPortEntry);
 NDIS_STATUS Sctx_DeletePort_Unsafe(_In_ const OVS_GLOBAL_FORWARD_INFO* pForwardInfo, _In_ NDIS_SWITCH_PORT_ID portId);
 
 OVS_PORT_LIST_ENTRY* Sctx_FindPortBy_Unsafe(_In_ OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const VOID* pContext, BOOLEAN(*Predicate)(int, const VOID*, _In_ const OVS_PORT_LIST_ENTRY*));

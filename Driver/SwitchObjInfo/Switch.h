@@ -59,6 +59,9 @@ typedef enum _OVS_SWITCH_CONTROLFLOW_STATE {
 
 typedef struct _OVS_SWITCH_INFO
 {
+	//must be the first field in the struct
+	OVS_RCU rcu;
+
     LIST_ENTRY				listEntry;
 
     OVS_GLOBAL_FORWARD_INFO* pForwardInfo;

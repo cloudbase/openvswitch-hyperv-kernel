@@ -53,7 +53,7 @@ VOID OvsUninit()
     OVS_DATAPATH* pDefaultDatapath = NULL;
 
     pDefaultDatapath = GetDefaultDatapath();
-    FlowTable_Destroy(pDefaultDatapath->pFlowTable);
+    FlowTable_DestroyNow_Unsafe(pDefaultDatapath->pFlowTable);
     ExFreePoolWithTag(pDefaultDatapath, g_extAllocationTag);
 
     PersPort_Uninitialize();

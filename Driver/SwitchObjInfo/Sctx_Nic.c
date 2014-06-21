@@ -58,6 +58,7 @@ NDIS_STATUS Sctx_AddNicUnsafe(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_
 
     NdisZeroMemory(pNicEntry, sizeof(OVS_NIC_LIST_ENTRY));
 
+	pNicEntry->rcu.Destroy = NicEntry_DestroyNow_Unsafe;
     RtlCopyMemory(pNicEntry->macAddress, pCurNic->PermanentMacAddress, OVS_ETHERNET_ADDRESS_LENGTH);
 
     pNicEntry->portId = pCurNic->PortId;
@@ -297,6 +298,15 @@ OVS_NIC_LIST_ENTRY* Sctx_FindNicByPortId_Unsafe(_In_ const OVS_GLOBAL_FORWARD_IN
 
 Cleanup:
     return (OVS_NIC_LIST_ENTRY*)pNicEntry;
+}
+
+VOID NicEntry_DestroyNow_Unsafe(OVS_NIC_LIST_ENTRY* pNicEntry)
+{
+	if (pNicEntry)
+	{
+		RemoveEntryList(&pNicEntry->listEntry);
+		KFree(pNicEntry);
+	}
 }
 
 NDIS_STATUS Sctx_DeleteNicUnsafe(_In_ const OVS_GLOBAL_FORWARD_INFO* pForwardInfo, _In_ NDIS_SWITCH_PORT_ID portId, _In_ NDIS_SWITCH_NIC_INDEX nicIndex)

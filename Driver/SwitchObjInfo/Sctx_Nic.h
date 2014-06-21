@@ -38,6 +38,8 @@ typedef struct _OVS_NIC_INFO {
 
 typedef struct _OVS_NIC_LIST_ENTRY
 {
+	OVS_RCU								rcu;
+
     LIST_ENTRY                          listEntry;
     UINT8                               macAddress[OVS_ETHERNET_ADDRESS_LENGTH];
     NDIS_SWITCH_PORT_ID                 portId;
@@ -92,6 +94,7 @@ OVS_NIC_LIST_ENTRY* Sctx_FindNicBy_Unsafe(_In_ OVS_GLOBAL_FORWARD_INFO* pForward
 OVS_NIC_LIST_ENTRY* Sctx_FindNicByPortIdAndNicIndex_Unsafe(_In_ const OVS_GLOBAL_FORWARD_INFO* pForwardIno, _In_ NDIS_SWITCH_PORT_ID portId, _In_ NDIS_SWITCH_NIC_INDEX nicIndex);
 OVS_NIC_LIST_ENTRY* Sctx_FindNicByPortId_Unsafe(_In_ const OVS_GLOBAL_FORWARD_INFO* pForwardIno, _In_ NDIS_SWITCH_PORT_ID portId);
 
+VOID NicEntry_DestroyNow_Unsafe(OVS_NIC_LIST_ENTRY* pNicEntry);
 NDIS_STATUS Sctx_DeleteNicUnsafe(_In_ const OVS_GLOBAL_FORWARD_INFO* pForwardInfo, _In_ NDIS_SWITCH_PORT_ID portId, _In_ NDIS_SWITCH_NIC_INDEX nicIndex);
 
 //i.e. you must lock the pForwardInfo->pRwLock

@@ -49,7 +49,7 @@ static OVS_FLOW* _FindFlowMatchingMaskedPI(OVS_FLOW_TABLE* pFlowTable, const OVS
     return NULL;
 }
 
-VOID FlowTable_Destroy(OVS_FLOW_TABLE* pFlowTable)
+VOID FlowTable_DestroyNow_Unsafe(OVS_FLOW_TABLE* pFlowTable)
 {
     LIST_ENTRY* pFlowEntry = NULL;
 
@@ -63,7 +63,7 @@ VOID FlowTable_Destroy(OVS_FLOW_TABLE* pFlowTable)
         pFlowEntry = RemoveHeadList(pFlowTable->pFlowList);
 
 		OVS_FLOW* pFlow = CONTAINING_RECORD(pFlowEntry, OVS_FLOW, listEntry);
-        Flow_Free(pFlow);
+        Flow_DestroyNow_Unsafe(pFlow);
     }
     ExFreePoolWithTag(pFlowTable->pFlowList, g_extAllocationTag);
 
@@ -158,6 +158,8 @@ OVS_FLOW_TABLE* FlowTable_Create()
 
     InitializeListHead(pFlowTable->pFlowList);
     InitializeListHead(pFlowTable->pMaskList);
+	pFlowTable->rcu.Destroy = FlowTable_DestroyNow_Unsafe;
+	pFlowTable->pRwLock = NdisAllocateRWLock(NULL);
 
 Cleanup:
     if (!ok)

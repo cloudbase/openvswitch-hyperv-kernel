@@ -288,7 +288,7 @@ Cleanup:
     {
         if (pPersPort)
         {
-            PersPort_Delete_Unsafe(pPersPort);
+            PersPort_Delete(pPersPort);
         }
     }
 
@@ -596,7 +596,7 @@ Cleanup:
 
     if (pPersPort)
     {
-        PersPort_Delete_Unsafe(pPersPort);
+        PersPort_Delete(pPersPort);
     }
 
 	FWDINFO_UNLOCK(g_pSwitchInfo->pForwardInfo, &lockState);

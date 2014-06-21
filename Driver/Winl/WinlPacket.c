@@ -195,7 +195,7 @@ VOID Packet_Execute(_In_ OVS_ARGUMENT_GROUP* pArgGroup, const FILE_OBJECT* pFile
     FlowTable_Unlock(&lockState);
 
 Cleanup:
-    Flow_Free(pFlow);
+    Flow_DestroyNow_Unsafe(pFlow);
 
     if (ok)
     {

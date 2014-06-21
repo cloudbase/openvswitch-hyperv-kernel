@@ -34,6 +34,9 @@ typedef struct _OVS_DATAPATH_STATS {
 
 typedef struct _OVS_DATAPATH
 {
+	//must be the first field in the struct
+	OVS_RCU rcu;
+
     char*				name;
     //we keep one single datapath, which is created at startup.
     //we set 'deleted' = true, when it is 'deleted' from userspace
@@ -43,7 +46,7 @@ typedef struct _OVS_DATAPATH
     PNDIS_RW_LOCK_EX	pRwLock;
     OVS_FLOW_TABLE*		pFlowTable;
 
-    NET_IFINDEX			switchIfIndex;
+	ULONG				switchIfIndex;
 
     OVS_DATAPATH_STATS	statistics;
 }OVS_DATAPATH, *POVS_DATAPATH;
@@ -56,7 +59,7 @@ BOOLEAN CreateMsgFromDatapath(OVS_DATAPATH* pDatapath, UINT32 sequence, UINT8 cm
 
 OVS_DATAPATH* GetDefaultDatapath();
 BOOLEAN CreateDefaultDatapath(NDIS_HANDLE ndisFilterHandle);
-
+VOID Datapath_DestroyNow_Unsafe(OVS_DATAPATH* pDatapath);
 BOOLEAN Datapath_FlushFlows(OVS_DATAPATH* pDatapath);
 
 VOID FlowTable_LockRead(_In_ LOCK_STATE_EX* pLockState);

@@ -16,9 +16,30 @@ limitations under the License.
 
 #include "precomp.h"
 
+#include "Switch.h"
+
 UCHAR g_driverMajorNdisVersion = NDIS_FILTER_MAJOR_VERSION;
 UCHAR g_driverMinorNdisVersion = NDIS_FILTER_MINOR_VERSION;
 PWCHAR g_driverFriendlyName = L"OpenVSwitch";
 PWCHAR g_driverUniqueName = L"{8DD9C187-772D-452E-AC80-D29F9247BB7D}";
 PWCHAR g_driverServiceName = L"OpenVSwitch";
 ULONG g_extOidRequestId = 'xsvO';
+
+VOID Switch_DestroyNow_Unsafe(OVS_SWITCH_INFO* pSwitchInfo)
+{
+	OVS_CHECK(pSwitchInfo->dataFlowState == OVS_SWITCH_PAUSED);
+	pSwitchInfo->controlFlowState = OVS_SWITCH_DETACHED;
+
+	KeMemoryBarrier();
+
+	while (pSwitchInfo->pendingOidCount > 0)
+	{
+		NdisMSleep(1000);
+	}
+
+	Switch_DeleteForwardInfo(pSwitchInfo->pForwardInfo);
+
+	RemoveEntryList(&pSwitchInfo->listEntry);
+
+	KFree(pSwitchInfo);
+}

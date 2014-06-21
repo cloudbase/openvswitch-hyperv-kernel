@@ -175,9 +175,9 @@ OVS_ERROR Flow_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
         if (FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_FLOW_CLEAR))
         {
-            NdisAcquireSpinLock(&pFlow->spinLock);
+            //NdisAcquireSpinLock(&pFlow->spinLock);
             Flow_ClearStats(pFlow);
-            NdisReleaseSpinLock(&pFlow->spinLock);
+            //NdisReleaseSpinLock(&pFlow->spinLock);
         }
 
         pOldActions = pFlow->pActions;
@@ -218,7 +218,7 @@ Cleanup:
         if (flowWasCreated)
         {
             if (pFlow)
-                Flow_Free(pFlow);
+                Flow_DestroyNow_Unsafe(pFlow);
         }
 
         if (flowTableLocked)
@@ -326,9 +326,9 @@ OVS_ERROR Flow_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
         if (FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_FLOW_CLEAR))
         {
-            NdisAcquireSpinLock(&pFlow->spinLock);
+            //NdisAcquireSpinLock(&pFlow->spinLock);
             Flow_ClearStats(pFlow);
-            NdisReleaseSpinLock(&pFlow->spinLock);
+            //NdisReleaseSpinLock(&pFlow->spinLock);
         }
 
         pOldActions = pFlow->pActions;
@@ -537,7 +537,7 @@ OVS_ERROR Flow_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
     FlowTable_RemoveFlow(pFlowTable, pFlow);
 
-    Flow_Free(pFlow);
+    Flow_DestroyNow_Unsafe(pFlow);
     FlowTable_Unlock(&lockState);
     flowTableLocked = FALSE;
 

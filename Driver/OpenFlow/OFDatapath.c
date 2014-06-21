@@ -29,6 +29,25 @@ limitations under the License.
 static OVS_DATAPATH* g_pDefaultDatapath = NULL;
 static PNDIS_RW_LOCK_EX g_pFlowTableRwLock = NULL;
 
+VOID Datapath_DestroyNow_Unsafe(OVS_DATAPATH* pDatapath)
+{
+	OVS_FLOW_TABLE* pFlowTable = NULL;
+	LOCK_STATE_EX lockState;
+
+	if (pDatapath->name)
+		KFree(pDatapath->name);
+
+	DATAPATH_LOCK_WRITE(pDatapath, &lockState);
+
+	pFlowTable = pDatapath->pFlowTable;
+	pDatapath->pFlowTable = NULL;
+	OVS_RCU_DESTROY(pFlowTable);
+
+	DATAPATH_UNLOCK(pDatapath, &lockState);
+
+	NdisFreeRWLock(pDatapath->pRwLock);
+}
+
 OVS_DATAPATH* GetDefaultDatapath()
 {
     return g_pDefaultDatapath;
@@ -189,6 +208,7 @@ BOOLEAN CreateDefaultDatapath(NDIS_HANDLE ndisFilterHandle)
 
     RtlZeroMemory(pDatapath, sizeof(OVS_DATAPATH));
 
+	pDatapath->rcu.Destroy = Datapath_DestroyNow_Unsafe;
     pDatapath->name = NULL;
 
     //i.e. at the beginning we don't have a datapath, we expect the userspace to tell us: 'create datapath'
@@ -213,7 +233,7 @@ Cleanup:
     {
         if (pDatapath->pFlowTable)
         {
-            FlowTable_Destroy(pDatapath->pFlowTable);
+            FlowTable_DestroyNow_Unsafe(pDatapath->pFlowTable);
         }
         ExFreePoolWithTag(pDatapath, g_extAllocationTag);
     }
@@ -239,7 +259,7 @@ BOOLEAN Datapath_FlushFlows(OVS_DATAPATH* pDatapath)
 
     pDatapath->pFlowTable = pNewTable;
 
-    FlowTable_Destroy(pOldTable);
+    FlowTable_DestroyNow_Unsafe(pOldTable);
 
     FlowTable_Unlock(&lockState);
     return TRUE;

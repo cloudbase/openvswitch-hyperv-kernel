@@ -239,6 +239,9 @@ NDIS_STATUS FilterAttach(NDIS_HANDLE ndisFilterHandle, NDIS_HANDLE hDriverContex
 
     RtlZeroMemory(pSwitchInfo, switchObjectSize);
 
+	pSwitchInfo->rcu.Destroy = Switch_DestroyNow_Unsafe;
+	pSwitchInfo->datapathIfIndex = 1;
+
     pSwitchInfo->filterHandle = ndisFilterHandle;
     pSwitchInfo->switchContext = switchContext;
     RtlCopyMemory(&pSwitchInfo->switchHandlers, &switchHandler, sizeof(NDIS_SWITCH_OPTIONAL_HANDLERS));

@@ -29,7 +29,13 @@ typedef struct _OVS_PORT_LIST_ENTRY OVS_PORT_LIST_ENTRY;
 typedef struct _OVS_TUNNELING_PORT_OPTIONS OVS_TUNNELING_PORT_OPTIONS;
 typedef struct _OVS_SWITCH_INFO OVS_SWITCH_INFO;
 
-typedef struct _OVS_PERSISTENT_PORT {
+typedef struct _OVS_PERSISTENT_PORT
+{
+	//must be the first field in the struct
+	OVS_RCU rcu;
+
+	NDIS_RW_LOCK_EX* pRwLock;
+
     //port number assigned by OVS (userspace, or computed in driver)
     UINT16				ovsPortNumber;
 
@@ -49,16 +55,26 @@ typedef struct _OVS_PERSISTENT_PORT {
     OVS_PORT_LIST_ENTRY*	pPortListEntry;
 }OVS_PERSISTENT_PORT;
 
+#define PORT_LOCK_READ(pPort, pLockState) NdisAcquireRWLockRead(pPort->pRwLock, pLockState, 0)
+#define PORT_LOCK_WRITE(pPort, pLockState) NdisAcquireRWLockWrite(pPort->pRwLock, pLockState, 0)
+#define PORT_UNLOCK(pPort, pLockState) NdisReleaseRWLock(pPort->pRwLock, pLockState)
+
 typedef struct _OVS_LOGICAL_PORT_ENTRY {
     LIST_ENTRY listEntry;
     OVS_PERSISTENT_PORT* pPort;
 }OVS_LOGICAL_PORT_ENTRY;
 
 typedef struct _OVS_PERSISTENT_PORTS_INFO {
+	NDIS_RW_LOCK_EX* pRwLock;
+
     OVS_PERSISTENT_PORT* portsArray[OVS_MAX_PORTS];
     UINT16 count;
     UINT16 firstPortFree;
 }OVS_PERSISTENT_PORTS_INFO;
+
+#define PERSPORTS_LOCK_READ(pPersPorts, pLockState) NdisAcquireRWLockRead((pPersPorts)->pRwLock, pLockState, 0)
+#define PERSPORTS_LOCK_WRITE(pPersPorts, pLockState) NdisAcquireRWLockWrite((pPersPorts)->pRwLock, pLockState, 0)
+#define PERSPORTS_UNLOCK(pPersPorts, pLockState) NdisReleaseRWLock((pPersPorts)->pRwLock, pLockState)
 
 typedef struct _OF_PI_IPV4_TUNNEL OF_PI_IPV4_TUNNEL;
 
@@ -72,7 +88,7 @@ OVS_PERSISTENT_PORT* PersPort_FindByNumber_Unsafe(UINT16 portNumber);
 OVS_PERSISTENT_PORT* PersPort_FindById_Unsafe(NDIS_SWITCH_PORT_ID portId, BOOLEAN lookInNic);
 
 OVS_PERSISTENT_PORT* PersPort_GetInternal_Unsafe();
-BOOLEAN PersPort_Delete_Unsafe(OVS_PERSISTENT_PORT* pPersPort);
+BOOLEAN PersPort_Delete(OVS_PERSISTENT_PORT* pPersPort);
 
 _Ret_maybenull_
 OVS_PERSISTENT_PORT* PersPort_FindExternal_Unsafe();
@@ -91,3 +107,5 @@ BOOLEAN PersPort_Initialize();
 VOID PersPort_Uninitialize();
 
 BOOLEAN PersPort_HaveInternal_Unsafe();
+
+VOID PersPort_DestroyNow_Unsafe(OVS_PERSISTENT_PORT* pPersPort);

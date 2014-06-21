@@ -381,6 +381,9 @@ OVS_PERSISTENT_PORT* PersPort_Create_Unsafe(_In_opt_ const char* portName, _In_o
 
     NdisZeroMemory(pPort, sizeof(OVS_PERSISTENT_PORT));
 
+	pPort->rcu.Destroy = PersPort_DestroyNow_Unsafe;
+	pPort->pRwLock = NdisAllocateRWLock(NULL);
+
     //if name for port was not provided, we must have been given a number
     if (!portName)
     {
@@ -804,7 +807,7 @@ Cleanup:
 	return pOutPort;
 }
 
-BOOLEAN PersPort_Delete_Unsafe(OVS_PERSISTENT_PORT* pPort)
+BOOLEAN PersPort_Delete(OVS_PERSISTENT_PORT* pPort)
 {
     OVS_PERSISTENT_PORTS_INFO* pPorts = NULL;
     BOOLEAN ok = TRUE;
@@ -878,4 +881,28 @@ OVS_PERSISTENT_PORT* PersPort_GetInternal_Unsafe()
     }
 
     return pInternalPort;
+}
+
+VOID PersPort_DestroyNow_Unsafe(OVS_PERSISTENT_PORT* pPort)
+{
+	KFree(pPort->ovsPortName);
+
+	/* previously, we 'unset' the nic and port: the hyper-v switch ports & nics were set to have pPort = NULL
+	** Now we use numbers instead. Anyway, there's no need to do unset now, because:
+	** o) the only reason we keep the mapping between ovs port numbers and hyper-v switch port ids is because we need to find a port id, given an ovs port number (or ovs port name)
+	** o) we need to be able to find a persistent port, when knowing a port id, only when setting a hyper-v switch port name.
+	** o) any packet is sent out using an ovs port number (persistent port)
+	** o) it never happens for a port (hyper-v switch port or ovs port) to be created with the same number as one that had been deleted.
+	*/
+
+	if (pPort->pOptions)
+	{
+		KFree(pPort->pOptions);
+	}
+
+	if (pPort->pRwLock) {
+		NdisFreeRWLock(pPort->pRwLock);
+	}
+
+	KFree(pPort);
 }

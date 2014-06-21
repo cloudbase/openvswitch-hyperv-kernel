@@ -1324,12 +1324,12 @@ BOOLEAN CreateMsgFromFlow(_In_ const OVS_FLOW* pFlow, UINT8 command, _Inout_ OVS
 
     pMsg->dpIfIndex = dpIfIndex;
 
-    NdisAcquireSpinLock(&pFlow->spinLock);
+    //NdisAcquireSpinLock(&pFlow->spinLock);
     tickCount = pFlow->stats.lastUsedTime;
     stats.noOfMatchedPackets = pFlow->stats.packetsMached;
     stats.noOfMatchedBytes = pFlow->stats.bytesMatched;
     tcpFlags = pFlow->stats.tcpFlags;
-    NdisReleaseSpinLock(&pFlow->spinLock);
+    //NdisReleaseSpinLock(&pFlow->spinLock);
 
     //3. OVS_ARGUMENT_GROUP
     pFlowGroup = AllocArgumentGroup();

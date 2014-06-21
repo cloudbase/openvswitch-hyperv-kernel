@@ -16,6 +16,8 @@ limitations under the License.
 
 #pragma once
 
+typedef struct _OVS_SWITCH_INFO OVS_SWITCH_INFO;
+
 extern UCHAR  g_driverMajorNdisVersion;
 extern UCHAR  g_driverMinorNdisVersion;
 
@@ -28,3 +30,5 @@ extern ULONG  g_extOidRequestId;
 
 extern NDIS_STRING g_extensionFriendlyName;
 extern NDIS_STRING g_extensionGuid;
+
+VOID Switch_DestroyNow_Unsafe(OVS_SWITCH_INFO* pSwitchInfo);

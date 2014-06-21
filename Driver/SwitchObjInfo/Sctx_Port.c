@@ -68,6 +68,7 @@ NDIS_STATUS Sctx_AddPort_Unsafe(_Inout_ OVS_GLOBAL_FORWARD_INFO* pForwardInfo, c
 
     NdisZeroMemory(pPortEntry, sizeof(OVS_PORT_LIST_ENTRY));
 
+	pPortEntry->rcu.Destroy = PortEntry_DestroyNow_Unsafe;
     pPortEntry->portId = pCurPort->PortId;
     pPortEntry->portType = pCurPort->PortType;
     pPortEntry->on = (pCurPort->PortState == NdisSwitchPortStateCreated);
@@ -91,6 +92,15 @@ Cleanup:
     }
 
     return status;
+}
+
+VOID PortEntry_DestroyNow_Unsafe(OVS_PORT_LIST_ENTRY* pPortEntry)
+{
+	if (pPortEntry)
+	{
+		RemoveEntryList(&pPortEntry->listEntry);
+		KFree(pPortEntry);
+	}
 }
 
 NDIS_STATUS Sctx_DeletePort_Unsafe(_In_ const OVS_GLOBAL_FORWARD_INFO* pForwardInfo, _In_ NDIS_SWITCH_PORT_ID portId)

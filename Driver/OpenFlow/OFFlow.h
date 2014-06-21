@@ -20,7 +20,6 @@ limitations under the License.
 #include "Ethernet.h"
 #include "PacketInfo.h"
 
-typedef struct _OVS_CACHE OVS_CACHE;
 typedef struct _OVS_DATAPATH OVS_DATAPATH;
 typedef struct _OVS_ARGUMENT OVS_ARGUMENT;
 typedef struct _OVS_ARGUMENT_GROUP OVS_ARGUMENT_GROUP;
@@ -32,7 +31,8 @@ typedef struct _OVS_PI_RANGE {
     SIZE_T endRange;
 }OVS_PI_RANGE, *POVS_PI_RANGE;
 
-typedef struct _OVS_FLOW_MASK {
+typedef struct _OVS_FLOW_MASK
+{
     //a flow mask can be shared by multiple packet info-s (to save disk space)
     int refCount;
     //entry in OVS_FLOW_TABLE
@@ -49,21 +49,32 @@ typedef struct _OVS_FLOW_STATS {
 	UINT8 tcpFlags;
 }OVS_FLOW_STATS, *POVS_FLOW_STATS;
 
-typedef struct _OVS_FLOW {
-    //list entry in OVS_FLOW_TABLE
-    LIST_ENTRY			listEntry;
+typedef struct _OVS_FLOW
+{
+	//must be the first field in the struct
+	OVS_RCU rcu;
 
+	//lock that protects the flow against modifications
+	PNDIS_RW_LOCK_EX pRwLock;
+
+	//list entry in OVS_FLOW_TABLE
+	LIST_ENTRY		listEntry;
+
+	//once set, cannot be modified
     OVS_OFPACKET_INFO	maskedPacketInfo;
+	//once set, cannot be modified
     OVS_OFPACKET_INFO	unmaskedPacketInfo;
+	//once set, cannot be modified, nor the ptr changed
     OVS_FLOW_MASK*	pMask;
 
     OVS_ARGUMENT_GROUP* pActions;
 
-    //locks the values below
-    NDIS_SPIN_LOCK	spinLock;
-
 	OVS_FLOW_STATS	stats;
 }OVS_FLOW, *POVS_FLOW;
+
+#define FLOW_LOCK_READ(pFlow, pLockState) NdisAcquireRWLockRead(pFlow->pRwLock, pLockState, 0)
+#define FLOW_LOCK_WRITE(pFlow, pLockState) NdisAcquireRWLockWrite(pFlow->pRwLock, pLockState, 0)
+#define FLOW_UNLOCK(pFlow, pLockState) NdisReleaseRWLock(pFlow->pRwLock, pLockState)
 
 //a match is a pair (packet info, mask), with PI range = to apply mask and compare [startRange, endRange]
 typedef struct _OVS_FLOW_MATCH {
@@ -92,7 +103,7 @@ static __inline SIZE_T RoundDown(SIZE_T a, SIZE_T b)
 /*********************************** FLOW ***********************************/
 
 OVS_FLOW* Flow_Create();
-VOID Flow_Free(OVS_FLOW* pFlow);
+VOID Flow_DestroyNow_Unsafe(OVS_FLOW* pFlow);
 
 static __inline void Flow_ClearStats(OVS_FLOW* pFlow)
 {
@@ -110,6 +121,7 @@ void FlowMatch_Initialize(OVS_FLOW_MATCH* pFlowMatch, OVS_OFPACKET_INFO* pPacket
 /*********************************** FLOW MASK ***********************************/
 VOID FlowMask_DeleteReference(OVS_FLOW_MASK* pFlowMask);
 OVS_FLOW_MASK* FlowMask_Create();
+
 BOOLEAN FlowMask_Equal(const OVS_FLOW_MASK* pLhs, const OVS_FLOW_MASK* pRhs);
 
 #if OVS_DBGPRINT_FLOW

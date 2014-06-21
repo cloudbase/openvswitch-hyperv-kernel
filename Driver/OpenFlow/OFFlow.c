@@ -35,6 +35,8 @@ limitations under the License.
 #include "Argument.h"
 #include "Gre.h"
 #include "Checksum.h"
+#include "OFFlowTable.h"
+
 #include <ntstrsafe.h>
 
 /***********************************************/
@@ -57,7 +59,7 @@ VOID FlowMask_DeleteReference(OVS_FLOW_MASK* pFlowMask)
     }
 }
 
-VOID Flow_Free(OVS_FLOW* pFlow)
+VOID Flow_DestroyNow_Unsafe(OVS_FLOW* pFlow)
 {
     if (!pFlow)
     {
@@ -93,15 +95,14 @@ OVS_FLOW* Flow_Create()
 {
     OVS_FLOW* pFlow = NULL;
 
-    pFlow = KAlloc(sizeof(OVS_FLOW));
+    pFlow = KZAlloc(sizeof(OVS_FLOW));
     if (!pFlow)
     {
         return NULL;
     }
 
-    RtlZeroMemory(pFlow, sizeof(OVS_FLOW));
-
-    NdisAllocateSpinLock(&pFlow->spinLock);
+    pFlow->pRwLock = NdisAllocateRWLock(NULL);
+	pFlow->rcu.Destroy = Flow_DestroyNow_Unsafe;
 
     return pFlow;
 }
@@ -128,13 +129,11 @@ OVS_FLOW_MASK* FlowMask_Create()
 {
     OVS_FLOW_MASK* pFlowMask = NULL;
 
-    pFlowMask = ExAllocatePoolWithTag(NonPagedPool, sizeof(OVS_FLOW_MASK), g_extAllocationTag);
+    pFlowMask = KZAlloc(sizeof(OVS_FLOW_MASK));
     if (!pFlowMask)
     {
         return NULL;
     }
-
-    pFlowMask->refCount = 0;
 
     return pFlowMask;
 }
@@ -156,14 +155,14 @@ void Flow_UpdateTimeUsed(OVS_FLOW* pFlow, OVS_NET_BUFFER* pOvsNb)
 
     bufferLen = ONB_GetDataLength(pOvsNb);
 
-    NdisAcquireSpinLock(&pFlow->spinLock);
+    //NdisAcquireSpinLock(&pFlow->spinLock);
     pFlow->stats.packetsMached++;
     pFlow->stats.bytesMatched += bufferLen;
 
     pFlow->stats.lastUsedTime = KeQueryPerformanceCounter(NULL).QuadPart;
     pFlow->stats.tcpFlags |= tcpFlags;
 
-    NdisReleaseSpinLock(&pFlow->spinLock);
+    //NdisReleaseSpinLock(&pFlow->spinLock);
 }
 
 #if OVS_DBGPRINT_FLOW

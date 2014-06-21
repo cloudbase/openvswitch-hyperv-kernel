@@ -163,7 +163,7 @@ OVS_ERROR Datapath_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObjec
 
     FlowTable_LockWrite(&lockState);
 
-    FlowTable_Destroy(pDatapath->pFlowTable);
+    FlowTable_DestroyNow_Unsafe(pDatapath->pFlowTable);
     pDatapath->pFlowTable = NULL;
 
     FlowTable_Unlock(&lockState);
