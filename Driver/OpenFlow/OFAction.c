@@ -658,3 +658,31 @@ BOOLEAN ProcessReceivedActions(_Inout_ OVS_ARGUMENT_GROUP* pActionGroup, const O
 
     return TRUE;
 }
+
+VOID Actions_DestroyNow_Unsafe(_Inout_ OVS_ACTIONS* pActions)
+{
+	OVS_CHECK(pActions);
+
+	if (pActions->pActionGroup)
+		DestroyArgumentGroup((OVS_ARGUMENT_GROUP*)pActions->pActionGroup);
+
+	KFree(pActions);
+}
+
+OVS_ACTIONS* Actions_Create()
+{
+	OVS_ACTIONS* pActions = KZAlloc(sizeof(OVS_ACTIONS));
+
+	if (!pActions)
+		return NULL;
+
+	pActions->pActionGroup = AllocArgumentGroup();
+	if (!pActions->pActionGroup) {
+		KFree(pActions);
+		return NULL;
+	}
+
+	pActions->rcu.Destroy = Actions_DestroyNow_Unsafe;
+
+	return pActions;
+}
