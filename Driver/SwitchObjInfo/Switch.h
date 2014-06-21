@@ -59,8 +59,7 @@ typedef enum _OVS_SWITCH_CONTROLFLOW_STATE {
 
 typedef struct _OVS_SWITCH_INFO
 {
-    // The link *must* always be the first field.
-    LIST_ENTRY link;
+    LIST_ENTRY				listEntry;
 
     OVS_GLOBAL_FORWARD_INFO* pForwardInfo;
 

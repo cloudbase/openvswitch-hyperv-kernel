@@ -44,7 +44,7 @@ typedef struct _OVS_FLOW_MASK {
 
 typedef struct _OVS_FLOW {
     //list entry in OVS_FLOW_TABLE
-    LIST_ENTRY	entryInTable;
+    LIST_ENTRY			listEntry;
 
     OVS_OFPACKET_INFO	maskedPacketInfo;
     OVS_OFPACKET_INFO	unmaskedPacketInfo;

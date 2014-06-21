@@ -746,7 +746,7 @@ void DbgPrintAllFlows()
 
         while (pCurItem != pFlowTable->pFlowList)
         {
-            OVS_FLOW* pFlow = CONTAINING_RECORD(pCurItem, OVS_FLOW, entryInTable);
+            OVS_FLOW* pFlow = CONTAINING_RECORD(pCurItem, OVS_FLOW, listEntry);
 
             ULONG startRange = (ULONG)pFlow->pMask->piRange.startRange;
             ULONG endRange = (ULONG)pFlow->pMask->piRange.endRange;

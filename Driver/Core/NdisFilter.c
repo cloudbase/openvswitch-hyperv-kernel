@@ -269,7 +269,7 @@ NDIS_STATUS FilterAttach(NDIS_HANDLE ndisFilterHandle, NDIS_HANDLE hDriverContex
     pSwitchInfo->dataFlowState = OVS_SWITCH_PAUSED;
 
     NdisAcquireSpinLock(&g_extensionListLock);
-    InsertHeadList(&g_extensionList, &pSwitchInfo->link);
+	InsertHeadList(&g_extensionList, &pSwitchInfo->listEntry);
     NdisReleaseSpinLock(&g_extensionListLock);
 
     g_pSwitchInfo = pSwitchInfo;
@@ -370,7 +370,7 @@ VOID FilterDetach(NDIS_HANDLE filterModuleContext)
     Switch_DeleteForwardInfo(pSwitchInfo->pForwardInfo);
 
     NdisAcquireSpinLock(&g_extensionListLock);
-    RemoveEntryList(&pSwitchInfo->link);
+	RemoveEntryList(&pSwitchInfo->listEntry);
     NdisReleaseSpinLock(&g_extensionListLock);
 
     ExFreePool(pSwitchInfo);

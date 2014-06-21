@@ -601,7 +601,7 @@ OVS_ERROR Flow_Dump(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
         while (pCurItem != pFlowTable->pFlowList)
         {
-            OVS_FLOW* pFlow = CONTAINING_RECORD(pCurItem, OVS_FLOW, entryInTable);
+			OVS_FLOW* pFlow = CONTAINING_RECORD(pCurItem, OVS_FLOW, listEntry);
             OVS_MESSAGE* pReplyMsg = msgs + i;
 
             if (!CreateMsgFromFlow(pFlow, OVS_MESSAGE_COMMAND_NEW, pReplyMsg, pMsg->sequence, pDatapath->switchIfIndex, pMsg->pid))

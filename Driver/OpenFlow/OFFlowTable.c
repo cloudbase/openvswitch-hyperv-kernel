@@ -33,7 +33,7 @@ static OVS_FLOW* _FindFlowMatchingMaskedPI(OVS_FLOW_TABLE* pFlowTable, const OVS
 
     while (pFlowEntry != pFlowTable->pFlowList)
     {
-        pFlow = CONTAINING_RECORD(pFlowEntry, OVS_FLOW, entryInTable);
+		pFlow = CONTAINING_RECORD(pFlowEntry, OVS_FLOW, listEntry);
 
         if (pFlow->pMask == pFlowMask)
         {
@@ -62,7 +62,7 @@ VOID FlowTable_Destroy(OVS_FLOW_TABLE* pFlowTable)
     {
         pFlowEntry = RemoveHeadList(pFlowTable->pFlowList);
 
-        OVS_FLOW* pFlow = CONTAINING_RECORD(pFlowEntry, OVS_FLOW, entryInTable);
+		OVS_FLOW* pFlow = CONTAINING_RECORD(pFlowEntry, OVS_FLOW, listEntry);
         Flow_Free(pFlow);
     }
     ExFreePoolWithTag(pFlowTable->pFlowList, g_extAllocationTag);
@@ -120,7 +120,7 @@ void FlowTable_InsertFlowMask(OVS_FLOW_TABLE* pFlowTable, OVS_FLOW_MASK* pFlowMa
 
 void FlowTable_InsertFlow_Unsafe(_Inout_ OVS_FLOW_TABLE* pFlowTable, _In_ OVS_FLOW* pFlow)
 {
-    InsertHeadList(pFlowTable->pFlowList, &pFlow->entryInTable);
+	InsertHeadList(pFlowTable->pFlowList, &pFlow->listEntry);
     pFlowTable->countFlows++;
 }
 
@@ -128,7 +128,7 @@ void FlowTable_RemoveFlow(OVS_FLOW_TABLE* pFlowTable, OVS_FLOW* pFlow)
 {
     OVS_CHECK(pFlowTable->countFlows > 0);
 
-    RemoveEntryList(&pFlow->entryInTable);
+	RemoveEntryList(&pFlow->listEntry);
     pFlowTable->countFlows--;
 }
 
