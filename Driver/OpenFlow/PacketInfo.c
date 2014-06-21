@@ -726,27 +726,27 @@ static BOOLEAN _GetPIFromArg_Ipv4(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout
     }
 
     //1. ip protocol
-    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, ipInfo, OVS_IPV4_INFO, protocol);
+    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, ipInfo, OVS_NET_LAYER_INFO, protocol);
     size = sizeof(pPacketInfo->ipInfo.protocol);
 
     _UpdateRange(pPiRange, offset, size);
     pPacketInfo->ipInfo.protocol = pIpv4Info->protocol;
 
     //2. TOS
-    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, ipInfo, OVS_IPV4_INFO, typeOfService);
+    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, ipInfo, OVS_NET_LAYER_INFO, typeOfService);
     size = sizeof(pPacketInfo->ipInfo.typeOfService);
 
     _UpdateRange(pPiRange, offset, size);
     pPacketInfo->ipInfo.typeOfService = pIpv4Info->tos;
 
     //TTL
-    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, ipInfo, OVS_IPV4_INFO, timeToLive);
+    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, ipInfo, OVS_NET_LAYER_INFO, timeToLive);
     size = sizeof(pPacketInfo->ipInfo.timeToLive);
     _UpdateRange(pPiRange, offset, size);
     pPacketInfo->ipInfo.timeToLive = pIpv4Info->ttl;
 
     //fragmentation type
-    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, ipInfo, OVS_IPV4_INFO, fragment);
+    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, ipInfo, OVS_NET_LAYER_INFO, fragment);
     size = sizeof(pPacketInfo->ipInfo.fragment);
 
     _UpdateRange(pPiRange, offset, size);
@@ -791,28 +791,28 @@ static BOOLEAN _GetPIFromArg_Ipv6(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout
     pPacketInfo->netProto.ipv6Info.flowLabel = pIpv6Info->label;
 
     //ip proto
-    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, ipInfo, OVS_IPV4_INFO, protocol);
+    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, ipInfo, OVS_NET_LAYER_INFO, protocol);
     size = sizeof(pPacketInfo->ipInfo.protocol);
 
     _UpdateRange(pPiRange, offset, size);
     pPacketInfo->ipInfo.protocol = pIpv6Info->protocol;
 
     //TOS
-    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, ipInfo, OVS_IPV4_INFO, typeOfService);
+    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, ipInfo, OVS_NET_LAYER_INFO, typeOfService);
     size = sizeof(pPacketInfo->ipInfo.typeOfService);
 
     _UpdateRange(pPiRange, offset, size);
     pPacketInfo->ipInfo.typeOfService = pIpv6Info->trafficClass;
 
     //TTL
-    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, ipInfo, OVS_IPV4_INFO, timeToLive);
+    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, ipInfo, OVS_NET_LAYER_INFO, timeToLive);
     size = sizeof(pPacketInfo->ipInfo.timeToLive);
 
     _UpdateRange(pPiRange, offset, size);
     pPacketInfo->ipInfo.timeToLive = pIpv6Info->highLimit;
 
     //fragmentation
-    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, ipInfo, OVS_IPV4_INFO, fragment);
+    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, ipInfo, OVS_NET_LAYER_INFO, fragment);
     size = sizeof(pPacketInfo->ipInfo.fragment);
 
     _UpdateRange(pPiRange, offset, size);
@@ -864,7 +864,7 @@ static BOOLEAN _GetPIFromArg_Arp(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout_
     pPacketInfo->netProto.ipv4Info.destination.S_un.S_addr = pArpPI->targetIp;
 
     //proto
-    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, ipInfo, OVS_IPV4_INFO, protocol);
+    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, ipInfo, OVS_NET_LAYER_INFO, protocol);
     size = sizeof(pPacketInfo->ipInfo.protocol);
 
     _UpdateRange(pPiRange, offset, size);
