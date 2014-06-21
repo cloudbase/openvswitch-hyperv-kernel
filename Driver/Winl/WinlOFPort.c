@@ -170,7 +170,7 @@ OVS_ERROR OFPort_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     OVS_ERROR error = OVS_ERROR_NOERROR;
     LOCK_STATE_EX lockState = { 0 };
 
-    Rwlock_LockWrite(g_pSwitchInfo->pForwardInfo->pRwLock, &lockState);
+	FWDINFO_LOCK_WRITE(g_pSwitchInfo->pForwardInfo, &lockState);
 
     //NAME: required
     pArg = FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_OFPORT_NAME);
@@ -292,7 +292,7 @@ Cleanup:
         }
     }
 
-    Rwlock_Unlock(g_pSwitchInfo->pForwardInfo->pRwLock, &lockState);
+	FWDINFO_UNLOCK(g_pSwitchInfo->pForwardInfo, &lockState);
 
     if (replyMsg.pArgGroup)
     {
@@ -322,7 +322,7 @@ OVS_ERROR OFPort_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         return OVS_ERROR_NODEV;
     }
 
-    Rwlock_LockWrite(g_pSwitchInfo->pForwardInfo->pRwLock, &lockState);
+	FWDINFO_LOCK_WRITE(g_pSwitchInfo->pForwardInfo, &lockState);
 
     //required: NAME or NUMBER
     pArg = FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_OFPORT_NAME);
@@ -418,7 +418,7 @@ OVS_ERROR OFPort_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     error = WriteMsgsToDevice((OVS_NLMSGHDR*)&replyMsg, 1, pFileObject, OVS_VPORT_MCGROUP);
 
 Cleanup:
-    Rwlock_Unlock(g_pSwitchInfo->pForwardInfo->pRwLock, &lockState);
+	FWDINFO_UNLOCK(g_pSwitchInfo->pForwardInfo, &lockState);
 
     if (replyMsg.pArgGroup)
     {
@@ -446,7 +446,7 @@ OVS_ERROR OFPort_Get(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         return OVS_ERROR_NODEV;
     }
 
-    Rwlock_LockRead(g_pSwitchInfo->pForwardInfo->pRwLock, &lockState);
+	FWDINFO_LOCK_READ(g_pSwitchInfo->pForwardInfo, &lockState);
 
     //required: NAME or NUMBER
     pArg = FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_OFPORT_NAME);
@@ -508,7 +508,7 @@ Cleanup:
         DestroyArgumentGroup(replyMsg.pArgGroup);
     }
 
-    Rwlock_Unlock(g_pSwitchInfo->pForwardInfo->pRwLock, &lockState);
+	FWDINFO_UNLOCK(g_pSwitchInfo->pForwardInfo, &lockState);
 
     return error;
 }
@@ -531,7 +531,7 @@ OVS_ERROR OFPort_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         return OVS_ERROR_NODEV;
     }
 
-    Rwlock_LockWrite(g_pSwitchInfo->pForwardInfo->pRwLock, &lockState);
+	FWDINFO_LOCK_WRITE(g_pSwitchInfo->pForwardInfo, &lockState);
 
     //required: NAME or NUMBER
     pArg = FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_OFPORT_NAME);
@@ -599,7 +599,7 @@ Cleanup:
         PersPort_Delete_Unsafe(pPersPort);
     }
 
-    Rwlock_Unlock(g_pSwitchInfo->pForwardInfo->pRwLock, &lockState);
+	FWDINFO_UNLOCK(g_pSwitchInfo->pForwardInfo, &lockState);
 
     if (replyMsg.pArgGroup)
     {
@@ -632,7 +632,7 @@ OVS_ERROR OFPort_Dump(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
     pForwardInfo = g_pSwitchInfo->pForwardInfo;
 
-    Rwlock_LockRead(pForwardInfo->pRwLock, &lockState);
+	FWDINFO_LOCK_READ(pForwardInfo, &lockState);
 
     if (pForwardInfo->persistentPortsInfo.count > 0)
     {
@@ -654,7 +654,7 @@ OVS_ERROR OFPort_Dump(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         }
     }
 
-    Rwlock_Unlock(g_pSwitchInfo->pForwardInfo->pRwLock, &lockState);
+    FWDINFO_UNLOCK(g_pSwitchInfo->pForwardInfo, &lockState);
 
     if (error != OVS_ERROR_NOERROR)
     {

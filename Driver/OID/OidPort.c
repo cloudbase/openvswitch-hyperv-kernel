@@ -33,7 +33,7 @@ NDIS_STATUS Port_Create(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH
             NdisMSleep(100);
         }
 
-        Rwlock_LockWrite(pForwardInfo->pRwLock, &lockState);
+        FWDINFO_LOCK_WRITE(pForwardInfo, &lockState);
 
         OVS_CHECK(pPort->PortState == NdisSwitchPortStateCreated);
         status = Sctx_AddPort_Unsafe(pForwardInfo, pPort, &pPortEntry);
@@ -45,7 +45,7 @@ NDIS_STATUS Port_Create(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH
             Sctx_Port_SetPersistentPort_Unsafe(pPortEntry);
         }
 
-        Rwlock_Unlock(pForwardInfo->pRwLock, &lockState);
+        FWDINFO_UNLOCK(pForwardInfo, &lockState);
 
         return status;
     }
@@ -66,7 +66,7 @@ VOID Port_Update(const OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH_
             NdisMSleep(100);
         }
 
-        Rwlock_LockWrite(pForwardInfo->pRwLock, &lockState);
+        FWDINFO_LOCK_WRITE(pForwardInfo, &lockState);
 
         OVS_CHECK(pPort->PortState == NdisSwitchPortStateCreated);
         pPortListEntry = Sctx_FindPortById_Unsafe(pForwardInfo, pPort->PortId);
@@ -82,7 +82,7 @@ VOID Port_Update(const OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH_
         pPortListEntry->portType = pPort->PortType;
         pPortListEntry->on = (pPort->PortState == NdisSwitchPortStateCreated);
 
-        Rwlock_Unlock(pForwardInfo->pRwLock, &lockState);
+        FWDINFO_UNLOCK(pForwardInfo, &lockState);
     }
 }
 
@@ -99,7 +99,7 @@ VOID Port_Teardown(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH_PORT
             NdisMSleep(100);
         }
 
-        Rwlock_LockWrite(pForwardInfo->pRwLock, &lockState);
+        FWDINFO_LOCK_WRITE(pForwardInfo, &lockState);
 
         if (pPort->PortType == NdisSwitchPortTypeExternal)
         {
@@ -131,7 +131,7 @@ VOID Port_Teardown(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH_PORT
             Sctx_Port_Disable_Unsafe(pForwardInfo, pPortEntry);
         }
 
-        Rwlock_Unlock(pForwardInfo->pRwLock, &lockState);
+        FWDINFO_UNLOCK(pForwardInfo, &lockState);
     }
 
     return;
@@ -150,7 +150,7 @@ Port_Delete(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH_PORT_PARAME
             NdisMSleep(100);
         }
 
-        Rwlock_LockWrite(pForwardInfo->pRwLock, &lockState);
+        FWDINFO_LOCK_WRITE(pForwardInfo, &lockState);
         if (pPort->PortType == NdisSwitchPortTypeExternal)
         {
             OVS_CHECK(pForwardInfo->pExternalPort);
@@ -175,7 +175,7 @@ Port_Delete(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH_PORT_PARAME
 
         Sctx_DeletePort_Unsafe(pForwardInfo, pPort->PortId);
 
-        Rwlock_Unlock(pForwardInfo->pRwLock, &lockState);
+        FWDINFO_UNLOCK(pForwardInfo, &lockState);
     }
 
     return;

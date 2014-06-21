@@ -64,7 +64,7 @@ OVS_ERROR Datapath_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
     upcallPid = GET_ARG_DATA(pArgUpcallPid, UINT32);
 
-    Rwlock_LockWrite(g_pSwitchInfo->pForwardInfo->pRwLock, &fwdLockState);
+	FWDINFO_LOCK_WRITE(g_pSwitchInfo->pForwardInfo, &fwdLockState);
     DATAPATH_LOCK_WRITE(pDatapath, &lockState);
 
     if (!pDatapath->deleted || pDatapath->name)
@@ -91,7 +91,7 @@ OVS_ERROR Datapath_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     pDatapath->switchIfIndex = g_pSwitchInfo->datapathIfIndex;
 
     DATAPATH_UNLOCK(pDatapath, &lockState);
-    Rwlock_Unlock(g_pSwitchInfo->pForwardInfo->pRwLock, &fwdLockState);
+	FWDINFO_UNLOCK(g_pSwitchInfo->pForwardInfo, &fwdLockState);
 
     if (0 == pDatapath->switchIfIndex)
     {

@@ -82,7 +82,7 @@ static __inline BOOLEAN HaveNdisPortExternal(_In_ const OVS_GLOBAL_FORWARD_INFO*
 
     OVS_CHECK(pForwardInfo);
 
-    Rwlock_LockRead(pForwardInfo->pRwLock, &lockState);
+    FWDINFO_LOCK_READ(pForwardInfo, &lockState);
 
     ok = (pForwardInfo->pExternalNic ? TRUE : FALSE);
 
@@ -92,7 +92,7 @@ static __inline BOOLEAN HaveNdisPortExternal(_In_ const OVS_GLOBAL_FORWARD_INFO*
         OVS_CHECK(pForwardInfo->pExternalNic->portId != NDIS_SWITCH_DEFAULT_PORT_ID);
     }
 
-    Rwlock_Unlock(pForwardInfo->pRwLock, &lockState);
+    FWDINFO_UNLOCK(pForwardInfo, &lockState);
 
     return ok;
 }

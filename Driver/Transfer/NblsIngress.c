@@ -57,7 +57,7 @@ static BOOLEAN _GetSourceInfo(_In_ const OVS_GLOBAL_FORWARD_INFO* pForwardInfo, 
     sourcePort = pForwardDetail->SourcePortId;
     sourceIndex = (NDIS_SWITCH_NIC_INDEX)pForwardDetail->SourceNicIndex;
 
-    Rwlock_LockRead(pForwardInfo->pRwLock, &lockState);
+    FWDINFO_LOCK_READ(pForwardInfo, &lockState);
 
     pSourceNicEntry = Sctx_FindNicByPortIdAndNicIndex_Unsafe(pForwardInfo, sourcePort, sourceIndex);
 
@@ -80,7 +80,7 @@ static BOOLEAN _GetSourceInfo(_In_ const OVS_GLOBAL_FORWARD_INFO* pForwardInfo, 
     pSourceInfo->portId = sourcePort;
 
 Cleanup:
-    Rwlock_Unlock(pForwardInfo->pRwLock, &lockState);
+	FWDINFO_UNLOCK(pForwardInfo, &lockState);
     return ok;
 }
 
@@ -116,11 +116,11 @@ OVS_NBL_FAIL_REASON* pFailReason)
     LOCK_STATE_EX lockState = { 0 };
     BOOLEAN ok = TRUE;
 
-    Rwlock_LockRead(pForwardInfo->pRwLock, &lockState);
+    FWDINFO_LOCK_READ(pForwardInfo, &lockState);
 
     ok = _GetExternalDestinationInfo_Unsafe(pForwardInfo, sourcePort, pCurDestination, pFailReason);
 
-    Rwlock_Unlock(pForwardInfo->pRwLock, &lockState);
+	FWDINFO_UNLOCK(pForwardInfo, &lockState);
 
     return ok;
 }
@@ -135,7 +135,7 @@ OVS_NIC_INFO* pCurDestination, OVS_NBL_FAIL_REASON* pFailReason)
 
     RtlZeroMemory(pCurDestination, sizeof(OVS_NIC_INFO));
 
-    Rwlock_LockRead(pForwardInfo->pRwLock, &lockState);
+    FWDINFO_LOCK_READ(pForwardInfo, &lockState);
 
     pDestinationNicEntry = Sctx_FindNicByMacAddressUnsafe(pForwardInfo, pDestMac);
 
@@ -164,7 +164,7 @@ OVS_NIC_INFO* pCurDestination, OVS_NBL_FAIL_REASON* pFailReason)
     }
 
 Cleanup:
-    Rwlock_Unlock(pForwardInfo->pRwLock, &lockState);
+	FWDINFO_UNLOCK(pForwardInfo, &lockState);
     return ok;
 }
 
@@ -230,14 +230,14 @@ const OVS_NIC_INFO* pSourceInfo, NET_BUFFER_LIST* pNbl, OVS_NBL_FAIL_REASON* pFa
         pSwitchInfo->switchHandlers.GetNetBufferListDestinations(pSwitchInfo->switchContext, pNbl, &pBroadcastArray);
     }
 
-    Rwlock_LockRead(pForwardInfo->pRwLock, &lockState);
+    FWDINFO_LOCK_READ(pForwardInfo, &lockState);
 
     //set destination ports for broadcasts in broadcastArray destination port lists.
     *pCountAdded = Sctx_MakeBroadcastArrayUnsafe(pForwardInfo, pBroadcastArray, pSourceInfo->portId, pSourceInfo->nicIndex, /*out*/ pMtu);
 
     OVS_CHECK(*pCountAdded <= neededDestinations);
 
-    Rwlock_Unlock(pForwardInfo->pRwLock, &lockState);
+	FWDINFO_UNLOCK(pForwardInfo, &lockState);
 
     return pBroadcastArray;
 }
@@ -364,14 +364,14 @@ static BOOLEAN _OutputPacketToPort_Encaps(OVS_NET_BUFFER* pOvsNb)
     LOCK_STATE_EX lockState = { 0 };
     OVS_GLOBAL_FORWARD_INFO* pForwardInfo = pOvsNb->pSwitchInfo->pForwardInfo;
 
-    Rwlock_LockRead(pForwardInfo->pRwLock, &lockState);
+    FWDINFO_LOCK_READ(pForwardInfo, &lockState);
 
     if (pForwardInfo->pExternalNic)
     {
         NicListEntry_To_NicInfo(pForwardInfo->pExternalNic, &externalNicInfo);
     }
 
-    Rwlock_Unlock(pOvsNb->pSwitchInfo->pForwardInfo->pRwLock, &lockState);
+    FWDINFO_UNLOCK(pOvsNb->pSwitchInfo->pForwardInfo, &lockState);
 
     if (!pForwardInfo->pExternalNic)
     {
@@ -563,7 +563,7 @@ static BOOLEAN _OutputPacketToPort_Normal(OVS_NET_BUFFER* pOvsNb)
     LOCK_STATE_EX lockState = { 0 };
     OVS_GLOBAL_FORWARD_INFO* pForwardInfo = pOvsNb->pSwitchInfo->pForwardInfo;
 
-    Rwlock_LockRead(pForwardInfo->pRwLock, &lockState);
+    FWDINFO_LOCK_READ(pForwardInfo, &lockState);
 
     if (pForwardInfo->pExternalNic && pForwardInfo->pExternalNic->portId == pOvsNb->pSourceNic->portId)
     {
@@ -577,7 +577,7 @@ static BOOLEAN _OutputPacketToPort_Normal(OVS_NET_BUFFER* pOvsNb)
         isSrcExternal = TRUE;
     }
 
-    Rwlock_Unlock(pOvsNb->pSwitchInfo->pForwardInfo->pRwLock, &lockState);
+    FWDINFO_UNLOCK(pOvsNb->pSwitchInfo->pForwardInfo, &lockState);
 
     isBroadcast = ETH_IS_BROADCAST(pEthHeader->destination_addr);
     isMulticast = ETH_IS_MULTICAST(pEthHeader->destination_addr);
@@ -608,7 +608,7 @@ static BOOLEAN _OutputPacketToPort_Physical(OVS_NET_BUFFER* pOvsNb)
 
     bytesSent = ONB_GetDataLength(pOvsNb);
 
-    Rwlock_LockRead(pForwardInfo->pRwLock, &lockState);
+    FWDINFO_LOCK_READ(pForwardInfo, &lockState);
 
     pNicEntry = pOvsNb->pDestinationPort->pNicListEntry;
 
@@ -634,7 +634,7 @@ static BOOLEAN _OutputPacketToPort_Physical(OVS_NET_BUFFER* pOvsNb)
         ok = FALSE;
     }
 
-    Rwlock_Unlock(pForwardInfo->pRwLock, &lockState);
+    FWDINFO_UNLOCK(pForwardInfo, &lockState);
 
     return ok;
 }
@@ -1028,7 +1028,7 @@ static VOID _ProcessAllNblsIngress(_In_ OVS_SWITCH_INFO* pSwitchInfo, _In_ OVS_G
                 break;
             }
 
-            Rwlock_LockWrite(pForwardInfo->pRwLock, &lockState);
+			FWDINFO_LOCK_WRITE(pForwardInfo, &lockState);
 
             if (isFromExternal)
             {
@@ -1037,7 +1037,7 @@ static VOID _ProcessAllNblsIngress(_In_ OVS_SWITCH_INFO* pSwitchInfo, _In_ OVS_G
                 if (!ok)
                 {
                     ONB_Destroy(pSwitchInfo, &pOvsNb);
-                    Rwlock_Unlock(pForwardInfo->pRwLock, &lockState);
+					FWDINFO_UNLOCK(pForwardInfo, &lockState);
                     continue;
                 }
 
@@ -1073,7 +1073,7 @@ static VOID _ProcessAllNblsIngress(_In_ OVS_SWITCH_INFO* pSwitchInfo, _In_ OVS_G
                 ExFreePoolWithTag(pOvsNb, g_extAllocationTag);
             }
 
-            Rwlock_Unlock(pForwardInfo->pRwLock, &lockState);
+			FWDINFO_UNLOCK(pForwardInfo, &lockState);
         }
     }
 

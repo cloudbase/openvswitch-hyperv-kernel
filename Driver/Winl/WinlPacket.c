@@ -161,7 +161,7 @@ VOID Packet_Execute(_In_ OVS_ARGUMENT_GROUP* pArgGroup, const FILE_OBJECT* pFile
 
     if (pOvsNb->pOriginalPacketInfo->physical.ovsInPort != OVS_INVALID_PORT_NUMBER)
     {
-        Rwlock_LockRead(g_pSwitchInfo->pForwardInfo->pRwLock, &lockState);
+		FWDINFO_LOCK_READ(g_pSwitchInfo->pForwardInfo, &lockState);
 
         OVS_PERSISTENT_PORT* pPersPort = PersPort_FindByNumber_Unsafe(pOvsNb->pOriginalPacketInfo->physical.ovsInPort);
         if (pPersPort && pPersPort->pNicListEntry)
@@ -171,7 +171,7 @@ VOID Packet_Execute(_In_ OVS_ARGUMENT_GROUP* pArgGroup, const FILE_OBJECT* pFile
 
         pOvsNb->pSourcePort = pPersPort;
 
-        Rwlock_Unlock(g_pSwitchInfo->pForwardInfo->pRwLock, &lockState);
+		FWDINFO_UNLOCK(g_pSwitchInfo->pForwardInfo, &lockState);
     }
 
     pDatapath = GetDefaultDatapath();
