@@ -26,6 +26,7 @@ limitations under the License.
 #include "PersistentPort.h"
 
 ULONG g_extAllocationTag = 'xsvO';
+NDIS_RW_LOCK_EX* g_pRefRwLock = NULL;
 
 NDIS_STATUS OvsInit(NDIS_HANDLE ndisHandle)
 {

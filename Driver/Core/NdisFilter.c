@@ -105,6 +105,7 @@ NTSTATUS DriverEntry(PDRIVER_OBJECT pDriverObject, PUNICODE_STRING pRegistryPath
 
     NdisAllocateSpinLock(&g_extensionListLock);
     NdisAllocateSpinLock(&g_nbPoolLock);
+	g_pRefRwLock = NdisAllocateRWLock(NULL);
 
     InitializeListHead(&g_extensionList);
 
@@ -139,6 +140,7 @@ Cleanup:
 
         NdisFreeSpinLock(&g_extensionListLock);
         NdisFreeSpinLock(&g_nbPoolLock);
+		NdisFreeRWLock(g_pRefRwLock);
     }
 
     return status;
@@ -160,6 +162,7 @@ VOID FilterUnload(PDRIVER_OBJECT pDriverObject)
     NdisFDeregisterFilterDriver(g_driverHandle);
 
     NdisFreeSpinLock(&g_extensionListLock);
+	NdisFreeRWLock(g_pRefRwLock);
     NdisFreeSpinLock(&g_nbPoolLock);
 }
 
