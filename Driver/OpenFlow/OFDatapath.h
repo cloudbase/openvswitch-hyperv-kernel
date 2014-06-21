@@ -40,7 +40,7 @@ typedef struct _OVS_DATAPATH
     //and we set it to false when it's created from userspace.
     //it tells us if the datapath struct is usable.
     BOOLEAN				deleted;
-    PNDIS_RW_LOCK_EX	pStatsRwLock;
+    PNDIS_RW_LOCK_EX	pRwLock;
     OVS_FLOW_TABLE*		pFlowTable;
 
     NET_IFINDEX			switchIfIndex;

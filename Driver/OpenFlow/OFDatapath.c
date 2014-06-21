@@ -64,7 +64,7 @@ static void _GetDatapathStats(OVS_DATAPATH* pDatapath, OVS_DATAPATH_STATS* pStat
     LOCK_STATE_EX lockStateData = { 0 }, lockStateFlowTable = { 0 };
 
     //the pDatapath cannot be invalidated (there is a single pDatapath, and cannot be destroyed)
-    Rwlock_LockRead(pDatapath->pStatsRwLock, &lockStateData);
+    Rwlock_LockRead(pDatapath->pRwLock, &lockStateData);
 
     FlowTable_LockRead(&lockStateFlowTable);
 
@@ -77,7 +77,7 @@ static void _GetDatapathStats(OVS_DATAPATH* pDatapath, OVS_DATAPATH_STATS* pStat
     pStats->flowTableMissed = pDatapath->statistics.flowTableMissed;
     pStats->countLost = pDatapath->statistics.countLost;
 
-    Rwlock_Unlock(pDatapath->pStatsRwLock, &lockStateData);
+    Rwlock_Unlock(pDatapath->pRwLock, &lockStateData);
 }
 
 BOOLEAN CreateMsgFromDatapath(OVS_DATAPATH* pDatapath, UINT32 sequence, UINT8 cmd, _Inout_ OVS_MESSAGE* pMsg, UINT32 dpIfIndex, UINT32 pid)
@@ -202,7 +202,7 @@ BOOLEAN CreateDefaultDatapath(NDIS_HANDLE ndisFilterHandle)
         goto Cleanup;
     }
 
-    pDatapath->pStatsRwLock = NdisAllocateRWLock(ndisFilterHandle);
+    pDatapath->pRwLock = NdisAllocateRWLock(ndisFilterHandle);
 
     OVS_CHECK(!g_pDefaultDatapath);
     g_pDefaultDatapath = pDatapath;
