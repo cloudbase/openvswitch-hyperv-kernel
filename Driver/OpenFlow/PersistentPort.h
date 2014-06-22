@@ -48,11 +48,12 @@ typedef struct _OVS_PERSISTENT_PORT
     UINT32				upcallPortId;
 
     OVS_TUNNELING_PORT_OPTIONS*	pOptions;
-    OVS_SWITCH_INFO*			pSwitchInfo;
 
-    //NDIS / Hyper-V: NULL if disconnected from hyper-v
-    OVS_NIC_LIST_ENTRY*		pNicListEntry;
-    OVS_PORT_LIST_ENTRY*	pPortListEntry;
+	//NDIS_SWITCH_DEFAULT_PORT_ID (i.e. 0), if not connected
+	NDIS_SWITCH_PORT_ID			portId;
+
+	//if it's the external port of the switch or not
+	BOOLEAN						isExternal;
 }OVS_PERSISTENT_PORT;
 
 #define PORT_LOCK_READ(pPort, pLockState) NdisAcquireRWLockRead(pPort->pRwLock, pLockState, 0)
@@ -78,30 +79,31 @@ typedef struct _OVS_PERSISTENT_PORTS_INFO {
 
 typedef struct _OF_PI_IPV4_TUNNEL OF_PI_IPV4_TUNNEL;
 
-OVS_PERSISTENT_PORT* PersPort_Create_Unsafe(_In_opt_ const char* portName, _In_opt_ const UINT16* pPortNumber, OVS_OFPORT_TYPE portType);
+OVS_PERSISTENT_PORT* PersPort_Create_Ref(_In_opt_ const char* portName, _In_opt_ const UINT16* pPortNumber, OVS_OFPORT_TYPE portType);
 
 BOOLEAN PersPort_CForEach_Unsafe(_In_ const OVS_PERSISTENT_PORTS_INFO* pPorts, VOID* pContext, BOOLEAN(*Action)(int, OVS_PERSISTENT_PORT*, VOID*));
 
-OVS_PERSISTENT_PORT* PersPort_FindByName_Unsafe(const char* ofPortName);
-OVS_PERSISTENT_PORT* PersPort_FindByNumber_Unsafe(UINT16 portNumber);
+OVS_PERSISTENT_PORT* PersPort_FindByName_Ref(const char* ofPortName);
+OVS_PERSISTENT_PORT* PersPort_FindByNumber_Ref(UINT16 portNumber);
 
-OVS_PERSISTENT_PORT* PersPort_FindById_Unsafe(NDIS_SWITCH_PORT_ID portId, BOOLEAN lookInNic);
+OVS_PERSISTENT_PORT* PersPort_FindById_Unsafe(NDIS_SWITCH_PORT_ID portId);
+OVS_PERSISTENT_PORT* PersPort_FindById_Ref(NDIS_SWITCH_PORT_ID portId);
 
-OVS_PERSISTENT_PORT* PersPort_GetInternal_Unsafe();
+OVS_PERSISTENT_PORT* PersPort_GetInternal_Ref();
 BOOLEAN PersPort_Delete(OVS_PERSISTENT_PORT* pPersPort);
 
 _Ret_maybenull_
-OVS_PERSISTENT_PORT* PersPort_FindExternal_Unsafe();
+OVS_PERSISTENT_PORT* PersPort_FindExternal_Ref();
 
 _Ret_maybenull_
-OVS_PERSISTENT_PORT* PersPort_FindInternal_Unsafe();
+OVS_PERSISTENT_PORT* PersPort_FindInternal_Ref();
 
 _Ret_maybenull_
-OVS_PERSISTENT_PORT* PersPort_FindGre(const OVS_TUNNELING_PORT_OPTIONS* pTunnelInfo);
+OVS_PERSISTENT_PORT* PersPort_FindGre_Ref(const OVS_TUNNELING_PORT_OPTIONS* pTunnelInfo);
 _Ret_maybenull_
-OVS_PERSISTENT_PORT* PersPort_FindVxlan(_In_ const OVS_TUNNELING_PORT_OPTIONS* pTunnelInfo);
+OVS_PERSISTENT_PORT* PersPort_FindVxlan_Ref(_In_ const OVS_TUNNELING_PORT_OPTIONS* pTunnelInfo);
 _Ret_maybenull_
-OVS_PERSISTENT_PORT* PersPort_FindVxlanByDestPort(LE16 udpDestPort);
+OVS_PERSISTENT_PORT* PersPort_FindVxlanByDestPort_Ref(LE16 udpDestPort);
 
 BOOLEAN PersPort_Initialize();
 VOID PersPort_Uninitialize();

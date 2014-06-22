@@ -382,6 +382,8 @@ static BOOLEAN _OutputPacketToPort_Encaps(OVS_NET_BUFFER* pOvsNb)
     DEBUGP(LOG_LOUD, "Sending unicast to: nic index: %d; port id: %d; adap name: \"%s\"; vm name: \"%s\"\n",
         externalNicInfo.nicIndex, externalNicInfo.portId, externalNicInfo.nicName, externalNicInfo.vmName);
 
+	PORT_LOCK_READ(pOvsNb->pDestinationPort, &lockState);
+
     if (pOvsNb->pDestinationPort->pOptions)
     {
         OVS_TUNNELING_PORT_OPTIONS* pPortOptions = pOvsNb->pDestinationPort->pOptions;
@@ -397,6 +399,8 @@ static BOOLEAN _OutputPacketToPort_Encaps(OVS_NET_BUFFER* pOvsNb)
 
         pOvsNb->pTunnelInfo = &tunnelInfo;
     }
+
+	PORT_UNLOCK(pOvsNb->pDestinationPort, &lockState);
 
     OVS_CHECK(pOvsNb->pTunnelInfo);
 
@@ -610,13 +614,15 @@ static BOOLEAN _OutputPacketToPort_Physical(OVS_NET_BUFFER* pOvsNb)
 
     FWDINFO_LOCK_READ(pForwardInfo, &lockState);
 
-    pNicEntry = pOvsNb->pDestinationPort->pNicListEntry;
+	//we don't need to lock pDestinationPort, because its field, portId, never changed
+	pNicEntry = Sctx_FindNicByPortId_Unsafe(pForwardInfo, pOvsNb->pDestinationPort->portId);
 
     if (pNicEntry)
     {
         OVS_NIC_INFO nicInfo = { 0 };
         OVS_NBL_FAIL_REASON failReason = OVS_NBL_FAIL_SUCCESS;
 
+		//TODO: stats lock
         pOvsNb->pDestinationPort->stats.packetsSent++;
         pOvsNb->pDestinationPort->stats.bytesSent += bytesSent;
 
@@ -867,7 +873,8 @@ Cleanup:
     return sent;
 }
 
-static BOOLEAN _DecapsulateIfNeeded_Unsafe(OVS_NET_BUFFER* pOvsNb, _Out_ OF_PI_IPV4_TUNNEL* pTunnelInfo, BOOLEAN* pWasEncapsulated, _Out_ OVS_PERSISTENT_PORT** ppPersPort)
+static BOOLEAN _DecapsulateIfNeeded_Ref(_In_ const BYTE managOsMac[OVS_ETHERNET_ADDRESS_LENGTH],
+	OVS_NET_BUFFER* pOvsNb, _Out_ OF_PI_IPV4_TUNNEL* pTunnelInfo, BOOLEAN* pWasEncapsulated, _Out_ OVS_PERSISTENT_PORT** ppPersPort)
 {
     BOOLEAN ok = TRUE;
     const OVS_DECAPSULATOR* pDecapsulator = NULL;
@@ -892,7 +899,7 @@ static BOOLEAN _DecapsulateIfNeeded_Unsafe(OVS_NET_BUFFER* pOvsNb, _Out_ OF_PI_I
         *pWasEncapsulated = TRUE;
         ok = Encaps_DecapsulateOnb(pDecapsulator, pOvsNb, pTunnelInfo, encapProtocolType);
 
-        pGrePort = PersPort_FindGre(NULL);
+        pGrePort = PersPort_FindGre_Ref(NULL);
         if (pGrePort)
         {
             pGrePort->stats.packetsReceived++;
@@ -909,7 +916,7 @@ static BOOLEAN _DecapsulateIfNeeded_Unsafe(OVS_NET_BUFFER* pOvsNb, _Out_ OF_PI_I
         *pWasEncapsulated = TRUE;
         ok = Encaps_DecapsulateOnb(pDecapsulator, pOvsNb, pTunnelInfo, encapProtocolType);
 
-        pVxlanPort = PersPort_FindVxlanByDestPort(udpDestPort);
+        pVxlanPort = PersPort_FindVxlanByDestPort_Ref(udpDestPort);
 
         if (pVxlanPort)
         {
@@ -928,32 +935,35 @@ static BOOLEAN _DecapsulateIfNeeded_Unsafe(OVS_NET_BUFFER* pOvsNb, _Out_ OF_PI_I
 
         OVS_CHECK(!pDecapsulator);
 
-        pInternalPort = PersPort_FindInternal_Unsafe();
-        pExternalPort = PersPort_FindExternal_Unsafe();
+        pInternalPort = PersPort_FindInternal_Ref();
+        pExternalPort = PersPort_FindExternal_Ref();
 
         pEthHeader = (OVS_ETHERNET_HEADER*)ONB_GetDataOfSize(pOvsNb, sizeof(OVS_ETHERNET_HEADER));
 
-        if (pInternalPort && pInternalPort->pNicListEntry)
+		if (pInternalPort && pInternalPort->portId != NDIS_SWITCH_DEFAULT_PORT_ID)
         {
             //if the src eth addr = external nic (the internal nic has the same eth addr) => we say the src port is internal, so the destination may be external port
             //otherwise, we say the src is external, and the destination may be the internal port
-            if (!memcmp(pEthHeader->source_addr, pInternalPort->pNicListEntry->macAddress, OVS_ETHERNET_ADDRESS_LENGTH))
+			if (!memcmp(pEthHeader->source_addr, managOsMac, OVS_ETHERNET_ADDRESS_LENGTH))
             {
                 ++pInternalPort->stats.packetsReceived;
                 pInternalPort->stats.bytesReceived += ONB_GetDataLength(pOvsNb);
 
                 *ppPersPort = pInternalPort;
+				OVS_RCU_DEREFERENCE(pExternalPort);
             }
 
             else
             {
                 *ppPersPort = pExternalPort;
+				OVS_RCU_DEREFERENCE(pInternalPort);
             }
         }
 
         else
         {
             *ppPersPort = pExternalPort;
+			OVS_RCU_DEREFERENCE(pInternalPort);
         }
     }
 
@@ -984,6 +994,7 @@ static VOID _ProcessAllNblsIngress(_In_ OVS_SWITCH_INFO* pSwitchInfo, _In_ OVS_G
     NET_BUFFER* pNb = NULL;
     BOOLEAN isFromExternal = FALSE;
     BOOLEAN isFromInternal = FALSE;
+	BYTE managOsMac[OVS_ETHERNET_ADDRESS_LENGTH] = { 0 };
 
     UNREFERENCED_PARAMETER(sendFlags);
 
@@ -1001,6 +1012,7 @@ static VOID _ProcessAllNblsIngress(_In_ OVS_SWITCH_INFO* pSwitchInfo, _In_ OVS_G
     //TODO:we could check the nblFlags of each nbl.
     for (pNbl = nbls; pNbl != NULL; pNbl = NET_BUFFER_LIST_NEXT_NBL(pNbl))
     {
+		LOCK_STATE_EX lockState = { 0 };
         mustTransfer = TRUE;
 
         DEBUGP(LOG_LOUD, "current nbl: %p\n", pNbl);
@@ -1022,6 +1034,7 @@ static VOID _ProcessAllNblsIngress(_In_ OVS_SWITCH_INFO* pSwitchInfo, _In_ OVS_G
             pSourceInfo->nicIndex, pSourceInfo->portId,
             pSourceInfo->nicName, pSourceInfo->vmName);
 
+		FWDINFO_LOCK_READ(pForwardInfo, &lockState);
         if (pForwardInfo->pExternalNic && pSourceInfo->portId == pForwardInfo->pExternalNic->portId)
         {
             /*If the source port is connected to the external network adapter, the non-extensible switch OOB data will be in a receive format.
@@ -1032,11 +1045,16 @@ static VOID _ProcessAllNblsIngress(_In_ OVS_SWITCH_INFO* pSwitchInfo, _In_ OVS_G
         else {
             isFromExternal = FALSE;
 
-            if (pForwardInfo->pInternalNic && pSourceInfo->portId == pForwardInfo->pInternalNic->portId)
-            {
-                isFromInternal = TRUE;
-            }
+			if (pForwardInfo->pInternalNic)
+			{
+				RtlCopyMemory(managOsMac, pForwardInfo->pInternalNic->macAddress, OVS_ETHERNET_ADDRESS_LENGTH);
+
+				if (pSourceInfo->portId == pForwardInfo->pInternalNic->portId)
+					isFromInternal = TRUE;
+			}
         }
+
+		FWDINFO_UNLOCK(pForwardInfo, &lockState);
 
         OVS_CHECK(mustTransfer);
 
@@ -1046,7 +1064,6 @@ static VOID _ProcessAllNblsIngress(_In_ OVS_SWITCH_INFO* pSwitchInfo, _In_ OVS_G
             OF_PI_IPV4_TUNNEL tunnelInfo = { 0 }, *pTunnelInfo = NULL;
             BOOLEAN wasEncapsulated = FALSE;
             OVS_PERSISTENT_PORT* pPersPort = NULL;
-            LOCK_STATE_EX lockState = { 0 };
 
             OVS_NET_BUFFER* pOvsNb = ONB_CreateFromNbAndNbl(pSwitchInfo, pNbl, pNb, additionalSize);
             if (!pOvsNb)
@@ -1054,16 +1071,15 @@ static VOID _ProcessAllNblsIngress(_In_ OVS_SWITCH_INFO* pSwitchInfo, _In_ OVS_G
                 break;
             }
 
-			FWDINFO_LOCK_WRITE(pForwardInfo, &lockState);
-
             if (isFromExternal)
             {
                 //if has gre / vxlan => decapsulates
-                BOOLEAN ok = _DecapsulateIfNeeded_Unsafe(pOvsNb, &tunnelInfo, &wasEncapsulated, &pPersPort);
+				BOOLEAN ok = _DecapsulateIfNeeded_Ref(managOsMac, pOvsNb, &tunnelInfo, &wasEncapsulated, &pPersPort);
                 if (!ok)
                 {
+					OVS_RCU_DEREFERENCE(pPersPort);
+
                     ONB_Destroy(pSwitchInfo, &pOvsNb);
-					FWDINFO_UNLOCK(pForwardInfo, &lockState);
                     continue;
                 }
 
@@ -1075,7 +1091,7 @@ static VOID _ProcessAllNblsIngress(_In_ OVS_SWITCH_INFO* pSwitchInfo, _In_ OVS_G
 
             else
             {
-                pPersPort = PersPort_FindById_Unsafe(pSourceInfo->portId, /*look in nic*/ TRUE);
+				pPersPort = PersPort_FindById_Ref(pSourceInfo->portId);
             }
 
             pOvsNb->pSwitchInfo = pSwitchInfo;
@@ -1099,14 +1115,11 @@ static VOID _ProcessAllNblsIngress(_In_ OVS_SWITCH_INFO* pSwitchInfo, _In_ OVS_G
                 ExFreePoolWithTag(pOvsNb, g_extAllocationTag);
             }
 
-			FWDINFO_UNLOCK(pForwardInfo, &lockState);
+			OVS_RCU_DEREFERENCE(pPersPort);
         }
     }
 
-    if (nbls)
-    {
-        Nbls_DropAllIngress(pSwitchInfo, nbls, completeFlags, OVS_NBL_FAIL_SUCCESS);
-    }
+	Nbls_DropAllIngress(pSwitchInfo, nbls, completeFlags, OVS_NBL_FAIL_SUCCESS);
 }
 
 //drops the packets if the switch is not running (or, switch extension?)

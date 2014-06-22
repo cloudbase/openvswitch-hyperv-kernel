@@ -166,6 +166,8 @@ OVS_ERROR OFPort_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     OVS_MESSAGE replyMsg = { 0 };
     PORT_FETCH_CTXT context = { 0 };
     OVS_ERROR error = OVS_ERROR_NOERROR;
+    LOCK_STATE_EX lockState = { 0 };
+	BOOLEAN locked = FALSE;
 
     //NAME: required
     pArg = FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_OFPORT_NAME);
@@ -220,7 +222,7 @@ OVS_ERROR OFPort_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
         validPortNumber = (UINT16)portNumber;
 
-        pPersPort = PersPort_Create_Unsafe(ofPortName, &validPortNumber, portType);
+        pPersPort = PersPort_Create_Ref(ofPortName, &validPortNumber, portType);
         if (!pPersPort)
         {
             //TODO: perhaps we should give more specific error value
@@ -233,7 +235,7 @@ OVS_ERROR OFPort_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     {
         OVS_CHECK(ofPortName);
 
-        pPersPort = PersPort_Create_Unsafe(ofPortName, /*number*/ NULL, portType);
+        pPersPort = PersPort_Create_Ref(ofPortName, /*number*/ NULL, portType);
         if (!pPersPort)
         {
             //TODO: perhaps we should give more specific error value
@@ -246,6 +248,9 @@ OVS_ERROR OFPort_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     context.dpIfIndex = pDatapath->switchIfIndex;
     context.pReplyMsg = &replyMsg;
     context.pid = pMsg->pid;
+
+	PORT_LOCK_READ(pPersPort, &lockState);
+	locked = TRUE;
 
     pPersPort->ofPortType = portType;
     pPersPort->upcallPortId = upcallPortId;
@@ -279,22 +284,28 @@ OVS_ERROR OFPort_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     error = WriteMsgsToDevice((OVS_NLMSGHDR*)&replyMsg, 1, pFileObject, OVS_VPORT_MCGROUP);
 
 Cleanup:
-    if (error != OVS_ERROR_NOERROR)
-    {
-        if (pPersPort)
-        {
-            PersPort_Delete(pPersPort);
-        }
-    }
+	if (pPersPort)
+	{
+		if (locked) {
+			PORT_UNLOCK(pPersPort, &lockState);
+		}
 
+		if (error != OVS_ERROR_NOERROR)
+		{
+			//NOTE: must be referenced when called for delete
+			PersPort_Delete(pPersPort);
+		}
 
-    if (replyMsg.pArgGroup)
-    {
-        DestroyArgumentGroup(replyMsg.pArgGroup);
-    }
+		else
+		{
+			OVS_RCU_DEREFERENCE(pPersPort);
+		}
+	}
 
 	OVS_RCU_DEREFERENCE(pDatapath);
 
+	if (replyMsg.pArgGroup)
+		DestroyArgumentGroup(replyMsg.pArgGroup);
 
     return error;
 }
@@ -308,10 +319,12 @@ OVS_ERROR OFPort_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     OVS_MESSAGE replyMsg = { 0 };
     OVS_ERROR error = OVS_ERROR_NOERROR;
     OVS_ARGUMENT* pArg = NULL;
+    LOCK_STATE_EX lockState = { 0 };
     const char* ofPortName = NULL;
     UINT32 portNumber = (UINT)-1;
     PORT_FETCH_CTXT context = { 0 };
     OVS_DATAPATH* pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
+	BOOLEAN locked = FALSE;
 
     if (!pDatapath)
     {
@@ -323,7 +336,7 @@ OVS_ERROR OFPort_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     if (pArg)
     {
         ofPortName = pArg->data;
-        pPersPort = PersPort_FindByName_Unsafe(ofPortName);
+        pPersPort = PersPort_FindByName_Ref(ofPortName);
     }
 
     else
@@ -340,7 +353,7 @@ OVS_ERROR OFPort_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
                 goto Cleanup;
             }
 
-            pPersPort = PersPort_FindByNumber_Unsafe((UINT16)portNumber);
+            pPersPort = PersPort_FindByNumber_Ref((UINT16)portNumber);
         }
 
         else
@@ -368,6 +381,9 @@ OVS_ERROR OFPort_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
             goto Cleanup;
         }
     }
+
+	PORT_LOCK_WRITE(pPersPort, &lockState);
+	locked = TRUE;
 
     //OPTIONS: optional
     pOptionsGroup = FindArgumentGroup(pMsg->pArgGroup, OVS_ARGTYPE_GROUP_OFPORT_OPTIONS);
@@ -412,6 +428,15 @@ OVS_ERROR OFPort_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     error = WriteMsgsToDevice((OVS_NLMSGHDR*)&replyMsg, 1, pFileObject, OVS_VPORT_MCGROUP);
 
 Cleanup:
+	if (pPersPort)
+	{
+		if (locked) {
+			PORT_UNLOCK(pPersPort, &lockState);
+		}
+
+		OVS_RCU_DEREFERENCE(pPersPort);
+	}
+
 	OVS_RCU_DEREFERENCE(pDatapath);
 
     if (replyMsg.pArgGroup)
@@ -431,8 +456,10 @@ OVS_ERROR OFPort_Get(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     const char* ofPortName = NULL;
     UINT32 portNumber = (UINT32)-1;
     OVS_ERROR error = OVS_ERROR_NOERROR;
+    LOCK_STATE_EX lockState = { 0 };
     PORT_FETCH_CTXT context = { 0 };
     OVS_DATAPATH* pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
+	BOOLEAN locked = FALSE;
 
     if (!pDatapath)
     {
@@ -444,7 +471,7 @@ OVS_ERROR OFPort_Get(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     if (pArg)
     {
         ofPortName = pArg->data;
-        pPersPort = PersPort_FindByName_Unsafe(ofPortName);
+        pPersPort = PersPort_FindByName_Ref(ofPortName);
     }
 
     else
@@ -461,7 +488,7 @@ OVS_ERROR OFPort_Get(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
                 goto Cleanup;
             }
 
-            pPersPort = PersPort_FindByNumber_Unsafe((UINT16)portNumber);
+            pPersPort = PersPort_FindByNumber_Ref((UINT16)portNumber);
         }
 
         else
@@ -482,6 +509,9 @@ OVS_ERROR OFPort_Get(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     context.pReplyMsg = &replyMsg;
     context.pid = pMsg->pid;
 
+	PORT_LOCK_READ(pPersPort, &lockState);
+	locked = TRUE;
+
     //create message
     if (!_CreateMsgFromPersistentPort(0, pPersPort, &context))
     {
@@ -494,6 +524,15 @@ OVS_ERROR OFPort_Get(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     error = WriteMsgsToDevice((OVS_NLMSGHDR*)&replyMsg, 1, pFileObject, OVS_VPORT_MCGROUP);
 
 Cleanup:
+	if (pPersPort)
+	{
+		if (locked) {
+			PORT_UNLOCK(pPersPort, &lockState);
+		}
+
+		OVS_RCU_DEREFERENCE(pPersPort);
+	}
+
 	OVS_RCU_DEREFERENCE(pDatapath);
 
     if (replyMsg.pArgGroup)
@@ -515,6 +554,8 @@ OVS_ERROR OFPort_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     OVS_PERSISTENT_PORT* pPersPort = NULL;
     PORT_FETCH_CTXT context = { 0 };
     OVS_ERROR error = OVS_ERROR_NOERROR;
+    LOCK_STATE_EX lockState = { 0 };
+	BOOLEAN locked = FALSE;
 
     if (!pDatapath)
     {
@@ -526,7 +567,7 @@ OVS_ERROR OFPort_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     if (pArg)
     {
         ofPortName = pArg->data;
-        pPersPort = PersPort_FindByName_Unsafe(ofPortName);
+        pPersPort = PersPort_FindByName_Ref(ofPortName);
     }
 
     else
@@ -543,7 +584,7 @@ OVS_ERROR OFPort_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
                 goto Cleanup;
             }
 
-            pPersPort = PersPort_FindByNumber_Unsafe((UINT16)portNumber);
+            pPersPort = PersPort_FindByNumber_Ref((UINT16)portNumber);
         }
 
         else
@@ -569,6 +610,9 @@ OVS_ERROR OFPort_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     context.pReplyMsg = &replyMsg;
     context.pid = pMsg->pid;
 
+	PORT_LOCK_WRITE(pPersPort, &lockState);
+	locked = TRUE;
+
     //create mesasge
     if (!_CreateMsgFromPersistentPort(0, pPersPort, &context))
     {
@@ -581,11 +625,14 @@ OVS_ERROR OFPort_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     error = WriteMsgsToDevice((OVS_NLMSGHDR*)&replyMsg, 1, pFileObject, OVS_VPORT_MCGROUP);
 
 Cleanup:
+	if (pPersPort)
+	{
+		if (locked) {
+			PORT_UNLOCK(pPersPort, &lockState);
+		}
 
-    if (pPersPort)
-    {
-        PersPort_Delete(pPersPort);
-    }
+		PersPort_Delete(pPersPort);
+	}
 
 	OVS_RCU_DEREFERENCE(pDatapath);
 

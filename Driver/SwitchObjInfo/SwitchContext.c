@@ -171,7 +171,7 @@ static NDIS_STATUS _InitializeNicList(_Inout_ OVS_SWITCH_INFO* pSwitchInfo)
 
             if (pNicEntry)
             {
-                OVS_CHECK(pNicEntry->pPersistentPort == NULL);
+				OVS_CHECK(pNicEntry->ovsPortNumber == OVS_INVALID_PORT_NUMBER);
 
                 ++(pForwardInfo->countNics);
             }
@@ -260,7 +260,7 @@ static NDIS_STATUS _InitializePortList(_Inout_ OVS_SWITCH_INFO* pSwitchInfo)
 
             if (pPortEntry)
             {
-                OVS_CHECK(pPortEntry->pPersistentPort == NULL);
+				OVS_CHECK(pPortEntry->ovsPortNumber == OVS_INVALID_PORT_NUMBER);
 
                 pPortEntry->on = (pCurPort->PortState == NdisSwitchPortStateCreated);
 

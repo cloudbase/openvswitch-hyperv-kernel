@@ -51,9 +51,8 @@ typedef struct _OVS_NIC_LIST_ENTRY
 
     //OVS_OFPORT_STATS					portStats;
 
-    //when a nic is connected, it will have pPersistentPort = NULL
-    //when a port is created from ovs, if it's physical (i.e. vm), its pNicInfo
-    OVS_PERSISTENT_PORT*				pPersistentPort;
+	//OVS_INVALID_PORT_NUMBER (0xFFFF) if we don't have one
+	UINT16								ovsPortNumber;
 #ifdef DBG
     CHAR								vmName[OVS_NIC_ENTRY_NAME_SIZE + 1];
     CHAR								adapName[OVS_NIC_ENTRY_NAME_SIZE + 1];
@@ -97,9 +96,5 @@ OVS_NIC_LIST_ENTRY* Sctx_FindNicByPortId_Unsafe(_In_ const OVS_GLOBAL_FORWARD_IN
 VOID NicEntry_DestroyNow_Unsafe(OVS_NIC_LIST_ENTRY* pNicEntry);
 NDIS_STATUS Sctx_DeleteNicUnsafe(_In_ const OVS_GLOBAL_FORWARD_INFO* pForwardInfo, _In_ NDIS_SWITCH_PORT_ID portId, _In_ NDIS_SWITCH_NIC_INDEX nicIndex);
 
-//i.e. you must lock the pForwardInfo->pRwLock
-VOID Sctx_Nic_SetPersistentPort_Unsafe(_Inout_ OVS_NIC_LIST_ENTRY* pNicEntry);
-//i.e. you must lock the pForwardInfo->pRwLock
-VOID Sctx_Nic_UnsetPersistentPort_Unsafe(_Inout_ OVS_NIC_LIST_ENTRY* pNicEntry);
-
-VOID Sctx_Nic_Disable_Unsafe(_Inout_ OVS_GLOBAL_FORWARD_INFO* pForwardInfo, _Inout_ OVS_NIC_LIST_ENTRY* pNicEntry);
+//returns the ovs port number of the found pers port
+UINT16 Sctx_Nic_SetPersistentPort(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, NDIS_SWITCH_PORT_ID portId);

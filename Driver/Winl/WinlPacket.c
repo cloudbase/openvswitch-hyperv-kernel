@@ -166,19 +166,30 @@ VOID Packet_Execute(_In_ OVS_ARGUMENT_GROUP* pArgGroup, const FILE_OBJECT* pFile
 
     if (pOvsNb->pOriginalPacketInfo->physical.ovsInPort != OVS_INVALID_PORT_NUMBER)
     {
-       FWDINFO_LOCK_READ(pSwitchInfo->pForwardInfo, &lockState);
+		OVS_PERSISTENT_PORT* pSourcePersPort = PersPort_FindByNumber_Ref(pOvsNb->pOriginalPacketInfo->physical.ovsInPort);
+		NDIS_SWITCH_PORT_ID portId = NDIS_SWITCH_DEFAULT_PORT_ID;
 
-        OVS_PERSISTENT_PORT* pPersPort = PersPort_FindByNumber_Unsafe(pOvsNb->pOriginalPacketInfo->physical.ovsInPort);
-        if (pPersPort && pPersPort->pNicListEntry)
-        {
-            NicListEntry_To_NicInfo(pPersPort->pNicListEntry, &sourcePort);
-        }
+		//NOTE: actually, the portId of pers port CAN change (when mapping it to a hyper-v switch port)
+		//pershaps make it volatile and use it with interlocked ops?
+		if (pSourcePersPort && pSourcePersPort->portId != NDIS_SWITCH_DEFAULT_PORT_ID)
+		{
+			OVS_NIC_LIST_ENTRY* pNicEntry = NULL;
 
-        pOvsNb->pSourcePort = pPersPort;
+			portId = pSourcePersPort->portId;
 
-       FWDINFO_UNLOCK(pSwitchInfo->pForwardInfo, &lockState);
+			FWDINFO_LOCK_READ(pSwitchInfo->pForwardInfo, &lockState);
+
+			//actually, pNicEntry might have been deleted, even before Packet_Execute
+			pNicEntry = Sctx_FindNicByPortId_Unsafe(pSwitchInfo->pForwardInfo, portId);
+			if (pNicEntry) {
+				NicListEntry_To_NicInfo(pNicEntry, &sourcePort);
+			}
+
+			FWDINFO_UNLOCK(pSwitchInfo->pForwardInfo, &lockState);
+		}
+
+		pOvsNb->pSourcePort = pSourcePersPort;
     }
-
 
     pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
     if (!pDatapath)
@@ -205,6 +216,11 @@ Cleanup:
 		Flow_DestroyNow_Unsafe(pFlow);
 
 	OVS_RCU_DEREFERENCE(pDatapath);
+
+	if (pOvsNb->pSourcePort)
+	{
+		OVS_RCU_DEREFERENCE(pOvsNb->pSourcePort);
+	}
 
     if (ok)
     {
