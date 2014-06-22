@@ -726,7 +726,7 @@ void DbgPrintAllFlows()
     LOCK_STATE_EX lockState;
     UINT countMsgs = 0;
 
-    pDatapath = GetDefaultDatapath();
+    pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
     if (!pDatapath) {
         return;
     }
@@ -766,6 +766,10 @@ void DbgPrintAllFlows()
 	FLOWTABLE_UNLOCK(pFlowTable, &lockState);
 
 	OVS_RCU_DEREFERENCE(pFlowTable);
+
+	if (pDatapath) {
+		OVS_RCU_DEREFERENCE(pDatapath);
+	}
 }
 
 #endif

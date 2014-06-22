@@ -50,11 +50,7 @@ NDIS_STATUS OvsInit(NDIS_HANDLE ndisHandle)
 
 VOID OvsUninit()
 {
-    OVS_DATAPATH* pDefaultDatapath = NULL;
-
-    pDefaultDatapath = GetDefaultDatapath();
-    FlowTable_DestroyNow_Unsafe(pDefaultDatapath->pFlowTable);
-    ExFreePoolWithTag(pDefaultDatapath, g_extAllocationTag);
+	Driver_RemoveDatapath();
 
     PersPort_Uninitialize();
 }

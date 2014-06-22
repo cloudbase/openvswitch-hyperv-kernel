@@ -96,7 +96,7 @@ OVS_ERROR Flow_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         return OVS_ERROR_INVAL;
     }
 
-    pDatapath = GetDefaultDatapath();
+    pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
     if (!pDatapath)
     {
         error = OVS_ERROR_NODEV;
@@ -244,6 +244,7 @@ Cleanup:
 
 	OVS_RCU_DEREFERENCE(pFlow);
 	OVS_RCU_DEREFERENCE(pFlowTable);
+	OVS_RCU_DEREFERENCE(pDatapath);
 
     return error;
 }
@@ -306,8 +307,7 @@ OVS_ERROR Flow_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         }
     }
 
-    pDatapath = GetDefaultDatapath();
-
+    pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
     if (!pDatapath)
     {
         error = OVS_ERROR_NODEV;
@@ -389,6 +389,7 @@ Cleanup:
 	OVS_RCU_DEREFERENCE(pFlow);
 	OVS_RCU_DEREFERENCE(pFlowTable);
 
+	OVS_RCU_DEREFERENCE(pDatapath);
 
     if (error != OVS_ERROR_NOERROR)
     {
@@ -425,7 +426,7 @@ OVS_ERROR Flow_Get(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         return OVS_ERROR_INVAL;
     }
 
-    pDatapath = GetDefaultDatapath();
+    pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
     if (!pDatapath)
     {
         return OVS_ERROR_NODEV;
@@ -483,6 +484,8 @@ Cleanup:
 	OVS_RCU_DEREFERENCE(pFlow);
 	OVS_RCU_DEREFERENCE(pFlowTable);
 
+	OVS_RCU_DEREFERENCE(pDatapath);
+
     return error;
 }
 
@@ -499,7 +502,7 @@ OVS_ERROR Flow_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     LOCK_STATE_EX lockState = { 0 };
     OVS_ERROR error = OVS_ERROR_NOERROR;
 
-    pDatapath = GetDefaultDatapath();
+    pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
     if (!pDatapath)
     {
         return OVS_ERROR_NODEV;
@@ -510,26 +513,31 @@ OVS_ERROR Flow_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         pPacketInfoArgs = FindArgumentGroup(pMsg->pArgGroup, OVS_ARGTYPE_GROUP_PI);
         if (!pPacketInfoArgs)
         {
-            return OVS_ERROR_INVAL;
+			error = OVS_ERROR_INVAL;
+			goto Cleanup;
         }
     }
 
     else
     {
-        if (!Datapath_FlushFlows(pDatapath))
-            return OVS_ERROR_INVAL;
+		if (!Datapath_FlushFlows(pDatapath))
+		{
+			error = OVS_ERROR_INVAL;
+			goto Cleanup;
+		}
 
         //must send reply = ok
         WriteErrorToDevice((OVS_NLMSGHDR*)pMsg, OVS_ERROR_NOERROR, pFileObject, OVS_MULTICAST_GROUP_NONE);
 
-        return error;
+		goto Cleanup;
     }
 
     FlowMatch_Initialize(&flowMatch, &packetInfo, NULL);
 
     if (!GetFlowMatchFromArguments(&flowMatch, pPacketInfoArgs, NULL))
     {
-        return OVS_ERROR_INVAL;
+		error = OVS_ERROR_INVAL;
+		goto Cleanup;
     }
 
 	pFlowTable = Datapath_ReferenceFlowTable(pDatapath);
@@ -594,6 +602,8 @@ Cleanup:
 	OVS_RCU_DEREFERENCE(pFlow);
 	OVS_RCU_DEREFERENCE(pFlowTable);
 
+	OVS_RCU_DEREFERENCE(pDatapath);
+
     return error;
 }
 
@@ -607,7 +617,7 @@ OVS_ERROR Flow_Dump(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     OVS_MESSAGE msgDone = { 0 };
     OVS_ERROR error = OVS_ERROR_NOERROR;
 
-    pDatapath = GetDefaultDatapath();
+    pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
     if (!pDatapath)
     {
         return OVS_ERROR_NODEV;
@@ -688,6 +698,8 @@ OVS_ERROR Flow_Dump(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
 Cleanup:
 	OVS_RCU_DEREFERENCE(pFlowTable);
+	OVS_RCU_DEREFERENCE(pDatapath);
+
     if (msgs)
     {
         for (UINT i = 0; i < countMsgs; ++i)

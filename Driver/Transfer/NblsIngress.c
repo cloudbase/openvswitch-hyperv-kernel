@@ -577,7 +577,7 @@ static BOOLEAN _OutputPacketToPort_Normal(OVS_NET_BUFFER* pOvsNb)
         isSrcExternal = TRUE;
     }
 
-    FWDINFO_UNLOCK(pOvsNb->pSwitchInfo->pForwardInfo, &lockState);
+    FWDINFO_UNLOCK(pForwardInfo, &lockState);
 
     isBroadcast = ETH_IS_BROADCAST(pEthHeader->destination_addr);
     isMulticast = ETH_IS_MULTICAST(pEthHeader->destination_addr);
@@ -646,7 +646,7 @@ BOOLEAN OutputPacketToPort(OVS_NET_BUFFER* pOvsNb)
     OVS_DATAPATH* pDatapath = NULL;
     ULONG packetsSent = 0, bytesSent = 0;
 
-    pDatapath = GetDefaultDatapath();
+    pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
 
     //NOTE: it is no longer used.
     //It used to be used when a dest port was not provided by the userspace
@@ -670,6 +670,7 @@ BOOLEAN OutputPacketToPort(OVS_NET_BUFFER* pOvsNb)
         {
             _ComputePacketsAndBytesSent(pOvsNb->pNbl, &bytesSent, &packetsSent);
 
+			//TODO: lock for stats
             pPortStats->packetsSent += packetsSent;
             pPortStats->bytesSent += bytesSent;
         }
@@ -691,6 +692,7 @@ BOOLEAN OutputPacketToPort(OVS_NET_BUFFER* pOvsNb)
         {
             _ComputePacketsAndBytesSent(pOvsNb->pNbl, &bytesSent, &packetsSent);
 
+			//TODO: lock for stats
             pPortStats->packetsSent += packetsSent;
             pPortStats->bytesSent += bytesSent;
         }
@@ -716,6 +718,10 @@ BOOLEAN OutputPacketToPort(OVS_NET_BUFFER* pOvsNb)
     }
 
 Cleanup:
+	if (pDatapath) {
+		OVS_RCU_DEREFERENCE(pDatapath);
+	}
+
     if (ok)
     {
         Nbls_SendIngressBasic(pOvsNb->pSwitchInfo, pOvsNb->pNbl, pOvsNb->sendFlags, 1);
@@ -749,7 +755,10 @@ static BOOLEAN _ProcessPacket(OVS_NET_BUFFER* pOvsNb, _In_ const OVS_PERSISTENT_
     UINT16 ovsInPortNumber = OVS_INVALID_PORT_NUMBER;
 	OVS_FLOW_TABLE* pFlowTable = NULL;
 
-    pDatapath = GetDefaultDatapath();
+    pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
+	if (!pDatapath) {
+		return FALSE;
+	}
 
     //note: no need to set pOvsNb->pTunnelInfo because:
     //a) it's being reset to 0 at exec actions;
@@ -852,6 +861,8 @@ Cleanup:
 	OVS_RCU_DEREFERENCE(pFlowTable);
 
     DATAPATH_UNLOCK(pDatapath, &lockState);
+
+	OVS_RCU_DEREFERENCE(pDatapath);
 
     return sent;
 }
@@ -1109,6 +1120,8 @@ VOID Nbls_SendIngress(OVS_SWITCH_INFO* pSwitchInfo, NDIS_HANDLE extensionContext
     OVS_NIC_INFO sourceInfo = { 0 };
     OVS_NBL_FAIL_REASON failReason = OVS_NBL_FAIL_SUCCESS;
     OVS_NIC_INFO* pSourceInfo = NULL;
+
+	OVS_CHECK(pSwitchInfo);
 
     //FIRST THINGS FIRST: if pSwitchInfo is not running, drop all
     if (pSwitchInfo->dataFlowState != OVS_SWITCH_RUNNING)

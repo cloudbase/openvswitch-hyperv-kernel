@@ -71,9 +71,12 @@ typedef struct _OVS_DATAPATH
 
 BOOLEAN CreateMsgFromDatapath(OVS_DATAPATH* pDatapath, UINT32 sequence, UINT8 cmd, _Inout_ OVS_MESSAGE* pMsg, UINT32 dpIfIndex, UINT32 pid);
 
-OVS_DATAPATH* GetDefaultDatapath();
+OVS_DATAPATH* GetDefaultDatapath_Ref(const char* funcName);
 BOOLEAN CreateDefaultDatapath(NDIS_HANDLE ndisFilterHandle);
 VOID Datapath_DestroyNow_Unsafe(OVS_DATAPATH* pDatapath);
 BOOLEAN Datapath_FlushFlows(OVS_DATAPATH* pDatapath);
 
 OVS_FLOW_TABLE* Datapath_ReferenceFlowTable(OVS_DATAPATH* pDatapath);
+
+VOID Datapath_DestroyNow_Unsafe(OVS_DATAPATH* pDatapath);
+

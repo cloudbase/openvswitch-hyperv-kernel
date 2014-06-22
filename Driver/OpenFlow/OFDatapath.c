@@ -26,7 +26,6 @@ limitations under the License.
 #include "OvsCore.h"
 #include "OFFlowTable.h"
 
-static OVS_DATAPATH* g_pDefaultDatapath = NULL;
 #include "Switch.h"
 
 #include "Driver.h"
@@ -50,9 +49,20 @@ VOID Datapath_DestroyNow_Unsafe(OVS_DATAPATH* pDatapath)
 	NdisFreeRWLock(pDatapath->pRwLock);
 }
 
-OVS_DATAPATH* GetDefaultDatapath()
+OVS_DATAPATH* GetDefaultDatapath_Ref(const char* funcName)
 {
-	return g_pDefaultDatapath;
+	OVS_DATAPATH* pDatapath = NULL;
+
+	DRIVER_LOCK();
+
+	OVS_CHECK(!IsListEmpty(&g_driver.datapathList));
+
+	pDatapath = CONTAINING_RECORD(g_driver.datapathList.Flink, OVS_DATAPATH, listEntry);
+	pDatapath = Rcu_Reference(pDatapath, funcName);
+
+	DRIVER_UNLOCK();
+
+	return pDatapath;
 }
 
 static void _GetDatapathStats(OVS_DATAPATH* pDatapath, OVS_DATAPATH_STATS* pStats)
@@ -212,8 +222,12 @@ BOOLEAN CreateDefaultDatapath(NDIS_HANDLE ndisFilterHandle)
 
     pDatapath->pRwLock = NdisAllocateRWLock(ndisFilterHandle);
 
-    OVS_CHECK(!g_pDefaultDatapath);
-    g_pDefaultDatapath = pDatapath;
+	OVS_CHECK(!Driver_HaveDatapath());
+
+	//TODO: use an interlocked single list instead!
+	DRIVER_LOCK();
+	InsertHeadList(&g_driver.datapathList, &pDatapath->listEntry);
+	DRIVER_UNLOCK();
 
 Cleanup:
     if (!ok && pDatapath)

@@ -179,8 +179,8 @@ VOID Packet_Execute(_In_ OVS_ARGUMENT_GROUP* pArgGroup, const FILE_OBJECT* pFile
        FWDINFO_UNLOCK(pSwitchInfo->pForwardInfo, &lockState);
     }
 
-    pDatapath = GetDefaultDatapath();
 
+    pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
     if (!pDatapath)
     {
         ok = FALSE;
@@ -203,6 +203,8 @@ Cleanup:
 
 	if (pFlow)
 		Flow_DestroyNow_Unsafe(pFlow);
+
+	OVS_RCU_DEREFERENCE(pDatapath);
 
     if (ok)
     {
@@ -239,10 +241,10 @@ static OVS_ERROR _QueueUserspacePacket(_In_ NET_BUFFER* pNb, _In_ const OVS_UPCA
 	OVS_DATAPATH* pDatapath = NULL;
 	ULONG bufLen = NET_BUFFER_DATA_LENGTH(pNb);
 
-	/*pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
+	pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
 	if (!pDatapath) {
 		return OVS_ERROR_INVAL;
-	}*/
+	}
 
     nbBuffer = NdisGetDataBuffer(pNb, bufLen, NULL, 1, 0);
     OVS_CHECK(nbBuffer);
@@ -279,8 +281,8 @@ static OVS_ERROR _QueueUserspacePacket(_In_ NET_BUFFER* pNb, _In_ const OVS_UPCA
     msg.reserved = 0;
 
 	//NOTE: make sure pDatapath->switchIfIndex == pSwitchInfo->datapathIfIndex
-	/*msg.dpIfIndex = pDatapath->switchIfIndex;
-	OVS_RCU_DEREFERENCE(pDatapath);*/
+	msg.dpIfIndex = pDatapath->switchIfIndex;
+	OVS_RCU_DEREFERENCE(pDatapath);
 
     msg.pArgGroup = AllocArgumentGroup();
 
@@ -339,6 +341,8 @@ static OVS_ERROR _QueueUserspacePacket(_In_ NET_BUFFER* pNb, _In_ const OVS_UPCA
     }
 
 Out:
+	OVS_RCU_DEREFERENCE(pDatapath);
+
     if (msg.pArgGroup)
     {
         DestroyArgumentGroup(msg.pArgGroup);
@@ -386,7 +390,7 @@ BOOLEAN QueuePacketToUserspace(_In_ NET_BUFFER* pNb, _In_ const OVS_UPCALL_INFO*
 {
     int dpifindex = 0;
     BOOLEAN ok = TRUE;
-    OVS_DATAPATH* pDatapath = GetDefaultDatapath();
+    OVS_DATAPATH* pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
 
     //__DONT_QUEUE_BY_DEFAULT is used for debugging purposes only
 #define __DONT_QUEUE_BY_DEFAULT 0
@@ -428,6 +432,8 @@ Cleanup:
 
         DATAPATH_UNLOCK(pDatapath, &lockState);
     }
+
+	OVS_RCU_DEREFERENCE(pDatapath);
 
     return ok;
 }
