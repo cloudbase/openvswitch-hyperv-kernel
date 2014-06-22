@@ -734,6 +734,7 @@ void DbgPrintAllFlows()
     FlowTable_LockRead(&lockState);
 
     pFlowTable = pDatapath->pFlowTable;
+	FLOWTABLE_LOCK_READ(pFlowTable, &lockState);
 
     if (pFlowTable->countFlows > 0)
     {
@@ -764,6 +765,7 @@ void DbgPrintAllFlows()
     }
 
     FlowTable_Unlock(&lockState);
+	FLOWTABLE_UNLOCK(pFlowTable, &lockState);
 }
 
 #endif

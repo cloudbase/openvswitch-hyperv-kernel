@@ -82,15 +82,13 @@ static void _GetDatapathStats(OVS_DATAPATH* pDatapath, OVS_DATAPATH_STATS* pStat
     OVS_FLOW_TABLE* pFlowTable = NULL;
     LOCK_STATE_EX lockStateData = { 0 }, lockStateFlowTable = { 0 };
 
-    //the pDatapath cannot be invalidated (there is a single pDatapath, and cannot be destroyed)
     DATAPATH_LOCK_READ(pDatapath, &lockStateData);
 
-    FlowTable_LockRead(&lockStateFlowTable);
-
     pFlowTable = pDatapath->pFlowTable;
-    pStats->countFlows = pFlowTable->countFlows;
 
-    FlowTable_Unlock(&lockStateFlowTable);
+    FLOWTABLE_LOCK_READ(pFlowTable, &lockStateFlowTable);
+    pStats->countFlows = pFlowTable->countFlows;
+    FLOWTABLE_UNLOCK(pFlowTable, &lockStateFlowTable);
 
     pStats->flowTableMatches = pDatapath->statistics.flowTableMatches;
     pStats->flowTableMissed = pDatapath->statistics.flowTableMissed;

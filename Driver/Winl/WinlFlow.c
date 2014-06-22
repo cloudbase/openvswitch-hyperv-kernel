@@ -110,9 +110,9 @@ OVS_ERROR Flow_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
     pFlowTable = pDatapath->pFlowTable;
 
-    pFlow = FlowTable_FindFlowMatchingMaskedPI(pFlowTable, &packetInfo);
 
 	/*** process data ***/
+    pFlow = FlowTable_FindFlowMatchingMaskedPI_Ref(pFlowTable, &packetInfo);
     if (!pFlow)
     {
 		/*** create new flow ***/
@@ -124,6 +124,9 @@ OVS_ERROR Flow_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
             error = OVS_ERROR_INVAL;
             goto Cleanup;
         }
+
+		pFlow = OVS_RCU_REFERENCE(pFlow);
+		OVS_CHECK(pFlow);
 
         Flow_ClearStats_Unsafe(pFlow);
 
@@ -233,7 +236,10 @@ Cleanup:
         if (flowWasCreated)
         {
             if (pFlow)
+           {
                 Flow_DestroyNow_Unsafe(pFlow);
+                pFlow = NULL;
+           }
         }
 
         if (flowTableLocked)
@@ -245,6 +251,8 @@ Cleanup:
 			pActions = NULL;
 		}
 	}
+
+	OVS_RCU_DEREFERENCE(pFlow);
 
 
     return error;
@@ -322,9 +330,9 @@ OVS_ERROR Flow_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     flowTableLocked = TRUE;
     pFlowTable = pDatapath->pFlowTable;
 
-    pFlow = FlowTable_FindFlowMatchingMaskedPI(pFlowTable, &packetInfo);
 
 	/*** process data ***/
+    pFlow = FlowTable_FindFlowMatchingMaskedPI_Ref(pFlowTable, &packetInfo);
     if (!pFlow)
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " we were asked to set a flow that does not exist!\n");
@@ -394,6 +402,8 @@ Cleanup:
         replyMsg.pArgGroup = NULL;
     }
 
+	OVS_RCU_DEREFERENCE(pFlow);
+
     if (error != OVS_ERROR_NOERROR)
     {
         if (flowTableLocked)
@@ -444,8 +454,8 @@ OVS_ERROR Flow_Get(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
     pFlowTable = pDatapath->pFlowTable;
 
-    pFlow = FlowTable_FindFlowMatchingMaskedPI(pFlowTable, flowMatch.pPacketInfo);
 
+    pFlow = FlowTable_FindFlowMatchingMaskedPI_Ref(pFlowTable, flowMatch.pPacketInfo);
     if (pFlow)
     {
 		FLOW_LOCK_READ(pFlow, &lockState);
@@ -498,6 +508,8 @@ Cleanup:
     {
         FlowTable_Unlock(&lockState);
     }
+	
+	OVS_RCU_DEREFERENCE(pFlow);
 
     return error;
 }
@@ -554,8 +566,8 @@ OVS_ERROR Flow_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
     pFlowTable = pDatapath->pFlowTable;
 
-    pFlow = FlowTable_FindFlowMatchingMaskedPI(pFlowTable, flowMatch.pPacketInfo);
 
+    pFlow = FlowTable_FindFlowMatchingMaskedPI_Ref(pFlowTable, flowMatch.pPacketInfo);
     if (pFlow)
     {
 		FLOW_LOCK_READ(pFlow, &lockState);
@@ -585,11 +597,19 @@ OVS_ERROR Flow_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         goto Cleanup;
     }
 
-    FlowTable_RemoveFlow(pFlowTable, pFlow);
+	//NOTE: we can only delete the flow AFTER we reply: we need it to... write the reply
+	FLOWTABLE_LOCK_WRITE(pFlowTable, &lockState);
 
-    Flow_DestroyNow_Unsafe(pFlow);
+	//remove the flow from the list of flows
+	FlowTable_RemoveFlow_Unsafe(pFlowTable, pFlow);
+
     FlowTable_Unlock(&lockState);
     flowTableLocked = FALSE;
+
+	OVS_RCU_DEREFERENCE_ONLY(pFlow);
+	OVS_RCU_DESTROY(pFlow);
+
+	FLOWTABLE_UNLOCK(pFlowTable, &lockState);
 
     OVS_CHECK(replyMsg.type == OVS_MESSAGE_TARGET_FLOW);
     error = WriteMsgsToDevice((OVS_NLMSGHDR*)&replyMsg, 1, pFileObject, OVS_MULTICAST_GROUP_NONE);
@@ -608,6 +628,8 @@ Cleanup:
 
     if (flowTableLocked)
         FlowTable_Unlock(&lockState);
+
+	OVS_RCU_DEREFERENCE(pFlow);
 
     return error;
 }
@@ -649,6 +671,8 @@ OVS_ERROR Flow_Dump(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
         RtlZeroMemory(msgs, countMsgs * sizeof(OVS_MESSAGE));
 
+		FLOWTABLE_LOCK_READ(pFlowTable, &lockState);
+
         while (pCurItem != pFlowTable->pFlowList)
         {
 			OVS_FLOW* pFlow = CONTAINING_RECORD(pCurItem, OVS_FLOW, listEntry);
@@ -656,6 +680,8 @@ OVS_ERROR Flow_Dump(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
             if (!CreateMsgFromFlow(pFlow, OVS_MESSAGE_COMMAND_NEW, pReplyMsg, pMsg->sequence, pDatapath->switchIfIndex, pMsg->pid))
             {
+				FLOWTABLE_UNLOCK(pFlowTable, &lockState);
+
                 error = OVS_ERROR_INVAL;
                 goto Cleanup;
             }
@@ -666,6 +692,8 @@ OVS_ERROR Flow_Dump(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
             ++i;
             pCurItem = pCurItem->Flink;
         }
+
+		FLOWTABLE_UNLOCK(pFlowTable, &lockState);
 
         //there must be room for one more message: the dump done message
         OVS_CHECK(i == countMsgs - 1);

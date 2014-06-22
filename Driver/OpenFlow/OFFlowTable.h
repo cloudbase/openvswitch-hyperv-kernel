@@ -38,15 +38,18 @@ typedef struct _OVS_FLOW_TABLE
     UINT countFlows;
 }OVS_FLOW_TABLE, *POVS_FLOW_TABLE;
 
-OVS_FLOW* FlowTable_FindFlowMatchingMaskedPI(OVS_FLOW_TABLE* pFlowTable, const OVS_OFPACKET_INFO* pPacketInfo);
 #define FLOWTABLE_LOCK_READ(pFlowTable, pLockState) NdisAcquireRWLockRead(pFlowTable->pRwLock, pLockState, 0)
 #define FLOWTABLE_LOCK_WRITE(pFlowTable, pLockState) NdisAcquireRWLockWrite(pFlowTable->pRwLock, pLockState, 0)
 #define FLOWTABLE_UNLOCK(pFlowTable, pLockState) NdisReleaseRWLock(pFlowTable->pRwLock, pLockState)
 
 VOID FlowTable_DestroyNow_Unsafe(OVS_FLOW_TABLE* pFlowTable);
+//must lock the pFlowTable to get the flow
+OVS_FLOW* FlowTable_FindFlowMatchingMaskedPI_Unsafe(OVS_FLOW_TABLE* pFlowTable, const OVS_OFPACKET_INFO* pPacketInfo);
+//is locked with pFlowTable's lock
+OVS_FLOW* FlowTable_FindFlowMatchingMaskedPI_Ref(OVS_FLOW_TABLE* pFlowTable, const OVS_OFPACKET_INFO* pPacketInfo);
 
 OVS_FLOW_MASK* FlowTable_FindFlowMask(const OVS_FLOW_TABLE* pFlowTable, const OVS_FLOW_MASK* pFlowMask);
 void FlowTable_InsertFlowMask(OVS_FLOW_TABLE* pFlowTable, OVS_FLOW_MASK* pFlowMask);
 void FlowTable_InsertFlow_Unsafe(_Inout_ OVS_FLOW_TABLE* pFlowTable, _In_ OVS_FLOW* pFlow);
-void FlowTable_RemoveFlow(OVS_FLOW_TABLE* pFlowTable, OVS_FLOW* pFlow);
+void FlowTable_RemoveFlow_Unsafe(OVS_FLOW_TABLE* pFlowTable, OVS_FLOW* pFlow);
 OVS_FLOW_TABLE* FlowTable_Create();

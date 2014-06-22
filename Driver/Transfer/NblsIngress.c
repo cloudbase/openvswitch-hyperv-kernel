@@ -784,7 +784,7 @@ static BOOLEAN _ProcessPacket(OVS_NET_BUFFER* pOvsNb, _In_ const OVS_PERSISTENT_
     }
 
     FlowTable_LockRead(&lockState);
-    pFlow = FlowTable_FindFlowMatchingMaskedPI(pDatapath->pFlowTable, &packetInfo);
+    pFlow = FlowTable_FindFlowMatchingMaskedPI_Ref(pDatapath->pFlowTable, &packetInfo);
 
     pOvsNb->pOriginalPacketInfo = &packetInfo;
 
@@ -839,6 +839,8 @@ Cleanup_NoUnlock:
 		//the actions are not modified, once set in a flow, so there's no need to lock the pFlow to dereference pActions
 		OVS_RCU_DEREFERENCE(pOvsNb->pActions);
 		pOvsNb->pActions = NULL;
+
+		OVS_RCU_DEREFERENCE(pFlow);
     }
 
     else

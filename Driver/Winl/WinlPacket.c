@@ -198,7 +198,8 @@ VOID Packet_Execute(_In_ OVS_ARGUMENT_GROUP* pArgGroup, const FILE_OBJECT* pFile
 Cleanup:
 	OVS_RCU_DEREFERENCE(pTargetActions);
 
-    Flow_DestroyNow_Unsafe(pFlow);
+    if (pFlow)
+		Flow_DestroyNow_Unsafe(pFlow);
 
     if (ok)
     {
