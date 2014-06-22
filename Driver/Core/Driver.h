@@ -17,6 +17,7 @@ limitations under the License.
 #pragma once
 
 typedef struct _OVS_SWITCH_INFO OVS_SWITCH_INFO;
+typedef struct _OVS_DATAPATH OVS_DATAPATH;
 
 extern UCHAR  g_driverMajorNdisVersion;
 extern UCHAR  g_driverMinorNdisVersion;
@@ -31,4 +32,24 @@ extern ULONG  g_extOidRequestId;
 extern NDIS_STRING g_extensionFriendlyName;
 extern NDIS_STRING g_extensionGuid;
 
+typedef struct _OVS_DRIVER {
+	//the pRwLock will protect against dp removal, but the dp object will need a RCU struct
+	NDIS_SPIN_LOCK	lock;
+
+	//ATM one switch
+	LIST_ENTRY			switchList;
+	LIST_ENTRY			datapathList;
+} OVS_DRIVER, *POVS_DRIVER;
+
+extern OVS_DRIVER g_driver;
+
+#define DRIVER_LOCK() NdisAcquireSpinLock(&g_driver.lock)
+#define DRIVER_UNLOCK() NdisReleaseSpinLock(&g_driver.lock)
+
+VOID Driver_Uninit();
+VOID Driver_DetachExtension(OVS_SWITCH_INFO* pSwitchInfo);
+VOID Driver_RemoveDatapath();
 VOID Switch_DestroyNow_Unsafe(OVS_SWITCH_INFO* pSwitchInfo);
+
+BOOLEAN Driver_HaveDatapath();
+OVS_SWITCH_INFO* Driver_GetDefaultSwitch_Ref(const char* funcName);

@@ -37,6 +37,9 @@ typedef struct _OVS_DATAPATH
 	//must be the first field in the struct
 	OVS_RCU rcu;
 
+	//entry in OVS_DRIVER
+	LIST_ENTRY		listEntry;
+
     char*				name;
     //we keep one single datapath, which is created at startup.
     //we set 'deleted' = true, when it is 'deleted' from userspace

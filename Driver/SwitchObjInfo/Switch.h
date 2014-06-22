@@ -62,6 +62,7 @@ typedef struct _OVS_SWITCH_INFO
 	//must be the first field in the struct
 	OVS_RCU rcu;
 
+    //entry in switchList of OVS_DRIVER
     LIST_ENTRY				listEntry;
 
     OVS_GLOBAL_FORWARD_INFO* pForwardInfo;
