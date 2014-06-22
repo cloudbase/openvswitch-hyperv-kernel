@@ -363,18 +363,20 @@ static BOOLEAN _OutputPacketToPort_Encaps(OVS_NET_BUFFER* pOvsNb)
     OF_PI_IPV4_TUNNEL tunnelInfo = { 0 };
     LOCK_STATE_EX lockState = { 0 };
     OVS_GLOBAL_FORWARD_INFO* pForwardInfo = pOvsNb->pSwitchInfo->pForwardInfo;
+	BOOLEAN haveExternal = FALSE;
 
-    FWDINFO_LOCK_READ(pForwardInfo, &lockState);
+	FWDINFO_LOCK_READ(pForwardInfo, &lockState);
 
     if (pForwardInfo->pExternalNic)
     {
         NicListEntry_To_NicInfo(pForwardInfo->pExternalNic, &externalNicInfo);
+		haveExternal = TRUE;
     }
 
-    FWDINFO_UNLOCK(pOvsNb->pSwitchInfo->pForwardInfo, &lockState);
+	FWDINFO_UNLOCK(pForwardInfo, &lockState);
 
-    if (!pForwardInfo->pExternalNic)
-    {
+	if (!haveExternal)
+	{
         DEBUGP(LOG_ERROR, __FUNCTION__ " cannot out to prot encap because we have no port external!\n");
         return FALSE;
     }
