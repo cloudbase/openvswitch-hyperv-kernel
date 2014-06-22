@@ -318,8 +318,7 @@ NDIS_STATUS Sctx_DeleteNicUnsafe(_In_ const OVS_GLOBAL_FORWARD_INFO* pForwardInf
         goto Cleanup;
     }
 
-    RemoveEntryList(&pNicEntry->listEntry);
-    ExFreePoolWithTag(pNicEntry, g_extAllocationTag);
+	OVS_RCU_DESTROY(pNicEntry);
 
 Cleanup:
     return status;

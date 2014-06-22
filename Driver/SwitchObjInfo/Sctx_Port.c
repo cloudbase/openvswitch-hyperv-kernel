@@ -114,8 +114,7 @@ NDIS_STATUS Sctx_DeletePort_Unsafe(_In_ const OVS_GLOBAL_FORWARD_INFO* pForwardI
 
 	OVS_CHECK(pPortEntry->ovsPortNumber == OVS_INVALID_PORT_NUMBER);
 
-    RemoveEntryList(&pPortEntry->listEntry);
-    KFree(pPortEntry);
+	OVS_RCU_DESTROY(pPortEntry);
 
 Cleanup:
     return status;
