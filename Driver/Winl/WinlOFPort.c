@@ -31,8 +31,6 @@ limitations under the License.
 #include "PersistentPort.h"
 #include "Error.h"
 
-extern OVS_SWITCH_INFO* g_pSwitchInfo;
-
 typedef struct _PORT_FETCH_CTXT{
     OVS_MESSAGE* pReplyMsg;
     UINT sequence;
@@ -170,7 +168,7 @@ OVS_ERROR OFPort_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     OVS_ERROR error = OVS_ERROR_NOERROR;
     LOCK_STATE_EX lockState = { 0 };
 
-	FWDINFO_LOCK_WRITE(g_pSwitchInfo->pForwardInfo, &lockState);
+   //FWDINFO_LOCK_WRITE(g_pSwitchInfo->pForwardInfo, &lockState);
 
     //NAME: required
     pArg = FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_OFPORT_NAME);
@@ -292,7 +290,7 @@ Cleanup:
         }
     }
 
-	FWDINFO_UNLOCK(g_pSwitchInfo->pForwardInfo, &lockState);
+   //FWDINFO_UNLOCK(g_pSwitchInfo->pForwardInfo, &lockState);
 
     if (replyMsg.pArgGroup)
     {
@@ -322,7 +320,7 @@ OVS_ERROR OFPort_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         return OVS_ERROR_NODEV;
     }
 
-	FWDINFO_LOCK_WRITE(g_pSwitchInfo->pForwardInfo, &lockState);
+   //FWDINFO_LOCK_WRITE(g_pSwitchInfo->pForwardInfo, &lockState);
 
     //required: NAME or NUMBER
     pArg = FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_OFPORT_NAME);
@@ -418,7 +416,7 @@ OVS_ERROR OFPort_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     error = WriteMsgsToDevice((OVS_NLMSGHDR*)&replyMsg, 1, pFileObject, OVS_VPORT_MCGROUP);
 
 Cleanup:
-	FWDINFO_UNLOCK(g_pSwitchInfo->pForwardInfo, &lockState);
+   //FWDINFO_UNLOCK(g_pSwitchInfo->pForwardInfo, &lockState);
 
     if (replyMsg.pArgGroup)
     {
@@ -446,7 +444,7 @@ OVS_ERROR OFPort_Get(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         return OVS_ERROR_NODEV;
     }
 
-	FWDINFO_LOCK_READ(g_pSwitchInfo->pForwardInfo, &lockState);
+   //FWDINFO_LOCK_READ(g_pSwitchInfo->pForwardInfo, &lockState);
 
     //required: NAME or NUMBER
     pArg = FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_OFPORT_NAME);
@@ -508,7 +506,7 @@ Cleanup:
         DestroyArgumentGroup(replyMsg.pArgGroup);
     }
 
-	FWDINFO_UNLOCK(g_pSwitchInfo->pForwardInfo, &lockState);
+   //FWDINFO_UNLOCK(g_pSwitchInfo->pForwardInfo, &lockState);
 
     return error;
 }
@@ -531,7 +529,7 @@ OVS_ERROR OFPort_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         return OVS_ERROR_NODEV;
     }
 
-	FWDINFO_LOCK_WRITE(g_pSwitchInfo->pForwardInfo, &lockState);
+   //FWDINFO_LOCK_WRITE(g_pSwitchInfo->pForwardInfo, &lockState);
 
     //required: NAME or NUMBER
     pArg = FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_OFPORT_NAME);
@@ -599,7 +597,7 @@ Cleanup:
         PersPort_Delete(pPersPort);
     }
 
-	FWDINFO_UNLOCK(g_pSwitchInfo->pForwardInfo, &lockState);
+   //FWDINFO_UNLOCK(g_pSwitchInfo->pForwardInfo, &lockState);
 
     if (replyMsg.pArgGroup)
     {
@@ -617,20 +615,25 @@ OVS_ERROR OFPort_Dump(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     LOCK_STATE_EX lockState = { 0 };
     PORT_FETCH_CTXT context = { 0 };
     OVS_GLOBAL_FORWARD_INFO* pForwardInfo = NULL;
-    OVS_DATAPATH* pDatapath = GetDefaultDatapath();
+    OVS_DATAPATH* pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
     OVS_ERROR error = OVS_ERROR_NOERROR;
+	OVS_SWITCH_INFO* pSwitchInfo = NULL;
 
     if (!pDatapath)
     {
         return OVS_ERROR_NODEV;
     }
 
+	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
+	if (!pSwitchInfo)
+		return OVS_ERROR_NODEV;
+
     RtlZeroMemory(&context, sizeof(context));
     context.sequence = pMsg->sequence;
     context.dpIfIndex = pDatapath->switchIfIndex;
     context.pid = pMsg->pid;
 
-    pForwardInfo = g_pSwitchInfo->pForwardInfo;
+    pForwardInfo = pSwitchInfo->pForwardInfo;
 
 	FWDINFO_LOCK_READ(pForwardInfo, &lockState);
 
@@ -654,7 +657,7 @@ OVS_ERROR OFPort_Dump(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         }
     }
 
-    FWDINFO_UNLOCK(g_pSwitchInfo->pForwardInfo, &lockState);
+    FWDINFO_UNLOCK(pForwardInfo, &lockState);
 
     if (error != OVS_ERROR_NOERROR)
     {
@@ -692,6 +695,8 @@ OVS_ERROR OFPort_Dump(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     }
 
 Cleanup:
+	OVS_RCU_DEREFERENCE(pSwitchInfo);
+
     if (msgs)
     {
         for (i = 0; i < countMsgs; ++i)

@@ -35,8 +35,6 @@ limitations under the License.
 #include "Gre.h"
 #include "Vxlan.h"
 
-extern OVS_SWITCH_INFO* g_pSwitchInfo;
-
 static volatile LONG g_upcallSequence = 0;
 
 static LONG _NextUpcallSequence()
@@ -59,12 +57,12 @@ VOID Packet_Execute(_In_ OVS_ARGUMENT_GROUP* pArgGroup, const FILE_OBJECT* pFile
     BOOLEAN ok = FALSE;
     LOCK_STATE_EX lockState = { 0 };
     OVS_BUFFER buffer = { 0 };
-    OVS_GLOBAL_FORWARD_INFO* pFwdContext = NULL;
     OVS_NIC_INFO sourcePort = { 0 };
     ULONG additionalSize = max(Gre_BytesNeeded(0xFFFF), Vxlan_BytesNeeded(0xFFFF));
     OVS_ARGUMENT* pArg = NULL;
     OVS_ARGUMENT_GROUP* pPacketInfoArgs = NULL, *pActionsArgs = NULL;
 	OVS_ACTIONS* pTargetActions = NULL;
+	OVS_SWITCH_INFO* pSwitchInfo = NULL;
 
     UNREFERENCED_PARAMETER(pFileObject);
 
@@ -157,12 +155,18 @@ VOID Packet_Execute(_In_ OVS_ARGUMENT_GROUP* pArgGroup, const FILE_OBJECT* pFile
     pOvsNb->pDestinationPort = NULL;
     pOvsNb->sendToPortNormal = FALSE;
     pOvsNb->pSourceNic = &sourcePort;
-    pOvsNb->pSwitchInfo = g_pSwitchInfo;
+
+	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
+	if (!pSwitchInfo) {
+		goto Cleanup;
+	}
+
+    pOvsNb->pSwitchInfo = pSwitchInfo;
     pOvsNb->sendFlags = 0;
 
     if (pOvsNb->pOriginalPacketInfo->physical.ovsInPort != OVS_INVALID_PORT_NUMBER)
     {
-		FWDINFO_LOCK_READ(g_pSwitchInfo->pForwardInfo, &lockState);
+       FWDINFO_LOCK_READ(pSwitchInfo->pForwardInfo, &lockState);
 
         OVS_PERSISTENT_PORT* pPersPort = PersPort_FindByNumber_Unsafe(pOvsNb->pOriginalPacketInfo->physical.ovsInPort);
         if (pPersPort && pPersPort->pNicListEntry)
@@ -172,7 +176,7 @@ VOID Packet_Execute(_In_ OVS_ARGUMENT_GROUP* pArgGroup, const FILE_OBJECT* pFile
 
         pOvsNb->pSourcePort = pPersPort;
 
-		FWDINFO_UNLOCK(g_pSwitchInfo->pForwardInfo, &lockState);
+       FWDINFO_UNLOCK(pSwitchInfo->pForwardInfo, &lockState);
     }
 
     pDatapath = GetDefaultDatapath();
@@ -184,19 +188,20 @@ VOID Packet_Execute(_In_ OVS_ARGUMENT_GROUP* pArgGroup, const FILE_OBJECT* pFile
         goto Cleanup;
     }
 
-    OVS_CHECK(g_pSwitchInfo);
-    pFwdContext = g_pSwitchInfo->pForwardInfo;
-    OVS_CHECK(pFwdContext);
-
     pOvsNb->pTunnelInfo = NULL;
-    ok = ExecuteActions(pOvsNb, OutputPacketToPort);
 
-    FlowTable_Unlock(&lockState);
+	if (pOvsNb->pSwitchInfo) {
+		ok = ExecuteActions(pOvsNb, OutputPacketToPort);
+	}
+
+	else {
+		ok = FALSE;
+	}
 
 Cleanup:
 	OVS_RCU_DEREFERENCE(pTargetActions);
 
-    if (pFlow)
+	if (pFlow)
 		Flow_DestroyNow_Unsafe(pFlow);
 
     if (ok)
@@ -207,7 +212,9 @@ Cleanup:
 
     else
     {
-        ONB_Destroy(g_pSwitchInfo, &pOvsNb);
+		if (pSwitchInfo) {
+			ONB_Destroy(pSwitchInfo, &pOvsNb);
+		}
 
 		if (pTargetActions)
 		{
@@ -215,6 +222,8 @@ Cleanup:
 			OVS_RCU_DESTROY(pTargetActions);
 		}
     }
+
+	OVS_RCU_DEREFERENCE(pSwitchInfo);
 }
 
 static OVS_ERROR _QueueUserspacePacket(_In_ NET_BUFFER* pNb, _In_ const OVS_UPCALL_INFO* pUpcallInfo)
@@ -227,7 +236,13 @@ static OVS_ERROR _QueueUserspacePacket(_In_ NET_BUFFER* pNb, _In_ const OVS_UPCA
     UINT i = 0;
     OVS_ETHERNET_HEADER* pEthHeader = NULL;
     VOID* nbBuffer = NULL;
-    ULONG bufLen = NET_BUFFER_DATA_LENGTH(pNb);
+	OVS_DATAPATH* pDatapath = NULL;
+	ULONG bufLen = NET_BUFFER_DATA_LENGTH(pNb);
+
+	/*pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
+	if (!pDatapath) {
+		return OVS_ERROR_INVAL;
+	}*/
 
     nbBuffer = NdisGetDataBuffer(pNb, bufLen, NULL, 1, 0);
     OVS_CHECK(nbBuffer);
@@ -263,7 +278,9 @@ static OVS_ERROR _QueueUserspacePacket(_In_ NET_BUFFER* pNb, _In_ const OVS_UPCA
     msg.version = 1;
     msg.reserved = 0;
 
-    msg.dpIfIndex = g_pSwitchInfo->datapathIfIndex;
+	//NOTE: make sure pDatapath->switchIfIndex == pSwitchInfo->datapathIfIndex
+	/*msg.dpIfIndex = pDatapath->switchIfIndex;
+	OVS_RCU_DEREFERENCE(pDatapath);*/
 
     msg.pArgGroup = AllocArgumentGroup();
 

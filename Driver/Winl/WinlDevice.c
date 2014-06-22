@@ -43,10 +43,6 @@ static PDEVICE_OBJECT g_pOvsDeviceObject;
 static const GUID g_ovsDeviceGuidName =
 { 0xcef35472, 0xe7ee, 0x4b4e, { 0xab, 0x69, 0x93, 0xed, 0x2, 0x49, 0x37, 0x7c } };
 
-/*******************************/
-
-extern OVS_SWITCH_INFO* g_pSwitchInfo;
-
 /********************************************************************************************/
 
 //i.e. for userspace to read
@@ -453,6 +449,7 @@ NTSTATUS _WinlIrpWrite(PDEVICE_OBJECT pDeviceObject, PIRP pIrp)
     OVS_NLMSGHDR* pNlMsg = NULL;
     OVS_MESSAGE* pMsg = NULL;
 	VOID* pWriteBuffer = NULL;
+	OVS_SWITCH_INFO* pSwitchInfo = NULL;
 #if DBG
     BOOLEAN dbgPrintData = FALSE;
 #endif
@@ -468,7 +465,8 @@ NTSTATUS _WinlIrpWrite(PDEVICE_OBJECT pDeviceObject, PIRP pIrp)
         goto Cleanup;
     }
 
-    if (!g_pSwitchInfo)
+	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
+    if (!pSwitchInfo)
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " hyper-v extension not enabled!n");
         error = OVS_ERROR_PERM;
@@ -702,6 +700,8 @@ NTSTATUS _WinlIrpWrite(PDEVICE_OBJECT pDeviceObject, PIRP pIrp)
     }
 
 Cleanup:
+	OVS_RCU_DEREFERENCE(pSwitchInfo);
+
     if (pNlMsg)
     {
         if (error != OVS_ERROR_NOERROR)

@@ -27,7 +27,9 @@ limitations under the License.
 #include "OFFlowTable.h"
 
 static OVS_DATAPATH* g_pDefaultDatapath = NULL;
-static PNDIS_RW_LOCK_EX g_pFlowTableRwLock = NULL;
+#include "Switch.h"
+
+#include "Driver.h"
 
 VOID Datapath_DestroyNow_Unsafe(OVS_DATAPATH* pDatapath)
 {
@@ -50,11 +52,7 @@ VOID Datapath_DestroyNow_Unsafe(OVS_DATAPATH* pDatapath)
 
 OVS_DATAPATH* GetDefaultDatapath()
 {
-    return g_pDefaultDatapath;
-
-
-
-
+	return g_pDefaultDatapath;
 }
 
 static void _GetDatapathStats(OVS_DATAPATH* pDatapath, OVS_DATAPATH_STATS* pStats)
@@ -181,6 +179,7 @@ Cleanup:
 BOOLEAN CreateDefaultDatapath(NDIS_HANDLE ndisFilterHandle)
 {
     OVS_DATAPATH* pDatapath = NULL;
+	OVS_SWITCH_INFO* pSwitchInfo = NULL;
     BOOLEAN ok = TRUE;
 
     pDatapath = KZAlloc(sizeof(OVS_DATAPATH));
@@ -190,7 +189,13 @@ BOOLEAN CreateDefaultDatapath(NDIS_HANDLE ndisFilterHandle)
         goto Cleanup;
     }
 
+	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
+	if (!pSwitchInfo) {
+		ok = FALSE;
+		goto Cleanup;
+	}
 
+	pDatapath->switchIfIndex = pSwitchInfo->datapathIfIndex;
 	pDatapath->rcu.Destroy = Datapath_DestroyNow_Unsafe;
     pDatapath->name = NULL;
 
@@ -219,6 +224,10 @@ Cleanup:
         }
         ExFreePoolWithTag(pDatapath, g_extAllocationTag);
     }
+
+	if (pSwitchInfo) {
+		OVS_RCU_DEREFERENCE(pSwitchInfo);
+	}
 
     return ok;
 }

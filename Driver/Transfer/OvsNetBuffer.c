@@ -27,7 +27,6 @@ limitations under the License.
 #include "Nbls.h"
 
 extern NDIS_HANDLE g_ndisFilterHandle;
-extern OVS_SWITCH_INFO* g_pSwitchInfo;
 
 extern NDIS_HANDLE g_hNblPool;
 extern NDIS_HANDLE g_hNbPool;
@@ -296,14 +295,18 @@ OVS_NET_BUFFER* ONB_CreateFromBuffer(_In_ const OVS_BUFFER* pBuffer, ULONG addSi
     MDL* pDuplicateMdl = NULL;
     OVS_NET_BUFFER* pOvsNetBuffer = NULL;
     VOID* buffer = NULL;
+	OVS_SWITCH_INFO* pSwitchInfo = NULL;
+	BOOLEAN ok = TRUE;
 
     OVS_CHECK(pBuffer);
     OVS_CHECK(pBuffer->p);
     OVS_CHECK(pBuffer->size);
     OVS_CHECK(!pBuffer->offset);
 
-    //TODO: must lock
-    OVS_CHECK(g_ndisFilterHandle);
+	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
+	if (!pSwitchInfo) {
+		return NULL;
+	}
 
     //1. Allocate NBL
     NdisAcquireSpinLock(&g_nbPoolLock);
@@ -312,7 +315,8 @@ OVS_NET_BUFFER* ONB_CreateFromBuffer(_In_ const OVS_BUFFER* pBuffer, ULONG addSi
     OVS_CHECK(pDuplicateNbl);
     if (!pDuplicateNbl)
     {
-        return NULL;
+		ok = FALSE;
+		goto Cleanup;
     }
 
     //2. Allocate buffer
@@ -334,7 +338,8 @@ OVS_NET_BUFFER* ONB_CreateFromBuffer(_In_ const OVS_BUFFER* pBuffer, ULONG addSi
 
     if (!pDuplicateNb)
     {
-        return NULL;
+		ok = FALSE;
+		goto Cleanup;
     }
 
     //5. Set NB as the first NB in the NBL
@@ -346,10 +351,10 @@ OVS_NET_BUFFER* ONB_CreateFromBuffer(_In_ const OVS_BUFFER* pBuffer, ULONG addSi
 
     //7. Set the rest of NBL stuff
     //TODO: must lock
-    pDuplicateNbl->SourceHandle = g_ndisFilterHandle;
+	pDuplicateNbl->SourceHandle = pSwitchInfo->filterHandle;
 
     //TODO: must lock g_pSwitchInfo
-    status = g_pSwitchInfo->switchHandlers.AllocateNetBufferListForwardingContext(g_pSwitchInfo->switchContext, pDuplicateNbl);
+    status = pSwitchInfo->switchHandlers.AllocateNetBufferListForwardingContext(pSwitchInfo->switchContext, pDuplicateNbl);
     if (status != NDIS_STATUS_SUCCESS)
     {
         OVS_CHECK(0);
@@ -357,10 +362,10 @@ OVS_NET_BUFFER* ONB_CreateFromBuffer(_In_ const OVS_BUFFER* pBuffer, ULONG addSi
 
     //8. Create the OVS_NET_BUFFER
     pOvsNetBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(OVS_NET_BUFFER), g_extAllocationTag);
-
     if (!pOvsNetBuffer)
     {
-        return NULL;
+		ok = FALSE;
+		goto Cleanup;
     }
 
     RtlZeroMemory(pOvsNetBuffer, sizeof(OVS_NET_BUFFER));
@@ -375,12 +380,17 @@ OVS_NET_BUFFER* ONB_CreateFromBuffer(_In_ const OVS_BUFFER* pBuffer, ULONG addSi
     buffer = NdisGetDataBuffer(pDuplicateNb, nbLen, NULL, 1, 0);
     OVS_CHECK(buffer);
 
-    if (!buffer)
-    {
-        return NULL;
-    }
+Cleanup:
+	if (pSwitchInfo) {
+		OVS_RCU_DEREFERENCE(pSwitchInfo);
+	}
 
-    return pOvsNetBuffer;
+	if (!ok)
+	{
+		//TODO: cleanup pOvsNetBuffer, pDuplicateNbl, pDuplicateNb, pDuplicateMdl, pDestBuffer
+	}
+
+    return (ok ? pOvsNetBuffer : NULL);
 }
 
 OVS_NET_BUFFER* ONB_Create(ULONG bufSize)
@@ -393,9 +403,13 @@ OVS_NET_BUFFER* ONB_Create(ULONG bufSize)
     MDL* pDuplicateMdl = NULL;
     OVS_NET_BUFFER* pOvsNetBuffer = NULL;
     VOID* buffer = NULL;
+	OVS_SWITCH_INFO* pSwitchInfo = NULL;
+	BOOLEAN ok = TRUE;
 
-    //TODO: must lock
-    OVS_CHECK(g_ndisFilterHandle);
+	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
+	if (!pSwitchInfo) {
+		return NULL;
+	}
 
     //1. Allocate NBL
     NdisAcquireSpinLock(&g_nbPoolLock);
@@ -405,7 +419,8 @@ OVS_NET_BUFFER* ONB_Create(ULONG bufSize)
 
     if (!pDuplicateNbl)
     {
-        return NULL;
+		ok = FALSE;
+		goto Cleanup;
     }
 
     //2. Allocate buffer
@@ -426,7 +441,8 @@ OVS_NET_BUFFER* ONB_Create(ULONG bufSize)
 
     if (!pDuplicateNb)
     {
-        return NULL;
+		ok = FALSE;
+		goto Cleanup;
     }
 
     //5. Set NB as the first NB in the NBL
@@ -434,10 +450,10 @@ OVS_NET_BUFFER* ONB_Create(ULONG bufSize)
 
     //6. Set the rest of NBL stuff
     //TODO: must lock
-    pDuplicateNbl->SourceHandle = g_ndisFilterHandle;
+	pDuplicateNbl->SourceHandle = pSwitchInfo->filterHandle;
 
     //TODO: must lock g_pSwitchInfo
-    status = g_pSwitchInfo->switchHandlers.AllocateNetBufferListForwardingContext(g_pSwitchInfo->switchContext, pDuplicateNbl);
+    status = pSwitchInfo->switchHandlers.AllocateNetBufferListForwardingContext(pSwitchInfo->switchContext, pDuplicateNbl);
     if (status != NDIS_STATUS_SUCCESS)
     {
         OVS_CHECK(0);
@@ -448,7 +464,8 @@ OVS_NET_BUFFER* ONB_Create(ULONG bufSize)
 
     if (!pOvsNetBuffer)
     {
-        return NULL;
+		ok = FALSE;
+		goto Cleanup;
     }
 
     RtlZeroMemory(pOvsNetBuffer, sizeof(OVS_NET_BUFFER));
@@ -463,10 +480,15 @@ OVS_NET_BUFFER* ONB_Create(ULONG bufSize)
     buffer = NdisGetDataBuffer(pDuplicateNb, bufSize, NULL, 1, 0);
     OVS_CHECK(buffer);
 
-    if (!buffer)
-    {
-        return NULL;
-    }
+Cleanup:
+	if (pSwitchInfo) {
+		OVS_RCU_DEREFERENCE(pSwitchInfo);
+	}
+
+	if (!ok)
+	{
+		//TODO: cleanup pOvsNetBuffer, pDuplicateNbl, pDuplicateNb, pDuplicateMdl, pDestBuffer
+	}
 
     return pOvsNetBuffer;
 }
@@ -477,9 +499,6 @@ NET_BUFFER* ONB_CreateNb(ULONG dataLen, ULONG dataOffset)
     BYTE* pDestBuffer = NULL;
     MDL* pDuplicateMdl = NULL;
     VOID* buffer = NULL;
-
-    //TODO: must lock
-    OVS_CHECK(g_ndisFilterHandle);
 
     //2. Allocate buffer
     //assume there is no mdl size > 1500
@@ -516,6 +535,12 @@ NET_BUFFER_LIST* ONB_CreateNblFromNb(_In_ NET_BUFFER* pNb, USHORT contextSize)
 {
 	NET_BUFFER_LIST* pNbl = NULL;
 	NDIS_STATUS status = STATUS_SUCCESS;
+	OVS_SWITCH_INFO* pSwitchInfo = NULL;
+
+	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
+	if (!pSwitchInfo) {
+		return NULL;
+	}
 
 	OVS_CHECK(pNb);
 
@@ -530,13 +555,18 @@ NET_BUFFER_LIST* ONB_CreateNblFromNb(_In_ NET_BUFFER* pNb, USHORT contextSize)
 
 	//6. Set the rest of NBL stuff
 	//TODO: must lock
-	pNbl->SourceHandle = g_ndisFilterHandle;
+	pNbl->SourceHandle = pSwitchInfo->filterHandle;
 
 	//TODO: must lock g_pSwitchInfo
-	status = g_pSwitchInfo->switchHandlers.AllocateNetBufferListForwardingContext(g_pSwitchInfo->switchContext, pNbl);
+	status = pSwitchInfo->switchHandlers.AllocateNetBufferListForwardingContext(pSwitchInfo->switchContext, pNbl);
 	if (status != NDIS_STATUS_SUCCESS)
 	{
 		OVS_CHECK(0);
+	}
+
+//Cleanup:
+	if (pSwitchInfo) {
+		OVS_RCU_DEREFERENCE(pSwitchInfo);
 	}
 
 	return pNbl;
@@ -1050,16 +1080,17 @@ BOOLEAN ONB_OriginateArpRequest(const BYTE targetIp[4])
     OVS_GLOBAL_FORWARD_INFO* pForwardInfo = NULL;
     OVS_NIC_INFO externalNicAndPort = { 0 };
     OVS_ARP_HEADER* pArpHeader = NULL;
+	OVS_SWITCH_INFO* pSwitchInfo = NULL;
 
     ULONG bufSize = sizeof(OVS_ETHERNET_HEADER) + sizeof(OVS_ARP_HEADER);
 
-    if (!g_pSwitchInfo)
-    {
-        DEBUGP(LOG_ERROR, "failed to originate arp request: the extension appears not to be attached to any switch!\n");
-        return FALSE;
-    }
+	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
+	if (!pSwitchInfo) {
+		DEBUGP(LOG_ERROR, "failed to originate arp request: the extension appears not to be attached to any switch!\n");
+		return FALSE;
+	}
 
-    pForwardInfo = g_pSwitchInfo->pForwardInfo;
+    pForwardInfo = pSwitchInfo->pForwardInfo;
 
     mustTransfer = GetExternalDestinationInfo(pForwardInfo, 0, &externalNicAndPort, &failReason);
     if (!mustTransfer)
@@ -1069,7 +1100,8 @@ BOOLEAN ONB_OriginateArpRequest(const BYTE targetIp[4])
             DEBUGP(LOG_ERROR, "Get destination failed: %s\n", FailReasonMessageA(failReason));
         }
 
-        return FALSE;
+		mustTransfer = FALSE;
+		goto Cleanup;
     }
 
     pArpPacket = ONB_Create(bufSize);
@@ -1096,24 +1128,27 @@ BOOLEAN ONB_OriginateArpRequest(const BYTE targetIp[4])
     RtlCopyMemory(pArpHeader->targetProtocolAddress, targetIp, OVS_IPV4_ADDRESS_LENGTH);
 
     //6. set destination
-    mustTransfer = SetOneDestination(g_pSwitchInfo, pArpPacket->pNbl, &failReason, /*in*/ &externalNicAndPort);
+    mustTransfer = SetOneDestination(pSwitchInfo, pArpPacket->pNbl, &failReason, /*in*/ &externalNicAndPort);
     if (!mustTransfer)
     {
         DEBUGP(LOG_ERROR, "set one destination failed. returning FALSE. Fail Reason:%s\n", FailReasonMessageA(failReason));
-        return FALSE;
+		goto Cleanup;
     }
 
+Cleanup:
     if (mustTransfer)
     {
-        Nbls_SendIngressBasic(g_pSwitchInfo, pArpPacket->pNbl, /*sendFlags*/0, 1);
+        Nbls_SendIngressBasic(pSwitchInfo, pArpPacket->pNbl, /*sendFlags*/0, 1);
 
         ExFreePoolWithTag(pArpPacket, g_extAllocationTag);
     }
 
     else
     {
-        ONB_Destroy(g_pSwitchInfo, &pArpPacket);
+        ONB_Destroy(pSwitchInfo, &pArpPacket);
     }
+
+	OVS_RCU_DEREFERENCE(pSwitchInfo);
 
     return mustTransfer;
 }

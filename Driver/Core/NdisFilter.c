@@ -42,9 +42,6 @@ NDIS_HANDLE g_hNbPool = NULL;
 UINT g_tagNblPool = 'PsvO';
 UINT g_tagNbPool = 'PsvO';
 
-NDIS_HANDLE g_ndisFilterHandle = NULL;
-OVS_SWITCH_INFO* g_pSwitchInfo = NULL;
-
 PNDIS_RW_LOCK_EX g_pArpRWLock = NULL;
 
 LONG g_requestID = 0xFFFFFFFE;
@@ -190,8 +187,6 @@ NDIS_STATUS FilterAttach(NDIS_HANDLE ndisFilterHandle, NDIS_HANDLE hDriverContex
     NET_BUFFER_LIST_POOL_PARAMETERS nbl_pool_params = { 0 };
     NET_BUFFER_POOL_PARAMETERS nb_pool_params = { 0 };
 
-	g_ndisFilterHandle = ndisFilterHandle;
-
     UNREFERENCED_PARAMETER(hDriverContext);
 
     DEBUGP(LOG_INFO, "FilterAttach: NdisFilterHandle %p\n", ndisFilterHandle);
@@ -262,8 +257,6 @@ NDIS_STATUS FilterAttach(NDIS_HANDLE ndisFilterHandle, NDIS_HANDLE hDriverContex
 	DRIVER_LOCK();
 	InsertHeadList(&g_driver.switchList, &pSwitchInfo->listEntry);
 	DRIVER_UNLOCK();
-
-	g_pSwitchInfo = pSwitchInfo;
 
 	status = OvsInit(g_driverHandle);
 	if (status != NDIS_STATUS_SUCCESS) {
@@ -343,8 +336,6 @@ VOID FilterDetach(NDIS_HANDLE filterModuleContext)
     DEBUGP(LOG_TRACE, "Detach: Instance %p\n", filterModuleContext);
 
     OvsUninit();
-
-	g_ndisFilterHandle = NULL;
 
     NdisAcquireSpinLock(&g_nbPoolLock);
     NdisFreeNetBufferPool(g_hNbPool);
@@ -561,7 +552,15 @@ VOID FilterSendNetBufferLists(NDIS_HANDLE filterModuleContext, PNET_BUFFER_LIST 
     OVS_SWITCH_INFO* pSwitchInfo = (OVS_SWITCH_INFO*)filterModuleContext;
     UNREFERENCED_PARAMETER(portNumber);
 
+	DRIVER_LOCK();
+	pSwitchInfo = OVS_RCU_REFERENCE(pSwitchInfo);
+	DRIVER_UNLOCK();
+
+	OVS_CHECK(pSwitchInfo);
+
     Nbls_SendIngress(pSwitchInfo, pSwitchInfo->pForwardInfo, netBufferLists, sendFlags);
+
+	OVS_RCU_DEREFERENCE(pSwitchInfo);
 }
 
 _Use_decl_annotations_

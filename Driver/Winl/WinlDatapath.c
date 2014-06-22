@@ -29,8 +29,6 @@ limitations under the License.
 
 #include <Netioapi.h>
 
-extern OVS_SWITCH_INFO* g_pSwitchInfo;
-
 _Use_decl_annotations_
 OVS_ERROR Datapath_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 {
@@ -86,8 +84,6 @@ OVS_ERROR Datapath_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     }
 
     RtlCopyMemory(pDatapath->name, pArgName->data, dpNameLen);
-
-    pDatapath->switchIfIndex = g_pSwitchInfo->datapathIfIndex;
 
 	DATAPATH_UNLOCK(pDatapath, &lockState);
 
