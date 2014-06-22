@@ -159,7 +159,7 @@ OVS_ERROR Flow_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
         //if we have cmd = new with the flag 'exclusive', it means we're not allowed to override existing flows.
         //the flag 'create' is accepted as well: 'create' may be set instead of 'exclusive'
-        if (pMsg->flags & OVS_MESSAGE_FLAG_CREATE ||
+        if (pMsg->flags & OVS_MESSAGE_FLAG_CREATE &&
             pMsg->flags & OVS_MESSAGE_FLAG_EXCLUSIVE)
         {
             DEBUGP(LOG_LOUD, __FUNCTION__ " we are not allowed to override the flow, because of the nl flag = create / exclusive!\n");
@@ -173,7 +173,7 @@ OVS_ERROR Flow_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
         if (!PacketInfo_Equal(&pFlow->unmaskedPacketInfo, &packetInfo, flowMatch.piRange.endRange))
         {
-            DEBUGP(LOG_ERROR, "Cannot override flow, because it does not match the unmasked key!\n");
+        	DEBUGP(LOG_LOUD, "Cannot override flow, because it does not match the unmasked key!\n");
 			FLOW_UNLOCK(pFlow, &lockState);
 
             error = OVS_ERROR_INVAL;
