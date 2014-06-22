@@ -37,7 +37,7 @@ OVS_ERROR Datapath_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     OVS_DATAPATH* pDatapath = NULL;
     OVS_MESSAGE replyMsg = { 0 };
     OVS_ARGUMENT* pArgName = NULL, *pArgUpcallPid = NULL;
-    LOCK_STATE_EX lockState = { 0 }, fwdLockState = { 0 };
+    LOCK_STATE_EX lockState = { 0 };
     OVS_ERROR error = OVS_ERROR_NOERROR;
     ULONG dpNameLen = 0;
     UINT32 upcallPid = 0;
@@ -64,8 +64,7 @@ OVS_ERROR Datapath_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
     upcallPid = GET_ARG_DATA(pArgUpcallPid, UINT32);
 
-	FWDINFO_LOCK_WRITE(g_pSwitchInfo->pForwardInfo, &fwdLockState);
-    DATAPATH_LOCK_WRITE(pDatapath, &lockState);
+	DATAPATH_LOCK_WRITE(pDatapath, &lockState);
 
     if (!pDatapath->deleted || pDatapath->name)
     {
@@ -90,8 +89,7 @@ OVS_ERROR Datapath_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
     pDatapath->switchIfIndex = g_pSwitchInfo->datapathIfIndex;
 
-    DATAPATH_UNLOCK(pDatapath, &lockState);
-	FWDINFO_UNLOCK(g_pSwitchInfo->pForwardInfo, &fwdLockState);
+	DATAPATH_UNLOCK(pDatapath, &lockState);
 
     if (0 == pDatapath->switchIfIndex)
     {
@@ -144,14 +142,16 @@ OVS_ERROR Datapath_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObjec
         return OVS_ERROR_NODEV;
     }
 
+	DATAPATH_LOCK_WRITE(pDatapath, &lockState);
+
     if (pDatapath->deleted || !pDatapath->name)
     {
+		DATAPATH_UNLOCK(pDatapath, &lockState);
+
         DEBUGP(LOG_ERROR, "expected the datapath not to exist");
         error = OVS_ERROR_INVAL;
         goto Cleanup;
     }
-
-    DATAPATH_LOCK_WRITE(pDatapath, &lockState);
 
     RtlZeroMemory(&replyMsg, sizeof(replyMsg));
     if (!CreateMsgFromDatapath(pDatapath, pMsg->sequence, OVS_MESSAGE_COMMAND_DELETE, &replyMsg, pDatapath->switchIfIndex, pMsg->pid))
@@ -161,20 +161,13 @@ OVS_ERROR Datapath_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObjec
 
     pDatapath->deleted = TRUE;
 
-    FlowTable_LockWrite(&lockState);
-
-    FlowTable_DestroyNow_Unsafe(pDatapath->pFlowTable);
+    OVS_RCU_DESTROY(pDatapath->pFlowTable);
     pDatapath->pFlowTable = NULL;
-
-    FlowTable_Unlock(&lockState);
-
     ExFreePoolWithTag(pDatapath->name, g_extAllocationTag);
     pDatapath->name = NULL;
+	DATAPATH_UNLOCK(pDatapath, &lockState);
 
-    DATAPATH_UNLOCK(pDatapath, &lockState);
-
-    if (error != OVS_ERROR_NOERROR)
-    {
+    if (error != OVS_ERROR_NOERROR) {
         goto Cleanup;
     }
 

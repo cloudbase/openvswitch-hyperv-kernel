@@ -51,30 +51,10 @@ VOID Datapath_DestroyNow_Unsafe(OVS_DATAPATH* pDatapath)
 OVS_DATAPATH* GetDefaultDatapath()
 {
     return g_pDefaultDatapath;
-}
 
-VOID FlowTable_LockRead(_In_ LOCK_STATE_EX* pLockState)
-{
-    NdisAcquireRWLockRead(g_pFlowTableRwLock, pLockState, 0);
-}
 
-VOID FlowTable_LockWrite(_In_ LOCK_STATE_EX* pLockState)
-{
-    NdisAcquireRWLockWrite(g_pFlowTableRwLock, pLockState, 0);
-}
 
-BOOLEAN IsLockInitialized(const LOCK_STATE_EX* pLockState)
-{
-    LOCK_STATE_EX tmp = { 0 };
-    return pLockState && memcmp(pLockState, &tmp, sizeof(LOCK_STATE_EX));
-}
 
-VOID FlowTable_Unlock(_In_ LOCK_STATE_EX* pLockState)
-{
-    if (IsLockInitialized(pLockState))
-    {
-        Rwlock_Unlock(g_pFlowTableRwLock, pLockState);
-    }
 }
 
 static void _GetDatapathStats(OVS_DATAPATH* pDatapath, OVS_DATAPATH_STATS* pStats)
@@ -101,11 +81,23 @@ BOOLEAN CreateMsgFromDatapath(OVS_DATAPATH* pDatapath, UINT32 sequence, UINT8 cm
 {
     OVS_ARGUMENT_GROUP* pArgGroup = NULL;
     OVS_ARGUMENT* pNameArg = NULL, *pStatsArg = NULL;
-    const char* datapathName = NULL;
+    char* datapathName = NULL;
     OVS_DATAPATH_STATS dpStats = { 0 };
     BOOLEAN ok = TRUE;
+	ULONG nameLen = 0;
+	LOCK_STATE_EX lockState;
 
     OVS_CHECK(pMsg);
+
+	DATAPATH_LOCK_READ(pDatapath, &lockState);
+
+	nameLen = (ULONG)strlen(pDatapath->name) + 1;
+	datapathName = KAlloc(nameLen);
+	RtlCopyMemory(datapathName, pDatapath->name, nameLen);
+
+	_GetDatapathStats(pDatapath, &dpStats);
+
+	DATAPATH_UNLOCK(pDatapath, &lockState);
 
     pArgGroup = AllocArgumentGroup();
 
@@ -127,8 +119,6 @@ BOOLEAN CreateMsgFromDatapath(OVS_DATAPATH* pDatapath, UINT32 sequence, UINT8 cm
 
     pArgGroup->args[0] = *pNameArg;
     pArgGroup->groupSize += pNameArg->length;
-
-    _GetDatapathStats(pDatapath, &dpStats);
 
     pStatsArg = CreateArgument_Alloc(OVS_ARGTYPE_DATAPATH_STATS, &dpStats);
     if (!pStatsArg)
@@ -155,6 +145,9 @@ BOOLEAN CreateMsgFromDatapath(OVS_DATAPATH* pDatapath, UINT32 sequence, UINT8 cm
     pMsg->pArgGroup = pArgGroup;
 
 Cleanup:
+	if (datapathName)
+		KFree(datapathName);
+
     if (ok)
     {
         FreeArgument(pNameArg);
@@ -190,21 +183,13 @@ BOOLEAN CreateDefaultDatapath(NDIS_HANDLE ndisFilterHandle)
     OVS_DATAPATH* pDatapath = NULL;
     BOOLEAN ok = TRUE;
 
-    g_pFlowTableRwLock = NdisAllocateRWLock(ndisFilterHandle);
-    if (!g_pFlowTableRwLock)
-    {
-        DEBUGP(LOG_ERROR, "could not allocate global datapath rwlock\n");
-        return FALSE;
-    }
-
-    pDatapath = ExAllocatePoolWithTag(NonPagedPool, sizeof(OVS_DATAPATH), g_extAllocationTag);
+    pDatapath = KZAlloc(sizeof(OVS_DATAPATH));
     if (pDatapath == NULL)
     {
         ok = FALSE;
         goto Cleanup;
     }
 
-    RtlZeroMemory(pDatapath, sizeof(OVS_DATAPATH));
 
 	pDatapath->rcu.Destroy = Datapath_DestroyNow_Unsafe;
     pDatapath->name = NULL;
@@ -226,7 +211,6 @@ BOOLEAN CreateDefaultDatapath(NDIS_HANDLE ndisFilterHandle)
     g_pDefaultDatapath = pDatapath;
 
 Cleanup:
-
     if (!ok && pDatapath)
     {
         if (pDatapath->pFlowTable)
@@ -244,21 +228,39 @@ BOOLEAN Datapath_FlushFlows(OVS_DATAPATH* pDatapath)
     OVS_FLOW_TABLE* pOldTable = NULL;
     OVS_FLOW_TABLE* pNewTable = NULL;
     LOCK_STATE_EX lockState = { 0 };
+	BOOLEAN ok = TRUE;
 
-    FlowTable_LockWrite(&lockState);
+	//pDatapath contains the pFlowTable, so we must lock its rw lock, to replace the pFlowTable
+	DATAPATH_LOCK_WRITE(pDatapath, &lockState);
 
     pOldTable = pDatapath->pFlowTable;
     pNewTable = FlowTable_Create();
     if (!pNewTable)
     {
-        FlowTable_Unlock(&lockState);
-        return FALSE;
+		ok = FALSE;
+		goto Cleanup;
     }
 
     pDatapath->pFlowTable = pNewTable;
 
-    FlowTable_DestroyNow_Unsafe(pOldTable);
+	OVS_RCU_DESTROY(pOldTable);
 
-    FlowTable_Unlock(&lockState);
-    return TRUE;
+Cleanup:
+	DATAPATH_UNLOCK(pDatapath, &lockState);
+    return ok;
+}
+
+OVS_FLOW_TABLE* Datapath_ReferenceFlowTable(OVS_DATAPATH* pDatapath)
+{
+	OVS_FLOW_TABLE* pFlowTable = NULL;
+	LOCK_STATE_EX lockState;
+
+	OVS_CHECK(pDatapath);
+	DATAPATH_LOCK_READ(pDatapath, &lockState);
+
+	pFlowTable = OVS_RCU_REFERENCE(pDatapath->pFlowTable);
+
+	DATAPATH_UNLOCK(pDatapath, &lockState);
+
+	return pFlowTable;
 }

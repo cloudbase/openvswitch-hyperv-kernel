@@ -747,6 +747,7 @@ static BOOLEAN _ProcessPacket(OVS_NET_BUFFER* pOvsNb, _In_ const OVS_PERSISTENT_
     LOCK_STATE_EX lockState = { 0 };
     VOID* pNbBuffer = NULL;
     UINT16 ovsInPortNumber = OVS_INVALID_PORT_NUMBER;
+	OVS_FLOW_TABLE* pFlowTable = NULL;
 
     pDatapath = GetDefaultDatapath();
 
@@ -767,14 +768,14 @@ static BOOLEAN _ProcessPacket(OVS_NET_BUFFER* pOvsNb, _In_ const OVS_PERSISTENT_
     if (!PacketInfo_Extract(pNbBuffer, nbLen, ovsInPortNumber, &packetInfo))
     {
         sent = FALSE;
-        goto Cleanup_NoUnlock;
+		goto Cleanup;
     }
 
     //we do this after PacketInfo_Extract, because PacketInfo_Extract updates the ARP table
     if (!pSourcePort)
     {
         sent = FALSE;
-        goto Cleanup_NoUnlock;
+		goto Cleanup;
     }
 
     nbLen = ONB_GetDataLength(pOvsNb);
@@ -783,7 +784,8 @@ static BOOLEAN _ProcessPacket(OVS_NET_BUFFER* pOvsNb, _In_ const OVS_PERSISTENT_
         packetInfo.tunnelInfo = *pTunnelInfo;
     }
 
-    FlowTable_LockRead(&lockState);
+	//the pFlowTable will not be deleted by a different thread until we call deref.
+	pFlowTable = Datapath_ReferenceFlowTable(pDatapath);
     pFlow = FlowTable_FindFlowMatchingMaskedPI_Ref(pDatapath->pFlowTable, &packetInfo);
 
     pOvsNb->pOriginalPacketInfo = &packetInfo;
@@ -807,6 +809,8 @@ static BOOLEAN _ProcessPacket(OVS_NET_BUFFER* pOvsNb, _In_ const OVS_PERSISTENT_
         goto Cleanup;
     }
 
+	//else -- if pFlow
+
 	FLOW_LOCK_READ(pFlow, &lockState);
 
 	pOvsNb->pActions = OVS_RCU_REFERENCE(pFlow->pActions);
@@ -825,10 +829,6 @@ static BOOLEAN _ProcessPacket(OVS_NET_BUFFER* pOvsNb, _In_ const OVS_PERSISTENT_
     sent = ExecuteActions(pOvsNb, OutputPacketToPort);
 
 Cleanup:
-    FlowTable_Unlock(&lockState);
-
-Cleanup_NoUnlock:
-
     DATAPATH_LOCK_WRITE(pDatapath, &lockState);
 
     if (pFlow)
@@ -847,6 +847,9 @@ Cleanup_NoUnlock:
     {
         ++pDatapath->statistics.flowTableMissed;
     }
+
+	//we don't use the pFlowTable anymore.
+	OVS_RCU_DEREFERENCE(pFlowTable);
 
     DATAPATH_UNLOCK(pDatapath, &lockState);
 

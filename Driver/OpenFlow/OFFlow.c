@@ -731,9 +731,8 @@ void DbgPrintAllFlows()
         return;
     }
 
-    FlowTable_LockRead(&lockState);
+	pFlowTable = Datapath_ReferenceFlowTable(pDatapath);
 
-    pFlowTable = pDatapath->pFlowTable;
 	FLOWTABLE_LOCK_READ(pFlowTable, &lockState);
 
     if (pFlowTable->countFlows > 0)
@@ -764,8 +763,9 @@ void DbgPrintAllFlows()
         DEBUGP(LOG_INFO, "flow table empty!\n");
     }
 
-    FlowTable_Unlock(&lockState);
 	FLOWTABLE_UNLOCK(pFlowTable, &lockState);
+
+	OVS_RCU_DEREFERENCE(pFlowTable);
 }
 
 #endif

@@ -45,9 +45,7 @@ OVS_ERROR Flow_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     OVS_DATAPATH* pDatapath = NULL;
     OVS_FLOW_TABLE* pFlowTable = NULL;
     OVS_FLOW_MATCH flowMatch = { 0 };
-    LOCK_STATE_EX lockState = { 0 };
     OVS_ERROR error = OVS_ERROR_NOERROR;
-    BOOLEAN flowTableLocked = FALSE;
     BOOLEAN flowWasCreated = TRUE;
 	OVS_ACTIONS* pActions = NULL;
 
@@ -105,11 +103,8 @@ OVS_ERROR Flow_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         goto Cleanup;
     }
 
-    FlowTable_LockWrite(&lockState);
-    flowTableLocked = TRUE;
-
-    pFlowTable = pDatapath->pFlowTable;
-
+	pFlowTable = Datapath_ReferenceFlowTable(pDatapath);
+	OVS_CHECK(pFlowTable);
 
 	/*** process data ***/
     pFlow = FlowTable_FindFlowMatchingMaskedPI_Ref(pFlowTable, &packetInfo);
@@ -159,6 +154,7 @@ OVS_ERROR Flow_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     else
     {
         OVS_ACTIONS* pOldActions = NULL;
+		LOCK_STATE_EX lockState = { 0 };
         flowWasCreated = FALSE;
 
         //if we have cmd = new with the flag 'exclusive', it means we're not allowed to override existing flows.
@@ -208,9 +204,6 @@ OVS_ERROR Flow_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         goto Cleanup;
     }
 
-    FlowTable_Unlock(&lockState);
-    flowTableLocked = FALSE;
-
     OVS_CHECK(replyMsg.type == OVS_MESSAGE_TARGET_FLOW);
 
     if (error == OVS_ERROR_NOERROR)
@@ -231,19 +224,16 @@ Cleanup:
         replyMsg.pArgGroup = NULL;
     }
 
-    if (error != OVS_ERROR_NOERROR)
-    {
-        if (flowWasCreated)
-        {
-            if (pFlow)
-           {
-                Flow_DestroyNow_Unsafe(pFlow);
-                pFlow = NULL;
-           }
-        }
-
-        if (flowTableLocked)
-            FlowTable_Unlock(&lockState);
+	if (error != OVS_ERROR_NOERROR)
+	{
+		if (flowWasCreated)
+		{
+			if (pFlow)
+			{
+				Flow_DestroyNow_Unsafe(pFlow);
+				pFlow = NULL;
+			}
+		}
 
 		if (pActions)
 		{
@@ -253,7 +243,7 @@ Cleanup:
 	}
 
 	OVS_RCU_DEREFERENCE(pFlow);
-
+	OVS_RCU_DEREFERENCE(pFlowTable);
 
     return error;
 }
@@ -271,9 +261,7 @@ OVS_ERROR Flow_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     OVS_FLOW_TABLE* pFlowTable = NULL;
 	OVS_ACTIONS* pActions = NULL;
     OVS_FLOW_MATCH flowMatch = { 0 };
-    LOCK_STATE_EX lockState = { 0 };
     OVS_ERROR error = OVS_ERROR_NOERROR;
-    BOOLEAN flowTableLocked = FALSE;
 
 	/*** get flow info from message ***/
     pPacketInfoArgs = FindArgumentGroup(pMsg->pArgGroup, OVS_ARGTYPE_GROUP_PI);
@@ -326,10 +314,8 @@ OVS_ERROR Flow_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         goto Cleanup;
     }
 
-    FlowTable_LockWrite(&lockState);
-    flowTableLocked = TRUE;
-    pFlowTable = pDatapath->pFlowTable;
-
+	pFlowTable = Datapath_ReferenceFlowTable(pDatapath);
+	OVS_CHECK(pFlowTable);
 
 	/*** process data ***/
     pFlow = FlowTable_FindFlowMatchingMaskedPI_Ref(pFlowTable, &packetInfo);
@@ -343,6 +329,7 @@ OVS_ERROR Flow_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     else
     {
         OVS_ACTIONS* pOldActions = NULL;
+		LOCK_STATE_EX lockState = { 0 };
 
 		/*** set existing flow ***/
 
@@ -381,9 +368,6 @@ OVS_ERROR Flow_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         goto Cleanup;
     }
 
-    FlowTable_Unlock(&lockState);
-    flowTableLocked = FALSE;
-
     OVS_CHECK(replyMsg.type == OVS_MESSAGE_TARGET_FLOW);
     OVS_CHECK(error == OVS_ERROR_NOERROR);
 
@@ -396,19 +380,18 @@ OVS_ERROR Flow_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
 	/*** cleanup ***/
 Cleanup:
-    if (replyMsg.pArgGroup)
-    {
-        DestroyArgumentGroup(replyMsg.pArgGroup);
-        replyMsg.pArgGroup = NULL;
-    }
+	if (replyMsg.pArgGroup)
+	{
+		DestroyArgumentGroup(replyMsg.pArgGroup);
+		replyMsg.pArgGroup = NULL;
+	}
 
 	OVS_RCU_DEREFERENCE(pFlow);
+	OVS_RCU_DEREFERENCE(pFlowTable);
+
 
     if (error != OVS_ERROR_NOERROR)
     {
-        if (flowTableLocked)
-            FlowTable_Unlock(&lockState);
-
         if (pActions)
 			Actions_DestroyNow_Unsafe(pActions);
     }
@@ -427,7 +410,6 @@ OVS_ERROR Flow_Get(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     OVS_FLOW_TABLE *pFlowTable = NULL;
     OVS_FLOW_MATCH flowMatch = { 0 };
     LOCK_STATE_EX lockState = { 0 };
-    BOOLEAN flowTableLocked = FALSE;
     OVS_ERROR error = OVS_ERROR_NOERROR;
 
     pPacketInfoArgs = FindArgumentGroup(pMsg->pArgGroup, OVS_ARGTYPE_GROUP_PI);
@@ -449,11 +431,8 @@ OVS_ERROR Flow_Get(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         return OVS_ERROR_NODEV;
     }
 
-    FlowTable_LockRead(&lockState);
-    flowTableLocked = TRUE;
-
-    pFlowTable = pDatapath->pFlowTable;
-
+	pFlowTable = Datapath_ReferenceFlowTable(pDatapath);
+	OVS_CHECK(pFlowTable);
 
     pFlow = FlowTable_FindFlowMatchingMaskedPI_Ref(pFlowTable, flowMatch.pPacketInfo);
     if (pFlow)
@@ -485,9 +464,6 @@ OVS_ERROR Flow_Get(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         goto Cleanup;
     }
 
-    FlowTable_Unlock(&lockState);
-    flowTableLocked = FALSE;
-
     OVS_CHECK(replyMsg.type == OVS_MESSAGE_TARGET_FLOW);
 
     error = WriteMsgsToDevice((OVS_NLMSGHDR*)&replyMsg, 1, pFileObject, OVS_MULTICAST_GROUP_NONE);
@@ -504,12 +480,8 @@ Cleanup:
         replyMsg.pArgGroup = NULL;
     }
 
-    if (flowTableLocked)
-    {
-        FlowTable_Unlock(&lockState);
-    }
-	
 	OVS_RCU_DEREFERENCE(pFlow);
+	OVS_RCU_DEREFERENCE(pFlowTable);
 
     return error;
 }
@@ -526,7 +498,6 @@ OVS_ERROR Flow_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     OVS_FLOW_MATCH flowMatch = { 0 };
     LOCK_STATE_EX lockState = { 0 };
     OVS_ERROR error = OVS_ERROR_NOERROR;
-    BOOLEAN flowTableLocked = FALSE;
 
     pDatapath = GetDefaultDatapath();
     if (!pDatapath)
@@ -561,11 +532,8 @@ OVS_ERROR Flow_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         return OVS_ERROR_INVAL;
     }
 
-    FlowTable_LockWrite(&lockState);
-    flowTableLocked = TRUE;
-
-    pFlowTable = pDatapath->pFlowTable;
-
+	pFlowTable = Datapath_ReferenceFlowTable(pDatapath);
+	OVS_CHECK(pFlowTable);
 
     pFlow = FlowTable_FindFlowMatchingMaskedPI_Ref(pFlowTable, flowMatch.pPacketInfo);
     if (pFlow)
@@ -603,9 +571,6 @@ OVS_ERROR Flow_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 	//remove the flow from the list of flows
 	FlowTable_RemoveFlow_Unsafe(pFlowTable, pFlow);
 
-    FlowTable_Unlock(&lockState);
-    flowTableLocked = FALSE;
-
 	OVS_RCU_DEREFERENCE_ONLY(pFlow);
 	OVS_RCU_DESTROY(pFlow);
 
@@ -626,10 +591,8 @@ Cleanup:
         replyMsg.pArgGroup = NULL;
     }
 
-    if (flowTableLocked)
-        FlowTable_Unlock(&lockState);
-
 	OVS_RCU_DEREFERENCE(pFlow);
+	OVS_RCU_DEREFERENCE(pFlowTable);
 
     return error;
 }
@@ -639,7 +602,6 @@ OVS_ERROR Flow_Dump(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 {
     OVS_DATAPATH *pDatapath = NULL;
     OVS_FLOW_TABLE *pFlowTable = NULL;
-    LOCK_STATE_EX lockState = { 0 };
     OVS_MESSAGE* msgs = NULL;
     UINT countMsgs = 0;
     OVS_MESSAGE msgDone = { 0 };
@@ -651,18 +613,17 @@ OVS_ERROR Flow_Dump(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         return OVS_ERROR_NODEV;
     }
 
-    FlowTable_LockRead(&lockState);
-
-    pFlowTable = pDatapath->pFlowTable;
+	pFlowTable = Datapath_ReferenceFlowTable(pDatapath);
+	OVS_CHECK(pFlowTable);
 
     if (pFlowTable->countFlows > 0)
     {
         LIST_ENTRY* pCurItem = pFlowTable->pFlowList->Flink;
         UINT i = 0;
+		LOCK_STATE_EX lockState = { 0 };
 
         countMsgs = pFlowTable->countFlows + 1;
-        msgs = ExAllocatePoolWithTag(NonPagedPool, countMsgs * sizeof(OVS_MESSAGE), g_extAllocationTag);
-
+        msgs = KZAlloc(countMsgs * sizeof(OVS_MESSAGE));
         if (!msgs)
         {
             error = OVS_ERROR_INVAL;
@@ -675,7 +636,7 @@ OVS_ERROR Flow_Dump(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
         while (pCurItem != pFlowTable->pFlowList)
         {
-			OVS_FLOW* pFlow = CONTAINING_RECORD(pCurItem, OVS_FLOW, listEntry);
+            OVS_FLOW* pFlow = CONTAINING_RECORD(pCurItem, OVS_FLOW, listEntry);
             OVS_MESSAGE* pReplyMsg = msgs + i;
 
             if (!CreateMsgFromFlow(pFlow, OVS_MESSAGE_COMMAND_NEW, pReplyMsg, pMsg->sequence, pDatapath->switchIfIndex, pMsg->pid))
@@ -726,6 +687,7 @@ OVS_ERROR Flow_Dump(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     }
 
 Cleanup:
+	OVS_RCU_DEREFERENCE(pFlowTable);
     if (msgs)
     {
         for (UINT i = 0; i < countMsgs; ++i)
@@ -739,10 +701,8 @@ Cleanup:
             }
         }
 
-        ExFreePoolWithTag(msgs, g_extAllocationTag);
+        KFree(msgs);
     }
-
-    FlowTable_Unlock(&lockState);
 
     return error;
 }

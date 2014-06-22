@@ -188,8 +188,6 @@ VOID Packet_Execute(_In_ OVS_ARGUMENT_GROUP* pArgGroup, const FILE_OBJECT* pFile
     pFwdContext = g_pSwitchInfo->pForwardInfo;
     OVS_CHECK(pFwdContext);
 
-    FlowTable_LockRead(&lockState);
-
     pOvsNb->pTunnelInfo = NULL;
     ok = ExecuteActions(pOvsNb, OutputPacketToPort);
 
