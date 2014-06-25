@@ -42,7 +42,7 @@ VOID Datapath_DestroyNow_Unsafe(OVS_DATAPATH* pDatapath)
 
 	pFlowTable = pDatapath->pFlowTable;
 	pDatapath->pFlowTable = NULL;
-	OVS_RCU_DESTROY(pFlowTable);
+	OVS_REFCOUNT_DESTROY(pFlowTable);
 
 	DATAPATH_UNLOCK(pDatapath, &lockState);
 
@@ -58,7 +58,7 @@ OVS_DATAPATH* GetDefaultDatapath_Ref(const char* funcName)
 	OVS_CHECK(!IsListEmpty(&g_driver.datapathList));
 
 	pDatapath = CONTAINING_RECORD(g_driver.datapathList.Flink, OVS_DATAPATH, listEntry);
-	pDatapath = Rcu_Reference(pDatapath, funcName);
+	pDatapath = RefCount_Reference(pDatapath, funcName);
 
 	DRIVER_UNLOCK();
 
@@ -206,7 +206,7 @@ BOOLEAN CreateDefaultDatapath(NDIS_HANDLE ndisFilterHandle)
 	}
 
 	pDatapath->switchIfIndex = pSwitchInfo->datapathIfIndex;
-	pDatapath->rcu.Destroy = Datapath_DestroyNow_Unsafe;
+	pDatapath->refCount.Destroy = Datapath_DestroyNow_Unsafe;
     pDatapath->name = NULL;
 
     //i.e. at the beginning we don't have a datapath, we expect the userspace to tell us: 'create datapath'
@@ -240,7 +240,7 @@ Cleanup:
     }
 
 	if (pSwitchInfo) {
-		OVS_RCU_DEREFERENCE(pSwitchInfo);
+		OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
 	}
 
     return ok;
@@ -266,7 +266,7 @@ BOOLEAN Datapath_FlushFlows(OVS_DATAPATH* pDatapath)
 
     pDatapath->pFlowTable = pNewTable;
 
-	OVS_RCU_DESTROY(pOldTable);
+	OVS_REFCOUNT_DESTROY(pOldTable);
 
 Cleanup:
 	DATAPATH_UNLOCK(pDatapath, &lockState);
@@ -281,7 +281,7 @@ OVS_FLOW_TABLE* Datapath_ReferenceFlowTable(OVS_DATAPATH* pDatapath)
 	OVS_CHECK(pDatapath);
 	DATAPATH_LOCK_READ(pDatapath, &lockState);
 
-	pFlowTable = OVS_RCU_REFERENCE(pDatapath->pFlowTable);
+	pFlowTable = OVS_REFCOUNT_REFERENCE(pDatapath->pFlowTable);
 
 	DATAPATH_UNLOCK(pDatapath, &lockState);
 

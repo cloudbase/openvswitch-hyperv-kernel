@@ -120,7 +120,7 @@ OVS_ERROR Flow_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
             goto Cleanup;
         }
 
-		pFlow = OVS_RCU_REFERENCE(pFlow);
+		pFlow = OVS_REFCOUNT_REFERENCE(pFlow);
 		OVS_CHECK(pFlow);
 
         Flow_ClearStats_Unsafe(pFlow);
@@ -189,7 +189,7 @@ OVS_ERROR Flow_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 		//the pFlow does not become invalidated between locks, because it's referenced
 		FLOW_LOCK_WRITE(pFlow, &lockState);
 
-		OVS_RCU_DESTROY(pOldActions);
+		OVS_REFCOUNT_DESTROY(pOldActions);
 
         if (FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_FLOW_CLEAR))
         {
@@ -242,9 +242,9 @@ Cleanup:
 		}
 	}
 
-	OVS_RCU_DEREFERENCE(pFlow);
-	OVS_RCU_DEREFERENCE(pFlowTable);
-	OVS_RCU_DEREFERENCE(pDatapath);
+	OVS_REFCOUNT_DEREFERENCE(pFlow);
+	OVS_REFCOUNT_DEREFERENCE(pFlowTable);
+	OVS_REFCOUNT_DEREFERENCE(pDatapath);
 
     return error;
 }
@@ -351,7 +351,7 @@ OVS_ERROR Flow_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 		//the pFlow does not become invalidated between locks, because it's referenced
 		FLOW_LOCK_WRITE(pFlow, &lockState);
 
-		OVS_RCU_DESTROY(pOldActions);
+		OVS_REFCOUNT_DESTROY(pOldActions);
 
         if (FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_FLOW_CLEAR))
         {
@@ -386,10 +386,10 @@ Cleanup:
 		replyMsg.pArgGroup = NULL;
 	}
 
-	OVS_RCU_DEREFERENCE(pFlow);
-	OVS_RCU_DEREFERENCE(pFlowTable);
+	OVS_REFCOUNT_DEREFERENCE(pFlow);
+	OVS_REFCOUNT_DEREFERENCE(pFlowTable);
 
-	OVS_RCU_DEREFERENCE(pDatapath);
+	OVS_REFCOUNT_DEREFERENCE(pDatapath);
 
     if (error != OVS_ERROR_NOERROR)
     {
@@ -481,10 +481,10 @@ Cleanup:
         replyMsg.pArgGroup = NULL;
     }
 
-	OVS_RCU_DEREFERENCE(pFlow);
-	OVS_RCU_DEREFERENCE(pFlowTable);
+	OVS_REFCOUNT_DEREFERENCE(pFlow);
+	OVS_REFCOUNT_DEREFERENCE(pFlowTable);
 
-	OVS_RCU_DEREFERENCE(pDatapath);
+	OVS_REFCOUNT_DEREFERENCE(pDatapath);
 
     return error;
 }
@@ -579,8 +579,8 @@ OVS_ERROR Flow_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 	//remove the flow from the list of flows
 	FlowTable_RemoveFlow_Unsafe(pFlowTable, pFlow);
 
-	OVS_RCU_DEREFERENCE_ONLY(pFlow);
-	OVS_RCU_DESTROY(pFlow);
+	OVS_REFCOUNT_DEREFERENCE_ONLY(pFlow);
+	OVS_REFCOUNT_DESTROY(pFlow);
 
 	FLOWTABLE_UNLOCK(pFlowTable, &lockState);
 
@@ -599,10 +599,10 @@ Cleanup:
         replyMsg.pArgGroup = NULL;
     }
 
-	OVS_RCU_DEREFERENCE(pFlow);
-	OVS_RCU_DEREFERENCE(pFlowTable);
+	OVS_REFCOUNT_DEREFERENCE(pFlow);
+	OVS_REFCOUNT_DEREFERENCE(pFlowTable);
 
-	OVS_RCU_DEREFERENCE(pDatapath);
+	OVS_REFCOUNT_DEREFERENCE(pDatapath);
 
     return error;
 }
@@ -697,8 +697,8 @@ OVS_ERROR Flow_Dump(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     }
 
 Cleanup:
-	OVS_RCU_DEREFERENCE(pFlowTable);
-	OVS_RCU_DEREFERENCE(pDatapath);
+	OVS_REFCOUNT_DEREFERENCE(pFlowTable);
+	OVS_REFCOUNT_DEREFERENCE(pDatapath);
 
     if (msgs)
     {

@@ -35,7 +35,7 @@ typedef struct _OVS_DATAPATH_STATS {
 typedef struct _OVS_DATAPATH
 {
 	//must be the first field in the struct
-	OVS_RCU rcu;
+	OVS_REF_COUNT refCount;
 
 	//entry in OVS_DRIVER
 	LIST_ENTRY		listEntry;

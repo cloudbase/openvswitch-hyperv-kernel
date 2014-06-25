@@ -65,7 +65,7 @@ NDIS_STATUS Sctx_AddPort_Unsafe(_Inout_ OVS_GLOBAL_FORWARD_INFO* pForwardInfo, c
         goto Cleanup;
     }
 
-	pPortEntry->rcu.Destroy = PortEntry_DestroyNow_Unsafe;
+	pPortEntry->refCount.Destroy = PortEntry_DestroyNow_Unsafe;
     pPortEntry->portId = pCurPort->PortId;
     pPortEntry->portType = pCurPort->PortType;
     pPortEntry->on = (pCurPort->PortState == NdisSwitchPortStateCreated);
@@ -114,7 +114,7 @@ NDIS_STATUS Sctx_DeletePort_Unsafe(_In_ const OVS_GLOBAL_FORWARD_INFO* pForwardI
 
 	OVS_CHECK(pPortEntry->ovsPortNumber == OVS_INVALID_PORT_NUMBER);
 
-	OVS_RCU_DESTROY(pPortEntry);
+	OVS_REFCOUNT_DESTROY(pPortEntry);
 
 Cleanup:
     return status;
@@ -169,7 +169,7 @@ UINT16 Sctx_Port_SetPersistentPort(const char* ovsPortName, NDIS_SWITCH_PORT_ID 
 
 		PORT_UNLOCK(pPort, &lockState);
 
-		OVS_RCU_DEREFERENCE(pPort);
+		OVS_REFCOUNT_DEREFERENCE(pPort);
 	}
 
 	return ovsPortNumber;

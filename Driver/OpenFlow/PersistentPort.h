@@ -32,7 +32,7 @@ typedef struct _OVS_SWITCH_INFO OVS_SWITCH_INFO;
 typedef struct _OVS_PERSISTENT_PORT
 {
 	//must be the first field in the struct
-	OVS_RCU rcu;
+	OVS_REF_COUNT refCount;
 
 	NDIS_RW_LOCK_EX* pRwLock;
 

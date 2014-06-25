@@ -727,7 +727,7 @@ BOOLEAN OutputPacketToPort(OVS_NET_BUFFER* pOvsNb)
 
 Cleanup:
 	if (pDatapath) {
-		OVS_RCU_DEREFERENCE(pDatapath);
+		OVS_REFCOUNT_DEREFERENCE(pDatapath);
 	}
 
     if (ok)
@@ -830,7 +830,7 @@ static BOOLEAN _ProcessPacket(OVS_NET_BUFFER* pOvsNb, _In_ const OVS_PERSISTENT_
 
 	FLOW_LOCK_READ(pFlow, &lockState);
 
-	pOvsNb->pActions = OVS_RCU_REFERENCE(pFlow->pActions);
+	pOvsNb->pActions = OVS_REFCOUNT_REFERENCE(pFlow->pActions);
 
 	Flow_UpdateTimeUsed_Unsafe(pFlow, pOvsNb);
 
@@ -854,10 +854,10 @@ Cleanup:
 
 		//we don't use the pActions anymore
 		//the actions are not modified, once set in a flow, so there's no need to lock the pFlow to dereference pActions
-		OVS_RCU_DEREFERENCE(pOvsNb->pActions);
+		OVS_REFCOUNT_DEREFERENCE(pOvsNb->pActions);
 		pOvsNb->pActions = NULL;
 
-		OVS_RCU_DEREFERENCE(pFlow);
+		OVS_REFCOUNT_DEREFERENCE(pFlow);
     }
 
     else
@@ -866,11 +866,11 @@ Cleanup:
     }
 
 	//we don't use the pFlowTable anymore.
-	OVS_RCU_DEREFERENCE(pFlowTable);
+	OVS_REFCOUNT_DEREFERENCE(pFlowTable);
 
     DATAPATH_UNLOCK(pDatapath, &lockState);
 
-	OVS_RCU_DEREFERENCE(pDatapath);
+	OVS_REFCOUNT_DEREFERENCE(pDatapath);
 
     return sent;
 }
@@ -952,20 +952,20 @@ static BOOLEAN _DecapsulateIfNeeded_Ref(_In_ const BYTE managOsMac[OVS_ETHERNET_
                 pInternalPort->stats.bytesReceived += ONB_GetDataLength(pOvsNb);
 
                 *ppPersPort = pInternalPort;
-				OVS_RCU_DEREFERENCE(pExternalPort);
+				OVS_REFCOUNT_DEREFERENCE(pExternalPort);
             }
 
             else
             {
                 *ppPersPort = pExternalPort;
-				OVS_RCU_DEREFERENCE(pInternalPort);
+				OVS_REFCOUNT_DEREFERENCE(pInternalPort);
             }
         }
 
         else
         {
             *ppPersPort = pExternalPort;
-			OVS_RCU_DEREFERENCE(pInternalPort);
+			OVS_REFCOUNT_DEREFERENCE(pInternalPort);
         }
     }
 
@@ -1079,7 +1079,7 @@ static VOID _ProcessAllNblsIngress(_In_ OVS_SWITCH_INFO* pSwitchInfo, _In_ OVS_G
 				BOOLEAN ok = _DecapsulateIfNeeded_Ref(managOsMac, pOvsNb, &tunnelInfo, &wasEncapsulated, &pPersPort);
                 if (!ok)
                 {
-					OVS_RCU_DEREFERENCE(pPersPort);
+					OVS_REFCOUNT_DEREFERENCE(pPersPort);
 
                     ONB_Destroy(pSwitchInfo, &pOvsNb);
                     continue;
@@ -1117,7 +1117,7 @@ static VOID _ProcessAllNblsIngress(_In_ OVS_SWITCH_INFO* pSwitchInfo, _In_ OVS_G
                 ExFreePoolWithTag(pOvsNb, g_extAllocationTag);
             }
 
-			OVS_RCU_DEREFERENCE(pPersPort);
+			OVS_REFCOUNT_DEREFERENCE(pPersPort);
         }
     }
 

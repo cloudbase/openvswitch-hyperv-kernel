@@ -298,11 +298,11 @@ Cleanup:
 
 		else
 		{
-			OVS_RCU_DEREFERENCE(pPersPort);
+			OVS_REFCOUNT_DEREFERENCE(pPersPort);
 		}
 	}
 
-	OVS_RCU_DEREFERENCE(pDatapath);
+	OVS_REFCOUNT_DEREFERENCE(pDatapath);
 
 	if (replyMsg.pArgGroup)
 		DestroyArgumentGroup(replyMsg.pArgGroup);
@@ -434,10 +434,10 @@ Cleanup:
 			PORT_UNLOCK(pPersPort, &lockState);
 		}
 
-		OVS_RCU_DEREFERENCE(pPersPort);
+		OVS_REFCOUNT_DEREFERENCE(pPersPort);
 	}
 
-	OVS_RCU_DEREFERENCE(pDatapath);
+	OVS_REFCOUNT_DEREFERENCE(pDatapath);
 
     if (replyMsg.pArgGroup)
     {
@@ -530,10 +530,10 @@ Cleanup:
 			PORT_UNLOCK(pPersPort, &lockState);
 		}
 
-		OVS_RCU_DEREFERENCE(pPersPort);
+		OVS_REFCOUNT_DEREFERENCE(pPersPort);
 	}
 
-	OVS_RCU_DEREFERENCE(pDatapath);
+	OVS_REFCOUNT_DEREFERENCE(pDatapath);
 
     if (replyMsg.pArgGroup)
     {
@@ -634,7 +634,7 @@ Cleanup:
 		PersPort_Delete(pPersPort);
 	}
 
-	OVS_RCU_DEREFERENCE(pDatapath);
+	OVS_REFCOUNT_DEREFERENCE(pDatapath);
 
     if (replyMsg.pArgGroup)
     {
@@ -734,8 +734,8 @@ OVS_ERROR OFPort_Dump(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     }
 
 Cleanup:
-	OVS_RCU_DEREFERENCE(pDatapath);
-	OVS_RCU_DEREFERENCE(pSwitchInfo);
+	OVS_REFCOUNT_DEREFERENCE(pDatapath);
+	OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
 
     if (msgs)
     {

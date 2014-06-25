@@ -28,7 +28,7 @@ typedef struct _OVS_NIC_INFO OVS_NIC_INFO;
 
 typedef struct _OVS_ACTIONS {
 	//must be the first field in the struct
-	OVS_RCU rcu;
+	OVS_REF_COUNT refCount;
 
 	//once set, it cannot be modified. Also, the pointer cannot be changed, unless the OVS_ACTIONS struct is destroyed
 	OVS_ARGUMENT_GROUP* pActionGroup;

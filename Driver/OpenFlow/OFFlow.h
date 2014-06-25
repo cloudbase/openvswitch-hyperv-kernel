@@ -53,7 +53,7 @@ typedef struct _OVS_FLOW_STATS {
 typedef struct _OVS_FLOW
 {
 	//must be the first field in the struct
-	OVS_RCU rcu;
+	OVS_REF_COUNT refCount;
 
 	//lock that protects the flow against modifications
 	PNDIS_RW_LOCK_EX pRwLock;

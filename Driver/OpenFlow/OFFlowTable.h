@@ -24,7 +24,7 @@ typedef struct _OVS_FLOW_MASK OVS_FLOW_MASK;
 typedef struct _OVS_FLOW_TABLE
 {
 	//must be the first field in the struct
-	OVS_RCU rcu;
+	OVS_REF_COUNT refCount;
 
 	//lock that protects the flow table against modifications
 	//this includes additions & removals of flows or masks

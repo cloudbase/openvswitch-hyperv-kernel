@@ -147,7 +147,7 @@ VOID Packet_Execute(_In_ OVS_ARGUMENT_GROUP* pArgGroup, const FILE_OBJECT* pFile
     pFlow->pActions = pTargetActions;
 
 	//while we will process the packet, we do not allow its actions to be destroyed
-	pOvsNb->pActions = OVS_RCU_REFERENCE(pTargetActions);
+	pOvsNb->pActions = OVS_REFCOUNT_REFERENCE(pTargetActions);
     pOvsNb->pOriginalPacketInfo = &pFlow->maskedPacketInfo;
     pOvsNb->packetPriority = pFlow->maskedPacketInfo.physical.packetPriority;
     pOvsNb->packetMark = pFlow->maskedPacketInfo.physical.packetMark;
@@ -210,16 +210,16 @@ VOID Packet_Execute(_In_ OVS_ARGUMENT_GROUP* pArgGroup, const FILE_OBJECT* pFile
 	}
 
 Cleanup:
-	OVS_RCU_DEREFERENCE(pTargetActions);
+	OVS_REFCOUNT_DEREFERENCE(pTargetActions);
 
 	if (pFlow)
 		Flow_DestroyNow_Unsafe(pFlow);
 
-	OVS_RCU_DEREFERENCE(pDatapath);
+	OVS_REFCOUNT_DEREFERENCE(pDatapath);
 
 	if (pOvsNb->pSourcePort)
 	{
-		OVS_RCU_DEREFERENCE(pOvsNb->pSourcePort);
+		OVS_REFCOUNT_DEREFERENCE(pOvsNb->pSourcePort);
 	}
 
     if (ok)
@@ -236,12 +236,12 @@ Cleanup:
 
 		if (pTargetActions)
 		{
-			OVS_RCU_DEREFERENCE_ONLY(pTargetActions);
-			OVS_RCU_DESTROY(pTargetActions);
+			OVS_REFCOUNT_DEREFERENCE_ONLY(pTargetActions);
+			OVS_REFCOUNT_DESTROY(pTargetActions);
 		}
     }
 
-	OVS_RCU_DEREFERENCE(pSwitchInfo);
+	OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
 }
 
 static OVS_ERROR _QueueUserspacePacket(_In_ NET_BUFFER* pNb, _In_ const OVS_UPCALL_INFO* pUpcallInfo)
@@ -298,7 +298,7 @@ static OVS_ERROR _QueueUserspacePacket(_In_ NET_BUFFER* pNb, _In_ const OVS_UPCA
 
 	//NOTE: make sure pDatapath->switchIfIndex == pSwitchInfo->datapathIfIndex
 	msg.dpIfIndex = pDatapath->switchIfIndex;
-	OVS_RCU_DEREFERENCE(pDatapath);
+	OVS_REFCOUNT_DEREFERENCE(pDatapath);
 
     msg.pArgGroup = AllocArgumentGroup();
 
@@ -357,7 +357,7 @@ static OVS_ERROR _QueueUserspacePacket(_In_ NET_BUFFER* pNb, _In_ const OVS_UPCA
     }
 
 Out:
-	OVS_RCU_DEREFERENCE(pDatapath);
+	OVS_REFCOUNT_DEREFERENCE(pDatapath);
 
     if (msg.pArgGroup)
     {
@@ -449,7 +449,7 @@ Cleanup:
         DATAPATH_UNLOCK(pDatapath, &lockState);
     }
 
-	OVS_RCU_DEREFERENCE(pDatapath);
+	OVS_REFCOUNT_DEREFERENCE(pDatapath);
 
     return ok;
 }

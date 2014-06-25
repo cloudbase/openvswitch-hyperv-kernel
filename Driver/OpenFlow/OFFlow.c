@@ -69,7 +69,7 @@ VOID Flow_DestroyNow_Unsafe(OVS_FLOW* pFlow)
     FlowMask_DeleteReference(pFlow->pMask);
 
 	if (pFlow->pActions) {
-		OVS_RCU_DESTROY(pFlow->pActions);
+		OVS_REFCOUNT_DESTROY(pFlow->pActions);
 	}
 
     KFree(pFlow);
@@ -101,7 +101,7 @@ OVS_FLOW* Flow_Create()
     }
 
     pFlow->pRwLock = NdisAllocateRWLock(NULL);
-	pFlow->rcu.Destroy = Flow_DestroyNow_Unsafe;
+	pFlow->refCount.Destroy = Flow_DestroyNow_Unsafe;
 
     return pFlow;
 }
@@ -765,10 +765,10 @@ void DbgPrintAllFlows()
 
 	FLOWTABLE_UNLOCK(pFlowTable, &lockState);
 
-	OVS_RCU_DEREFERENCE(pFlowTable);
+	OVS_REFCOUNT_DEREFERENCE(pFlowTable);
 
 	if (pDatapath) {
-		OVS_RCU_DEREFERENCE(pDatapath);
+		OVS_REFCOUNT_DEREFERENCE(pDatapath);
 	}
 }
 

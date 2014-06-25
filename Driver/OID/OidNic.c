@@ -100,7 +100,7 @@ VOID Nic_Connect(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH_NIC_PA
 
         OVS_CHECK(pNicEntry != NULL);
 
-		pNicEntry = OVS_RCU_REFERENCE(pNicEntry);
+		pNicEntry = OVS_REFCOUNT_REFERENCE(pNicEntry);
     }
 
     if (pNicEntry)
@@ -130,7 +130,7 @@ VOID Nic_Connect(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH_NIC_PA
 
 	//Cleanup
 	if (pNicEntry) {
-		OVS_RCU_DEREFERENCE(pNicEntry);
+		OVS_REFCOUNT_DEREFERENCE(pNicEntry);
 	}
 }
 

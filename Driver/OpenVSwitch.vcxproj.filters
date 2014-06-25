@@ -354,7 +354,7 @@
       <Filter>SwitchObjInfo</Filter>
     </ClInclude>
     <ClInclude Include="resource.h" />
-    <ClInclude Include="Core\OvsRcu.h">
+    <ClInclude Include="Core\OvsRefCount.h">
       <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>

@@ -26,6 +26,6 @@ limitations under the License.
 #include "OvsCore.h"
 #include "Driver.h"
 #include "Types.h"
-#include "OvsRcu.h"
+#include "OvsRefCount.h"
 
 void DbgPrintMultipleDestinations(NDIS_SWITCH_FORWARDING_DESTINATION_ARRAY* broadcastArray);

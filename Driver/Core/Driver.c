@@ -19,7 +19,6 @@ limitations under the License.
 #include "Driver.h"
 #include "OFDatapath.h"
 #include "Switch.h"
-#include "OvsRcu.h"
 
 UCHAR g_driverMajorNdisVersion = NDIS_FILTER_MAJOR_VERSION;
 UCHAR g_driverMinorNdisVersion = NDIS_FILTER_MINOR_VERSION;
@@ -43,8 +42,8 @@ VOID Driver_Uninit()
 		RemoveEntryList(&pDatapath->listEntry);
 		OVS_CHECK(IsListEmpty(&g_driver.datapathList));
 
-		OVS_RCU_DEREFERENCE_ONLY(pDatapath);
-		OVS_RCU_DESTROY(pDatapath);
+		OVS_REFCOUNT_DEREFERENCE_ONLY(pDatapath);
+		OVS_REFCOUNT_DESTROY(pDatapath);
 	}
 
 	if (!IsListEmpty(&g_driver.switchList))
@@ -127,7 +126,7 @@ VOID Driver_RemoveDatapath()
 		RemoveEntryList(&pDatapath->listEntry);
 		OVS_CHECK(IsListEmpty(&g_driver.datapathList));
 
-		OVS_RCU_DESTROY(pDatapath);
+		OVS_REFCOUNT_DESTROY(pDatapath);
 	}
 
 	DRIVER_UNLOCK();
@@ -155,7 +154,7 @@ OVS_SWITCH_INFO* Driver_GetDefaultSwitch_Ref(const char* funcName)
 	if (!IsListEmpty(&g_driver.switchList))
 	{
 		pSwitchInfo = CONTAINING_RECORD(g_driver.switchList.Flink, OVS_SWITCH_INFO, listEntry);
-		pSwitchInfo = Rcu_Reference(pSwitchInfo, funcName);
+		pSwitchInfo = RefCount_Reference(pSwitchInfo, funcName);
 	}
 
 	DRIVER_UNLOCK();

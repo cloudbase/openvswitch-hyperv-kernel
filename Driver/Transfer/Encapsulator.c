@@ -481,7 +481,7 @@ const OVS_DECAPSULATOR* Encap_FindDecapsulator(NET_BUFFER* pNb, BYTE* pEncapProt
                 *pEncapProtoType = OVS_IPPROTO_UDP;
                 pDecapsulator = Encap_GetDecapsulator_Vxlan();
 
-				OVS_RCU_DEREFERENCE(pPort);
+				OVS_REFCOUNT_DEREFERENCE(pPort);
             }
         }
 

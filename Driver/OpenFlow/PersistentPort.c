@@ -113,7 +113,7 @@ static OVS_PERSISTENT_PORT* _PersPort_FindTunnel_Ref(_In_ const LIST_ENTRY* pLis
         if (pList == &g_grePorts)
         {
             pPortEntry = CONTAINING_RECORD(pList->Flink, OVS_LOGICAL_PORT_ENTRY, listEntry);
-			pOutPort = OVS_RCU_REFERENCE(pPortEntry->pPort);
+			pOutPort = OVS_REFCOUNT_REFERENCE(pPortEntry->pPort);
 			goto Cleanup;
         }
 
@@ -130,7 +130,7 @@ static OVS_PERSISTENT_PORT* _PersPort_FindTunnel_Ref(_In_ const LIST_ENTRY* pLis
 
             if (pOptions->udpDestPort == pTunnelOptions->udpDestPort)
             {
-				pOutPort = OVS_RCU_REFERENCE(pPortEntry->pPort);
+				pOutPort = OVS_REFCOUNT_REFERENCE(pPortEntry->pPort);
 				goto Cleanup;
             }
         }
@@ -411,7 +411,7 @@ OVS_PERSISTENT_PORT* PersPort_Create_Ref(_In_opt_ const char* portName, _In_opt_
         goto Cleanup;
     }
 
-	pPort->rcu.Destroy = PersPort_DestroyNow_Unsafe;
+	pPort->refCount.Destroy = PersPort_DestroyNow_Unsafe;
 	pPort->pRwLock = NdisAllocateRWLock(NULL);
 
     //if name for port was not provided, we must have been given a number
@@ -453,7 +453,7 @@ OVS_PERSISTENT_PORT* PersPort_Create_Ref(_In_opt_ const char* portName, _In_opt_
     pPort->ovsPortNumber = (pPortNumber ? *pPortNumber : 0);
     pPort->ofPortType = portType;
 
-    pPort = OVS_RCU_REFERENCE(pPort);
+    pPort = OVS_REFCOUNT_REFERENCE(pPort);
 
     if (portType == OVS_OFPORT_TYPE_GRE)
     {
@@ -506,7 +506,7 @@ Cleanup:
 		PERSPORTS_UNLOCK(pPorts, &lockState);
 	}
 
-	OVS_RCU_DEREFERENCE(pSwitchInfo);
+	OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
 
 	return (ok ? pPort : NULL);
 }
@@ -564,7 +564,7 @@ OVS_PERSISTENT_PORT* PersPort_FindExternal_Ref()
 
 			if (pCurPort->isExternal == TRUE && pCurPort->portId != NDIS_SWITCH_DEFAULT_PORT_ID)
 			{
-				pOutPort = OVS_RCU_REFERENCE(pCurPort);
+				pOutPort = OVS_REFCOUNT_REFERENCE(pCurPort);
 
 				PORT_UNLOCK(pCurPort, &portLockState);
 				goto Cleanup;
@@ -588,7 +588,7 @@ Cleanup:
 		PERSPORTS_UNLOCK(pPorts, &lockState);
 	}
 
-	OVS_RCU_DEREFERENCE(pSwitchInfo);
+	OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
 
 	return pOutPort;
 }
@@ -632,7 +632,7 @@ OVS_PERSISTENT_PORT* PersPort_FindInternal_Ref()
 
 			if (pCurPort->ofPortType == OVS_OFPORT_TYPE_MANAG_OS && pCurPort->portId != NDIS_SWITCH_DEFAULT_PORT_ID)
 			{
-				pOutPort = OVS_RCU_REFERENCE(pCurPort);
+				pOutPort = OVS_REFCOUNT_REFERENCE(pCurPort);
 
 				PORT_UNLOCK(pCurPort, &portLockState);
 				goto Cleanup;
@@ -656,7 +656,7 @@ Cleanup:
 		PERSPORTS_UNLOCK(pPorts, &lockState);
 	}
 
-	OVS_RCU_DEREFERENCE(pSwitchInfo);
+	OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
 
 	return pOutPort;
 }
@@ -688,7 +688,7 @@ OVS_PERSISTENT_PORT* PersPort_FindVxlanByDestPort_Ref(LE16 udpDestPort)
 
         if (pOptions->udpDestPort == udpDestPort)
         {
-            return OVS_RCU_REFERENCE(pPortEntry->pPort);
+            return OVS_REFCOUNT_REFERENCE(pPortEntry->pPort);
         }
     }
 
@@ -788,7 +788,7 @@ OVS_PERSISTENT_PORT* PersPort_FindByName_Ref(const char* ofPortName)
 
 			if (0 == strcmp(pCurPort->ovsPortName, ofPortName))
 			{
-				pOutPort = OVS_RCU_REFERENCE(pCurPort);
+				pOutPort = OVS_REFCOUNT_REFERENCE(pCurPort);
 
 				PORT_UNLOCK(pCurPort, &portLockState);
 				goto Cleanup;
@@ -812,7 +812,7 @@ Cleanup:
 		PERSPORTS_UNLOCK(pPorts, &lockState);
 	}
 
-	OVS_RCU_DEREFERENCE(pSwitchInfo);
+	OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
 
 	return pOutPort;
 }
@@ -858,7 +858,7 @@ OVS_PERSISTENT_PORT* PersPort_FindById_Ref(NDIS_SWITCH_PORT_ID portId)
 
 			if (pCurPort->portId == portId)
 			{
-				pOutPort = OVS_RCU_REFERENCE(pCurPort);
+				pOutPort = OVS_REFCOUNT_REFERENCE(pCurPort);
 
 				PORT_UNLOCK(pCurPort, &portLockState);
 				goto Cleanup;
@@ -880,7 +880,7 @@ Cleanup:
 		PERSPORTS_UNLOCK(pPorts, &lockState);
 	}
 
-	OVS_RCU_DEREFERENCE(pSwitchInfo);
+	OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
 
 	return pOutPort;
 }
@@ -937,7 +937,7 @@ OVS_PERSISTENT_PORT* PersPort_FindById_Unsafe(NDIS_SWITCH_PORT_ID portId)
 	OVS_CHECK(countProcessed == pPorts->count);
 
 Cleanup:
-	OVS_RCU_DEREFERENCE(pSwitchInfo);
+	OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
 
 	return pOutPort;
 }
@@ -979,7 +979,7 @@ OVS_PERSISTENT_PORT* PersPort_FindByNumber_Ref(UINT16 portNumber)
 			//the ovs port number is never modified, so we don't need another lock for it
 			if (pCurPort->ovsPortNumber == portNumber)
             {
-				pOutPort = OVS_RCU_REFERENCE(pCurPort);
+				pOutPort = OVS_REFCOUNT_REFERENCE(pCurPort);
                 goto Cleanup;
             }
 
@@ -999,7 +999,7 @@ Cleanup:
 		PERSPORTS_UNLOCK(pPorts, &lockState);
 	}
 
-	OVS_RCU_DEREFERENCE(pSwitchInfo);
+	OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
 
 	return pOutPort;
 }
@@ -1050,15 +1050,15 @@ BOOLEAN PersPort_Delete(OVS_PERSISTENT_PORT* pPort)
     OVS_CHECK(pPorts->count > 0);
     --(pPorts->count);
 
-	OVS_RCU_DEREFERENCE_ONLY(pPort);
-	OVS_RCU_DESTROY(pPort);
+	OVS_REFCOUNT_DEREFERENCE_ONLY(pPort);
+	OVS_REFCOUNT_DESTROY(pPort);
 
 Cleanup:
 	if (portsLocked) {
 		PERSPORTS_UNLOCK(pPorts, &lockState);
 	}
 
-	OVS_RCU_DEREFERENCE(pSwitchInfo);
+	OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
 
     return ok;
 }
@@ -1091,7 +1091,7 @@ OVS_PERSISTENT_PORT* PersPort_GetInternal_Ref()
 		goto Cleanup;
     }
 
-	pInternalPort = OVS_RCU_REFERENCE(pPorts->portsArray[0]);
+	pInternalPort = OVS_REFCOUNT_REFERENCE(pPorts->portsArray[0]);
     if (pInternalPort)
     {
 		LOCK_STATE_EX portLockState = { 0 };
@@ -1108,7 +1108,7 @@ Cleanup:
 		PERSPORTS_UNLOCK(pPorts, &lockState);
 	}
 
-	OVS_RCU_DEREFERENCE(pSwitchInfo);
+	OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
 
     return pInternalPort;
 }

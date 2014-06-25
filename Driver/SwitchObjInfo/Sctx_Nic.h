@@ -38,7 +38,7 @@ typedef struct _OVS_NIC_INFO {
 
 typedef struct _OVS_NIC_LIST_ENTRY
 {
-	OVS_RCU								rcu;
+	OVS_REF_COUNT						refCount;
 
     LIST_ENTRY                          listEntry;
     UINT8                               macAddress[OVS_ETHERNET_ADDRESS_LENGTH];

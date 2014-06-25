@@ -55,7 +55,7 @@ NDIS_STATUS Sctx_AddNicUnsafe(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_
         goto Cleanup;
     }
 
-	pNicEntry->rcu.Destroy = NicEntry_DestroyNow_Unsafe;
+	pNicEntry->refCount.Destroy = NicEntry_DestroyNow_Unsafe;
     RtlCopyMemory(pNicEntry->macAddress, pCurNic->PermanentMacAddress, OVS_ETHERNET_ADDRESS_LENGTH);
 
     pNicEntry->portId = pCurNic->PortId;
@@ -318,7 +318,7 @@ NDIS_STATUS Sctx_DeleteNicUnsafe(_In_ const OVS_GLOBAL_FORWARD_INFO* pForwardInf
         goto Cleanup;
     }
 
-	OVS_RCU_DESTROY(pNicEntry);
+	OVS_REFCOUNT_DESTROY(pNicEntry);
 
 Cleanup:
     return status;

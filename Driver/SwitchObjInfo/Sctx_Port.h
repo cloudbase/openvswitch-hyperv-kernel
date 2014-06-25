@@ -26,7 +26,7 @@ typedef struct _OVS_PERSISTENT_PORT OVS_PERSISTENT_PORT;
 typedef struct _OVS_PORT_LIST_ENTRY
 {
 	//must be the first field in the struct
-	OVS_RCU							rcu;
+	OVS_REF_COUNT					refCount;
 
     LIST_ENTRY						listEntry;
 

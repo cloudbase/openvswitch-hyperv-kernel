@@ -196,7 +196,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\Debug.h" />
-    <ClInclude Include="Core\OvsRcu.h" />
+    <ClInclude Include="Core\OvsRefCount.h" />
     <ClInclude Include="OpenFlow\OFFlowTable.h" />
     <ClInclude Include="precomp.h" />
     <ClInclude Include="OpenFlow\OFAction.h" />

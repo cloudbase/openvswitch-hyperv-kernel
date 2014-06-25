@@ -52,7 +52,7 @@ extern ULONG g_debugLevel;
 
 #ifdef DBG
 
-#define OVS_USE_RCU_CALL_STACK		1
+#define OVS_USE_REFCOUNT_CALL_STACK		1
 
 #undef OVS_USE_ASSERTS
 #define OVS_USE_ASSERTS				1
@@ -70,7 +70,7 @@ extern ULONG g_debugLevel;
 #endif //OVS_USE_ASSERTS
 
 #else
-#define OVS_USE_RCU_CALL_STACK	0
+#define OVS_USE_REFCOUNT_CALL_STACK	0
 
 #define OVS_CHECK(x)
 

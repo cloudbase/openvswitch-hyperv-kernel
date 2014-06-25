@@ -700,7 +700,7 @@ NTSTATUS _WinlIrpWrite(PDEVICE_OBJECT pDeviceObject, PIRP pIrp)
     }
 
 Cleanup:
-	OVS_RCU_DEREFERENCE(pSwitchInfo);
+	OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
 
     if (pNlMsg)
     {

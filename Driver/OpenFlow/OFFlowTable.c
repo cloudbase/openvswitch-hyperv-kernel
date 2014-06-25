@@ -72,7 +72,7 @@ VOID FlowTable_DestroyNow_Unsafe(OVS_FLOW_TABLE* pFlowTable)
         pFlowEntry = RemoveHeadList(pFlowTable->pFlowList);
 
         OVS_FLOW* pFlow = CONTAINING_RECORD(pFlowEntry, OVS_FLOW, listEntry);
-		OVS_RCU_DESTROY(pFlow);
+		OVS_REFCOUNT_DESTROY(pFlow);
     }
 
     OVS_CHECK(IsListEmpty(pFlowTable->pMaskList));
@@ -112,7 +112,7 @@ OVS_FLOW* FlowTable_FindFlowMatchingMaskedPI_Ref(OVS_FLOW_TABLE* pFlowTable, con
 	FLOWTABLE_LOCK_READ(pFlowTable, &lockState);
 
 	pFlow = FlowTable_FindFlowMatchingMaskedPI_Unsafe(pFlowTable, pPacketInfo);
-	pFlow = OVS_RCU_REFERENCE(pFlow);
+	pFlow = OVS_REFCOUNT_REFERENCE(pFlow);
 
 	FLOWTABLE_UNLOCK(pFlowTable, &lockState);
 
@@ -207,7 +207,7 @@ OVS_FLOW_TABLE* FlowTable_Create()
 
     InitializeListHead(pFlowTable->pFlowList);
     InitializeListHead(pFlowTable->pMaskList);
-	pFlowTable->rcu.Destroy = FlowTable_DestroyNow_Unsafe;
+	pFlowTable->refCount.Destroy = FlowTable_DestroyNow_Unsafe;
 	pFlowTable->pRwLock = NdisAllocateRWLock(NULL);
 
 Cleanup:

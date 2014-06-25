@@ -112,7 +112,7 @@ OVS_ERROR Datapath_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     }
 
 Cleanup:
-	OVS_RCU_DEREFERENCE(pDatapath);
+	OVS_REFCOUNT_DEREFERENCE(pDatapath);
 
     if (replyMsg.pArgGroup)
     {
@@ -177,8 +177,8 @@ OVS_ERROR Datapath_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObjec
     }
 
 Cleanup:
-	OVS_RCU_DEREFERENCE_ONLY(pDatapath);
-	OVS_RCU_DESTROY(pDatapath);
+	OVS_REFCOUNT_DEREFERENCE_ONLY(pDatapath);
+	OVS_REFCOUNT_DESTROY(pDatapath);
 
     if (replyMsg.pArgGroup)
     {
@@ -224,7 +224,7 @@ OVS_ERROR Datapath_Get(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     }
 
 Cleanup:
-	OVS_RCU_DEREFERENCE(pDatapath);
+	OVS_REFCOUNT_DEREFERENCE(pDatapath);
 
     if (replyMsg.pArgGroup)
     {
@@ -265,7 +265,7 @@ OVS_ERROR Datapath_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     }
 
 Cleanup:
-	OVS_RCU_DEREFERENCE(pDatapath);
+	OVS_REFCOUNT_DEREFERENCE(pDatapath);
 
     if (replyMsg.pArgGroup)
     {
@@ -343,7 +343,7 @@ OVS_ERROR Datapath_Dump(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     }
 
 Cleanup:
-	OVS_RCU_DEREFERENCE(pDatapath);
+	OVS_REFCOUNT_DEREFERENCE(pDatapath);
 
     return error;
 }

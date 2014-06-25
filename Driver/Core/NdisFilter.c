@@ -222,7 +222,7 @@ NDIS_STATUS FilterAttach(NDIS_HANDLE ndisFilterHandle, NDIS_HANDLE hDriverContex
         goto Cleanup;
     }
 
-	pSwitchInfo->rcu.Destroy = Switch_DestroyNow_Unsafe;
+	pSwitchInfo->refCount.Destroy = Switch_DestroyNow_Unsafe;
 	pSwitchInfo->datapathIfIndex = 1;
 
     pSwitchInfo->filterHandle = ndisFilterHandle;
@@ -553,14 +553,14 @@ VOID FilterSendNetBufferLists(NDIS_HANDLE filterModuleContext, PNET_BUFFER_LIST 
     UNREFERENCED_PARAMETER(portNumber);
 
 	DRIVER_LOCK();
-	pSwitchInfo = OVS_RCU_REFERENCE(pSwitchInfo);
+	pSwitchInfo = OVS_REFCOUNT_REFERENCE(pSwitchInfo);
 	DRIVER_UNLOCK();
 
 	OVS_CHECK(pSwitchInfo);
 
     Nbls_SendIngress(pSwitchInfo, pSwitchInfo->pForwardInfo, netBufferLists, sendFlags);
 
-	OVS_RCU_DEREFERENCE(pSwitchInfo);
+	OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
 }
 
 _Use_decl_annotations_

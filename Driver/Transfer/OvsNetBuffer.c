@@ -382,7 +382,7 @@ OVS_NET_BUFFER* ONB_CreateFromBuffer(_In_ const OVS_BUFFER* pBuffer, ULONG addSi
 
 Cleanup:
 	if (pSwitchInfo) {
-		OVS_RCU_DEREFERENCE(pSwitchInfo);
+		OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
 	}
 
 	if (!ok)
@@ -482,7 +482,7 @@ OVS_NET_BUFFER* ONB_Create(ULONG bufSize)
 
 Cleanup:
 	if (pSwitchInfo) {
-		OVS_RCU_DEREFERENCE(pSwitchInfo);
+		OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
 	}
 
 	if (!ok)
@@ -566,7 +566,7 @@ NET_BUFFER_LIST* ONB_CreateNblFromNb(_In_ NET_BUFFER* pNb, USHORT contextSize)
 
 //Cleanup:
 	if (pSwitchInfo) {
-		OVS_RCU_DEREFERENCE(pSwitchInfo);
+		OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
 	}
 
 	return pNbl;
@@ -1148,7 +1148,7 @@ Cleanup:
         ONB_Destroy(pSwitchInfo, &pArpPacket);
     }
 
-	OVS_RCU_DEREFERENCE(pSwitchInfo);
+	OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
 
     return mustTransfer;
 }

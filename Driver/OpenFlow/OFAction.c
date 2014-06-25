@@ -204,7 +204,7 @@ static OVS_PERSISTENT_PORT* _FindDestPort_Ref(_In_ const OVS_PERSISTENT_PORT* pS
 	if (pDestPersPort->portId == NDIS_SWITCH_DEFAULT_PORT_ID &&
 		(pDestPersPort->ofPortType == OVS_OFPORT_TYPE_PHYSICAL || pDestPersPort->ofPortType == OVS_OFPORT_TYPE_MANAG_OS))
 	{
-		OVS_RCU_DEREFERENCE(pDestPersPort);
+		OVS_REFCOUNT_DEREFERENCE(pDestPersPort);
 
 		return NULL;
 	}
@@ -218,7 +218,7 @@ static OVS_PERSISTENT_PORT* _FindDestPort_Ref(_In_ const OVS_PERSISTENT_PORT* pS
 			pSourcePort->isExternal ||
 			pSourcePort->ofPortType == OVS_OFPORT_TYPE_MANAG_OS)
 		{
-			OVS_RCU_DEREFERENCE(pDestPersPort);
+			OVS_REFCOUNT_DEREFERENCE(pDestPersPort);
 
 			return NULL;
 		}
@@ -233,7 +233,7 @@ static OVS_PERSISTENT_PORT* _FindDestPort_Ref(_In_ const OVS_PERSISTENT_PORT* pS
 			if (pDestPersPort->isExternal ||
 				pDestPersPort->ofPortType == OVS_OFPORT_TYPE_MANAG_OS)
 			{
-				OVS_RCU_DEREFERENCE(pDestPersPort);
+				OVS_REFCOUNT_DEREFERENCE(pDestPersPort);
 
 				return NULL;
 			}
@@ -282,7 +282,7 @@ BOOLEAN ExecuteActions(_Inout_ OVS_NET_BUFFER* pOvsNb, _In_ const OutputToPortCa
 
                 ok = TRUE;
 
-				OVS_RCU_DEREFERENCE(pDestPersPort);
+				OVS_REFCOUNT_DEREFERENCE(pDestPersPort);
                 pDestPersPort = NULL;
             }
         }
@@ -342,7 +342,7 @@ BOOLEAN ExecuteActions(_Inout_ OVS_NET_BUFFER* pOvsNb, _In_ const OutputToPortCa
 
         ok = (*outputToPort)(pOvsNb);
 
-		OVS_RCU_DEREFERENCE(pDestPersPort);
+		OVS_REFCOUNT_DEREFERENCE(pDestPersPort);
 		pDestPersPort = NULL;
     }
 
@@ -355,7 +355,7 @@ BOOLEAN ExecuteActions(_Inout_ OVS_NET_BUFFER* pOvsNb, _In_ const OutputToPortCa
 Cleanup:
 	if (pDestPersPort)
 	{
-		OVS_RCU_DEREFERENCE(pDestPersPort);
+		OVS_REFCOUNT_DEREFERENCE(pDestPersPort);
 		pDestPersPort = NULL;
 	}
 
@@ -714,7 +714,7 @@ OVS_ACTIONS* Actions_Create()
 		return NULL;
 	}
 
-	pActions->rcu.Destroy = Actions_DestroyNow_Unsafe;
+	pActions->refCount.Destroy = Actions_DestroyNow_Unsafe;
 
 	return pActions;
 }
