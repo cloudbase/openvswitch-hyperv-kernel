@@ -25,6 +25,13 @@ limitations under the License.
 #include "Udp.h"
 #include "PersistentPort.h"
 
+volatile UINT16 g_uniqueIpv4Id = 0;
+
+static __inline UINT16 _GenerateUniqueIpv4Id()
+{
+	return (UINT16)InterlockedIncrement16((volatile SHORT*)&g_uniqueIpv4Id);
+}
+
 static const OVS_DECAPSULATOR g_greDecapsulator = {
     .ReadEncapsHeader = Gre_ReadHeader,
 };
@@ -87,7 +94,8 @@ static VOID _BuildOuterIpv4Header(_In_ const OF_PI_IPV4_TUNNEL* pTunnel, _Out_ O
     */
     //i.e. identification is considered for the same ip src & dest + proto
     //update: RFC6864 - use only for fragmentation.
-    pDeliveryIp4Header->Identification = 0;
+	//TODO: consider using FwpsConstructIpHeaderForTransport
+	pDeliveryIp4Header->Identification = _GenerateUniqueIpv4Id();
     // If TTL contains the value zero, then the datagram must be destroyed.
     pDeliveryIp4Header->TimeToLive = pTunnel->ipv4TimeToLive;
     pDeliveryIp4Header->Protocol = encapProto;
