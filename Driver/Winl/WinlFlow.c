@@ -53,6 +53,7 @@ OVS_ERROR Flow_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     pPacketInfoArgs = FindArgumentGroup(pMsg->pArgGroup, OVS_ARGTYPE_GROUP_PI);
     if (!pPacketInfoArgs)
     {
+		DEBUGP(LOG_ERROR, "flow create fail: no Packet Info arg!\n");
         return OVS_ERROR_INVAL;
     }
 
@@ -61,8 +62,11 @@ OVS_ERROR Flow_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
     FlowMatch_Initialize(&flowMatch, &packetInfo, &flowMask);
 
-    if (!GetFlowMatchFromArguments(&flowMatch, pPacketInfoArgs, pPacketInfoMaskArgs))
-        return OVS_ERROR_INVAL;
+	if (!GetFlowMatchFromArguments(&flowMatch, pPacketInfoArgs, pPacketInfoMaskArgs))
+	{
+		DEBUGP(LOG_ERROR, "flow create fail: flow match!\n");
+		return OVS_ERROR_INVAL;
+	}
 
     pFlowActionGroupArg = FindArgumentGroupAsArg(pMsg->pArgGroup, OVS_ARGTYPE_GROUP_ACTIONS);
     if (pFlowActionGroupArg)
@@ -71,6 +75,7 @@ OVS_ERROR Flow_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 		
 		pActions = Actions_Create();
 		if (NULL == pActions) {
+			DEBUGP(LOG_ERROR, "flow create fail: create actions!\n");
 			return OVS_ERROR_INVAL;
 		}
 
@@ -78,6 +83,8 @@ OVS_ERROR Flow_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
         if (!CopyArgumentGroup(pActions->pActionGroup, pOriginalGroup, /*actionsToAdd*/0))
         {
+			DEBUGP(LOG_ERROR, "flow create fail: copy actions!\n");
+
 			Actions_DestroyNow_Unsafe(pActions);
             error = OVS_ERROR_INVAL;
             goto Cleanup;
@@ -85,7 +92,7 @@ OVS_ERROR Flow_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
         if (!ProcessReceivedActions(pActions->pActionGroup, &maskedPacketInfo, /*recursivity depth*/0))
         {
-            DEBUGP(LOG_ERROR, __FUNCTION__ " _ProcessActions failed!\n");
+            DEBUGP(LOG_ERROR, __FUNCTION__ " failed processing the received actions!\n");
             error = OVS_ERROR_INVAL;
             goto Cleanup;
         }
@@ -93,12 +100,14 @@ OVS_ERROR Flow_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
     else
     {
+		DEBUGP(LOG_ERROR, "flow create fail: have no actions arg!\n");
         return OVS_ERROR_INVAL;
     }
 
     pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
     if (!pDatapath)
     {
+		DEBUGP(LOG_ERROR, "flow create fail: no datapath!\n");
         error = OVS_ERROR_NODEV;
         goto Cleanup;
     }
@@ -116,6 +125,7 @@ OVS_ERROR Flow_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         pFlow = Flow_Create();
         if (!pFlow)
         {
+			DEBUGP(LOG_ERROR, "flow create fail: Flow_Create!\n");
             error = OVS_ERROR_INVAL;
             goto Cleanup;
         }
@@ -134,6 +144,7 @@ OVS_ERROR Flow_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
             pFlowMask = FlowMask_Create();
             if (!pFlowMask)
             {
+				DEBUGP(LOG_ERROR, "flow mask creation failed!\n");
                 error = OVS_ERROR_INVAL;
                 goto Cleanup;
             }
@@ -200,6 +211,7 @@ OVS_ERROR Flow_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 	/*** reply ***/
     if (!CreateMsgFromFlow(pFlow, OVS_MESSAGE_COMMAND_NEW, &replyMsg, pMsg->sequence, pDatapath->switchIfIndex, pMsg->pid))
     {
+		DEBUGP(LOG_ERROR, "flow new fail: create msg!\n");
         error = OVS_ERROR_INVAL;
         goto Cleanup;
     }
@@ -211,6 +223,8 @@ OVS_ERROR Flow_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         error = WriteMsgsToDevice((OVS_NLMSGHDR*)&replyMsg, 1, pFileObject, OVS_MULTICAST_GROUP_NONE);
         if (error != OVS_ERROR_NOERROR)
         {
+			DEBUGP(LOG_ERROR, "flow new fail: buffer write!\n");
+
             error = OVS_ERROR_INVAL;
             goto Cleanup;
         }
@@ -268,6 +282,7 @@ OVS_ERROR Flow_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     pPacketInfoArgs = FindArgumentGroup(pMsg->pArgGroup, OVS_ARGTYPE_GROUP_PI);
     if (!pPacketInfoArgs)
     {
+		DEBUGP(LOG_ERROR, "flow set fail: no Packet Info arg!\n");
         return OVS_ERROR_INVAL;
     }
 
@@ -278,6 +293,7 @@ OVS_ERROR Flow_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
     if (!GetFlowMatchFromArguments(&flowMatch, pPacketInfoArgs, pPacketInfoMaskArgs))
     {
+		DEBUGP(LOG_ERROR, "flow set fail: flow match!\n");
         return OVS_ERROR_INVAL;
     }
 
@@ -290,18 +306,20 @@ OVS_ERROR Flow_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
 		pActions = Actions_Create();
 		if (NULL == pActions) {
+			DEBUGP(LOG_ERROR, "flow set fail: actions create!\n");
 			return OVS_ERROR_INVAL;
 		}
 
         if (!CopyArgumentGroup(pActions->pActionGroup, pOriginalGroup, /*actionsToAdd*/0))
         {
+			DEBUGP(LOG_ERROR, "flow set fail: copy  actions!\n");
             error = OVS_ERROR_INVAL;
             goto Cleanup;
         }
 
         if (!ProcessReceivedActions(pActions->pActionGroup, &maskedPacketInfo, /*recursivity depth*/0))
         {
-            DEBUGP(LOG_ERROR, __FUNCTION__ " ProcessReceivedActions failed.\n");
+            DEBUGP(LOG_ERROR, __FUNCTION__ " failed processing the received actions.\n");
             error = OVS_ERROR_INVAL;
             goto Cleanup;
         }
@@ -310,6 +328,7 @@ OVS_ERROR Flow_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
     if (!pDatapath)
     {
+		DEBUGP(LOG_ERROR, "flow set fail: no datapath!\n");
         error = OVS_ERROR_NODEV;
         goto Cleanup;
     }
@@ -364,6 +383,7 @@ OVS_ERROR Flow_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 	/*** reply ***/
     if (!CreateMsgFromFlow(pFlow, OVS_MESSAGE_COMMAND_NEW, &replyMsg, pMsg->sequence, pDatapath->switchIfIndex, pMsg->pid))
     {
+		DEBUGP(LOG_ERROR, "flow set fail: create msg!\n");
         error = OVS_ERROR_INVAL;
         goto Cleanup;
     }
@@ -374,6 +394,7 @@ OVS_ERROR Flow_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     error = WriteMsgsToDevice((OVS_NLMSGHDR*)&replyMsg, 1, pFileObject, OVS_MULTICAST_GROUP_NONE);
     if (error != OVS_ERROR_NOERROR)
     {
+		DEBUGP(LOG_ERROR, "flow set fail: buffer write!\n");
         error = OVS_ERROR_INVAL;
         goto Cleanup;
     }
@@ -416,6 +437,7 @@ OVS_ERROR Flow_Get(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     pPacketInfoArgs = FindArgumentGroup(pMsg->pArgGroup, OVS_ARGTYPE_GROUP_PI);
     if (!pPacketInfoArgs)
     {
+		DEBUGP(LOG_ERROR, "flow get fail: no Packet Info arg!\n");
         return OVS_ERROR_INVAL;
     }
 
@@ -423,12 +445,14 @@ OVS_ERROR Flow_Get(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
     if (!GetFlowMatchFromArguments(&flowMatch, pPacketInfoArgs, NULL))
     {
+		DEBUGP(LOG_ERROR, "flow get fail: flow match!\n");
         return OVS_ERROR_INVAL;
     }
 
     pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
     if (!pDatapath)
     {
+		DEBUGP(LOG_ERROR, "flow get fail: no datapath!\n");
         return OVS_ERROR_NODEV;
     }
 
@@ -455,12 +479,14 @@ OVS_ERROR Flow_Get(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
     if (!pFlow)
     {
+		DEBUGP(LOG_ERROR, "flow get fail: flow not found!\n");
         error = OVS_ERROR_NOENT;
         goto Cleanup;
     }
 
     if (!CreateMsgFromFlow(pFlow, OVS_MESSAGE_COMMAND_NEW, &replyMsg, pMsg->sequence, pDatapath->switchIfIndex, pMsg->pid))
     {
+		DEBUGP(LOG_ERROR, "flow get fail: create msg!\n");
         error = OVS_ERROR_INVAL;
         goto Cleanup;
     }
@@ -470,6 +496,7 @@ OVS_ERROR Flow_Get(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     error = WriteMsgsToDevice((OVS_NLMSGHDR*)&replyMsg, 1, pFileObject, OVS_MULTICAST_GROUP_NONE);
     if (error != OVS_ERROR_NOERROR)
     {
+		DEBUGP(LOG_ERROR, "flow get fail: buffer write!\n");
         error = OVS_ERROR_INVAL;
         goto Cleanup;
     }
@@ -505,6 +532,7 @@ OVS_ERROR Flow_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
     if (!pDatapath)
     {
+		DEBUGP(LOG_ERROR, "flow delete fail: no datapath!\n");
         return OVS_ERROR_NODEV;
     }
 
@@ -513,6 +541,7 @@ OVS_ERROR Flow_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         pPacketInfoArgs = FindArgumentGroup(pMsg->pArgGroup, OVS_ARGTYPE_GROUP_PI);
         if (!pPacketInfoArgs)
         {
+			DEBUGP(LOG_ERROR, "flow delete fail: no Packet Info arg!\n");
 			error = OVS_ERROR_INVAL;
 			goto Cleanup;
         }
@@ -522,6 +551,7 @@ OVS_ERROR Flow_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     {
 		if (!Datapath_FlushFlows(pDatapath))
 		{
+			DEBUGP(LOG_ERROR, "flow 'delete all' failed!\n");
 			error = OVS_ERROR_INVAL;
 			goto Cleanup;
 		}
@@ -536,6 +566,7 @@ OVS_ERROR Flow_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
     if (!GetFlowMatchFromArguments(&flowMatch, pPacketInfoArgs, NULL))
     {
+		DEBUGP(LOG_ERROR, "flow delete fail: flow match!\n");
 		error = OVS_ERROR_INVAL;
 		goto Cleanup;
     }
@@ -563,12 +594,14 @@ OVS_ERROR Flow_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
     if (!pFlow)
     {
+		DEBUGP(LOG_ERROR, "flow delete fail: flow not found!\n");
         error = OVS_ERROR_NOENT;
         goto Cleanup;
     }
 
     if (!CreateMsgFromFlow(pFlow, OVS_MESSAGE_COMMAND_DELETE, &replyMsg, pMsg->sequence, pDatapath->switchIfIndex, pMsg->pid))
     {
+		DEBUGP(LOG_ERROR, "flow delete: create msg fail!\n");
         error = OVS_ERROR_INVAL;
         goto Cleanup;
     }
@@ -588,6 +621,7 @@ OVS_ERROR Flow_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     error = WriteMsgsToDevice((OVS_NLMSGHDR*)&replyMsg, 1, pFileObject, OVS_MULTICAST_GROUP_NONE);
     if (error != OVS_ERROR_NOERROR)
     {
+		DEBUGP(LOG_ERROR, "flow delete fail: buffer write!\n");
         error = OVS_ERROR_INVAL;
         goto Cleanup;
     }
@@ -620,6 +654,7 @@ OVS_ERROR Flow_Dump(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
     if (!pDatapath)
     {
+		DEBUGP(LOG_ERROR, "flow dump fail: no datapath!\n");
         return OVS_ERROR_NODEV;
     }
 
@@ -636,6 +671,7 @@ OVS_ERROR Flow_Dump(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         msgs = KZAlloc(countMsgs * sizeof(OVS_MESSAGE));
         if (!msgs)
         {
+			DEBUGP(LOG_ERROR, "flow dump fail: could not alloc messages!\n");
             error = OVS_ERROR_INVAL;
             goto Cleanup;
         }
@@ -653,6 +689,7 @@ OVS_ERROR Flow_Dump(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
             {
 				FLOWTABLE_UNLOCK(pFlowTable, &lockState);
 
+				DEBUGP(LOG_ERROR, "flow dump fail: create msg!\n");
                 error = OVS_ERROR_INVAL;
                 goto Cleanup;
             }
@@ -695,6 +732,11 @@ OVS_ERROR Flow_Dump(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
         error = WriteMsgsToDevice((OVS_NLMSGHDR*)&msgDone, 1, pFileObject, OVS_MULTICAST_GROUP_NONE);
     }
+
+	if (error != OVS_ERROR_NOERROR)
+	{
+		DEBUGP(LOG_ERROR, "flow dump fail: buffer write!\n");
+	}
 
 Cleanup:
 	OVS_REFCOUNT_DEREFERENCE(pFlowTable);
