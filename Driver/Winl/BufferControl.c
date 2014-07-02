@@ -398,9 +398,11 @@ OVS_ERROR _BufferCtl_ReadUnicast_Unsafe(_Inout_ OVS_BUFFER* pBuffer, _Inout_ VOI
 		}
 		__except (EXCEPTION_EXECUTE_HANDLER)
 		{
+#ifdef DBG
 			ULONG status = GetExceptionCode();
 			DEBUGP(LOG_ERROR, "ucast read mem copy exception: 0x%x\n", status);
 			OVS_CHECK(__UNEXPECTED__);
+#endif
 
 			return OVS_ERROR_IO;
 		}
@@ -462,9 +464,11 @@ OVS_ERROR _BufferCtl_ReadMulticast_Unsafe(_Inout_ OVS_BUFFER* pBuffer, _Inout_ V
 
 		__except (EXCEPTION_EXECUTE_HANDLER)
 		{
+#ifdef DBG
 			ULONG status = GetExceptionCode();
 			DEBUGP(LOG_ERROR, "mcast read mem copy exception: 0x%x\n", status);
 			OVS_CHECK(__UNEXPECTED__);
+#endif
 
 			return OVS_ERROR_IO;
 		}
