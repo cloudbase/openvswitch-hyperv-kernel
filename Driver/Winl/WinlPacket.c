@@ -35,8 +35,6 @@ limitations under the License.
 #include "Gre.h"
 #include "Vxlan.h"
 
-extern OVS_SWITCH_INFO* g_pSwitchInfo;
-
 static volatile LONG g_upcallSequence = 0;
 
 static LONG _NextUpcallSequence()
@@ -59,11 +57,12 @@ VOID Packet_Execute(_In_ OVS_ARGUMENT_GROUP* pArgGroup, const FILE_OBJECT* pFile
     BOOLEAN ok = FALSE;
     LOCK_STATE_EX lockState = { 0 };
     OVS_BUFFER buffer = { 0 };
-    OVS_GLOBAL_FORWARD_INFO* pFwdContext = NULL;
     OVS_NIC_INFO sourcePort = { 0 };
     ULONG additionalSize = max(Gre_BytesNeeded(0xFFFF), Vxlan_BytesNeeded(0xFFFF));
     OVS_ARGUMENT* pArg = NULL;
-    OVS_ARGUMENT_GROUP* pPacketInfoArgs = NULL, *pActionsArgs = NULL, *pTargetActions = NULL;
+    OVS_ARGUMENT_GROUP* pPacketInfoArgs = NULL, *pActionsArgs = NULL;
+	OVS_ACTIONS* pTargetActions = NULL;
+	OVS_SWITCH_INFO* pSwitchInfo = NULL;
 
     UNREFERENCED_PARAMETER(pFileObject);
 
@@ -125,21 +124,20 @@ VOID Packet_Execute(_In_ OVS_ARGUMENT_GROUP* pArgGroup, const FILE_OBJECT* pFile
         goto Cleanup;
     }
 
-    pTargetActions = AllocArgumentGroup();
+	pTargetActions = Actions_Create();
     if (NULL == pTargetActions)
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " fail: could not alloc group for target actions!\n");
-        return;
+        goto Cleanup;
     }
 
-    if (!CopyArgumentGroup(pTargetActions, pActionsArgs, /*actionsToAdd*/0))
+    if (!CopyArgumentGroup(pTargetActions->pActionGroup, pActionsArgs, /*actionsToAdd*/0))
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " fail: could not copy actions group\n");
-        DestroyArgumentGroup(pTargetActions);
-        return;
+        goto Cleanup;
     }
 
-    ok = ProcessReceivedActions(pTargetActions, &pFlow->maskedPacketInfo, /*recursivity depth*/0);
+    ok = ProcessReceivedActions(pTargetActions->pActionGroup, &pFlow->maskedPacketInfo, /*recursivity depth*/0);
     if (!ok)
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ "ProcessReceivedActions failed!\n");
@@ -148,7 +146,8 @@ VOID Packet_Execute(_In_ OVS_ARGUMENT_GROUP* pArgGroup, const FILE_OBJECT* pFile
 
     pFlow->pActions = pTargetActions;
 
-    pOvsNb->pFlow = pFlow;
+	//while we will process the packet, we do not allow its actions to be destroyed
+	pOvsNb->pActions = OVS_REFCOUNT_REFERENCE(pTargetActions);
     pOvsNb->pOriginalPacketInfo = &pFlow->maskedPacketInfo;
     pOvsNb->packetPriority = pFlow->maskedPacketInfo.physical.packetPriority;
     pOvsNb->packetMark = pFlow->maskedPacketInfo.physical.packetMark;
@@ -156,26 +155,43 @@ VOID Packet_Execute(_In_ OVS_ARGUMENT_GROUP* pArgGroup, const FILE_OBJECT* pFile
     pOvsNb->pDestinationPort = NULL;
     pOvsNb->sendToPortNormal = FALSE;
     pOvsNb->pSourceNic = &sourcePort;
-    pOvsNb->pSwitchInfo = g_pSwitchInfo;
+
+	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
+	if (!pSwitchInfo) {
+		goto Cleanup;
+	}
+
+    pOvsNb->pSwitchInfo = pSwitchInfo;
     pOvsNb->sendFlags = 0;
 
     if (pOvsNb->pOriginalPacketInfo->physical.ovsInPort != OVS_INVALID_PORT_NUMBER)
     {
-        Rwlock_LockRead(g_pSwitchInfo->pForwardInfo->pRwLock, &lockState);
+		OVS_PERSISTENT_PORT* pSourcePersPort = PersPort_FindByNumber_Ref(pOvsNb->pOriginalPacketInfo->physical.ovsInPort);
+		NDIS_SWITCH_PORT_ID portId = NDIS_SWITCH_DEFAULT_PORT_ID;
 
-        OVS_PERSISTENT_PORT* pPersPort = PersPort_FindByNumber_Unsafe(pOvsNb->pOriginalPacketInfo->physical.ovsInPort);
-        if (pPersPort && pPersPort->pNicListEntry)
-        {
-            NicListEntry_To_NicInfo(pPersPort->pNicListEntry, &sourcePort);
-        }
+		//NOTE: actually, the portId of pers port CAN change (when mapping it to a hyper-v switch port)
+		//pershaps make it volatile and use it with interlocked ops?
+		if (pSourcePersPort && pSourcePersPort->portId != NDIS_SWITCH_DEFAULT_PORT_ID)
+		{
+			OVS_NIC_LIST_ENTRY* pNicEntry = NULL;
 
-        pOvsNb->pSourcePort = pPersPort;
+			portId = pSourcePersPort->portId;
 
-        Rwlock_Unlock(g_pSwitchInfo->pForwardInfo->pRwLock, &lockState);
+			FWDINFO_LOCK_READ(pSwitchInfo->pForwardInfo, &lockState);
+
+			//actually, pNicEntry might have been deleted, even before Packet_Execute
+			pNicEntry = Sctx_FindNicByPortId_Unsafe(pSwitchInfo->pForwardInfo, portId);
+			if (pNicEntry) {
+				NicListEntry_To_NicInfo(pNicEntry, &sourcePort);
+			}
+
+			FWDINFO_UNLOCK(pSwitchInfo->pForwardInfo, &lockState);
+		}
+
+		pOvsNb->pSourcePort = pSourcePersPort;
     }
 
-    pDatapath = GetDefaultDatapath();
-
+    pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
     if (!pDatapath)
     {
         ok = FALSE;
@@ -183,19 +199,28 @@ VOID Packet_Execute(_In_ OVS_ARGUMENT_GROUP* pArgGroup, const FILE_OBJECT* pFile
         goto Cleanup;
     }
 
-    OVS_CHECK(g_pSwitchInfo);
-    pFwdContext = g_pSwitchInfo->pForwardInfo;
-    OVS_CHECK(pFwdContext);
-
-    FlowTable_LockRead(&lockState);
-
     pOvsNb->pTunnelInfo = NULL;
-    ok = ExecuteActions(pOvsNb, OutputPacketToPort);
 
-    FlowTable_Unlock(&lockState);
+	if (pOvsNb->pSwitchInfo) {
+		ok = ExecuteActions(pOvsNb, OutputPacketToPort);
+	}
+
+	else {
+		ok = FALSE;
+	}
 
 Cleanup:
-    Flow_Free(pFlow);
+	OVS_REFCOUNT_DEREFERENCE(pTargetActions);
+
+	if (pFlow)
+		Flow_DestroyNow_Unsafe(pFlow);
+
+	OVS_REFCOUNT_DEREFERENCE(pDatapath);
+
+	if (pOvsNb->pSourcePort)
+	{
+		OVS_REFCOUNT_DEREFERENCE(pOvsNb->pSourcePort);
+	}
 
     if (ok)
     {
@@ -205,11 +230,21 @@ Cleanup:
 
     else
     {
-        ONB_Destroy(g_pSwitchInfo, &pOvsNb);
+		if (pSwitchInfo) {
+			ONB_Destroy(pSwitchInfo, &pOvsNb);
+		}
+
+		if (pTargetActions)
+		{
+			OVS_REFCOUNT_DEREFERENCE_ONLY(pTargetActions);
+			OVS_REFCOUNT_DESTROY(pTargetActions);
+		}
     }
+
+	OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
 }
 
-static OVS_ERROR _QueueUserspacePacket(NET_BUFFER* pNb, const OVS_UPCALL_INFO* pUpcallInfo)
+static OVS_ERROR _QueueUserspacePacket(_In_ NET_BUFFER* pNb, _In_ const OVS_UPCALL_INFO* pUpcallInfo)
 {
     BOOLEAN dbgPrintPacket = FALSE;
     OVS_ERROR error = OVS_ERROR_NOERROR;
@@ -219,7 +254,13 @@ static OVS_ERROR _QueueUserspacePacket(NET_BUFFER* pNb, const OVS_UPCALL_INFO* p
     UINT i = 0;
     OVS_ETHERNET_HEADER* pEthHeader = NULL;
     VOID* nbBuffer = NULL;
-    ULONG bufLen = NET_BUFFER_DATA_LENGTH(pNb);
+	OVS_DATAPATH* pDatapath = NULL;
+	ULONG bufLen = NET_BUFFER_DATA_LENGTH(pNb);
+
+	pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
+	if (!pDatapath) {
+		return OVS_ERROR_INVAL;
+	}
 
     nbBuffer = NdisGetDataBuffer(pNb, bufLen, NULL, 1, 0);
     OVS_CHECK(nbBuffer);
@@ -255,7 +296,9 @@ static OVS_ERROR _QueueUserspacePacket(NET_BUFFER* pNb, const OVS_UPCALL_INFO* p
     msg.version = 1;
     msg.reserved = 0;
 
-    msg.dpIfIndex = g_pSwitchInfo->datapathIfIndex;
+	//NOTE: make sure pDatapath->switchIfIndex == pSwitchInfo->datapathIfIndex
+	msg.dpIfIndex = pDatapath->switchIfIndex;
+	OVS_REFCOUNT_DEREFERENCE(pDatapath);
 
     msg.pArgGroup = AllocArgumentGroup();
 
@@ -314,6 +357,8 @@ static OVS_ERROR _QueueUserspacePacket(NET_BUFFER* pNb, const OVS_UPCALL_INFO* p
     }
 
 Out:
+	OVS_REFCOUNT_DEREFERENCE(pDatapath);
+
     if (msg.pArgGroup)
     {
         DestroyArgumentGroup(msg.pArgGroup);
@@ -357,11 +402,11 @@ Out:
     return error;
 }
 
-BOOLEAN QueuePacketToUserspace(NET_BUFFER* pNb, const OVS_UPCALL_INFO* pUpcallInfo)
+BOOLEAN QueuePacketToUserspace(_In_ NET_BUFFER* pNb, _In_ const OVS_UPCALL_INFO* pUpcallInfo)
 {
     int dpifindex = 0;
     BOOLEAN ok = TRUE;
-    OVS_DATAPATH* pDatapath = GetDefaultDatapath();
+    OVS_DATAPATH* pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
 
     //__DONT_QUEUE_BY_DEFAULT is used for debugging purposes only
 #define __DONT_QUEUE_BY_DEFAULT 0
@@ -397,12 +442,14 @@ Cleanup:
     {
         LOCK_STATE_EX lockState = { 0 };
 
-        Rwlock_LockWrite(pDatapath->pStatsRwLock, &lockState);
+        DATAPATH_LOCK_WRITE(pDatapath, &lockState);
 
         ++pDatapath->statistics.countLost;
 
-        Rwlock_Unlock(pDatapath->pStatsRwLock, &lockState);
+        DATAPATH_UNLOCK(pDatapath, &lockState);
     }
+
+	OVS_REFCOUNT_DEREFERENCE(pDatapath);
 
     return ok;
 }

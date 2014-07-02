@@ -43,7 +43,7 @@ limitations under the License.
 
 #define OVS_ACTION_SAMPLE_MAX_DEPTH		3
 
-static BOOLEAN _ExecuteAction_OutToUserspace(NET_BUFFER* pNb, OVS_OFPACKET_INFO* pPacketInfo, const OVS_ARGUMENT_GROUP* pArguments)
+static BOOLEAN _ExecuteAction_OutToUserspace(_In_ NET_BUFFER* pNb, _In_ const OVS_OFPACKET_INFO* pPacketInfo, _In_ const OVS_ARGUMENT_GROUP* pArguments)
 {
     OVS_UPCALL_INFO upcallInfo = { 0 };
     BOOLEAN ok = FALSE;
@@ -179,10 +179,74 @@ static BOOLEAN _ExecuteAction_Sample(_Inout_ OVS_NET_BUFFER *pOvsNb, _In_ const 
     return ExecuteActions(pOvsNb, outputToPort);
 }
 
+static OVS_PERSISTENT_PORT* _FindDestPort_Ref(_In_ const OVS_PERSISTENT_PORT* pSourcePort, UINT32 persPortNumber)
+{
+	UINT16 validPortNumber = OVS_INVALID_PORT_NUMBER;
+	OVS_PERSISTENT_PORT* pDestPersPort = NULL;
+
+	//NOTE: we don't need to lock neither pSourcePort, nor pDestPort, because these fields (id, type, isExternal) never change
+	if (persPortNumber >= OVS_MAX_PORTS)
+	{
+		DEBUGP(LOG_ERROR, __FUNCTION__ " invalid port number from userspace: %u\n", persPortNumber);
+		return NULL;
+	}
+
+	validPortNumber = (UINT16)persPortNumber;
+
+	pDestPersPort = PersPort_FindByNumber_Ref(validPortNumber);
+	if (!pDestPersPort)
+	{
+		DEBUGP(LOG_ERROR, "could not find pers port: %u!\n", validPortNumber);
+		return NULL;
+	}
+
+	//if we know from now that the dest port is not connected (i.e. has no associated NIC), we won't attempt to send through the port
+	if (pDestPersPort->portId == NDIS_SWITCH_DEFAULT_PORT_ID &&
+		(pDestPersPort->ofPortType == OVS_OFPORT_TYPE_PHYSICAL || pDestPersPort->ofPortType == OVS_OFPORT_TYPE_MANAG_OS))
+	{
+		OVS_REFCOUNT_DEREFERENCE(pDestPersPort);
+
+		return NULL;
+	}
+
+	//if the src port = internal / external, we won't output to gre / vxlan:
+	//for external: we would be sending the packet back whence it came
+	//for internal: when outputting via NORMAL from hypervisor to hypervisor, we don't want to send to the hypervisor both via external and gre 
+	if (pDestPersPort->ofPortType == OVS_OFPORT_TYPE_GRE || pDestPersPort->ofPortType == OVS_OFPORT_TYPE_VXLAN)
+	{
+		if (pSourcePort->portId != NDIS_SWITCH_DEFAULT_PORT_ID &&
+			pSourcePort->isExternal ||
+			pSourcePort->ofPortType == OVS_OFPORT_TYPE_MANAG_OS)
+		{
+			OVS_REFCOUNT_DEREFERENCE(pDestPersPort);
+
+			return NULL;
+		}
+	}
+
+	//if the src port = gre / vxlan, we must not send to internal, nor to external (we would be sending back to the same hyper-v switch port)
+	if (pSourcePort->ofPortType == OVS_OFPORT_TYPE_GRE ||
+		pSourcePort->ofPortType == OVS_OFPORT_TYPE_VXLAN)
+	{
+		if (pDestPersPort && pDestPersPort->portId != NDIS_SWITCH_DEFAULT_PORT_ID)
+		{
+			if (pDestPersPort->isExternal ||
+				pDestPersPort->ofPortType == OVS_OFPORT_TYPE_MANAG_OS)
+			{
+				OVS_REFCOUNT_DEREFERENCE(pDestPersPort);
+
+				return NULL;
+			}
+		}
+	}
+
+	return pDestPersPort;
+}
+
 BOOLEAN ExecuteActions(_Inout_ OVS_NET_BUFFER* pOvsNb, _In_ const OutputToPortCallback outputToPort)
 {
     BOOLEAN ok = TRUE;
-    const OVS_ARGUMENT_GROUP *pActionArgs = pOvsNb->pFlow->pActions;
+	const OVS_ARGUMENT_GROUP* pActionArgs = pOvsNb->pActions->pActionGroup;
     OVS_PERSISTENT_PORT* pDestPersPort = NULL;
     UINT32 persPortNumber = (UINT32)-1;
 
@@ -218,6 +282,7 @@ BOOLEAN ExecuteActions(_Inout_ OVS_NET_BUFFER* pOvsNb, _In_ const OutputToPortCa
 
                 ok = TRUE;
 
+				OVS_REFCOUNT_DEREFERENCE(pDestPersPort);
                 pDestPersPort = NULL;
             }
         }
@@ -226,61 +291,18 @@ BOOLEAN ExecuteActions(_Inout_ OVS_NET_BUFFER* pOvsNb, _In_ const OutputToPortCa
         {
         case OVS_ARGTYPE_ACTION_OUTPUT_TO_PORT:
         {
-            UINT16 validPortNumber = 0;
             persPortNumber = GET_ARG_DATA(pArg, UINT32);
 
-            if (persPortNumber < OVS_MAX_PORTS)
-            {
-                validPortNumber = (UINT16)persPortNumber;
+			if (persPortNumber < OVS_MAX_PORTS)
+			{
+				pDestPersPort = _FindDestPort_Ref(pOvsNb->pSourcePort, persPortNumber);
+			}
 
-                pDestPersPort = PersPort_FindByNumber_Unsafe(validPortNumber);
-                if (!pDestPersPort)
-                {
-                    DEBUGP(LOG_ERROR, "could not find pers port: %u!\n", validPortNumber);
-                }
-
-                //if we know from now that the dest port is not connected (i.e. has no associated NIC), we won't attempt to send through the port
-                else if (!pDestPersPort->pNicListEntry &&
-                    (pDestPersPort->ofPortType == OVS_OFPORT_TYPE_PHYSICAL || pDestPersPort->ofPortType == OVS_OFPORT_TYPE_MANAG_OS))
-                {
-                    pDestPersPort = NULL;
-                }
-
-                //if the src port = internal / external, we won't output to gre / vxlan:
-                //for external: we would be sending the packet back whence it came
-                //for internal: when outputting via NORMAL from hypervisor to hypervisor, we don't want to send to the hypervisor both via external and gre
-                else if (pDestPersPort->ofPortType == OVS_OFPORT_TYPE_GRE || pDestPersPort->ofPortType == OVS_OFPORT_TYPE_VXLAN)
-                {
-                    if (pOvsNb->pSourcePort->pNicListEntry)
-                    {
-                        if (pOvsNb->pSourcePort->pNicListEntry->nicType == NdisSwitchNicTypeExternal ||
-                            pOvsNb->pSourcePort->pNicListEntry->nicType == NdisSwitchNicTypeInternal)
-                        {
-                            pDestPersPort = NULL;
-                        }
-                    }
-                }
-
-                //if the src port = gre / vxlan, we must not send to internal, nor to external (we would be sending back to the same hyper-v switch port)
-                if (pOvsNb->pSourcePort->ofPortType == OVS_OFPORT_TYPE_GRE ||
-                    pOvsNb->pSourcePort->ofPortType == OVS_OFPORT_TYPE_VXLAN)
-                {
-                    if (pDestPersPort && pDestPersPort->pNicListEntry)
-                    {
-                        if (pDestPersPort->pNicListEntry->nicType == NdisSwitchNicTypeExternal ||
-                            pDestPersPort->pNicListEntry->nicType == NdisSwitchNicTypeInternal)
-                        {
-                            pDestPersPort = NULL;
-                        }
-                    }
-                }
-            }
-
-            else
-            {
-                DEBUGP(LOG_ERROR, __FUNCTION__ " invalid port number from userspace: %u\n", persPortNumber);
-                ok = FALSE;
-            }
+			else
+			{
+				DEBUGP(LOG_ERROR, __FUNCTION__ " invalid port number from userspace: %u\n", persPortNumber);
+				ok = FALSE;
+			}
         }
             break;
 
@@ -298,8 +320,8 @@ BOOLEAN ExecuteActions(_Inout_ OVS_NET_BUFFER* pOvsNb, _In_ const OutputToPortCa
 
         case OVS_ARGTYPE_ACTION_PUSH_VLAN:
             ok = Vlan_Push(pOvsNb, pArg->data);
-            if (!ok)
-                return FALSE;
+			if (!ok)
+				goto Cleanup;
             break;
 
         case OVS_ARGTYPE_ACTION_POP_VLAN:
@@ -309,7 +331,7 @@ BOOLEAN ExecuteActions(_Inout_ OVS_NET_BUFFER* pOvsNb, _In_ const OutputToPortCa
 
         if (!ok)
         {
-            return FALSE;
+			goto Cleanup;
         }
     }
 
@@ -319,13 +341,23 @@ BOOLEAN ExecuteActions(_Inout_ OVS_NET_BUFFER* pOvsNb, _In_ const OutputToPortCa
         pOvsNb->sendToPortNormal = FALSE;
 
         ok = (*outputToPort)(pOvsNb);
+
+		OVS_REFCOUNT_DEREFERENCE(pDestPersPort);
+		pDestPersPort = NULL;
     }
 
     else
     {
         //i.e. did not send pOvsNb, _ProcessAllNblsIngress will destroy it.
-        return FALSE;
+		ok = FALSE;
     }
+
+Cleanup:
+	if (pDestPersPort)
+	{
+		OVS_REFCOUNT_DEREFERENCE(pDestPersPort);
+		pDestPersPort = NULL;
+	}
 
     return ok;
 }
@@ -657,4 +689,32 @@ BOOLEAN ProcessReceivedActions(_Inout_ OVS_ARGUMENT_GROUP* pActionGroup, const O
     }
 
     return TRUE;
+}
+
+VOID Actions_DestroyNow_Unsafe(_Inout_ OVS_ACTIONS* pActions)
+{
+	OVS_CHECK(pActions);
+
+	if (pActions->pActionGroup)
+		DestroyArgumentGroup((OVS_ARGUMENT_GROUP*)pActions->pActionGroup);
+
+	KFree(pActions);
+}
+
+OVS_ACTIONS* Actions_Create()
+{
+	OVS_ACTIONS* pActions = KZAlloc(sizeof(OVS_ACTIONS));
+
+	if (!pActions)
+		return NULL;
+
+	pActions->pActionGroup = AllocArgumentGroup();
+	if (!pActions->pActionGroup) {
+		KFree(pActions);
+		return NULL;
+	}
+
+	pActions->refCount.Destroy = Actions_DestroyNow_Unsafe;
+
+	return pActions;
 }

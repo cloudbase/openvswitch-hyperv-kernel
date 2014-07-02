@@ -26,6 +26,7 @@ limitations under the License.
 typedef struct _OVS_SWITCH_INFO OVS_SWITCH_INFO;
 typedef struct _OVS_NIC_INFO OVS_NIC_INFO;
 typedef struct _OVS_PERSISTENT_PORT OVS_PERSISTENT_PORT;
+typedef struct _OVS_ACTIONS OVS_ACTIONS;
 
 typedef struct _OVS_NET_BUFFER
 {
@@ -37,10 +38,12 @@ typedef struct _OVS_NET_BUFFER
     BOOLEAN					sendToPortNormal;
     ULONG					sendFlags;
 
-    //The flow associated with this packet. Can be NULL.
-    OVS_FLOW*		pFlow;
+	//actions to apply to the packet
+	//the pActions OVS_ARGUMENT_GROUP struct cannot be modified
+	OVS_ACTIONS*		pActions;
 
     //The flow information extracted from the packet (overwriting packet headers do not affect it). Must not be null.
+	//once set, cannot be modified
     OVS_OFPACKET_INFO*	pOriginalPacketInfo;
 
     //Key for the tunnel that encapsulated this packet. Can be NULL if the packet is not being tunneled.
@@ -160,11 +163,15 @@ OVS_NET_BUFFER* ONB_CreateFromBuffer(_In_ const OVS_BUFFER* pBuffer, ULONG addSi
 OVS_NET_BUFFER* ONB_Duplicate(_In_ const OVS_NET_BUFFER* pOriginalOnb);
 
 BOOLEAN ONB_OriginateIcmpPacket_Ipv4_Type3Code4(_Inout_ OVS_NET_BUFFER* pOvsNb, ULONG mtu, OVS_NIC_INFO* pDestinationNic);
-BOOLEAN ONB_OriginateIcmp6Packet_Type2Code0(_Inout_ OVS_NET_BUFFER* pOvsNb, ULONG mtu, OVS_NIC_INFO* pDestinationNic);
+BOOLEAN ONB_OriginateIcmp6Packet_Type2Code0(_Inout_ OVS_NET_BUFFER* pOvsNb, ULONG mtu, _In_ const OVS_NIC_INFO* pDestinationNic);
 
 OVS_NET_BUFFER* ONB_Create(ULONG bufSize);
 
-NET_BUFFER_LIST* ONB_FragmentBuffer_Ipv4(_Inout_ OVS_NET_BUFFER* pOvsNb, ULONG mtu, const OVS_ETHERNET_HEADER* pEthHeader, ULONG ethSize, ULONG dataOffsetAdd);
+NET_BUFFER_LIST* ONB_FragmentBuffer_Ipv4(_Inout_ OVS_NET_BUFFER* pOvsNb, ULONG maxIpPacketSize, const OVS_ETHERNET_HEADER* pEthHeader, ULONG dataOffset);
+
 NET_BUFFER* ONB_CreateNb(ULONG dataLen, ULONG dataOffset);
+NET_BUFFER_LIST* ONB_CreateNblFromNb(_In_ NET_BUFFER* pNb, USHORT contextSize);
 
 BOOLEAN ONB_OriginateArpRequest(const BYTE targetIp[4]);
+
+BOOLEAN ONB_NblEqual(_In_ NET_BUFFER_LIST* pLhsNbl, _In_ NET_BUFFER_LIST* pRhsNbl);

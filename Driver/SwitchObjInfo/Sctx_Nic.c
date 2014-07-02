@@ -48,16 +48,14 @@ NDIS_STATUS Sctx_AddNicUnsafe(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_
         return status;
     }
 
-    pNicEntry = ExAllocatePoolWithTag(NonPagedPool, sizeof(OVS_NIC_LIST_ENTRY), g_extAllocationTag);
-
+    pNicEntry = KZAlloc(sizeof(OVS_NIC_LIST_ENTRY));
     if (pNicEntry == NULL)
     {
         status = NDIS_STATUS_RESOURCES;
         goto Cleanup;
     }
 
-    NdisZeroMemory(pNicEntry, sizeof(OVS_NIC_LIST_ENTRY));
-
+	pNicEntry->refCount.Destroy = NicEntry_DestroyNow_Unsafe;
     RtlCopyMemory(pNicEntry->macAddress, pCurNic->PermanentMacAddress, OVS_ETHERNET_ADDRESS_LENGTH);
 
     pNicEntry->portId = pCurNic->PortId;
@@ -65,7 +63,7 @@ NDIS_STATUS Sctx_AddNicUnsafe(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_
     pNicEntry->nicType = pCurNic->NicType;
     pNicEntry->connected = (pCurNic->NicState == NdisSwitchNicStateConnected);
     pNicEntry->mtu = pCurNic->MTU;
-    pNicEntry->pPersistentPort = NULL;
+	pNicEntry->ovsPortNumber = OVS_INVALID_PORT_NUMBER;
 
 #ifdef DBG
     WcharArrayToAscii(pNicEntry->vmName, pCurNic->VmFriendlyName.String, min(OVS_NIC_ENTRY_NAME_SIZE, pCurNic->VmFriendlyName.Length));
@@ -299,6 +297,15 @@ Cleanup:
     return (OVS_NIC_LIST_ENTRY*)pNicEntry;
 }
 
+VOID NicEntry_DestroyNow_Unsafe(OVS_NIC_LIST_ENTRY* pNicEntry)
+{
+	if (pNicEntry)
+	{
+		RemoveEntryList(&pNicEntry->listEntry);
+		KFree(pNicEntry);
+	}
+}
+
 NDIS_STATUS Sctx_DeleteNicUnsafe(_In_ const OVS_GLOBAL_FORWARD_INFO* pForwardInfo, _In_ NDIS_SWITCH_PORT_ID portId, _In_ NDIS_SWITCH_NIC_INDEX nicIndex)
 {
     NDIS_STATUS status = NDIS_STATUS_SUCCESS;
@@ -311,37 +318,34 @@ NDIS_STATUS Sctx_DeleteNicUnsafe(_In_ const OVS_GLOBAL_FORWARD_INFO* pForwardInf
         goto Cleanup;
     }
 
-    OVS_CHECK(!pNicEntry->pPersistentPort);
-
-    RemoveEntryList(&pNicEntry->listEntry);
-    ExFreePoolWithTag(pNicEntry, g_extAllocationTag);
+	OVS_REFCOUNT_DESTROY(pNicEntry);
 
 Cleanup:
     return status;
 }
 
-VOID Sctx_Nic_SetPersistentPort_Unsafe(_Inout_ OVS_NIC_LIST_ENTRY* pNicEntry)
+UINT16 Sctx_Nic_SetPersistentPort(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, NDIS_SWITCH_PORT_ID portId)
 {
-    pNicEntry->pPersistentPort = PersPort_FindById_Unsafe(pNicEntry->portId, FALSE);
-    if (pNicEntry->pPersistentPort)
-    {
-        pNicEntry->pPersistentPort->pNicListEntry = pNicEntry;
-    }
-}
+	OVS_PERSISTENT_PORT* pPort = NULL;
+	LOCK_STATE_EX lockState;
+	UINT16 ovsPortNumber = OVS_INVALID_PORT_NUMBER;
 
-VOID Sctx_Nic_UnsetPersistentPort_Unsafe(_Inout_ OVS_NIC_LIST_ENTRY* pNicEntry)
-{
-    if (pNicEntry->pPersistentPort)
-    {
-        pNicEntry->pPersistentPort->pNicListEntry = NULL;
-        pNicEntry->pPersistentPort = NULL;
-    }
-}
+	PERSPORTS_LOCK_WRITE(&pForwardInfo->persistentPortsInfo, &lockState);
 
-VOID Sctx_Nic_Disable_Unsafe(_Inout_ OVS_GLOBAL_FORWARD_INFO* pForwardInfo, _Inout_ OVS_NIC_LIST_ENTRY* pNicEntry)
-{
-    pNicEntry->connected = FALSE;
-    --(pForwardInfo->countNics);
+	pPort = PersPort_FindById_Unsafe(portId);
+	if (pPort)
+	{
+		LOCK_STATE_EX lockState = { 0 };
 
-    Sctx_Nic_UnsetPersistentPort_Unsafe(pNicEntry);
+		PORT_LOCK_WRITE(pPort, &lockState);
+
+		pPort->portId = portId;
+		ovsPortNumber = pPort->ovsPortNumber;
+
+		PORT_UNLOCK(pPort, &lockState);
+	}
+
+	PERSPORTS_UNLOCK(&pForwardInfo->persistentPortsInfo, &lockState);
+
+	return ovsPortNumber;
 }

@@ -43,10 +43,6 @@ static PDEVICE_OBJECT g_pOvsDeviceObject;
 static const GUID g_ovsDeviceGuidName =
 { 0xcef35472, 0xe7ee, 0x4b4e, { 0xab, 0x69, 0x93, 0xed, 0x2, 0x49, 0x37, 0x7c } };
 
-/*******************************/
-
-extern OVS_SWITCH_INFO* g_pSwitchInfo;
-
 /********************************************************************************************/
 
 //i.e. for userspace to read
@@ -233,6 +229,7 @@ NTSTATUS _WinlIrpRead(PDEVICE_OBJECT pDeviceObject, PIRP pIrp)
     ULONG userReadBufferLen = 0, bytesRead = 0;
     LOCK_STATE_EX lockState = { 0 };
     FILE_OBJECT* pFileObject = NULL;
+	VOID* pReadBuffer = NULL;
 #if DBG
     BOOLEAN dbgPrintData = FALSE;
 #endif
@@ -256,12 +253,26 @@ NTSTATUS _WinlIrpRead(PDEVICE_OBJECT pDeviceObject, PIRP pIrp)
 
     BufferCtl_LockWrite(&lockState);
 
-    status = BufferCtl_Read_Unsafe(pFileObject, pIrp->AssociatedIrp.SystemBuffer, userReadBufferLen, &bytesRead);
+	//when using direct io, sys buffer is NULL for read and for write
+	OVS_CHECK(pDeviceObject->Flags & DO_DIRECT_IO);
+	OVS_CHECK(pIrp->AssociatedIrp.SystemBuffer == NULL);
+
+	pReadBuffer = MmGetSystemAddressForMdlSafe(pIrp->MdlAddress, NormalPagePriority | MdlMappingNoExecute);
+	if (pReadBuffer)
+	{
+		status = BufferCtl_Read_Unsafe(pFileObject, pReadBuffer, userReadBufferLen, &bytesRead);
+	}
+
+	else
+	{
+		status = STATUS_INSUFFICIENT_RESOURCES;
+		DEBUGP(LOG_ERROR, __FUNCTION__ " MmGetSystemAddressForMdlSafe failed: read buffer is NULL!\n");
+	}
 
     BufferCtl_Unlock(&lockState);
 
     pIrp->IoStatus.Status = status;
-    pIrp->IoStatus.Information = bytesRead;
+    pIrp->IoStatus.Information = (status == STATUS_SUCCESS ? bytesRead : 0);
     IoCompleteRequest(pIrp, IO_NO_INCREMENT);
 
     return status;
@@ -437,6 +448,8 @@ NTSTATUS _WinlIrpWrite(PDEVICE_OBJECT pDeviceObject, PIRP pIrp)
     UINT groupId = OVS_MULTICAST_GROUP_NONE;
     OVS_NLMSGHDR* pNlMsg = NULL;
     OVS_MESSAGE* pMsg = NULL;
+	VOID* pWriteBuffer = NULL;
+	OVS_SWITCH_INFO* pSwitchInfo = NULL;
 #if DBG
     BOOLEAN dbgPrintData = FALSE;
 #endif
@@ -452,15 +465,29 @@ NTSTATUS _WinlIrpWrite(PDEVICE_OBJECT pDeviceObject, PIRP pIrp)
         goto Cleanup;
     }
 
-    if (!g_pSwitchInfo)
+	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
+    if (!pSwitchInfo)
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " hyper-v extension not enabled!n");
         error = OVS_ERROR_PERM;
         goto Cleanup;
     }
 
+    //when using direct io, sys buffer is NULL for read and for write
+	OVS_CHECK(pDeviceObject->Flags & DO_DIRECT_IO);
+	OVS_CHECK(pIrp->AssociatedIrp.SystemBuffer == NULL);
+
+	pWriteBuffer = MmGetSystemAddressForMdlSafe(pIrp->MdlAddress, NormalPagePriority | MdlMappingNoExecute);
+	if (!pWriteBuffer)
+	{
+		status = STATUS_INSUFFICIENT_RESOURCES;
+		DEBUGP(LOG_ERROR, __FUNCTION__ " MmGetSystemAddressForMdlSafe failed: read buffer is NULL!\n");
+
+		goto Cleanup;
+	}
+
     //messages from here are always OVS_MESSAGE, not done, not error
-    if (!ParseReceivedMessage(pIrp->AssociatedIrp.SystemBuffer, (UINT16)length, &pNlMsg))
+    if (!ParseReceivedMessage(pWriteBuffer, (UINT16)length, &pNlMsg))
     {
         error = OVS_ERROR_INVAL;
         goto Cleanup;
@@ -511,7 +538,7 @@ NTSTATUS _WinlIrpWrite(PDEVICE_OBJECT pDeviceObject, PIRP pIrp)
             goto Cleanup;
         }
 
-        Parse_Control(pIrp->AssociatedIrp.SystemBuffer, pMsg, pFileObject, groupId);
+        Parse_Control(pWriteBuffer, pMsg, pFileObject, groupId);
         DEBUGP_FILE(LOG_INFO, __FUNCTION__ " target = OVS_NETLINK_GENERIC\n");
         break;
 
@@ -673,6 +700,8 @@ NTSTATUS _WinlIrpWrite(PDEVICE_OBJECT pDeviceObject, PIRP pIrp)
     }
 
 Cleanup:
+	OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
+
     if (pNlMsg)
     {
         if (error != OVS_ERROR_NOERROR)
@@ -693,8 +722,9 @@ Cleanup:
         pMsg = NULL;
     }
 
-    pIrp->IoStatus.Status = STATUS_SUCCESS;
-    pIrp->IoStatus.Information = length;
+    pIrp->IoStatus.Status = status;
+	pIrp->IoStatus.Information = (status == STATUS_SUCCESS ? length : 0);
+
     IoCompleteRequest(pIrp, IO_NO_INCREMENT);
 
     return status;
@@ -718,14 +748,12 @@ static NTSTATUS _WinlCreateOneDevice(_In_ PDRIVER_OBJECT pDriverObject, UINT typ
     status = IoCreateDevice(pDriverObject, sizeof(WINL_DEVICE_EXTENSION), &deviceName, type,
         FILE_DEVICE_SECURE_OPEN, FALSE, ppDeviceObj);
 
-    //g_commDeviceObject.Flags |= DO_BUFFERED_IO? MUST NOT BE EXCLUSIVE!
-
     if (!NT_SUCCESS(status))
     {
         return status;
     }
 
-    (*ppDeviceObj)->Flags |= DO_BUFFERED_IO;
+    (*ppDeviceObj)->Flags |= DO_DIRECT_IO;
 
     NdisInitUnicodeString(&symbolicName, wsSymbolicName);
     status = IoCreateSymbolicLink(&symbolicName, &deviceName);

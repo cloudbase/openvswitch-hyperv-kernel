@@ -35,6 +35,8 @@ limitations under the License.
 #include "Argument.h"
 #include "Gre.h"
 #include "Checksum.h"
+#include "OFFlowTable.h"
+
 #include <ntstrsafe.h>
 
 /***********************************************/
@@ -46,7 +48,7 @@ VOID FlowMask_DeleteReference(OVS_FLOW_MASK* pFlowMask)
         return;
     }
 
-    OVS_CHECK(mask->refCount);
+	OVS_CHECK(pFlowMask->refCount);
     pFlowMask->refCount--;
 
     if (!pFlowMask->refCount)
@@ -57,7 +59,7 @@ VOID FlowMask_DeleteReference(OVS_FLOW_MASK* pFlowMask)
     }
 }
 
-VOID Flow_Free(OVS_FLOW* pFlow)
+VOID Flow_DestroyNow_Unsafe(OVS_FLOW* pFlow)
 {
     if (!pFlow)
     {
@@ -66,10 +68,9 @@ VOID Flow_Free(OVS_FLOW* pFlow)
 
     FlowMask_DeleteReference(pFlow->pMask);
 
-    if (pFlow->pActions)
-    {
-        DestroyArgumentGroup(pFlow->pActions);
-    }
+	if (pFlow->pActions) {
+		OVS_REFCOUNT_DESTROY(pFlow->pActions);
+	}
 
     KFree(pFlow);
 }
@@ -93,15 +94,14 @@ OVS_FLOW* Flow_Create()
 {
     OVS_FLOW* pFlow = NULL;
 
-    pFlow = KAlloc(sizeof(OVS_FLOW));
+    pFlow = KZAlloc(sizeof(OVS_FLOW));
     if (!pFlow)
     {
         return NULL;
     }
 
-    RtlZeroMemory(pFlow, sizeof(OVS_FLOW));
-
-    NdisAllocateSpinLock(&pFlow->spinLock);
+    pFlow->pRwLock = NdisAllocateRWLock(NULL);
+	pFlow->refCount.Destroy = Flow_DestroyNow_Unsafe;
 
     return pFlow;
 }
@@ -128,18 +128,16 @@ OVS_FLOW_MASK* FlowMask_Create()
 {
     OVS_FLOW_MASK* pFlowMask = NULL;
 
-    pFlowMask = ExAllocatePoolWithTag(NonPagedPool, sizeof(OVS_FLOW_MASK), g_extAllocationTag);
+    pFlowMask = KZAlloc(sizeof(OVS_FLOW_MASK));
     if (!pFlowMask)
     {
         return NULL;
     }
 
-    pFlowMask->refCount = 0;
-
     return pFlowMask;
 }
 
-void Flow_UpdateTimeUsed(OVS_FLOW* pFlow, OVS_NET_BUFFER* pOvsNb)
+void Flow_UpdateTimeUsed_Unsafe(OVS_FLOW* pFlow, OVS_NET_BUFFER* pOvsNb)
 {
     UINT8 tcpFlags = 0;
     ULONG bufferLen = 0;
@@ -156,14 +154,14 @@ void Flow_UpdateTimeUsed(OVS_FLOW* pFlow, OVS_NET_BUFFER* pOvsNb)
 
     bufferLen = ONB_GetDataLength(pOvsNb);
 
-    NdisAcquireSpinLock(&pFlow->spinLock);
+    //NdisAcquireSpinLock(&pFlow->spinLock);
     pFlow->stats.packetsMached++;
     pFlow->stats.bytesMatched += bufferLen;
 
     pFlow->stats.lastUsedTime = KeQueryPerformanceCounter(NULL).QuadPart;
     pFlow->stats.tcpFlags |= tcpFlags;
 
-    NdisReleaseSpinLock(&pFlow->spinLock);
+    //NdisReleaseSpinLock(&pFlow->spinLock);
 }
 
 #if OVS_DBGPRINT_FLOW
@@ -728,14 +726,14 @@ void DbgPrintAllFlows()
     LOCK_STATE_EX lockState;
     UINT countMsgs = 0;
 
-    pDatapath = GetDefaultDatapath();
+    pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
     if (!pDatapath) {
         return;
     }
 
-    FlowTable_LockRead(&lockState);
+	pFlowTable = Datapath_ReferenceFlowTable(pDatapath);
 
-    pFlowTable = pDatapath->pFlowTable;
+	FLOWTABLE_LOCK_READ(pFlowTable, &lockState);
 
     if (pFlowTable->countFlows > 0)
     {
@@ -746,12 +744,14 @@ void DbgPrintAllFlows()
 
         while (pCurItem != pFlowTable->pFlowList)
         {
-            OVS_FLOW* pFlow = CONTAINING_RECORD(pCurItem, OVS_FLOW, entryInTable);
+            OVS_FLOW* pFlow = CONTAINING_RECORD(pCurItem, OVS_FLOW, listEntry);
 
             ULONG startRange = (ULONG)pFlow->pMask->piRange.startRange;
             ULONG endRange = (ULONG)pFlow->pMask->piRange.endRange;
 
-            DbgPrintFlowWithActions("flow dump: ", &pFlow->unmaskedPacketInfo, &pFlow->pMask->packetInfo, startRange, endRange, pFlow->pActions);
+			FLOW_LOCK_READ(pFlow, &lockState);
+            DbgPrintFlowWithActions("flow dump: ", &pFlow->unmaskedPacketInfo, &pFlow->pMask->packetInfo, startRange, endRange, pFlow->pActions->pActionGroup);
+			FLOW_UNLOCK(pFlow, &lockState);
 
             ++i;
             pCurItem = pCurItem->Flink;
@@ -763,7 +763,13 @@ void DbgPrintAllFlows()
         DEBUGP(LOG_INFO, "flow table empty!\n");
     }
 
-    FlowTable_Unlock(&lockState);
+	FLOWTABLE_UNLOCK(pFlowTable, &lockState);
+
+	OVS_REFCOUNT_DEREFERENCE(pFlowTable);
+
+	if (pDatapath) {
+		OVS_REFCOUNT_DEREFERENCE(pDatapath);
+	}
 }
 
 #endif

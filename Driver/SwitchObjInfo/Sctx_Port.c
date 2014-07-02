@@ -58,21 +58,19 @@ NDIS_STATUS Sctx_AddPort_Unsafe(_Inout_ OVS_GLOBAL_FORWARD_INFO* pForwardInfo, c
         return status;
     }
 
-    pPortEntry = KAlloc(sizeof(OVS_PORT_LIST_ENTRY));
-
+    pPortEntry = KZAlloc(sizeof(OVS_PORT_LIST_ENTRY));
     if (pPortEntry == NULL)
     {
         status = NDIS_STATUS_RESOURCES;
         goto Cleanup;
     }
 
-    NdisZeroMemory(pPortEntry, sizeof(OVS_PORT_LIST_ENTRY));
-
+	pPortEntry->refCount.Destroy = PortEntry_DestroyNow_Unsafe;
     pPortEntry->portId = pCurPort->PortId;
     pPortEntry->portType = pCurPort->PortType;
     pPortEntry->on = (pCurPort->PortState == NdisSwitchPortStateCreated);
     pPortEntry->portFriendlyName = pCurPort->PortFriendlyName;
-    pPortEntry->pPersistentPort = NULL;
+	pPortEntry->ovsPortNumber = OVS_INVALID_PORT_NUMBER;
 
     DEBUGP(LOG_INFO, "PORT: id=%d; type=%d; on=%d; friendly name=\"%s\"\n",
         pPortEntry->portId, pPortEntry->portType, pPortEntry->on, ofPortName);
@@ -93,6 +91,15 @@ Cleanup:
     return status;
 }
 
+VOID PortEntry_DestroyNow_Unsafe(OVS_PORT_LIST_ENTRY* pPortEntry)
+{
+	if (pPortEntry)
+	{
+		RemoveEntryList(&pPortEntry->listEntry);
+		KFree(pPortEntry);
+	}
+}
+
 NDIS_STATUS Sctx_DeletePort_Unsafe(_In_ const OVS_GLOBAL_FORWARD_INFO* pForwardInfo, _In_ NDIS_SWITCH_PORT_ID portId)
 {
     NDIS_STATUS status = NDIS_STATUS_SUCCESS;
@@ -105,10 +112,9 @@ NDIS_STATUS Sctx_DeletePort_Unsafe(_In_ const OVS_GLOBAL_FORWARD_INFO* pForwardI
         goto Cleanup;
     }
 
-    OVS_CHECK(!pPortEntry->pPersistentPort);
+	OVS_CHECK(pPortEntry->ovsPortNumber == OVS_INVALID_PORT_NUMBER);
 
-    RemoveEntryList(&pPortEntry->listEntry);
-    KFree(pPortEntry);
+	OVS_REFCOUNT_DESTROY(pPortEntry);
 
 Cleanup:
     return status;
@@ -146,50 +152,25 @@ Cleanup:
     return NULL;
 }
 
-VOID Sctx_Port_SetPersistentPort_Unsafe(_Inout_ OVS_PORT_LIST_ENTRY* pPortEntry)
+UINT16 Sctx_Port_SetPersistentPort(const char* ovsPortName, NDIS_SWITCH_PORT_ID portId)
 {
-    char* ovsPortName = IfCountedStringToCharArray(&pPortEntry->portFriendlyName);
+	OVS_PERSISTENT_PORT* pPort = NULL;
+	UINT16 ovsPortNumber = OVS_INVALID_PORT_NUMBER;
 
-    pPortEntry->pPersistentPort = PersPort_FindByName_Unsafe(ovsPortName);
-    if (pPortEntry->pPersistentPort)
-    {
-        pPortEntry->pPersistentPort->pPortListEntry = pPortEntry;
-    }
+	pPort = PersPort_FindByName_Ref(ovsPortName);
+	if (pPort)
+	{
+		LOCK_STATE_EX lockState = { 0 };
 
-    KFree(ovsPortName);
-}
+		PORT_LOCK_WRITE(pPort, &lockState);
 
-VOID Sctx_Port_UnsetPersistentPort_Unsafe(_Inout_ OVS_PORT_LIST_ENTRY* pPortEntry)
-{
-    if (pPortEntry->pPersistentPort)
-    {
-        pPortEntry->pPersistentPort->pPortListEntry = NULL;
-        pPortEntry->pPersistentPort = NULL;
-    }
-}
+		pPort->portId = portId;
+		ovsPortNumber = pPort->ovsPortNumber;
 
-VOID Sctx_Port_Disable_Unsafe(_Inout_ OVS_GLOBAL_FORWARD_INFO* pForwardInfo, _Inout_ OVS_PORT_LIST_ENTRY* pPortEntry)
-{
-    --(pForwardInfo->countPorts);
-    pPortEntry->on = FALSE;
+		PORT_UNLOCK(pPort, &lockState);
 
-    Sctx_Port_UnsetPersistentPort_Unsafe(pPortEntry);
-}
+		OVS_REFCOUNT_DEREFERENCE(pPort);
+	}
 
-VOID Sctx_Port_UpdateName_Unsafe(_Inout_ OVS_PORT_LIST_ENTRY* pPortEntry, _In_ const IF_COUNTED_STRING* pNewName)
-{
-    OVS_CHECK(pNewName);
-
-    pPortEntry->portFriendlyName = *pNewName;
-
-    if (pPortEntry->pPersistentPort)
-    {
-        if (pPortEntry->pPersistentPort->ovsPortName)
-        {
-            KFree(pPortEntry->pPersistentPort->ovsPortName);
-            pPortEntry->pPersistentPort->ovsPortName = NULL;
-        }
-
-        pPortEntry->pPersistentPort->ovsPortName = IfCountedStringToCharArray(pNewName);
-    }
+	return ovsPortNumber;
 }

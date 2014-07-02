@@ -25,6 +25,9 @@ typedef struct _OVS_PERSISTENT_PORT OVS_PERSISTENT_PORT;
 
 typedef struct _OVS_PORT_LIST_ENTRY
 {
+	//must be the first field in the struct
+	OVS_REF_COUNT					refCount;
+
     LIST_ENTRY						listEntry;
 
     NDIS_SWITCH_PORT_ID				portId;
@@ -32,20 +35,17 @@ typedef struct _OVS_PORT_LIST_ENTRY
     NDIS_SWITCH_PORT_TYPE			portType;
     BOOLEAN							on;
 
-    OVS_PERSISTENT_PORT*			pPersistentPort;
+	//OVS_INVALID_PORT_NUMBER (0xFFFF) when we don't have one
+	UINT16							ovsPortNumber;
 } OVS_PORT_LIST_ENTRY, *POVS_PORT_LIST_ENTRY;
 
 OVS_PORT_LIST_ENTRY* Sctx_FindPortById_Unsafe(_In_ const OVS_GLOBAL_FORWARD_INFO* pForwardIno, _In_ NDIS_SWITCH_PORT_ID portId);
 NDIS_STATUS Sctx_AddPort_Unsafe(_Inout_ OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH_PORT_PARAMETERS* pCurPort, _Inout_opt_ OVS_PORT_LIST_ENTRY** ppPortEntry);
+
+VOID PortEntry_DestroyNow_Unsafe(OVS_PORT_LIST_ENTRY* pPortEntry);
 NDIS_STATUS Sctx_DeletePort_Unsafe(_In_ const OVS_GLOBAL_FORWARD_INFO* pForwardInfo, _In_ NDIS_SWITCH_PORT_ID portId);
 
 OVS_PORT_LIST_ENTRY* Sctx_FindPortBy_Unsafe(_In_ OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const VOID* pContext, BOOLEAN(*Predicate)(int, const VOID*, _In_ const OVS_PORT_LIST_ENTRY*));
 
-//i.e. you must lock the pForwardInfo->pRwLock
-VOID Sctx_Port_SetPersistentPort_Unsafe(_Inout_ OVS_PORT_LIST_ENTRY* pPortEntry);
-//i.e. you must lock the pForwardInfo->pRwLock
-VOID Sctx_Port_UnsetPersistentPort_Unsafe(_Inout_ OVS_PORT_LIST_ENTRY* pPortEntry);
-
-VOID Sctx_Port_Disable_Unsafe(_Inout_ OVS_GLOBAL_FORWARD_INFO* pForwardInfo, _Inout_ OVS_PORT_LIST_ENTRY* pPortEntry);
-
-VOID Sctx_Port_UpdateName_Unsafe(_Inout_ OVS_PORT_LIST_ENTRY* pPortEntry, _In_ const IF_COUNTED_STRING* pNewName);
+//returns ovs port number
+UINT16 Sctx_Port_SetPersistentPort(const char* ovsPortName, NDIS_SWITCH_PORT_ID portId);

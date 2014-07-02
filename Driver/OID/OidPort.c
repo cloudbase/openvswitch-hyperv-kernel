@@ -22,18 +22,22 @@ limitations under the License.
 _Use_decl_annotations_
 NDIS_STATUS Port_Create(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH_PORT_PARAMETERS* pPort)
 {
+	//TODO: change to "if (pPort->IsValidationPort) return NDIS_STATUS_SUCCESS;"
     if (!pPort->IsValidationPort)
     {
         NDIS_STATUS status = NDIS_STATUS_SUCCESS;
         LOCK_STATE_EX lockState = { 0 };
         OVS_PORT_LIST_ENTRY* pPortEntry = NULL;
+		UINT16 ovsPortNumber = OVS_INVALID_PORT_NUMBER;
+		char* ovsPortName = NULL;
+		NDIS_SWITCH_PORT_ID portId = NDIS_SWITCH_DEFAULT_PORT_ID;
 
         while (pForwardInfo->isInitialRestart)
         {
             NdisMSleep(100);
         }
 
-        Rwlock_LockWrite(pForwardInfo->pRwLock, &lockState);
+        FWDINFO_LOCK_WRITE(pForwardInfo, &lockState);
 
         OVS_CHECK(pPort->PortState == NdisSwitchPortStateCreated);
         status = Sctx_AddPort_Unsafe(pForwardInfo, pPort, &pPortEntry);
@@ -42,10 +46,35 @@ NDIS_STATUS Port_Create(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH
             ++(pForwardInfo->countPorts);
 
             OVS_CHECK(pPortEntry);
-            Sctx_Port_SetPersistentPort_Unsafe(pPortEntry);
+            //Sctx_Port_SetPersistentPort_Unsafe(pPortEntry);
+			pPortEntry = OVS_REFCOUNT_REFERENCE(pPortEntry);
+			//nothing could have been able to mark for deletion the pPortEntry right now -- or, could it?
+			OVS_CHECK(pPortEntry);
+
+			portId = pPortEntry->portId;
+			ovsPortName = IfCountedStringToCharArray(&pPortEntry->portFriendlyName);
         }
 
-        Rwlock_Unlock(pForwardInfo->pRwLock, &lockState);
+		FWDINFO_UNLOCK(pForwardInfo, &lockState);
+
+		if (status != NDIS_STATUS_SUCCESS)
+			return status;
+
+		if (ovsPortName) {
+			ovsPortNumber = Sctx_Port_SetPersistentPort(ovsPortName, portId);
+		}
+
+		OVS_CHECK(pPortEntry);
+
+		FWDINFO_LOCK_WRITE(pForwardInfo, &lockState);
+		pPortEntry->ovsPortNumber = ovsPortNumber;
+		FWDINFO_UNLOCK(pForwardInfo, &lockState);
+
+		//Cleanup
+		if (ovsPortName)
+			KFree(ovsPortName);
+
+		OVS_REFCOUNT_DEREFERENCE(pPortEntry);
 
         return status;
     }
@@ -59,30 +88,57 @@ VOID Port_Update(const OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH_
     if (!pPort->IsValidationPort)
     {
         LOCK_STATE_EX lockState = { 0 };
-        OVS_PORT_LIST_ENTRY* pPortListEntry = NULL;
+        OVS_PORT_LIST_ENTRY* pPortEntry = NULL;
+		UINT16 ovsPortNumber = OVS_INVALID_PORT_NUMBER;
+		NDIS_SWITCH_PORT_ID portId = NDIS_SWITCH_DEFAULT_PORT_ID;
+		char* ovsPortName = NULL;
 
         while (pForwardInfo->isInitialRestart)
         {
             NdisMSleep(100);
         }
 
-        Rwlock_LockWrite(pForwardInfo->pRwLock, &lockState);
+        FWDINFO_LOCK_READ(pForwardInfo, &lockState);
 
         OVS_CHECK(pPort->PortState == NdisSwitchPortStateCreated);
-        pPortListEntry = Sctx_FindPortById_Unsafe(pForwardInfo, pPort->PortId);
-        OVS_CHECK(pPortListEntry);
+		pPortEntry = Sctx_FindPortById_Unsafe(pForwardInfo, pPort->PortId);
+		OVS_CHECK(pPortEntry);
 
-        if (pPortListEntry->portFriendlyName.Length != pPort->PortFriendlyName.Length ||
-            memcmp(pPortListEntry->portFriendlyName.String, pPort->PortFriendlyName.String, pPortListEntry->portFriendlyName.Length))
-        {
-            Sctx_Port_UpdateName_Unsafe(pPortListEntry, &pPort->PortFriendlyName);
-        }
+		pPortEntry = OVS_REFCOUNT_REFERENCE(pPortEntry);
+		//could not have marked for deletion this quickly.
+		OVS_CHECK(pPortEntry);
 
-        pPortListEntry->portFriendlyName = pPort->PortFriendlyName;
-        pPortListEntry->portType = pPort->PortType;
-        pPortListEntry->on = (pPort->PortState == NdisSwitchPortStateCreated);
+		//if the name of the hyper-v switch port has changed, and we did not have a mapping between this hyper-v switch port and an ovs port,
+		//we find a mapping now
+		if (pPortEntry->ovsPortNumber == OVS_INVALID_PORT_NUMBER &&
+			(pPortEntry->portFriendlyName.Length != pPort->PortFriendlyName.Length ||
+			memcmp(pPortEntry->portFriendlyName.String, pPort->PortFriendlyName.String, pPortEntry->portFriendlyName.Length)))
+		{
+			portId = pPortEntry->portId;
+			ovsPortName = IfCountedStringToCharArray(&pPortEntry->portFriendlyName);
+		}
 
-        Rwlock_Unlock(pForwardInfo->pRwLock, &lockState);
+        FWDINFO_UNLOCK(pForwardInfo, &lockState);
+
+		if (ovsPortName)
+		{
+			ovsPortNumber = Sctx_Port_SetPersistentPort(ovsPortName, portId);
+		}
+
+		FWDINFO_LOCK_WRITE(pForwardInfo, &lockState);
+
+		pPortEntry->ovsPortNumber = ovsPortNumber;
+		pPortEntry->portFriendlyName = pPort->PortFriendlyName;
+		pPortEntry->portType = pPort->PortType;
+		pPortEntry->on = (pPort->PortState == NdisSwitchPortStateCreated);
+
+		FWDINFO_UNLOCK(pForwardInfo, &lockState);
+
+		//Cleanup
+		if (ovsPortName)
+			KFree(ovsPortName);
+
+		OVS_REFCOUNT_DEREFERENCE(pPortEntry);
     }
 }
 
@@ -99,7 +155,7 @@ VOID Port_Teardown(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH_PORT
             NdisMSleep(100);
         }
 
-        Rwlock_LockWrite(pForwardInfo->pRwLock, &lockState);
+        FWDINFO_LOCK_WRITE(pForwardInfo, &lockState);
 
         if (pPort->PortType == NdisSwitchPortTypeExternal)
         {
@@ -128,10 +184,13 @@ VOID Port_Teardown(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH_PORT
 
         if (pPortEntry)
         {
-            Sctx_Port_Disable_Unsafe(pForwardInfo, pPortEntry);
+			//we no longer 'unset' the persistent port: when it will try to output to pers port, it will find a hyper v switch port / nic,
+			//it will not find one, so it will drop the packet.
+			--(pForwardInfo->countPorts);
+			pPortEntry->on = FALSE;
         }
 
-        Rwlock_Unlock(pForwardInfo->pRwLock, &lockState);
+        FWDINFO_UNLOCK(pForwardInfo, &lockState);
     }
 
     return;
@@ -150,7 +209,8 @@ Port_Delete(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH_PORT_PARAME
             NdisMSleep(100);
         }
 
-        Rwlock_LockWrite(pForwardInfo->pRwLock, &lockState);
+        FWDINFO_LOCK_WRITE(pForwardInfo, &lockState);
+
         if (pPort->PortType == NdisSwitchPortTypeExternal)
         {
             OVS_CHECK(pForwardInfo->pExternalPort);
@@ -175,7 +235,7 @@ Port_Delete(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH_PORT_PARAME
 
         Sctx_DeletePort_Unsafe(pForwardInfo, pPort->PortId);
 
-        Rwlock_Unlock(pForwardInfo->pRwLock, &lockState);
+        FWDINFO_UNLOCK(pForwardInfo, &lockState);
     }
 
     return;

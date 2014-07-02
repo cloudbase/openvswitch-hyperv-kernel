@@ -62,15 +62,15 @@ typedef enum {
 }OVS_FRAGMENT_TYPE;
 
 __declspec(align(8))
-typedef struct _OVS_IPV4_INFO {
+typedef struct _OVS_NET_LAYER_INFO {
     //eth type = ipv4/ipv6: IP protocol; ARP: lower 8 bits of operation code.
     UINT8 protocol;
     UINT8 typeOfService;
     UINT8 timeToLive;
     //OVS_FRAGMENT_TYPE: 0 = not fragmented; 1 = first fragment; 2 = fragment with offset != 0
     UINT8 fragment;
-}OVS_IPV4_INFO, *POVS_IPV4_INFO;
-C_ASSERT(sizeof(OVS_IPV4_INFO) == 8);
+}OVS_NET_LAYER_INFO, *POVS_NET_LAYER_INFO;
+C_ASSERT(sizeof(OVS_NET_LAYER_INFO) == 8);
 
 __declspec(align(8))
 typedef struct _OVS_IP4_INFO {
@@ -139,7 +139,7 @@ typedef struct _OVS_OFPACKET_INFO
 
     OVS_PHYSICAL physical;					//16 bytes
     OVS_ETH_INFO ethInfo;					//16 bytes
-    OVS_IPV4_INFO ipInfo;						//8 bytes
+    OVS_NET_LAYER_INFO ipInfo;				//8 bytes
 
     union {
         OVS_IP4_INFO ipv4Info;

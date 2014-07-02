@@ -26,6 +26,7 @@ limitations under the License.
 #include "PersistentPort.h"
 
 ULONG g_extAllocationTag = 'xsvO';
+NDIS_RW_LOCK_EX* g_pRefRwLock = NULL;
 
 NDIS_STATUS OvsInit(NDIS_HANDLE ndisHandle)
 {
@@ -49,11 +50,7 @@ NDIS_STATUS OvsInit(NDIS_HANDLE ndisHandle)
 
 VOID OvsUninit()
 {
-    OVS_DATAPATH* pDefaultDatapath = NULL;
-
-    pDefaultDatapath = GetDefaultDatapath();
-    FlowTable_Destroy(pDefaultDatapath->pFlowTable);
-    ExFreePoolWithTag(pDefaultDatapath, g_extAllocationTag);
+	Driver_RemoveDatapath();
 
     PersPort_Uninitialize();
 }

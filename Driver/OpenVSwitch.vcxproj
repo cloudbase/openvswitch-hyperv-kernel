@@ -188,8 +188,7 @@
   </ItemGroup>
   <ItemGroup>
     <Inf Exclude="@(Inf)" Include="*.inf" />
-    <FilesToPackage Include="$(TargetPath)" />
-    <Inf Include="openvswitch.inf" />
+    <FilesToPackage Include="$(TargetPath)" Condition="'$(ConfigurationType)'=='Driver' or '$(ConfigurationType)'=='DynamicLibrary'" />
   </ItemGroup>
   <ItemGroup>
     <None Exclude="@(None)" Include="*.ico;*.cur;*.bmp;*.dlg;*.rct;*.gif;*.jpg;*.jpeg;*.wav;*.jpe;*.tiff;*.tif;*.png;*.rc2" />
@@ -197,6 +196,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\Debug.h" />
+    <ClInclude Include="Core\OvsRefCount.h" />
     <ClInclude Include="OpenFlow\OFFlowTable.h" />
     <ClInclude Include="precomp.h" />
     <ClInclude Include="OpenFlow\OFAction.h" />

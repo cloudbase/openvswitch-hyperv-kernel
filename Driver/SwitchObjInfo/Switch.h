@@ -59,8 +59,11 @@ typedef enum _OVS_SWITCH_CONTROLFLOW_STATE {
 
 typedef struct _OVS_SWITCH_INFO
 {
-    // The link *must* always be the first field.
-    LIST_ENTRY link;
+	//must be the first field in the struct
+	OVS_REF_COUNT refCount;
+
+    //entry in switchList of OVS_DRIVER
+    LIST_ENTRY				listEntry;
 
     OVS_GLOBAL_FORWARD_INFO* pForwardInfo;
 
@@ -78,6 +81,10 @@ typedef struct _OVS_SWITCH_INFO
 
     NET_IFINDEX datapathIfIndex;
 } OVS_SWITCH_INFO, *POVS_SWITCH_INFO;
+
+#define FWDINFO_LOCK_READ(pForwardInfo, pLockState) NdisAcquireRWLockRead(pForwardInfo->pRwLock, pLockState, 0)
+#define FWDINFO_LOCK_WRITE(pForwardInfo, pLockState) NdisAcquireRWLockWrite(pForwardInfo->pRwLock, pLockState, 0)
+#define FWDINFO_UNLOCK(pForwardInfo, pLockState) NdisReleaseRWLock(pForwardInfo->pRwLock, pLockState)
 
 /*****************************************************  SWITCH ****************************************************/
 

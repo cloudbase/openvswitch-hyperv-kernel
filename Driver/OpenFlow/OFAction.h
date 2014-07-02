@@ -26,6 +26,14 @@ typedef struct _OVS_ARGUMENT_GROUP OVS_ARGUMENT_GROUP;
 typedef struct _OVS_SWITCH_INFO OVS_SWITCH_INFO;
 typedef struct _OVS_NIC_INFO OVS_NIC_INFO;
 
+typedef struct _OVS_ACTIONS {
+	//must be the first field in the struct
+	OVS_REF_COUNT refCount;
+
+	//once set, it cannot be modified. Also, the pointer cannot be changed, unless the OVS_ACTIONS struct is destroyed
+	OVS_ARGUMENT_GROUP* pActionGroup;
+} OVS_ACTIONS, *POVS_ACTIONS;
+
 typedef struct _OVS_ACTION_PUSH_VLAN {
     //usually / normally OVS_ETHERTYPE_QTAG
     BE16 protocol;
@@ -40,3 +48,6 @@ typedef BOOLEAN(*OutputToPortCallback)(_Inout_ OVS_NET_BUFFER* pOvsNb);
 BOOLEAN ExecuteActions(_Inout_ OVS_NET_BUFFER* pOvsNb, _In_ const OutputToPortCallback outputToPort);
 
 BOOLEAN ProcessReceivedActions(_Inout_ OVS_ARGUMENT_GROUP* pActionGroup, const OVS_OFPACKET_INFO* pPacketInfo, int recursivityDepth);
+
+OVS_ACTIONS* Actions_Create();
+VOID Actions_DestroyNow_Unsafe(_Inout_ OVS_ACTIONS* pActions);

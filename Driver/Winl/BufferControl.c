@@ -392,8 +392,20 @@ OVS_ERROR _BufferCtl_ReadUnicast_Unsafe(_Inout_ OVS_BUFFER* pBuffer, _Inout_ VOI
         bytesLeft = pBuffer->size - pBuffer->offset;
         bytesRead = min(toRead, bytesLeft);
 
-        //copy from our data to system buffer
-        RtlCopyMemory(pOutBuf, srcBuffer, bytesRead);
+        //copy from our data to device io buffer
+		__try {
+			RtlCopyMemory(pOutBuf, srcBuffer, bytesRead);
+		}
+		__except (EXCEPTION_EXECUTE_HANDLER)
+		{
+#ifdef DBG
+			ULONG status = GetExceptionCode();
+			DEBUGP(LOG_ERROR, "ucast read mem copy exception: 0x%x\n", status);
+			OVS_CHECK(__UNEXPECTED__);
+#endif
+
+			return OVS_ERROR_IO;
+		}
 
         if (bytesRead == bytesLeft)
         {
@@ -434,6 +446,7 @@ OVS_ERROR _BufferCtl_ReadMulticast_Unsafe(_Inout_ OVS_BUFFER* pBuffer, _Inout_ V
 
         return OVS_ERROR_AGAIN;
     }
+
     else
     {
         VOID* srcBuffer = (BYTE*)pBuffer->p;
@@ -443,8 +456,22 @@ OVS_ERROR _BufferCtl_ReadMulticast_Unsafe(_Inout_ OVS_BUFFER* pBuffer, _Inout_ V
         bytesLeft = pBuffer->size;
         bytesRead = min(toRead, bytesLeft);
 
-        //copy from our data to system buffer
-        RtlCopyMemory(pOutBuf, srcBuffer, bytesRead);
+        //copy from our data to device io buffer
+		__try
+		{
+			RtlCopyMemory(pOutBuf, srcBuffer, bytesRead);
+		}
+
+		__except (EXCEPTION_EXECUTE_HANDLER)
+		{
+#ifdef DBG
+			ULONG status = GetExceptionCode();
+			DEBUGP(LOG_ERROR, "mcast read mem copy exception: 0x%x\n", status);
+			OVS_CHECK(__UNEXPECTED__);
+#endif
+
+			return OVS_ERROR_IO;
+		}
 
         if (bytesRead == bytesLeft)
         {

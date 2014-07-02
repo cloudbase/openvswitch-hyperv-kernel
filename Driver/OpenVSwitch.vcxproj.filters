@@ -50,7 +50,7 @@
     <ClCompile Include="Protocol\Icmp.c">
       <Filter>Protocol</Filter>
     </ClCompile>
-	<ClCompile Include="Protocol\Vlan.c">
+    <ClCompile Include="Protocol\Vlan.c">
       <Filter>Protocol</Filter>
     </ClCompile>
     <ClCompile Include="Protocol\Icmp6.c">
@@ -122,7 +122,7 @@
     <ClCompile Include="OpenFlow\OFFlow.c">
       <Filter>OpenFlow</Filter>
     </ClCompile>
-	<ClCompile Include="OpenFlow\OFFlowTable.c">
+    <ClCompile Include="OpenFlow\OFFlowTable.c">
       <Filter>OpenFlow</Filter>
     </ClCompile>
     <ClCompile Include="OpenFlow\PacketInfo.c">
@@ -176,9 +176,6 @@
     <ClInclude Include="Core\OvsCore.h">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Cache.h">
-      <Filter>Core</Filter>
-    </ClInclude>
     <ClInclude Include="Core\List.h">
       <Filter>Core</Filter>
     </ClInclude>
@@ -213,9 +210,6 @@
       <Filter>Transfer</Filter>
     </ClInclude>
     <ClInclude Include="Transfer\Nbls.h">
-      <Filter>Transfer</Filter>
-    </ClInclude>
-    <ClInclude Include="Transfer\ProcessNBLs.h">
       <Filter>Transfer</Filter>
     </ClInclude>
     <ClInclude Include="Transfer\Vxlan.h">
@@ -260,7 +254,7 @@
     <ClInclude Include="Protocol\Icmp6.h">
       <Filter>Protocol</Filter>
     </ClInclude>
-	<ClInclude Include="Protocol\Vlan.h">
+    <ClInclude Include="Protocol\Vlan.h">
       <Filter>Protocol</Filter>
     </ClInclude>
     <ClInclude Include="Protocol\Sctp.h">
@@ -272,7 +266,7 @@
     <ClInclude Include="OpenFlow\OFFlow.h">
       <Filter>OpenFlow</Filter>
     </ClInclude>
-	<ClInclude Include="OpenFlow\OFFlowTable.h">
+    <ClInclude Include="OpenFlow\OFFlowTable.h">
       <Filter>OpenFlow</Filter>
     </ClInclude>
     <ClInclude Include="OpenFlow\PacketInfo.h">
@@ -359,6 +353,10 @@
     <ClInclude Include="SwitchObjInfo\Sctx_Port.h">
       <Filter>SwitchObjInfo</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="Core\OvsRefCount.h">
+      <Filter>Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="OpenVSwitch.rc" />
@@ -397,8 +395,5 @@
     <Filter Include="OID">
       <UniqueIdentifier>{90b976b5-2e54-4281-8f40-691cf4b0b1f7}</UniqueIdentifier>
     </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Forwarding.htm" />
   </ItemGroup>
 </Project>

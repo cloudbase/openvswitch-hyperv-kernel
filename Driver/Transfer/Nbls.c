@@ -355,7 +355,7 @@ VOID FreeDuplicateNbl(const OVS_SWITCH_INFO* pSwitchInfo, NET_BUFFER_LIST* pNbl)
         OVS_CHECK(pMdl->Next == NULL);
 
         buffer = MmGetMdlVirtualAddress(pMdl);
-        ExFreePoolWithTag(buffer, g_extAllocationTag);
+        KFree(buffer);
 
         IoFreeMdl(pMdl);
         NdisFreeNetBuffer(pNb);
@@ -448,7 +448,7 @@ VOID DbgPrintNb(NET_BUFFER* pNb, LPCSTR msg)
 
     //BYTE* NdisGetDataBuffer(pNb, NET_BUFFER_DATA_LENGTH(pNb), 0, 0, 1);
 
-    bufPrintLen = min(NET_BUFFER_DATA_LENGTH(pNb), 256);
+	bufPrintLen = min(NET_BUFFER_DATA_LENGTH(pNb), 256);
 
     buffer = (BYTE*)NdisGetDataBuffer(pNb, bufPrintLen, NULL, 1, 0);
     if (!buffer)
@@ -751,14 +751,23 @@ BOOLEAN VerifyProtocolHeader(BYTE* buffer, ULONG* pLength, UINT16* pEthType)
 
         break;
 
-    case OVS_ETHERTYPE_IPV4:
-        nextHeader = VerifyIpv4Frame(buffer, pLength, &protoType);
-        if (!nextHeader)
-            return FALSE;
+	case OVS_ETHERTYPE_IPV4:
+	{
+		OVS_IPV4_HEADER* pIpv4Header = (OVS_IPV4_HEADER*)buffer;
+		UINT16 offset = 0;
 
-        if (!_VerifyTransportHeader(nextHeader, pLength, *pEthType, protoType))
-            return FALSE;
+		nextHeader = VerifyIpv4Frame(buffer, pLength, &protoType);
+		if (!nextHeader)
+			return FALSE;
 
+		offset = Ipv4_GetFragmentOffset(pIpv4Header);
+
+		if (offset == 0)
+		{
+			if (!_VerifyTransportHeader(nextHeader, pLength, *pEthType, protoType))
+				return FALSE;
+		}
+	}
         break;
 
     case OVS_ETHERTYPE_IPV6:

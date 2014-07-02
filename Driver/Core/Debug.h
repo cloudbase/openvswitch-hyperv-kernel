@@ -52,19 +52,31 @@ extern ULONG g_debugLevel;
 
 #ifdef DBG
 
-#if OVS_USE_ASSERTS
-#define OVS_CHECK(x) ASSERT(x)
-#else
-#define OVS_CHECK(x)
-#endif //OVS_USE_ASSERTS
+#define OVS_USE_REFCOUNT_CALL_STACK		1
+
+#undef OVS_USE_ASSERTS
+#define OVS_USE_ASSERTS				1
 
 #else
-#define OVS_CHECK(x)
+#define OVS_USE_REFCOUNT_CALL_STACK	0
 
 //we won't verify WINL messages on release mode
 #undef OVS_VERIFY_WINL_MESSAGES
 #define OVS_VERIFY_WINL_MESSAGES	0
 #endif //DBG
+
+//OVS_USE_ASSERTS is not #define-d on release mode
+#if OVS_USE_ASSERTS
+#define OVS_CHECK(x) ASSERT(x)
+#define OVS_CHECK_OR(x, expr) { ASSERT(x); if (!(x)) expr; }
+#define OVS_CHECK_BREAK(x) { ASSERT(x); if (!(x)) break; }
+#define OVS_CHECK_RET(x, value) { ASSERT(x); if (!(x)) return value; }
+#else
+#define OVS_CHECK(x)
+#define OVS_CHECK_OR(x, expr) { if (!(x)) expr; }
+#define OVS_CHECK_BREAK(x) { if (!(x)) break; }
+#define OVS_CHECK_RET(x, value) { if (!(x)) return value; }
+#endif //OVS_USE_ASSERTS
 
 #pragma warning( disable: 4127)
 
