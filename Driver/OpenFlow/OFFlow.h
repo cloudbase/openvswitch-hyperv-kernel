@@ -130,7 +130,23 @@ BOOLEAN FlowMask_Equal(const OVS_FLOW_MASK* pLhs, const OVS_FLOW_MASK* pRhs);
 
 #if OVS_DBGPRINT_FLOW
 void DbgPrintFlow(const char* msg, _In_ const OVS_OFPACKET_INFO* pPacketInfo, _In_ const OVS_OFPACKET_INFO* pMask, ULONG start, ULONG end);
-void DbgPrintFlowWithActions(const char* msg, _In_ const OVS_OFPACKET_INFO* pPacketInfo, _In_ const OVS_OFPACKET_INFO* pMask, ULONG start, ULONG end, _In_ const OVS_ARGUMENT_GROUP* pActions);
+
+void DbgPrintFlowWithActions(const char* msg, _In_ const OVS_OFPACKET_INFO* pPacketInfo, _In_ const OVS_OFPACKET_INFO* pMask,
+	ULONG start, ULONG end, _In_ const OVS_ARGUMENT_GROUP* pActions);
+
 void DbgPrintAllFlows();
-void FlowWithActions_ToString(const char* msg, _In_ const OVS_OFPACKET_INFO* pPacketInfo, _In_ const OVS_OFPACKET_INFO* pMask, ULONG start, ULONG end, _In_ const OVS_ARGUMENT_GROUP* pActions, CHAR str[501]);
+
+void FlowWithActions_ToString(const char* msg, _In_ const OVS_OFPACKET_INFO* pPacketInfo, _In_ const OVS_OFPACKET_INFO* pMask, 
+	ULONG start, ULONG end, _In_ const OVS_ARGUMENT_GROUP* pActions, _Out_ CHAR str[501]);
+
+#define DBGPRINT_FLOW(logLevel, msg, pFlow) DbgPrintFlow(msg, &(pFlow->unmaskedPacketInfo), &(pFlow->pMask->packetInfo),		\
+	(ULONG)pFlow->pMask->piRange.startRange, (ULONG)pFlow->pMask->piRange.endRange)
+
+#define DBGPRINT_FLOWMATCH(logLevel, msg, pFlowMatch) DbgPrintFlow(msg,													\
+	(pFlowMatch)->pPacketInfo, (pFlowMatch)->pFlowMask ? &((pFlowMatch)->pFlowMask->packetInfo) : NULL,		\
+	(ULONG)(pFlowMatch)->piRange.startRange, (ULONG)(pFlowMatch)->piRange.endRange)
+
+#else
+#define DBGPRINT_FLOW(logLevel, msg, pFlow)				DEBUGP(logLevel, msg "\n")
+#define DBGPRINT_FLOWMATCH(logLevel, msg, pFlowMatch)	DEBUGP(logLevel, msg "\n")
 #endif
