@@ -159,6 +159,7 @@ OVS_ERROR Flow_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         pFlow->pMask = pFlowMask;
         pFlow->pActions = pActions;
 
+		DBGPRINT_FLOW(LOG_LOUD, "flow created: ", pFlow);
         FlowTable_InsertFlow_Unsafe(pFlowTable, pFlow);
     }
 
@@ -173,7 +174,10 @@ OVS_ERROR Flow_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         if (pMsg->flags & OVS_MESSAGE_FLAG_CREATE &&
             pMsg->flags & OVS_MESSAGE_FLAG_EXCLUSIVE)
         {
-            DEBUGP(LOG_LOUD, __FUNCTION__ " we are not allowed to override the flow, because of the nl flag = create / exclusive!\n");
+			FLOW_LOCK_READ(pFlow, &lockState);
+			DBGPRINT_FLOW(LOG_LOUD, "flow create/set failed (EXISTS but Create & Exclusive): ", pFlow);
+			FLOW_UNLOCK(pFlow, &lockState);
+
             error = OVS_ERROR_EXIST;
             goto Cleanup;
         }
@@ -184,7 +188,8 @@ OVS_ERROR Flow_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
         if (!PacketInfo_Equal(&pFlow->unmaskedPacketInfo, &packetInfo, flowMatch.piRange.endRange))
         {
-        	DEBUGP(LOG_LOUD, "Cannot override flow, because it does not match the unmasked key!\n");
+			DBGPRINT_FLOW(LOG_LOUD, "flow create/set failed (flow does not match the unmasked key): ", pFlow);
+
 			FLOW_UNLOCK(pFlow, &lockState);
 
             error = OVS_ERROR_INVAL;
@@ -195,6 +200,8 @@ OVS_ERROR Flow_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 		//so we remove it from flow now, but will possibly destroy it (the actions struct) later
 		pOldActions = pFlow->pActions;
 		pFlow->pActions = pActions;
+
+		DBGPRINT_FLOW(LOG_LOUD, "flow create/set: ", pFlow);
 
 		FLOW_UNLOCK(pFlow, &lockState);
 		//the pFlow does not become invalidated between locks, because it's referenced
@@ -358,13 +365,16 @@ OVS_ERROR Flow_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         {
 			FLOW_UNLOCK(pFlow, &lockState);
 
-            DEBUGP(LOG_ERROR, "Flow Set error: the flow's unmasked key does not match the given key\n.\n");
+			DBGPRINT_FLOW(LOG_ERROR, "flow set FAIL: unmasked): ", pFlow);
+
             error = OVS_ERROR_INVAL;
             goto Cleanup;
         }
 
 		pOldActions = pFlow->pActions;
 		pFlow->pActions = pActions;
+
+		DBGPRINT_FLOW(LOG_LOUD, "flow set: ", pFlow);
 
 		FLOW_UNLOCK(pFlow, &lockState);
 		//the pFlow does not become invalidated between locks, because it's referenced
@@ -594,7 +604,7 @@ OVS_ERROR Flow_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
     if (!pFlow)
     {
-		DEBUGP(LOG_ERROR, "flow delete fail: flow not found!\n");
+		DBGPRINT_FLOWMATCH(LOG_ERROR, "flow delete -- no flow: ", &flowMatch);
         error = OVS_ERROR_NOENT;
         goto Cleanup;
     }
@@ -608,6 +618,8 @@ OVS_ERROR Flow_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
 	//NOTE: we can only delete the flow AFTER we reply: we need it to... write the reply
 	FLOWTABLE_LOCK_WRITE(pFlowTable, &lockState);
+
+	DBGPRINT_FLOW(LOG_LOUD, "flow delete: ", pFlow);
 
 	//remove the flow from the list of flows
 	FlowTable_RemoveFlow_Unsafe(pFlowTable, pFlow);
