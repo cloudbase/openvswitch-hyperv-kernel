@@ -66,9 +66,9 @@ _Use_decl_annotations_
 VOID Nic_Connect(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH_NIC_PARAMETERS* pNic)
 {
     OVS_NIC_LIST_ENTRY* pNicEntry = NULL;
-	NDIS_SWITCH_PORT_ID portId = NDIS_SWITCH_DEFAULT_PORT_ID;
+    NDIS_SWITCH_PORT_ID portId = NDIS_SWITCH_DEFAULT_PORT_ID;
     LOCK_STATE_EX lockState = { 0 };
-	UINT16 ovsPortNumber = OVS_INVALID_PORT_NUMBER;
+    UINT16 ovsPortNumber = OVS_INVALID_PORT_NUMBER;
 
     while (pForwardInfo->isInitialRestart)
     {
@@ -100,40 +100,40 @@ VOID Nic_Connect(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH_NIC_PA
 
         OVS_CHECK(pNicEntry != NULL);
 
-		pNicEntry = OVS_REFCOUNT_REFERENCE(pNicEntry);
+        pNicEntry = OVS_REFCOUNT_REFERENCE(pNicEntry);
     }
 
     if (pNicEntry)
     {
-		OVS_CHECK(pNicEntry->ovsPortNumber == OVS_INVALID_PORT_NUMBER);
+        OVS_CHECK(pNicEntry->ovsPortNumber == OVS_INVALID_PORT_NUMBER);
 
-		portId = pNicEntry->portId;
+        portId = pNicEntry->portId;
     }
 
-	FWDINFO_UNLOCK(pForwardInfo, &lockState);
+    FWDINFO_UNLOCK(pForwardInfo, &lockState);
 
-	if (portId != NDIS_SWITCH_DEFAULT_PORT_ID)
-	{
-		ovsPortNumber = Sctx_Nic_SetPersistentPort(pForwardInfo, portId);
-	}
+    if (portId != NDIS_SWITCH_DEFAULT_PORT_ID)
+    {
+        ovsPortNumber = Sctx_Nic_SetPersistentPort(pForwardInfo, portId);
+    }
 
-	FWDINFO_LOCK_WRITE(pForwardInfo, &lockState);
+    FWDINFO_LOCK_WRITE(pForwardInfo, &lockState);
 
-	if (pNicEntry)
-	{
-		pNicEntry->ovsPortNumber = ovsPortNumber;
-		pNicEntry->connected = TRUE;
+    if (pNicEntry)
+    {
+        pNicEntry->ovsPortNumber = ovsPortNumber;
+        pNicEntry->connected = TRUE;
 
-		++(pForwardInfo->countNics);
-	}
+        ++(pForwardInfo->countNics);
+    }
 
-	FWDINFO_UNLOCK(pForwardInfo, &lockState);
+    FWDINFO_UNLOCK(pForwardInfo, &lockState);
 
-	//Cleanup
-	if (pNicEntry)
-	{
-		OVS_REFCOUNT_DEREFERENCE(pNicEntry);
-	}
+    //Cleanup
+    if (pNicEntry)
+    {
+        OVS_REFCOUNT_DEREFERENCE(pNicEntry);
+    }
 }
 
 _Use_decl_annotations_
@@ -192,10 +192,10 @@ VOID Nic_Disconnect(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH_NIC
 
     if (pNicEntry != NULL)
     {
-		pNicEntry->connected = FALSE;
-		--(pForwardInfo->countNics);
+        pNicEntry->connected = FALSE;
+        --(pForwardInfo->countNics);
 
-		//we no longer need to 'unset' the pers port: it will try (eventually) to send to this port id, but it will not find nic, so it will fail.
+        //we no longer need to 'unset' the pers port: it will try (eventually) to send to this port id, but it will not find nic, so it will fail.
     }
 
     FWDINFO_UNLOCK(pForwardInfo, &lockState);

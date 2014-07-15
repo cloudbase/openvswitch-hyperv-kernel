@@ -65,13 +65,13 @@ typedef struct _OVS_ARGUMENT_SLIST_ENTRY {
 } OVS_ARGUMENT_SLIST_ENTRY;
 
 #define COMPARE_ARGUMENT_SIMPLE(arg, value, typeOfValue) \
-	(*(typeOfValue*)arg->data == value ? TRUE : FALSE)
+    (*(typeOfValue*)arg->data == value ? TRUE : FALSE)
 
 #define GET_ARG_DATA(arg, typeOfDest) \
 (*(typeOfDest*)arg->data)
 
 #define GET_ARG_DATA_PTR(arg, ptrType) \
-	((ptrType*)arg->data)
+    ((ptrType*)arg->data)
 
 /******************************************* ALLOC & FREE FUNCTIONS **********************************************************************/
 

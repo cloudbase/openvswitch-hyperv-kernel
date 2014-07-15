@@ -37,9 +37,9 @@ typedef struct _OVS_ARP_HEADER {
 
 void DbgPrintArp(OVS_ARP_HEADER* pArpHeader);
 
-#define OVS_ARP_OPERATION_REQUEST		1
-#define OVS_ARP_OPERATION_REPLY			2
-#define OVS_ARP_HARDWARE_TYPE_ETHERNET	1
+#define OVS_ARP_OPERATION_REQUEST        1
+#define OVS_ARP_OPERATION_REPLY          2
+#define OVS_ARP_HARDWARE_TYPE_ETHERNET   1
 
 OVS_ARP_HEADER* GetArpHeader(_In_ OVS_ETHERNET_HEADER* pEthHeader);
 BYTE* VerifyArpFrame(BYTE* buffer, ULONG* pLength);

@@ -23,8 +23,8 @@ limitations under the License.
 #define OFFSET_OF(Type, member) ((SIZE_T) &((Type *)0)->member)
 #define NESTED_OFFSET_OF(Type1, member1, Type2, member2) (OFFSET_OF(Type1, member1) + OFFSET_OF(Type2, member2))
 
-#define OVS_PI_MASK_MATCH_EXACT(type)		((type)~0)
-#define OVS_PI_MASK_MATCH_WILDCARD(type)	((type)0)
+#define OVS_PI_MASK_MATCH_EXACT(type)        ((type)~0)
+#define OVS_PI_MASK_MATCH_WILDCARD(type)     ((type)0)
 
 typedef struct _OVS_ARGUMENT_GROUP OVS_ARGUMENT_GROUP;
 typedef struct _OVS_ARGUMENT OVS_ARGUMENT;
@@ -35,19 +35,19 @@ typedef struct _OVS_FLOW_MASK OVS_FLOW_MASK;
 
 __declspec(align(8))
 typedef struct _OVS_PHYSICAL{
-    UINT32	packetPriority;
-    UINT32	packetMark;
-    UINT16	ovsInPort;
+    UINT32    packetPriority;
+    UINT32    packetMark;
+    UINT16    ovsInPort;
 }OVS_PHYSICAL, *POVS_PHYSICAL;
 C_ASSERT(sizeof(OVS_PHYSICAL) == 16);
 
 __declspec(align(8))
 typedef struct _OVS_ETH_INFO {
-    UINT8	source[OVS_ETHERNET_ADDRESS_LENGTH];
+    UINT8   source[OVS_ETHERNET_ADDRESS_LENGTH];
     UINT8   destination[OVS_ETHERNET_ADDRESS_LENGTH];
     //tag control information: 0 = no VLAN; otherwise OVS_VLAN_TAG_PRESENT is set
-    BE16	tci;
-    BE16	type;
+    BE16    tci;
+    BE16    type;
 }OVS_ETH_INFO, *POVS_ETH_INFO;
 C_ASSERT(sizeof(OVS_ETH_INFO) == 16);
 
@@ -117,34 +117,34 @@ C_ASSERT(sizeof(OVS_IPV6_INFO) == 72);
 //PI = PacketInfo
 __declspec(align(8))
 typedef struct _OF_PI_IPV4_TUNNEL {
-    BE64	tunnelId;
-    UINT32	ipv4Source;
-    UINT32	ipv4Destination;
-    UINT16	tunnelFlags;
-    UINT8	ipv4TypeOfService;
-    UINT8   ipv4TimeToLive;
+    BE64      tunnelId;
+    UINT32    ipv4Source;
+    UINT32    ipv4Destination;
+    UINT16    tunnelFlags;
+    UINT8     ipv4TypeOfService;
+    UINT8     ipv4TimeToLive;
 }OF_PI_IPV4_TUNNEL, *POF_PI_IPV4_TUNNEL;
 
 C_ASSERT(sizeof(OF_PI_IPV4_TUNNEL) == 24);
 
-#define OVS_TUNNEL_FLAG_CHECKSUM		RtlUshortByteSwap(0x01)
-#define OVS_TUNNEL_FLAG_KEY				RtlUshortByteSwap(0x04)
-#define OVS_TUNNEL_FLAG_SEQ				RtlUshortByteSwap(0x08)
-#define OVS_TUNNEL_FLAG_DONT_FRAGMENT	RtlUshortByteSwap(0x0100)
+#define OVS_TUNNEL_FLAG_CHECKSUM        RtlUshortByteSwap(0x01)
+#define OVS_TUNNEL_FLAG_KEY             RtlUshortByteSwap(0x04)
+#define OVS_TUNNEL_FLAG_SEQ             RtlUshortByteSwap(0x08)
+#define OVS_TUNNEL_FLAG_DONT_FRAGMENT   RtlUshortByteSwap(0x0100)
 
 __declspec(align(8))
 typedef struct _OVS_OFPACKET_INFO
 {
-    OF_PI_IPV4_TUNNEL tunnelInfo;		//24 bytes
+    OF_PI_IPV4_TUNNEL tunnelInfo;        //24 bytes
 
-    OVS_PHYSICAL physical;					//16 bytes
-    OVS_ETH_INFO ethInfo;					//16 bytes
-    OVS_NET_LAYER_INFO ipInfo;				//8 bytes
+    OVS_PHYSICAL physical;                    //16 bytes
+    OVS_ETH_INFO ethInfo;                    //16 bytes
+    OVS_NET_LAYER_INFO ipInfo;                //8 bytes
 
     union {
         OVS_IP4_INFO ipv4Info;
         OVS_ARP_INFO arpInfo;
-        OVS_IPV6_INFO ipv6Info;				//72 bytes
+        OVS_IPV6_INFO ipv6Info;                //72 bytes
     } netProto;
 }OVS_OFPACKET_INFO, *POVS_OFPACKET_INFO;
 C_ASSERT(sizeof(OVS_OFPACKET_INFO) == 136);
@@ -157,13 +157,13 @@ typedef struct _OVS_PI_MPLS {
 }OVS_PI_MPLS, *POVS_PI_MPLS;
 
 typedef struct _OVS_PI_ETH_ADDRESS{
-    UINT8	 source[OVS_ETHERNET_ADDRESS_LENGTH];
-    UINT8	 destination[OVS_ETHERNET_ADDRESS_LENGTH];
+    UINT8     source[OVS_ETHERNET_ADDRESS_LENGTH];
+    UINT8     destination[OVS_ETHERNET_ADDRESS_LENGTH];
 }OVS_PI_ETH_ADDRESS, *POVS_PI_ETH_ADDRESS;
 
 typedef struct _OVS_PI_IPV4{
-    BE32	source;
-    BE32	destination;
+    BE32    source;
+    BE32    destination;
     UINT8   protocol;
     UINT8   tos;
     UINT8   ttl;
@@ -172,9 +172,9 @@ typedef struct _OVS_PI_IPV4{
 }OVS_PI_IPV4, *POVS_PI_IPV4;
 
 typedef struct _OVS_PI_IPV6{
-    BE32	source[4];
-    BE32	destination[4];
-    BE32	label;
+    BE32    source[4];
+    BE32    destination[4];
+    BE32    label;
     UINT8   protocol;
     UINT8   trafficClass;
     UINT8   highLimit;
@@ -208,11 +208,11 @@ typedef struct _OVS_PI_ICMP6 {
 }OVS_PI_ICMP6, *POVS_PI_ICMP6;
 
 typedef struct _OVS_PI_ARP {
-    BE32	sourceIp;
-    BE32	targetIp;
-    BE16	operation;
-    UINT8	sourceMac[OVS_ETHERNET_ADDRESS_LENGTH];
-    UINT8	targetMac[OVS_ETHERNET_ADDRESS_LENGTH];
+    BE32    sourceIp;
+    BE32    targetIp;
+    BE16    operation;
+    UINT8   sourceMac[OVS_ETHERNET_ADDRESS_LENGTH];
+    UINT8   targetMac[OVS_ETHERNET_ADDRESS_LENGTH];
 }OVS_PI_ARP, *POVS_PI_ARP;
 
 //Ipv6 Neighbor Discovery

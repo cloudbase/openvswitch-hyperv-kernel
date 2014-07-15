@@ -30,31 +30,31 @@ typedef struct _OVS_TRANSPORT_PSEUDO_HEADER_IPV6 OVS_TRANSPORT_PSEUDO_HEADER_IPV
 
 typedef struct _OVS_IPV6_HEADER {
     //4 bits version; 8 traffic class (= 6 traffic class + 2 ECN); 20 flow label
-    UINT32		vcf;// 4 bits Version, 8 Traffic Class, 20 Flow Label.
+    UINT32        vcf;// 4 bits Version, 8 Traffic Class, 20 Flow Label.
 
-    UINT16		payloadLength;   // Zero indicates Jumbo Payload hop-by-hop option.
-    UINT8		nextHeader;       // Values are superset of IPv4's Protocol field.
-    UINT8		hopLimit;
-    IN6_ADDR	sourceAddress;
-    IN6_ADDR	destinationAddress;
+    UINT16        payloadLength;   // Zero indicates Jumbo Payload hop-by-hop option.
+    UINT8         nextHeader;       // Values are superset of IPv4's Protocol field.
+    UINT8         hopLimit;
+    IN6_ADDR      sourceAddress;
+    IN6_ADDR      destinationAddress;
 } OVS_IPV6_HEADER, *POVS_IPV6_HEADER;
 
 C_ASSERT(40 == sizeof(OVS_IPV6_HEADER));
 
 typedef struct _OVS_IPV6_FRAGMENT_HEADER
 {
-    UINT8		nextHeaderType;
-    UINT8		reserved;
-    UINT16		fragmentOffset; //13 bit fragment offset, 2bit reserved, 1bit M flag (more fragments)
-    UINT32		identification;
+    UINT8         nextHeaderType;
+    UINT8         reserved;
+    UINT16        fragmentOffset; //13 bit fragment offset, 2bit reserved, 1bit M flag (more fragments)
+    UINT32        identification;
 }OVS_IPV6_FRAGMENT_HEADER, *POVS_IPV6_FRAGMENT_HEADER;
 
 typedef struct _OVS_IPV6_ROUTING_HEADER
 {
-    UINT8		nextHeaderType;
-    UINT8		headerExtLength;
-    UINT8		routingType;
-    UINT8		segmentsLeft;
+    UINT8         nextHeaderType;
+    UINT8         headerExtLength;
+    UINT8         routingType;
+    UINT8         segmentsLeft;
     /* type specific data - variable length field */
 }OVS_IPV6_ROUTING_HEADER, *POVS_IPV6_ROUTING_HEADER;
 
@@ -182,9 +182,9 @@ static __inline BYTE GetIpv6ExtensionLength(_In_ const VOID* extBuffer)
     OVS_CHECK(IsIpv6Extension(type));
 
     if (type == OVS_IPV6_EXTH_FRAGMENTATION)
-	{
+    {
         return 8;
-	}
+    }
 
     len = *((BYTE*)extBuffer + 1);
 

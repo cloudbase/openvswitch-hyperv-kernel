@@ -62,7 +62,7 @@ OVS_ERROR Datapath_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
     upcallPid = GET_ARG_DATA(pArgUpcallPid, UINT32);
 
-	DATAPATH_LOCK_WRITE(pDatapath, &lockState);
+    DATAPATH_LOCK_WRITE(pDatapath, &lockState);
 
     if (!pDatapath->deleted || pDatapath->name)
     {
@@ -85,7 +85,7 @@ OVS_ERROR Datapath_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
     RtlCopyMemory(pDatapath->name, pArgName->data, dpNameLen);
 
-	DATAPATH_UNLOCK(pDatapath, &lockState);
+    DATAPATH_UNLOCK(pDatapath, &lockState);
 
     if (0 == pDatapath->switchIfIndex)
     {
@@ -112,7 +112,7 @@ OVS_ERROR Datapath_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     }
 
 Cleanup:
-	OVS_REFCOUNT_DEREFERENCE(pDatapath);
+    OVS_REFCOUNT_DEREFERENCE(pDatapath);
 
     if (replyMsg.pArgGroup)
     {
@@ -133,17 +133,17 @@ OVS_ERROR Datapath_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObjec
 
     DEBUGP(LOG_ERROR, "cannot delete datapath: we must always have one!\n");
 
-	pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
+    pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
     if (!pDatapath)
     {
         return OVS_ERROR_NODEV;
     }
 
-	DATAPATH_LOCK_READ(pDatapath, &lockState);
+    DATAPATH_LOCK_READ(pDatapath, &lockState);
 
     if (pDatapath->deleted || !pDatapath->name)
     {
-		DATAPATH_UNLOCK(pDatapath, &lockState);
+        DATAPATH_UNLOCK(pDatapath, &lockState);
 
         DEBUGP(LOG_ERROR, "expected the datapath not to exist");
         error = OVS_ERROR_INVAL;
@@ -156,7 +156,7 @@ OVS_ERROR Datapath_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObjec
         error = OVS_ERROR_INVAL;
     }
 
-	DATAPATH_UNLOCK(pDatapath, &lockState);
+    DATAPATH_UNLOCK(pDatapath, &lockState);
 
     if (error != OVS_ERROR_NOERROR)
     {
@@ -178,8 +178,8 @@ OVS_ERROR Datapath_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObjec
     }
 
 Cleanup:
-	OVS_REFCOUNT_DEREFERENCE_ONLY(pDatapath);
-	OVS_REFCOUNT_DESTROY(pDatapath);
+    OVS_REFCOUNT_DEREFERENCE_ONLY(pDatapath);
+    OVS_REFCOUNT_DESTROY(pDatapath);
 
     if (replyMsg.pArgGroup)
     {
@@ -197,7 +197,7 @@ OVS_ERROR Datapath_Get(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     OVS_DATAPATH *pDatapath = NULL;
     OVS_ERROR error = OVS_ERROR_NOERROR;
 
-	pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
+    pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
     if (!pDatapath)
     {
         return OVS_ERROR_NODEV;
@@ -225,7 +225,7 @@ OVS_ERROR Datapath_Get(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     }
 
 Cleanup:
-	OVS_REFCOUNT_DEREFERENCE(pDatapath);
+    OVS_REFCOUNT_DEREFERENCE(pDatapath);
 
     if (replyMsg.pArgGroup)
     {
@@ -246,7 +246,7 @@ OVS_ERROR Datapath_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     DEBUGP(LOG_ERROR, "setting dp has no meaning!\n");
     OVS_CHECK(0);
 
-	pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
+    pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
     if (!pDatapath)
     {
         return OVS_ERROR_NODEV;
@@ -266,7 +266,7 @@ OVS_ERROR Datapath_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     }
 
 Cleanup:
-	OVS_REFCOUNT_DEREFERENCE(pDatapath);
+    OVS_REFCOUNT_DEREFERENCE(pDatapath);
 
     if (replyMsg.pArgGroup)
     {
@@ -284,7 +284,7 @@ OVS_ERROR Datapath_Dump(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     OVS_MESSAGE replyMsg = { 0 }, *msgs = NULL;
     OVS_ERROR error = OVS_ERROR_NOERROR;
 
-	pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
+    pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
     if (!pDatapath)
     {
         return OVS_ERROR_NODEV;
@@ -343,7 +343,7 @@ OVS_ERROR Datapath_Dump(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     }
 
 Cleanup:
-	OVS_REFCOUNT_DEREFERENCE(pDatapath);
+    OVS_REFCOUNT_DEREFERENCE(pDatapath);
 
     return error;
 }

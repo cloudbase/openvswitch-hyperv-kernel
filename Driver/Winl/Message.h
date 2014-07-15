@@ -24,11 +24,11 @@ limitations under the License.
 typedef struct _OVS_BUFFER OVS_BUFFER;
 
 //OVS_USERSPACE_PACKET_CMD_MISS is the userspace correspondent of the kernel ovs message type = OVS_MESSAGE_COMMAND_PACKET_UPCALL_MISS
-#define OVS_USERSPACE_PACKET_CMD_MISS			1
+#define OVS_USERSPACE_PACKET_CMD_MISS                 1
 //OVS_USERSPACE_PACKET_CMD_ACTION is the correspondent of the kernel ovs message type = OVS_MESSAGE_COMMAND_PACKET_UPCALL_ACTION
-#define	OVS_USERSPACE_PACKET_CMD_ACTION			2
+#define    OVS_USERSPACE_PACKET_CMD_ACTION            2
 //OVS_USERSPACE_PACKET_CMD_EXECUTE is the correspondent of the kernel ovs message type = OVS_MESSAGE_COMMAND_PACKET_UPCALL_EXECUTE
-#define OVS_USERSPACE_PACKET_CMD_EXECUTE		3
+#define OVS_USERSPACE_PACKET_CMD_EXECUTE              3
 
 #define OVS_VPORT_MCGROUP 33
 

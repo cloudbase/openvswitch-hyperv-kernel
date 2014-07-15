@@ -26,10 +26,10 @@ typedef struct _OVS_PI_TCP OVS_PI_TCP;
 
 //TODO: must test to see if the bitfields are set ok (considering LE system)
 typedef struct _OVS_TCP_HEADER {
-    UINT16	sourcePort;
-    UINT16	destinationPort;
-    SEQ_NUM	sequenceNo;//DWORD
-    SEQ_NUM acknowledgeNo;
+    UINT16    sourcePort;
+    UINT16    destinationPort;
+    SEQ_NUM   sequenceNo;//DWORD
+    SEQ_NUM   acknowledgeNo;
 
     //flag bits (after the 6 bits = reserved)
     //bit 0: URG
@@ -123,10 +123,10 @@ static __inline VOID SetTcpReserved(UINT16* pFlagsAndOffset, UINT16 reserved)
 //O = Data Offset
 //R = Reserved
 //C = Control bit
-//0x1FF in BE is:				0000 0001 1111 1111
-//0x1FF in LE is:				1111 1111 0000 0001
-//FlagsAndOffset as LE it is:	CCCC CCCC OOOO RRRC
-//=> &= is flags only:			CCCC CCCC 0000 000C
+//0x1FF in BE is:                0000 0001 1111 1111
+//0x1FF in LE is:                1111 1111 0000 0001
+//FlagsAndOffset as LE it is:    CCCC CCCC OOOO RRRC
+//=> &= is flags only:           CCCC CCCC 0000 000C
 static __inline UINT16 GetTcpFlags(UINT16 flagsAndOffset)
 {
     UINT16 flags = _byteswap_ushort(flagsAndOffset);

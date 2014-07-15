@@ -29,7 +29,7 @@ volatile UINT16 g_uniqueIpv4Id = 0;
 
 static __inline UINT16 _GenerateUniqueIpv4Id()
 {
-	return (UINT16)InterlockedIncrement16((volatile SHORT*)&g_uniqueIpv4Id);
+    return (UINT16)InterlockedIncrement16((volatile SHORT*)&g_uniqueIpv4Id);
 }
 
 static const OVS_DECAPSULATOR g_greDecapsulator = {
@@ -94,8 +94,8 @@ static VOID _BuildOuterIpv4Header(_In_ const OF_PI_IPV4_TUNNEL* pTunnel, _Out_ O
     */
     //i.e. identification is considered for the same ip src & dest + proto
     //update: RFC6864 - use only for fragmentation.
-	//TODO: consider using FwpsConstructIpHeaderForTransport
-	pDeliveryIp4Header->Identification = _GenerateUniqueIpv4Id();
+    //TODO: consider using FwpsConstructIpHeaderForTransport
+    pDeliveryIp4Header->Identification = _GenerateUniqueIpv4Id();
     // If TTL contains the value zero, then the datagram must be destroyed.
     pDeliveryIp4Header->TimeToLive = pTunnel->ipv4TimeToLive;
     pDeliveryIp4Header->Protocol = encapProto;
@@ -179,7 +179,7 @@ static BOOLEAN _WriteEncapsulation(_In_ const OVS_ENCAPSULATOR* pEncapsulator, _
     {
         pIpv4PayloadHeader = (OVS_IPV4_HEADER*)writeBuffer;
 
-		pIpv4PayloadHeader->DontFragment = (pTunnelInfo->tunnelFlags & OVS_TUNNEL_FLAG_DONT_FRAGMENT ? 1 : 0);
+        pIpv4PayloadHeader->DontFragment = (pTunnelInfo->tunnelFlags & OVS_TUNNEL_FLAG_DONT_FRAGMENT ? 1 : 0);
 
         //NORMALLY we wouldn't worry about the payload ip header's checksum, because the checksum offloading mechanism requires the
         //NET_BUFFER_LIST to have NDIS_TCP_IP_CHECKSUM_NET_BUFFER_LIST_INFO field completed CORRECTLY.
@@ -466,11 +466,11 @@ const OVS_DECAPSULATOR* Encap_FindDecapsulator(NET_BUFFER* pNb, BYTE* pEncapProt
         else if (pIpv4Header->Protocol == OVS_IPPROTO_UDP)
         {
             OVS_UDP_HEADER* pUdpHeader = (OVS_UDP_HEADER*)AdvanceIpv4Header(pIpv4Header);
-			OVS_PERSISTENT_PORT* pPort = NULL;
+            OVS_PERSISTENT_PORT* pPort = NULL;
 
-			pPort = PersPort_FindVxlanByDestPort_Ref(RtlUshortByteSwap(pUdpHeader->destinationPort));
+            pPort = PersPort_FindVxlanByDestPort_Ref(RtlUshortByteSwap(pUdpHeader->destinationPort));
 
-			if (pPort)
+            if (pPort)
             {
                 if (pUdpDestPort)
                 {
@@ -480,7 +480,7 @@ const OVS_DECAPSULATOR* Encap_FindDecapsulator(NET_BUFFER* pNb, BYTE* pEncapProt
                 *pEncapProtoType = OVS_IPPROTO_UDP;
                 pDecapsulator = Encap_GetDecapsulator_Vxlan();
 
-				OVS_REFCOUNT_DEREFERENCE(pPort);
+                OVS_REFCOUNT_DEREFERENCE(pPort);
             }
         }
 

@@ -66,12 +66,12 @@ NDIS_STATUS Sctx_AddPort_Unsafe(_Inout_ OVS_GLOBAL_FORWARD_INFO* pForwardInfo, c
         goto Cleanup;
     }
 
-	pPortEntry->refCount.Destroy = PortEntry_DestroyNow_Unsafe;
+    pPortEntry->refCount.Destroy = PortEntry_DestroyNow_Unsafe;
     pPortEntry->portId = pCurPort->PortId;
     pPortEntry->portType = pCurPort->PortType;
     pPortEntry->on = (pCurPort->PortState == NdisSwitchPortStateCreated);
     pPortEntry->portFriendlyName = pCurPort->PortFriendlyName;
-	pPortEntry->ovsPortNumber = OVS_INVALID_PORT_NUMBER;
+    pPortEntry->ovsPortNumber = OVS_INVALID_PORT_NUMBER;
 
     DEBUGP(LOG_INFO, "PORT: id=%d; type=%d; on=%d; friendly name=\"%s\"\n",
         pPortEntry->portId, pPortEntry->portType, pPortEntry->on, ofPortName);
@@ -94,11 +94,11 @@ Cleanup:
 
 VOID PortEntry_DestroyNow_Unsafe(OVS_PORT_LIST_ENTRY* pPortEntry)
 {
-	if (pPortEntry)
-	{
-		RemoveEntryList(&pPortEntry->listEntry);
-		KFree(pPortEntry);
-	}
+    if (pPortEntry)
+    {
+        RemoveEntryList(&pPortEntry->listEntry);
+        KFree(pPortEntry);
+    }
 }
 
 NDIS_STATUS Sctx_DeletePort_Unsafe(_In_ const OVS_GLOBAL_FORWARD_INFO* pForwardInfo, _In_ NDIS_SWITCH_PORT_ID portId)
@@ -113,9 +113,9 @@ NDIS_STATUS Sctx_DeletePort_Unsafe(_In_ const OVS_GLOBAL_FORWARD_INFO* pForwardI
         goto Cleanup;
     }
 
-	OVS_CHECK(pPortEntry->ovsPortNumber == OVS_INVALID_PORT_NUMBER);
+    OVS_CHECK(pPortEntry->ovsPortNumber == OVS_INVALID_PORT_NUMBER);
 
-	OVS_REFCOUNT_DESTROY(pPortEntry);
+    OVS_REFCOUNT_DESTROY(pPortEntry);
 
 Cleanup:
     return status;
@@ -156,23 +156,23 @@ Cleanup:
 
 UINT16 Sctx_Port_SetPersistentPort(const char* ovsPortName, NDIS_SWITCH_PORT_ID portId)
 {
-	OVS_PERSISTENT_PORT* pPort = NULL;
-	UINT16 ovsPortNumber = OVS_INVALID_PORT_NUMBER;
+    OVS_PERSISTENT_PORT* pPort = NULL;
+    UINT16 ovsPortNumber = OVS_INVALID_PORT_NUMBER;
 
-	pPort = PersPort_FindByName_Ref(ovsPortName);
-	if (pPort)
-	{
-		LOCK_STATE_EX lockState = { 0 };
+    pPort = PersPort_FindByName_Ref(ovsPortName);
+    if (pPort)
+    {
+        LOCK_STATE_EX lockState = { 0 };
 
-		PORT_LOCK_WRITE(pPort, &lockState);
+        PORT_LOCK_WRITE(pPort, &lockState);
 
-		pPort->portId = portId;
-		ovsPortNumber = pPort->ovsPortNumber;
+        pPort->portId = portId;
+        ovsPortNumber = pPort->ovsPortNumber;
 
-		PORT_UNLOCK(pPort, &lockState);
+        PORT_UNLOCK(pPort, &lockState);
 
-		OVS_REFCOUNT_DEREFERENCE(pPort);
-	}
+        OVS_REFCOUNT_DEREFERENCE(pPort);
+    }
 
-	return ovsPortNumber;
+    return ovsPortNumber;
 }

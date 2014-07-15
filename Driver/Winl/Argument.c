@@ -1751,9 +1751,9 @@ static __inline BOOLEAN _VerifyArg_PacketInfoTunnelIpv4Dst(OVS_ARGUMENT* pArg, B
     if (!isMask)
     {
         if (destAddr == 0)
-		{
+        {
             return FALSE;
-		}
+        }
     }
     //is mask
     else if (isRequest)
@@ -1814,9 +1814,9 @@ static __inline BOOLEAN _VerifyArg_PacketInfoTunnelTtl(OVS_ARGUMENT* pArg, BOOLE
     if (!isMask)
     {
         if (ttl == 0)
-		{
+        {
             return FALSE;
-		}
+        }
     }
     else if (isRequest)
     {
@@ -1843,53 +1843,53 @@ static __inline BOOLEAN _VerifyGroup_FlowKeyTunnel(OVS_ARGUMENT* pParentArg, BOO
         {
         case OVS_ARGTYPE_PI_TUNNEL_CHECKSUM:
             if (!_VerifyArg_PacketInfoTunnelChecksum(pArg, isMask))
-			{
+            {
                 return FALSE;
-			}
+            }
             break;
 
         case OVS_ARGTYPE_PI_TUNNEL_DONT_FRAGMENT:
             if (!_VerifyArg_PacketInfoTunnelDontFragment(pArg, isMask))
-			{
+            {
                 return FALSE;
-			}
+            }
             break;
 
         case OVS_ARGTYPE_PI_TUNNEL_ID:
             if (!_VerifyArg_PacketInfoTunnelId(pArg, isMask, isRequest))
-			{
+            {
                 return FALSE;
-			}
+            }
             break;
 
         case OVS_ARGTYPE_PI_TUNNEL_IPV4_DST:
             if (!_VerifyArg_PacketInfoTunnelIpv4Dst(pArg, isMask, isRequest))
-			{
+            {
                 return FALSE;
-			}
+            }
 
             haveDest = TRUE;
             break;
 
         case OVS_ARGTYPE_PI_TUNNEL_IPV4_SRC:
             if (!_VerifyArg_PacketInfoTunnelIpv4Src(pArg, isMask, isRequest))
-			{
+            {
                 return FALSE;
-			}
+            }
             break;
 
         case OVS_ARGTYPE_PI_TUNNEL_TOS:
             if (!_VerifyArg_PacketInfoTunnelTos(pArg, isMask, isRequest))
-			{
+            {
                 return FALSE;
-			}
+            }
             break;
 
         case OVS_ARGTYPE_PI_TUNNEL_TTL:
             if (!_VerifyArg_PacketInfoTunnelTtl(pArg, isMask, isRequest))
-			{
+            {
                 return FALSE;
-			}
+            }
 
             haveTtl = TRUE;
             break;
@@ -1902,9 +1902,9 @@ static __inline BOOLEAN _VerifyGroup_FlowKeyTunnel(OVS_ARGUMENT* pParentArg, BOO
     if (!isMask)
     {
         if (!haveDest || !haveTtl)
-		{
+        {
             return FALSE;
-		}
+        }
     }
 
     return TRUE;
@@ -2031,9 +2031,9 @@ static __inline BOOLEAN _VerifyArg_PacketInfo_Icmp(OVS_ARGUMENT* pArg, BOOLEAN i
     if (!isMask)
     {
         if (!FindArgument(pParentArg->data, OVS_ARGTYPE_PI_IPV4))
-		{
+        {
             return FALSE;
-		}
+        }
     }
 
     //mask
@@ -2057,17 +2057,17 @@ static __inline BOOLEAN _VerifyArg_PacketInfo_Icmp6(OVS_ARGUMENT* pArg, BOOLEAN 
     if (!isMask)
     {
         if (!FindArgument(pParentArg->data, OVS_ARGTYPE_PI_IPV6))
-		{
+        {
             return FALSE;
-		}
+        }
 
         if (pIcmp6Info->type == OVS_NDISC_NEIGHBOUR_SOLICITATION ||
             pIcmp6Info->code == OVS_NDISC_NEIGHBOUR_ADVERTISEMENT)
         {
             if (!FindArgument(pParentArg->data, OVS_ARGTYPE_PI_NEIGHBOR_DISCOVERY))
-			{
+            {
                 return FALSE;
-			}
+            }
         }
     }
 
@@ -2099,30 +2099,30 @@ static __inline BOOLEAN _VerifyArg_PacketInfo_Ipv4(OVS_ARGUMENT* pArg, BOOLEAN i
                 {
                 case OVS_IPPROTO_TCP:
                     if (!FindArgument(pParentArg->data, OVS_ARGTYPE_PI_TCP))
-					{
+                    {
                         return FALSE;
-					}
+                    }
                     break;
 
                 case OVS_IPPROTO_UDP:
                     if (!FindArgument(pParentArg->data, OVS_ARGTYPE_PI_UDP))
-					{
+                    {
                         return FALSE;
-					}
+                    }
                     break;
 
                 case OVS_IPPROTO_SCTP:
                     if (!FindArgument(pParentArg->data, OVS_ARGTYPE_PI_SCTP))
-					{
+                    {
                         return FALSE;
-					}
+                    }
                     break;
 
                 case OVS_IPPROTO_ICMP:
                     if (!FindArgument(pParentArg->data, OVS_ARGTYPE_PI_ICMP))
-					{
+                    {
                         return FALSE;
-					}
+                    }
                     break;
                 }
             }
@@ -2146,9 +2146,9 @@ static __inline BOOLEAN _VerifyArg_PacketInfo_Ipv4(OVS_ARGUMENT* pArg, BOOLEAN i
         int res = memcmp(pIpv4Info, &wildcard, sizeof(OVS_PI_IPV4));
 
         if (0 == res)
-		{
+        {
             return FALSE;
-		}
+        }
     }
 
     return TRUE;
@@ -2190,30 +2190,30 @@ static __inline BOOLEAN _VerifyArg_PacketInfo_Ipv6(OVS_ARGUMENT* pArg, BOOLEAN i
                 {
                 case OVS_IPPROTO_TCP:
                     if (!FindArgument(pParentArg->data, OVS_ARGTYPE_PI_TCP))
-					{
+                    {
                         return FALSE;
-					}
+                    }
                     break;
 
                 case OVS_IPPROTO_UDP:
                     if (!FindArgument(pParentArg->data, OVS_ARGTYPE_PI_UDP))
-					{
+                    {
                         return FALSE;
-					}
+                    }
                     break;
 
                 case OVS_IPPROTO_SCTP:
                     if (!FindArgument(pParentArg->data, OVS_ARGTYPE_PI_SCTP))
-					{
+                    {
                         return FALSE;
-					}
+                    }
                     break;
 
                 case OVS_IPV6_EXTH_ICMP6:
                     if (!FindArgument(pParentArg->data, OVS_ARGTYPE_PI_ICMP6))
-					{
+                    {
                         return FALSE;
-					}
+                    }
                     break;
                 }
             }
@@ -2260,9 +2260,9 @@ static __inline BOOLEAN _VerifyArg_PacketInfo_NeighborDiscovery(OVS_ARGUMENT* pA
     if (!isMask)
     {
         if (!FindArgument(pParentArg->data, OVS_ARGTYPE_PI_IPV6))
-		{
+        {
             return FALSE;
-		}
+        }
     }
     else if (isRequest)
     {
@@ -2465,65 +2465,65 @@ static __inline BOOLEAN _VerifyArg_PacketInfo_Encap(OVS_ARGUMENT* pEncArg, BOOLE
         {
         case OVS_ARGTYPE_PI_ETH_TYPE:
             if (!_VerifyArg_PacketInfo_EthType(pArg, isMask, isRequest, pEncArg))
-			{
+            {
                 return FALSE;
-			}
+            }
             break;
 
         case OVS_ARGTYPE_PI_ICMP:
             if (!_VerifyArg_PacketInfo_Icmp(pArg, isMask, isRequest, pEncArg))
-			{
+            {
                 return FALSE;
-			}
+            }
             break;
 
         case OVS_ARGTYPE_PI_ICMP6:
             if (!_VerifyArg_PacketInfo_Icmp6(pArg, isMask, isRequest, pEncArg))
-			{
+            {
                 return FALSE;
-			}
+            }
             break;
 
         case OVS_ARGTYPE_PI_IPV4:
             if (!_VerifyArg_PacketInfo_Ipv4(pArg, isMask, isRequest, pEncArg, checkTransportLayer))
-			{
+            {
                 return FALSE;
-			}
+            }
             break;
 
         case OVS_ARGTYPE_PI_IPV6:
             if (!_VerifyArg_PacketInfo_Ipv6(pArg, isMask, isRequest, pEncArg, checkTransportLayer))
-			{
+            {
                 return FALSE;
-			}
+            }
             break;
 
         case OVS_ARGTYPE_PI_NEIGHBOR_DISCOVERY:
             if (!_VerifyArg_PacketInfo_NeighborDiscovery(pArg, isMask, isRequest, pEncArg))
-			{
+            {
                 return FALSE;
-			}
+            }
             break;
 
         case OVS_ARGTYPE_PI_SCTP:
             if (!_VerifyArg_PacketInfo_Sctp(pArg, isMask, isRequest, pEncArg, seekIp))
-			{
+            {
                 return FALSE;
-			}
+            }
             break;
 
         case OVS_ARGTYPE_PI_TCP:
             if (!_VerifyArg_PacketInfo_Tcp(pArg, isMask, isRequest, pEncArg, seekIp))
-			{
+            {
                 return FALSE;
-			}
+            }
             break;
 
         case OVS_ARGTYPE_PI_UDP:
             if (!_VerifyArg_PacketInfo_Udp(pArg, isMask, isRequest, pEncArg, seekIp))
-			{
+            {
                 return FALSE;
-			}
+            }
             break;
 
         default:
@@ -2548,135 +2548,135 @@ BOOLEAN VerifyGroup_PacketInfo(BOOLEAN isMask, BOOLEAN isRequest, _In_ OVS_ARGUM
         {
         case OVS_ARGTYPE_GROUP_PI_ENCAPSULATION:
             if (!_VerifyArg_PacketInfo_Encap(pArg, isMask, isRequest, checkTransportLayer, seekIp))
-			{
+            {
                 return FALSE;
-			}
+            }
             break;
 
         case OVS_ARGTYPE_GROUP_PI_TUNNEL:
             if (!_VerifyGroup_FlowKeyTunnel(pArg, isMask, isRequest))
-			{
+            {
                 return FALSE;
-			}
+            }
             break;
 
         case OVS_ARGTYPE_PI_DP_INPUT_PORT:
             if (!_VerifyArg_PacketInfo_DpInputPort(pArg, isMask, isRequest))
-			{
+            {
                 return FALSE;
-			}
+            }
             break;
 
         case OVS_ARGTYPE_PI_ETH_ADDRESS:
             if (!_VerifyArg_PacketInfo_EthAddress(pArg, isMask, isRequest))
-			{
+            {
                 return FALSE;
-			}
+            }
             break;
 
         case OVS_ARGTYPE_PI_ETH_TYPE:
             if (!_VerifyArg_PacketInfo_EthType(pArg, isMask, isRequest, pParentArg))
-			{
+            {
                 return FALSE;
-			}
+            }
             break;
 
         case OVS_ARGTYPE_PI_ICMP:
             if (!_VerifyArg_PacketInfo_Icmp(pArg, isMask, isRequest, pParentArg))
-			{
+            {
                 return FALSE;
-			}
+            }
             break;
 
         case OVS_ARGTYPE_PI_ICMP6:
             if (!_VerifyArg_PacketInfo_Icmp6(pArg, isMask, isRequest, pParentArg))
-			{
+            {
                 return FALSE;
-			}
+            }
             break;
 
         case OVS_ARGTYPE_PI_IPV4:
             if (!_VerifyArg_PacketInfo_Ipv4(pArg, isMask, isRequest, pParentArg, checkTransportLayer))
-			{
+            {
                 return FALSE;
-			}
+            }
             break;
 
         case OVS_ARGTYPE_PI_IPV4_TUNNEL:
             if (!_VerifyArg_PacketInfo_Ipv4Tunnel(pArg, isMask, isRequest))
-			{
+            {
                 return FALSE;
-			}
+            }
             break;
 
         case OVS_ARGTYPE_PI_IPV6:
             if (!_VerifyArg_PacketInfo_Ipv6(pArg, isMask, isRequest, pParentArg, checkTransportLayer))
-			{
+            {
                 return FALSE;
-			}
+            }
             break;
 
         case OVS_ARGTYPE_PI_MPLS:
             if (!_VerifyArg_PacketInfo_Mpls(pArg, isMask))
-			{
+            {
                 return FALSE;
-			}
+            }
             break;
 
         case OVS_ARGTYPE_PI_NEIGHBOR_DISCOVERY:
             if (!_VerifyArg_PacketInfo_NeighborDiscovery(pArg, isMask, isRequest, pParentArg))
-			{
+            {
                 return FALSE;
-			}
+            }
             break;
 
         case OVS_ARGTYPE_PI_PACKET_MARK:
             if (!_VerifyArg_PacketInfo_PacketMark(pArg, isMask, isRequest))
-			{
+            {
                 return FALSE;
-			}
+            }
             break;
 
         case OVS_ARGTYPE_PI_PACKET_PRIORITY:
             if (!_VerifyArg_PacketInfo_PacketPriority(pArg, isMask, isRequest))
-			{
+            {
                 return FALSE;
-			}
+            }
             break;
 
         case OVS_ARGTYPE_PI_SCTP:
             if (!_VerifyArg_PacketInfo_Sctp(pArg, isMask, isRequest, pParentArg, seekIp))
-			{
+            {
                 return FALSE;
-			}
+            }
             break;
 
         case OVS_ARGTYPE_PI_TCP:
             if (!_VerifyArg_PacketInfo_Tcp(pArg, isMask, isRequest, pParentArg, seekIp))
-			{
+            {
                 return FALSE;
-			}
+            }
             break;
 
         case OVS_ARGTYPE_PI_UDP:
             if (!_VerifyArg_PacketInfo_Udp(pArg, isMask, isRequest, pParentArg, seekIp))
-			{
+            {
                 return FALSE;
-			}
+            }
             break;
 
         case OVS_ARGTYPE_PI_ARP:
             if (!_VerifyArg_PacketInfo_Arp(pArg, isMask, isRequest, pParentArg))
-			{
+            {
                 return FALSE;
-			}
+            }
             break;
 
         case OVS_ARGTYPE_PI_VLAN_TCI:
             if (!_VerifyArg_PacketInfo_VlanTci(pArg, isMask, isRequest))
-			{
+            {
                 return FALSE;
-			}
+            }
             break;
 
         default:
@@ -2803,16 +2803,16 @@ static __inline BOOLEAN _VerifyGroup_PacketActionsUpcall(OVS_ARGUMENT* pParentAr
         {
         case OVS_ARGTYPE_ACTION_UPCALL_PORT_ID:
             if (!_VerifyArg_PacketActionUpcall_PortId(pArg))
-			{
+            {
                 return FALSE;
-			}
+            }
             break;
 
         case OVS_ARGTYPE_ACTION_UPCALL_DATA:
             if (!_VerifyArg_PacketActionUpcall_Data(pArg))
-			{
+            {
                 return FALSE;
-			}
+            }
             break;
 
         default:
@@ -2848,16 +2848,16 @@ static __inline BOOLEAN _VerifyGroup_PacketActionsSample(OVS_ARGUMENT* pParentAr
         {
         case OVS_ARGTYPE_GROUP_ACTIONS:
             if (!VerifyGroup_PacketActions(pArg->data, isRequest))
-			{
+            {
                 return FALSE;
-			}
+            }
             break;
 
         case OVS_ARGTYPE_ACTION_SAMPLE_PROBABILITY:
             if (!_VerifyArg_PacketAction_Sample_Probability(pArg->data))
-			{
+            {
                 return FALSE;
-			}
+            }
             break;
 
         default:

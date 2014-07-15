@@ -389,7 +389,7 @@ VOID DbgPrintMdl(MDL* pMdl)
 #ifndef BUFFER_PRINT
     UNREFERENCED_PARAMETER(pMdl);
 #else
-    //	UINT i = 0;
+    //UINT i = 0;
     BYTE* buffer = NULL;
 
     DEBUGP("MDL: 0x%x; count=%d; offset=%d;\nmdl data:", pMdl, MmGetMdlByteCount(pMdl), MmGetMdlByteOffset(pMdl));
@@ -427,8 +427,8 @@ static ULONG _CountMdls(NET_BUFFER* pNb)
 VOID DbgPrintNb(NET_BUFFER* pNb, LPCSTR msg)
 {
     //#ifndef BUFFER_PRINT
-    //	UNREFERENCED_PARAMETER(pNb);
-    //	UNREFERENCED_PARAMETER(msg);
+    //UNREFERENCED_PARAMETER(pNb);
+    //UNREFERENCED_PARAMETER(msg);
     //#else
     //MDL* pMdl = NULL;
     BYTE* buffer = NULL, *bufferAlloc = NULL;
@@ -451,7 +451,7 @@ VOID DbgPrintNb(NET_BUFFER* pNb, LPCSTR msg)
 
     //BYTE* NdisGetDataBuffer(pNb, NET_BUFFER_DATA_LENGTH(pNb), 0, 0, 1);
 
-	bufPrintLen = min(NET_BUFFER_DATA_LENGTH(pNb), 256);
+    bufPrintLen = min(NET_BUFFER_DATA_LENGTH(pNb), 256);
 
     buffer = (BYTE*)NdisGetDataBuffer(pNb, bufPrintLen, NULL, 1, 0);
     if (!buffer)
@@ -758,40 +758,40 @@ BOOLEAN VerifyProtocolHeader(BYTE* buffer, ULONG* pLength, UINT16* pEthType)
 
         break;
 
-	case OVS_ETHERTYPE_IPV4:
-	{
-		OVS_IPV4_HEADER* pIpv4Header = (OVS_IPV4_HEADER*)buffer;
-		UINT16 offset = 0;
+    case OVS_ETHERTYPE_IPV4:
+    {
+        OVS_IPV4_HEADER* pIpv4Header = (OVS_IPV4_HEADER*)buffer;
+        UINT16 offset = 0;
 
-		nextHeader = VerifyIpv4Frame(buffer, pLength, &protoType);
-		if (!nextHeader)
-		{
-			return FALSE;
-		}
+        nextHeader = VerifyIpv4Frame(buffer, pLength, &protoType);
+        if (!nextHeader)
+        {
+            return FALSE;
+        }
 
-		offset = Ipv4_GetFragmentOffset(pIpv4Header);
+        offset = Ipv4_GetFragmentOffset(pIpv4Header);
 
-		if (offset == 0)
-		{
-			if (!_VerifyTransportHeader(nextHeader, pLength, *pEthType, protoType))
-			{
-				return FALSE;
-			}
-		}
-	}
+        if (offset == 0)
+        {
+            if (!_VerifyTransportHeader(nextHeader, pLength, *pEthType, protoType))
+            {
+                return FALSE;
+            }
+        }
+    }
         break;
 
     case OVS_ETHERTYPE_IPV6:
         nextHeader = VerifyIpv6Frame(buffer, pLength, &protoType);
         if (!nextHeader)
-		{
+        {
             return FALSE;
-		}
+        }
 
         if (!_VerifyTransportHeader(nextHeader, pLength, *pEthType, protoType))
-		{
+        {
             return FALSE;
-		}
+        }
 
         break;
 
@@ -904,9 +904,9 @@ BOOLEAN VerifyNetBuffer(VOID* buffer, ULONG length)
     nextHeader = VerifyEthernetFrame(buffer, &sizeLeft, &ethType);
 
     if (!nextHeader)
-	{
+    {
         return FALSE;
-	}
+    }
 
     return VerifyProtocolHeader(nextHeader, &length, &ethType);
 }

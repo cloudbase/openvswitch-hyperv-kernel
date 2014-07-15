@@ -23,12 +23,12 @@ typedef struct _OVS_FLOW_MASK OVS_FLOW_MASK;
 
 typedef struct _OVS_FLOW_TABLE
 {
-	//must be the first field in the struct
-	OVS_REF_COUNT refCount;
+    //must be the first field in the struct
+    OVS_REF_COUNT refCount;
 
-	//lock that protects the flow table against modifications
-	//this includes additions & removals of flows or masks
-	PNDIS_RW_LOCK_EX pRwLock;
+    //lock that protects the flow table against modifications
+    //this includes additions & removals of flows or masks
+    PNDIS_RW_LOCK_EX pRwLock;
 
     //here we put OVS_FLOW_LIST
     LIST_ENTRY* pFlowList;

@@ -21,7 +21,7 @@ limitations under the License.
 #include "OvsCore.h"
 #include "Winetlink.h"
 
-#define OVS_MAX_QUEUED_BUFFERS		50
+#define OVS_MAX_QUEUED_BUFFERS        50
 
 /*****************************************/
 
@@ -49,21 +49,21 @@ typedef struct _OVS_MULTICAST_BUFFER_ENTRY {
 } OVS_MULTICAST_BUFFER_ENTRY;
 
 typedef struct _OVS_QUEUED_BUFFER_ENTRY {
-    LIST_ENTRY	listEntry;
-    UINT		portId;
+    LIST_ENTRY    listEntry;
+    UINT          portId;
 
-    LIST_ENTRY	bufferQueue;
-    UINT		count;
+    LIST_ENTRY    bufferQueue;
+    UINT          count;
 }OVS_QUEUED_BUFFER_ENTRY;
 
 typedef struct _OVS_DEVICE_FILE_INFO {
     const FILE_OBJECT* pFileObject;
     //TRUE = a request (write) was set, so a unicast reply (read) is expected; else, a read will search a multicast (notify) buffer
     //for 'send packet to userspace', it should be FALSE.
-    BOOLEAN expectReply;
-    UINT	portId;
+    BOOLEAN            expectReply;
+    UINT               portId;
     //if none, it should be set to OVS_MULTICAST_GROUP_NONE
-    UINT	groupId;
+    UINT               groupId;
 }OVS_DEVICE_FILE_INFO;
 
 typedef struct _OVS_DEVICE_FILE_INFO_ENTRY {
@@ -215,9 +215,9 @@ static OVS_DEVICE_FILE_INFO_ENTRY* _FindDeviceFileInfoByPortId_Unsafe(UINT portI
     LIST_FOR_EACH(OVS_DEVICE_FILE_INFO_ENTRY, pEntry, &g_deviceFileInfoList)
     {
         if (pEntry->info.portId == portId)
-		{
+        {
             return pEntry;
-		}
+        }
     }
 
     return NULL;
@@ -290,9 +290,9 @@ BOOLEAN _RemoveMulticastBuffer_Unsafe(OVS_DEVICE_FILE_INFO* pFileInfo)
     else
     {
         if (IsBufferEmpty(&pBufferEntry->buffer))
-		{
+        {
             FreeBufferData(&pBufferEntry->buffer);
-		}
+        }
 
         RemoveEntryList(&pBufferEntry->listEntry);
 
@@ -398,19 +398,19 @@ OVS_ERROR _BufferCtl_ReadUnicast_Unsafe(_Inout_ OVS_BUFFER* pBuffer, _Inout_ VOI
         bytesRead = min(toRead, bytesLeft);
 
         //copy from our data to device io buffer
-		__try {
-			RtlCopyMemory(pOutBuf, srcBuffer, bytesRead);
-		}
-		__except (EXCEPTION_EXECUTE_HANDLER)
-		{
+        __try {
+            RtlCopyMemory(pOutBuf, srcBuffer, bytesRead);
+        }
+        __except (EXCEPTION_EXECUTE_HANDLER)
+        {
 #ifdef DBG
-			ULONG status = GetExceptionCode();
-			DEBUGP(LOG_ERROR, "ucast read mem copy exception: 0x%x\n", status);
-			OVS_CHECK(__UNEXPECTED__);
+            ULONG status = GetExceptionCode();
+            DEBUGP(LOG_ERROR, "ucast read mem copy exception: 0x%x\n", status);
+            OVS_CHECK(__UNEXPECTED__);
 #endif
 
-			return OVS_ERROR_IO;
-		}
+            return OVS_ERROR_IO;
+        }
 
         if (bytesRead == bytesLeft)
         {
@@ -461,21 +461,21 @@ OVS_ERROR _BufferCtl_ReadMulticast_Unsafe(_Inout_ OVS_BUFFER* pBuffer, _Inout_ V
         bytesRead = min(toRead, bytesLeft);
 
         //copy from our data to device io buffer
-		__try
-		{
-			RtlCopyMemory(pOutBuf, srcBuffer, bytesRead);
-		}
+        __try
+        {
+            RtlCopyMemory(pOutBuf, srcBuffer, bytesRead);
+        }
 
-		__except (EXCEPTION_EXECUTE_HANDLER)
-		{
+        __except (EXCEPTION_EXECUTE_HANDLER)
+        {
 #ifdef DBG
-			ULONG status = GetExceptionCode();
-			DEBUGP(LOG_ERROR, "mcast read mem copy exception: 0x%x\n", status);
-			OVS_CHECK(__UNEXPECTED__);
+            ULONG status = GetExceptionCode();
+            DEBUGP(LOG_ERROR, "mcast read mem copy exception: 0x%x\n", status);
+            OVS_CHECK(__UNEXPECTED__);
 #endif
 
-			return OVS_ERROR_IO;
-		}
+            return OVS_ERROR_IO;
+        }
 
         if (bytesRead == bytesLeft)
         {
@@ -769,9 +769,9 @@ OVS_ERROR BufferCtl_Read_Unsafe(const FILE_OBJECT* pFileObject, VOID* pOutBuf, U
             {
                 error = _PopBufferFromQueue_Unsafe(pQBufferEntry, &buffer);
                 if (error != OVS_ERROR_NOERROR)
-				{
+                {
                     return error;
-				}
+                }
             } while (IsBufferEmpty(&buffer));
 
             //mcast read reads without concern for offset in buffer.

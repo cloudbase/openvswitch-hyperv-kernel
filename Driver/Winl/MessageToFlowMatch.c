@@ -65,9 +65,9 @@ BOOLEAN GetPacketContextFromPIArgs(_In_ const OVS_ARGUMENT_GROUP* pArgGroup, _In
         case OVS_ARGTYPE_PI_DP_INPUT_PORT:
             pDatapathInPortArg = pArg;
             if (!PIFromArg_DatapathInPort(pPacketInfo, pPiRange, pArg, /*is mask*/FALSE))
-			{
+            {
                 return FALSE;
-			}
+            }
 
             break;
 
@@ -588,9 +588,9 @@ BOOLEAN GetFlowMatchFromArguments(_Inout_ OVS_FLOW_MATCH* pFlowMatch, _In_ const
     //b) if it is a bug, we can do little in the kernel to help it.
 #if __VERIFY_MASKS
     if (!_VerifyMasks(pFlowMatch, pPIGroup, pPIMaskGroup))
-	{
+    {
         return FALSE;
-	}
+    }
 #endif
 
     return TRUE;

@@ -25,18 +25,18 @@ typedef struct _OVS_PERSISTENT_PORT OVS_PERSISTENT_PORT;
 
 typedef struct _OVS_PORT_LIST_ENTRY
 {
-	//must be the first field in the struct
-	OVS_REF_COUNT					refCount;
+    //must be the first field in the struct
+    OVS_REF_COUNT                    refCount;
 
-    LIST_ENTRY						listEntry;
+    LIST_ENTRY                       listEntry;
 
-    NDIS_SWITCH_PORT_ID				portId;
-    NDIS_SWITCH_PORT_FRIENDLYNAME	portFriendlyName;
-    NDIS_SWITCH_PORT_TYPE			portType;
-    BOOLEAN							on;
+    NDIS_SWITCH_PORT_ID              portId;
+    NDIS_SWITCH_PORT_FRIENDLYNAME    portFriendlyName;
+    NDIS_SWITCH_PORT_TYPE            portType;
+    BOOLEAN                          on;
 
-	//OVS_INVALID_PORT_NUMBER (0xFFFF) when we don't have one
-	UINT16							ovsPortNumber;
+    //OVS_INVALID_PORT_NUMBER (0xFFFF) when we don't have one
+    UINT16                           ovsPortNumber;
 } OVS_PORT_LIST_ENTRY, *POVS_PORT_LIST_ENTRY;
 
 OVS_PORT_LIST_ENTRY* Sctx_FindPortById_Unsafe(_In_ const OVS_GLOBAL_FORWARD_INFO* pForwardIno, _In_ NDIS_SWITCH_PORT_ID portId);

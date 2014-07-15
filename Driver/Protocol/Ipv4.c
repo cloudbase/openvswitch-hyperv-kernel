@@ -290,7 +290,7 @@ BYTE* Ipv4_CopyHeaderOptions(_In_ const OVS_IPV4_HEADER* pIpv4Header, _Inout_ UL
     OVS_CHECK(pIpv4Header);
     outOptionsSize = 0;
 
-	//if ipv4 header length == 5 => there are no options
+    //if ipv4 header length == 5 => there are no options
     if (pIpv4Header->HeaderLength == 5)
     {
         return NULL;
@@ -314,7 +314,7 @@ BYTE* Ipv4_CopyHeaderOptions(_In_ const OVS_IPV4_HEADER* pIpv4Header, _Inout_ UL
     {
         ULONG optSize = Ipv4_GetOptionLength(pOption);
 
-		OVS_CHECK_OR(optSize > 0, break);
+        OVS_CHECK_OR(optSize > 0, break);
 
         if (IPV4_GET_OPTION_COPIED(optionType))
         {
@@ -344,13 +344,13 @@ BYTE* Ipv4_CopyHeaderOptions(_In_ const OVS_IPV4_HEADER* pIpv4Header, _Inout_ UL
         outOptionsSize += paddingBytes;
     }
 
-	if (outOptionsSize == 0)
-	{
-		KFree(pOptionBuffer);
-		pOptionBuffer = NULL;
-	}
+    if (outOptionsSize == 0)
+    {
+        KFree(pOptionBuffer);
+        pOptionBuffer = NULL;
+    }
 
-	*pOptionsSize = outOptionsSize;
+    *pOptionsSize = outOptionsSize;
 
     return pOptionBuffer;
 }

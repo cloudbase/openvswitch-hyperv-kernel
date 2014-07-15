@@ -19,20 +19,20 @@ limitations under the License.
 #include "precomp.h"
 
 //used in ASSERT-s
-#define __NEVER_TRIED_THIS__	0
-#define __NOT_IMPLEMENTED__		0
-#define __UNEXPECTED__			0
+#define __NEVER_TRIED_THIS__      0
+#define __NOT_IMPLEMENTED__       0
+#define __UNEXPECTED__            0
 
 #define KAlloc(size) ExAllocatePoolWithTag(NonPagedPool, size, g_extAllocationTag)
 #define KFree(p) ExFreePoolWithTag(p, g_extAllocationTag)
 
 #define OVS_ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
 
-typedef struct _OVS_FLOW		OVS_FLOW;
-typedef struct _OVS_OFPACKET_INFO			OVS_OFPACKET_INFO;
-typedef struct _OF_PI_IPV4_TUNNEL			OF_PI_IPV4_TUNNEL;
-typedef struct _OVS_OFPORT		OVS_OFPORT;
-typedef struct _OVS_DATAPATH	OVS_DATAPATH;
+typedef struct _OVS_FLOW                     OVS_FLOW;
+typedef struct _OVS_OFPACKET_INFO            OVS_OFPACKET_INFO;
+typedef struct _OF_PI_IPV4_TUNNEL            OF_PI_IPV4_TUNNEL;
+typedef struct _OVS_OFPORT                   OVS_OFPORT;
+typedef struct _OVS_DATAPATH                 OVS_DATAPATH;
 
 /*************************************/
 

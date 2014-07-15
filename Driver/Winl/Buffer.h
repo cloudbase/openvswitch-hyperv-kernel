@@ -19,9 +19,9 @@ limitations under the License.
 #include "precomp.h"
 
 typedef struct _OVS_BUFFER {
-    VOID*	p;
-    UINT	size;
-    UINT	offset;
+    VOID*    p;
+    UINT     size;
+    UINT     offset;
 } OVS_BUFFER;
 
 static __inline VOID InitializeBuffer(_Inout_  OVS_BUFFER* pBuf)
@@ -39,9 +39,9 @@ static __inline BOOLEAN AllocateBuffer(_Inout_ OVS_BUFFER* pBuf, UINT size)
 
     pBuf->p = ExAllocatePoolWithTag(NonPagedPool, size, g_extAllocationTag);
     if (!pBuf->p)
-	{
+    {
         return FALSE;
-	}
+    }
 
     pBuf->size = size;
 

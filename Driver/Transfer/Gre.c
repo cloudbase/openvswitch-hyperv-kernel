@@ -192,10 +192,10 @@ void DbgPrintGreHeader(const VOID* buffer)
     //TODO: check tunnel key, sequence, checksum.
 }
 
-//pLength:	in - the length of the packet, beginning with the GRE header
-//			out - the length of the packet beginning with the end of the whole GRE header (i.e. the length of payload)
-//pEthType:	out - the protocol type of the GRE (i.e. the encaps protocol)
-//returns:	buffer after the end of the whole GRE header, i.e. ptr to net protocol header
+//pLength:    in - the length of the packet, beginning with the GRE header
+//            out - the length of the packet beginning with the end of the whole GRE header (i.e. the length of payload)
+//pEthType:   out - the protocol type of the GRE (i.e. the encaps protocol)
+//returns:    buffer after the end of the whole GRE header, i.e. ptr to net protocol header
 
 BYTE* VerifyGreHeader(_In_ BYTE* buffer, _Inout_ ULONG* pLength, _Inout_ UINT16* pEthType)
 {

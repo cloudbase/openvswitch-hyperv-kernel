@@ -120,7 +120,7 @@ void ONB_Destroy(const OVS_SWITCH_INFO* pSwitchInfo, OVS_NET_BUFFER** ppOvsNb)
 
     NdisFreeNetBufferList(pOvsNb->pNbl);
 
-	pOvsNb->pActions = NULL;
+    pOvsNb->pActions = NULL;
     pOvsNb->pOriginalPacketInfo = NULL;
     pOvsNb->pTunnelInfo = NULL;
 
@@ -274,7 +274,7 @@ OVS_NET_BUFFER* ONB_Duplicate(const OVS_NET_BUFFER* pOriginalOnb)
     pDuplicateOnb->packetMark = pOriginalOnb->packetMark;
     pDuplicateOnb->packetPriority = pOriginalOnb->packetPriority;
 
-	pDuplicateOnb->pActions = pOriginalOnb->pActions;
+    pDuplicateOnb->pActions = pOriginalOnb->pActions;
     pDuplicateOnb->pOriginalPacketInfo = pOriginalOnb->pOriginalPacketInfo;
     pDuplicateOnb->pTunnelInfo = pOriginalOnb->pTunnelInfo;
     //pSource can be shared: it is used as a ptr to a local variable
@@ -295,19 +295,19 @@ OVS_NET_BUFFER* ONB_CreateFromBuffer(_In_ const OVS_BUFFER* pBuffer, ULONG addSi
     MDL* pDuplicateMdl = NULL;
     OVS_NET_BUFFER* pOvsNetBuffer = NULL;
     VOID* buffer = NULL;
-	OVS_SWITCH_INFO* pSwitchInfo = NULL;
-	BOOLEAN ok = TRUE;
+    OVS_SWITCH_INFO* pSwitchInfo = NULL;
+    BOOLEAN ok = TRUE;
 
     OVS_CHECK(pBuffer);
     OVS_CHECK(pBuffer->p);
     OVS_CHECK(pBuffer->size);
     OVS_CHECK(!pBuffer->offset);
 
-	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
-	if (!pSwitchInfo)
-	{
-		return NULL;
-	}
+    pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
+    if (!pSwitchInfo)
+    {
+        return NULL;
+    }
 
     //1. Allocate NBL
     NdisAcquireSpinLock(&g_nbPoolLock);
@@ -316,8 +316,8 @@ OVS_NET_BUFFER* ONB_CreateFromBuffer(_In_ const OVS_BUFFER* pBuffer, ULONG addSi
     OVS_CHECK(pDuplicateNbl);
     if (!pDuplicateNbl)
     {
-		ok = FALSE;
-		goto Cleanup;
+        ok = FALSE;
+        goto Cleanup;
     }
 
     //2. Allocate buffer
@@ -339,8 +339,8 @@ OVS_NET_BUFFER* ONB_CreateFromBuffer(_In_ const OVS_BUFFER* pBuffer, ULONG addSi
 
     if (!pDuplicateNb)
     {
-		ok = FALSE;
-		goto Cleanup;
+        ok = FALSE;
+        goto Cleanup;
     }
 
     //5. Set NB as the first NB in the NBL
@@ -352,7 +352,7 @@ OVS_NET_BUFFER* ONB_CreateFromBuffer(_In_ const OVS_BUFFER* pBuffer, ULONG addSi
 
     //7. Set the rest of NBL stuff
     //TODO: must lock
-	pDuplicateNbl->SourceHandle = pSwitchInfo->filterHandle;
+    pDuplicateNbl->SourceHandle = pSwitchInfo->filterHandle;
 
     //TODO: must lock g_pSwitchInfo
     status = pSwitchInfo->switchHandlers.AllocateNetBufferListForwardingContext(pSwitchInfo->switchContext, pDuplicateNbl);
@@ -365,8 +365,8 @@ OVS_NET_BUFFER* ONB_CreateFromBuffer(_In_ const OVS_BUFFER* pBuffer, ULONG addSi
     pOvsNetBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(OVS_NET_BUFFER), g_extAllocationTag);
     if (!pOvsNetBuffer)
     {
-		ok = FALSE;
-		goto Cleanup;
+        ok = FALSE;
+        goto Cleanup;
     }
 
     RtlZeroMemory(pOvsNetBuffer, sizeof(OVS_NET_BUFFER));
@@ -382,15 +382,15 @@ OVS_NET_BUFFER* ONB_CreateFromBuffer(_In_ const OVS_BUFFER* pBuffer, ULONG addSi
     OVS_CHECK(buffer);
 
 Cleanup:
-	if (pSwitchInfo)
-	{
-		OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
-	}
+    if (pSwitchInfo)
+    {
+        OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
+    }
 
-	if (!ok)
-	{
-		//TODO: cleanup pOvsNetBuffer, pDuplicateNbl, pDuplicateNb, pDuplicateMdl, pDestBuffer
-	}
+    if (!ok)
+    {
+        //TODO: cleanup pOvsNetBuffer, pDuplicateNbl, pDuplicateNb, pDuplicateMdl, pDestBuffer
+    }
 
     return (ok ? pOvsNetBuffer : NULL);
 }
@@ -405,14 +405,14 @@ OVS_NET_BUFFER* ONB_Create(ULONG bufSize)
     MDL* pDuplicateMdl = NULL;
     OVS_NET_BUFFER* pOvsNetBuffer = NULL;
     VOID* buffer = NULL;
-	OVS_SWITCH_INFO* pSwitchInfo = NULL;
-	BOOLEAN ok = TRUE;
+    OVS_SWITCH_INFO* pSwitchInfo = NULL;
+    BOOLEAN ok = TRUE;
 
-	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
-	if (!pSwitchInfo)
-	{
-		return NULL;
-	}
+    pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
+    if (!pSwitchInfo)
+    {
+        return NULL;
+    }
 
     //1. Allocate NBL
     NdisAcquireSpinLock(&g_nbPoolLock);
@@ -422,8 +422,8 @@ OVS_NET_BUFFER* ONB_Create(ULONG bufSize)
 
     if (!pDuplicateNbl)
     {
-		ok = FALSE;
-		goto Cleanup;
+        ok = FALSE;
+        goto Cleanup;
     }
 
     //2. Allocate buffer
@@ -444,8 +444,8 @@ OVS_NET_BUFFER* ONB_Create(ULONG bufSize)
 
     if (!pDuplicateNb)
     {
-		ok = FALSE;
-		goto Cleanup;
+        ok = FALSE;
+        goto Cleanup;
     }
 
     //5. Set NB as the first NB in the NBL
@@ -453,7 +453,7 @@ OVS_NET_BUFFER* ONB_Create(ULONG bufSize)
 
     //6. Set the rest of NBL stuff
     //TODO: must lock
-	pDuplicateNbl->SourceHandle = pSwitchInfo->filterHandle;
+    pDuplicateNbl->SourceHandle = pSwitchInfo->filterHandle;
 
     //TODO: must lock g_pSwitchInfo
     status = pSwitchInfo->switchHandlers.AllocateNetBufferListForwardingContext(pSwitchInfo->switchContext, pDuplicateNbl);
@@ -467,8 +467,8 @@ OVS_NET_BUFFER* ONB_Create(ULONG bufSize)
 
     if (!pOvsNetBuffer)
     {
-		ok = FALSE;
-		goto Cleanup;
+        ok = FALSE;
+        goto Cleanup;
     }
 
     RtlZeroMemory(pOvsNetBuffer, sizeof(OVS_NET_BUFFER));
@@ -484,15 +484,15 @@ OVS_NET_BUFFER* ONB_Create(ULONG bufSize)
     OVS_CHECK(buffer);
 
 Cleanup:
-	if (pSwitchInfo)
-	{
-		OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
-	}
+    if (pSwitchInfo)
+    {
+        OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
+    }
 
-	if (!ok)
-	{
-		//TODO: cleanup pOvsNetBuffer, pDuplicateNbl, pDuplicateNb, pDuplicateMdl, pDestBuffer
-	}
+    if (!ok)
+    {
+        //TODO: cleanup pOvsNetBuffer, pDuplicateNbl, pDuplicateNb, pDuplicateMdl, pDestBuffer
+    }
 
     return pOvsNetBuffer;
 }
@@ -530,52 +530,52 @@ NET_BUFFER* ONB_CreateNb(ULONG dataLen, ULONG dataOffset)
         return NULL;
     }
 
-	DEBUGP(LOG_INFO, "nb: %p; mdl: %p; buf: %p\n", pDuplicateNb, pDuplicateMdl, pDestBuffer);
+    DEBUGP(LOG_INFO, "nb: %p; mdl: %p; buf: %p\n", pDuplicateNb, pDuplicateMdl, pDestBuffer);
 
     return pDuplicateNb;
 }
 
 NET_BUFFER_LIST* ONB_CreateNblFromNb(_In_ NET_BUFFER* pNb, USHORT contextSize)
 {
-	NET_BUFFER_LIST* pNbl = NULL;
-	NDIS_STATUS status = STATUS_SUCCESS;
-	OVS_SWITCH_INFO* pSwitchInfo = NULL;
+    NET_BUFFER_LIST* pNbl = NULL;
+    NDIS_STATUS status = STATUS_SUCCESS;
+    OVS_SWITCH_INFO* pSwitchInfo = NULL;
 
-	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
-	if (!pSwitchInfo)
-	{
-		return NULL;
-	}
+    pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
+    if (!pSwitchInfo)
+    {
+        return NULL;
+    }
 
-	OVS_CHECK(pNb);
+    OVS_CHECK(pNb);
 
-	//Allocate NBL
-	NdisAcquireSpinLock(&g_nbPoolLock);
-	pNbl = NdisAllocateNetBufferList(g_hNblPool, contextSize, /*backfill*/contextSize);
-	NdisReleaseSpinLock(&g_nbPoolLock);
-	OVS_CHECK(pNbl);
+    //Allocate NBL
+    NdisAcquireSpinLock(&g_nbPoolLock);
+    pNbl = NdisAllocateNetBufferList(g_hNblPool, contextSize, /*backfill*/contextSize);
+    NdisReleaseSpinLock(&g_nbPoolLock);
+    OVS_CHECK(pNbl);
 
-	//5. Set NB as the first NB in the NBL
-	NET_BUFFER_LIST_FIRST_NB(pNbl) = pNb;
+    //5. Set NB as the first NB in the NBL
+    NET_BUFFER_LIST_FIRST_NB(pNbl) = pNb;
 
-	//6. Set the rest of NBL stuff
-	//TODO: must lock
-	pNbl->SourceHandle = pSwitchInfo->filterHandle;
+    //6. Set the rest of NBL stuff
+    //TODO: must lock
+    pNbl->SourceHandle = pSwitchInfo->filterHandle;
 
-	//TODO: must lock g_pSwitchInfo
-	status = pSwitchInfo->switchHandlers.AllocateNetBufferListForwardingContext(pSwitchInfo->switchContext, pNbl);
-	if (status != NDIS_STATUS_SUCCESS)
-	{
-		OVS_CHECK(0);
-	}
+    //TODO: must lock g_pSwitchInfo
+    status = pSwitchInfo->switchHandlers.AllocateNetBufferListForwardingContext(pSwitchInfo->switchContext, pNbl);
+    if (status != NDIS_STATUS_SUCCESS)
+    {
+        OVS_CHECK(0);
+    }
 
 //Cleanup:
-	if (pSwitchInfo)
-	{
-		OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
-	}
+    if (pSwitchInfo)
+    {
+        OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
+    }
 
-	return pNbl;
+    return pNbl;
 }
 
 _Use_decl_annotations_
@@ -703,10 +703,10 @@ BOOLEAN ONB_OriginateIcmp6Packet_Type2Code0(OVS_NET_BUFFER* pOvsNb, ULONG mtu, _
     LE16 ethType = 0;
     OVS_SWITCH_INFO* pSwitchInfo = pOvsNb->pSwitchInfo;
 
-	//the payload of the "icmp6 packet too big" must be:
-	//As much of invoking packet as possible without the ICMPv6 packet exceeding the minimum IPv6 MTU
+    //the payload of the "icmp6 packet too big" must be:
+    //As much of invoking packet as possible without the ICMPv6 packet exceeding the minimum IPv6 MTU
     ULONG destBufSize = sizeof(OVS_ETHERNET_HEADER) + sizeof(OVS_IPV6_HEADER) + OVS_ICMP6_PACKET_TOO_BIG_SIZE_BARE;
-	//payload to attached ipv6 frame
+    //payload to attached ipv6 frame
     ULONG payloadSize = 0;
 
     OVS_CHECK(pDestinationNic);
@@ -716,18 +716,18 @@ BOOLEAN ONB_OriginateIcmp6Packet_Type2Code0(OVS_NET_BUFFER* pOvsNb, ULONG mtu, _
     ethType = ReadEthernetType(pOriginalEthHeader);
     pOriginalIpv6Header = AdvanceEthernetHeader((OVS_ETHERNET_HEADER*)originalBuffer, ethSize);
 
-	//attached ipv6 header (in icmp6)
-	destBufSize += sizeof(OVS_IPV6_HEADER);
-	OVS_CHECK(OVS_IPV6_MINIMUM_MTU > destBufSize);
-	payloadSize = min(RtlUshortByteSwap(pOriginalIpv6Header->payloadLength), OVS_IPV6_MINIMUM_MTU - destBufSize);
+    //attached ipv6 header (in icmp6)
+    destBufSize += sizeof(OVS_IPV6_HEADER);
+    OVS_CHECK(OVS_IPV6_MINIMUM_MTU > destBufSize);
+    payloadSize = min(RtlUshortByteSwap(pOriginalIpv6Header->payloadLength), OVS_IPV6_MINIMUM_MTU - destBufSize);
 
-	//ATM destBufSize is size of: eth + ipv6 + icmp6 + attached ipv6 headers.
-	//we need to add the payload of the attached ipv6 frame
-	destBufSize += payloadSize;
+    //ATM destBufSize is size of: eth + ipv6 + icmp6 + attached ipv6 headers.
+    //we need to add the payload of the attached ipv6 frame
+    destBufSize += payloadSize;
 
     OVS_CHECK(pOriginalEthHeader->type == RtlUshortByteSwap(OVS_ETHERTYPE_IPV6));
 
-	pIcmp6Packet = ONB_Create(destBufSize);
+    pIcmp6Packet = ONB_Create(destBufSize);
     newBuffer = ONB_GetData(pIcmp6Packet);
 
     //1. fill eth
@@ -742,7 +742,7 @@ BOOLEAN ONB_OriginateIcmp6Packet_Type2Code0(OVS_NET_BUFFER* pOvsNb, ULONG mtu, _
     pNewIpv6Header->vcf = 0;
     SetIpv6Version(6, &pNewIpv6Header->vcf);
 
-	pNewIpv6Header->payloadLength = RtlUshortByteSwap(destBufSize - sizeof(OVS_ETHERNET_HEADER)-sizeof(OVS_IPV6_HEADER));
+    pNewIpv6Header->payloadLength = RtlUshortByteSwap(destBufSize - sizeof(OVS_ETHERNET_HEADER)-sizeof(OVS_IPV6_HEADER));
     pNewIpv6Header->nextHeader = OVS_IPV6_EXTH_ICMP6;
     pNewIpv6Header->hopLimit = pOriginalIpv6Header->hopLimit;//TODO
 
@@ -769,7 +769,7 @@ BOOLEAN ONB_OriginateIcmp6Packet_Type2Code0(OVS_NET_BUFFER* pOvsNb, ULONG mtu, _
     pAttachedIpv6Header = (OVS_IPV6_HEADER*)((UINT8*)(pIcmp6Header)+OVS_ICMP6_PACKET_TOO_BIG_SIZE_BARE);
     RtlCopyMemory(pAttachedIpv6Header, pOriginalIpv6Header, sizeof(OVS_IPV6_HEADER) + payloadSize);
 
-	pIcmp6Header->checksum = ComputeTransportChecksum(pIcmp6Header, pNewIpv6Header, OVS_ETHERTYPE_IPV6);
+    pIcmp6Header->checksum = ComputeTransportChecksum(pIcmp6Header, pNewIpv6Header, OVS_ETHERTYPE_IPV6);
     pIcmp6Header->checksum = RtlUshortByteSwap(pIcmp6Header->checksum);
 
     OVS_CHECK(pDestinationNic);
@@ -809,62 +809,62 @@ Recompute Checksum;
 datagram processing;
 */
 NET_BUFFER* _Ipv4_CreateFirstFragment(_In_ const OVS_IPV4_HEADER* pOldIpv4Header, ULONG maxIpPacketSize, _Out_ ULONG* pBytesRemaining, ULONG dataOffsetAdd,
-	_Inout_ ULONG* pNextSrcOffset)
+    _Inout_ ULONG* pNextSrcOffset)
 {
-	//resulting NB
-	NET_BUFFER* pNb = NULL;
-	//packet size, excluding ipv4 header size
-	ULONG ipFragmentSize = 0;
-	ULONG ipv4HeaderSize = 0;
-	//packet size, including ipv4 header size
-	ULONG curPacketSize = 0;
-	ULONG oldIpv4TotalLength = 0;
-	//the buffer of the resulting NB
-	VOID* buffer = NULL;
-	OVS_IPV4_HEADER* pFragIpv4Header = NULL;
+    //resulting NB
+    NET_BUFFER* pNb = NULL;
+    //packet size, excluding ipv4 header size
+    ULONG ipFragmentSize = 0;
+    ULONG ipv4HeaderSize = 0;
+    //packet size, including ipv4 header size
+    ULONG curPacketSize = 0;
+    ULONG oldIpv4TotalLength = 0;
+    //the buffer of the resulting NB
+    VOID* buffer = NULL;
+    OVS_IPV4_HEADER* pFragIpv4Header = NULL;
 
-	oldIpv4TotalLength = RtlUshortByteSwap(pOldIpv4Header->TotalLength);
-	ipv4HeaderSize = Ipv4_GetHeaderSize(pOldIpv4Header);
+    oldIpv4TotalLength = RtlUshortByteSwap(pOldIpv4Header->TotalLength);
+    ipv4HeaderSize = Ipv4_GetHeaderSize(pOldIpv4Header);
 
-	//a LSO packet may have TL == 0.
-	//TODO: we currently have no support for fragmentation of LSO packets
-	//(LSO packets appear to have ipv4 total length == 0)
-	OVS_CHECK(oldIpv4TotalLength > 0);
-	//we can only fragment if the size of the current packet is too big
-	OVS_CHECK(oldIpv4TotalLength > maxIpPacketSize);
-	OVS_CHECK(*pNextSrcOffset == 0);
+    //a LSO packet may have TL == 0.
+    //TODO: we currently have no support for fragmentation of LSO packets
+    //(LSO packets appear to have ipv4 total length == 0)
+    OVS_CHECK(oldIpv4TotalLength > 0);
+    //we can only fragment if the size of the current packet is too big
+    OVS_CHECK(oldIpv4TotalLength > maxIpPacketSize);
+    OVS_CHECK(*pNextSrcOffset == 0);
 
-	//the ipv4 packet size must be <= maxIpPacketSize, but packet size (excluding ipv4 header) must be multiple of 8
-	//(because of frag offset, which is in units of 8 bytes)
-	ipFragmentSize = ((maxIpPacketSize - ipv4HeaderSize) / 8) * 8;
-	curPacketSize = ipFragmentSize + ipv4HeaderSize;
+    //the ipv4 packet size must be <= maxIpPacketSize, but packet size (excluding ipv4 header) must be multiple of 8
+    //(because of frag offset, which is in units of 8 bytes)
+    ipFragmentSize = ((maxIpPacketSize - ipv4HeaderSize) / 8) * 8;
+    curPacketSize = ipFragmentSize + ipv4HeaderSize;
 
-	pNb = ONB_CreateNb(curPacketSize, dataOffsetAdd);
+    pNb = ONB_CreateNb(curPacketSize, dataOffsetAdd);
 
-	//the buffer was allocated by us, so its data is contiguous => NdisGetDataBuffer will succeed
-	buffer = NdisGetDataBuffer(pNb, curPacketSize, NULL, 1, 0);
-	OVS_CHECK(buffer);
+    //the buffer was allocated by us, so its data is contiguous => NdisGetDataBuffer will succeed
+    buffer = NdisGetDataBuffer(pNb, curPacketSize, NULL, 1, 0);
+    OVS_CHECK(buffer);
 
-	//1. Copy the ipv4 packet
-	RtlCopyMemory(buffer, pOldIpv4Header, curPacketSize);
-	pFragIpv4Header = (OVS_IPV4_HEADER*)buffer;
+    //1. Copy the ipv4 packet
+    RtlCopyMemory(buffer, pOldIpv4Header, curPacketSize);
+    pFragIpv4Header = (OVS_IPV4_HEADER*)buffer;
 
-	//2. correct the header: MF and TL, recompute checksum
-	pFragIpv4Header->MoreFragments = 1;
-	pFragIpv4Header->TotalLength = RtlUshortByteSwap((UINT16)curPacketSize);
+    //2. correct the header: MF and TL, recompute checksum
+    pFragIpv4Header->MoreFragments = 1;
+    pFragIpv4Header->TotalLength = RtlUshortByteSwap((UINT16)curPacketSize);
 
-	pFragIpv4Header->HeaderChecksum = (UINT16)ComputeIpChecksum((BYTE*)pFragIpv4Header, ipv4HeaderSize);
-	pFragIpv4Header->HeaderChecksum = RtlUshortByteSwap(pFragIpv4Header->HeaderChecksum);
+    pFragIpv4Header->HeaderChecksum = (UINT16)ComputeIpChecksum((BYTE*)pFragIpv4Header, ipv4HeaderSize);
+    pFragIpv4Header->HeaderChecksum = RtlUshortByteSwap(pFragIpv4Header->HeaderChecksum);
 
-	*pBytesRemaining = oldIpv4TotalLength - curPacketSize;
-	*pNextSrcOffset = ipFragmentSize / 8;
+    *pBytesRemaining = oldIpv4TotalLength - curPacketSize;
+    *pNextSrcOffset = ipFragmentSize / 8;
 
-	return pNb;
+    return pNb;
 }
 
 /* To produce the second fragment :
 (7)  Selectively copy the internet header(some options
-	are not copied, see option definitions);
+    are not copied, see option definitions);
 (8)  Append the remaining data;
 (9)  Correct the header :
 IHL <-(((OIHL * 4) - (length of options not copied)) + 3) / 4;
@@ -874,121 +874,121 @@ FO <-OFO + NFB;  MF <-OMF;  Recompute Checksum;
 */
 
 NET_BUFFER* _Ipv4_CreateNextFragment(_In_ const OVS_IPV4_HEADER* pOldIpv4Header, _In_opt_ const BYTE* pOptions, ULONG optionsSize,
-	ULONG maxIpPacketSize, _Inout_ ULONG* pBytesRemaining, ULONG dataOffsetAdd, _Inout_ ULONG* pSrcOffset)
+    ULONG maxIpPacketSize, _Inout_ ULONG* pBytesRemaining, ULONG dataOffsetAdd, _Inout_ ULONG* pSrcOffset)
 {
-	//resulting NB
-	NET_BUFFER* pNb = NULL;
-	//packet size, excluding ipv4 header
-	ULONG ipFragmentSize = 0;
-	//the whole ipv4 packet for the current fragment: i.e., including ipv4 header
-	ULONG curPacketSize = 0;
-	ULONG ipv4HeaderSize = 0;
-	//the buffer of the resulting NB
-	VOID* buffer = NULL;
-	//the buffer of the source packet, the packet that is being fragmented
-	BYTE* pSrcBuffer = NULL;
-	OVS_IPV4_HEADER* pFragIpv4Header = NULL;
-	//where to copy from, and where to copy to
-	ULONG srcOffset = 0, destOffset = 0;
-	//the ipv4's fragment offset, in units of 8 bytes
-	UINT16 oldFragOffset = 0;
+    //resulting NB
+    NET_BUFFER* pNb = NULL;
+    //packet size, excluding ipv4 header
+    ULONG ipFragmentSize = 0;
+    //the whole ipv4 packet for the current fragment: i.e., including ipv4 header
+    ULONG curPacketSize = 0;
+    ULONG ipv4HeaderSize = 0;
+    //the buffer of the resulting NB
+    VOID* buffer = NULL;
+    //the buffer of the source packet, the packet that is being fragmented
+    BYTE* pSrcBuffer = NULL;
+    OVS_IPV4_HEADER* pFragIpv4Header = NULL;
+    //where to copy from, and where to copy to
+    ULONG srcOffset = 0, destOffset = 0;
+    //the ipv4's fragment offset, in units of 8 bytes
+    UINT16 oldFragOffset = 0;
 
-	srcOffset = *pSrcOffset;
-	OVS_CHECK(srcOffset > 0);
+    srcOffset = *pSrcOffset;
+    OVS_CHECK(srcOffset > 0);
 
-	ipv4HeaderSize = sizeof(OVS_IPV4_HEADER) + optionsSize;
+    ipv4HeaderSize = sizeof(OVS_IPV4_HEADER) + optionsSize;
 
-	//the ipv4 packet size must be <= maxIpPacketSize, but packet size (excluding ipv4 header) must be multiple of 8
-	//(because of frag offset, which is in units of 8 bytes)
-	ipFragmentSize = ((maxIpPacketSize - ipv4HeaderSize) / 8) * 8;
-	curPacketSize = ipFragmentSize + ipv4HeaderSize;
+    //the ipv4 packet size must be <= maxIpPacketSize, but packet size (excluding ipv4 header) must be multiple of 8
+    //(because of frag offset, which is in units of 8 bytes)
+    ipFragmentSize = ((maxIpPacketSize - ipv4HeaderSize) / 8) * 8;
+    curPacketSize = ipFragmentSize + ipv4HeaderSize;
 
-	//however, we may have left to copy only a few bytes
-	if (*pBytesRemaining + ipv4HeaderSize <= maxIpPacketSize)
-	{
-		ipFragmentSize = *pBytesRemaining;
-		curPacketSize = ipFragmentSize + ipv4HeaderSize;
-	}
+    //however, we may have left to copy only a few bytes
+    if (*pBytesRemaining + ipv4HeaderSize <= maxIpPacketSize)
+    {
+        ipFragmentSize = *pBytesRemaining;
+        curPacketSize = ipFragmentSize + ipv4HeaderSize;
+    }
 
-	pNb = ONB_CreateNb(curPacketSize, dataOffsetAdd);
+    pNb = ONB_CreateNb(curPacketSize, dataOffsetAdd);
 
-	//the buffer was allocated by us, so its data is contiguous => NdisGetDataBuffer will succeed
-	buffer = NdisGetDataBuffer(pNb, curPacketSize, NULL, 1, 0);
-	OVS_CHECK(buffer);
+    //the buffer was allocated by us, so its data is contiguous => NdisGetDataBuffer will succeed
+    buffer = NdisGetDataBuffer(pNb, curPacketSize, NULL, 1, 0);
+    OVS_CHECK(buffer);
 
-	//1. Copy the ipv4 header
-	RtlCopyMemory(buffer, pOldIpv4Header, sizeof(OVS_IPV4_HEADER));
-	pFragIpv4Header = (OVS_IPV4_HEADER*)buffer;
+    //1. Copy the ipv4 header
+    RtlCopyMemory(buffer, pOldIpv4Header, sizeof(OVS_IPV4_HEADER));
+    pFragIpv4Header = (OVS_IPV4_HEADER*)buffer;
 
-	destOffset = sizeof(OVS_IPV4_HEADER);
+    destOffset = sizeof(OVS_IPV4_HEADER);
 
-	//2. copy the options
-	if (optionsSize)
-	{
-		OVS_CHECK(pOptions);
-		//make sure the options size is a multiple of 4 bytes (requirement from header length, which is in 4 bytes)
-		OVS_CHECK(optionsSize == (optionsSize / 4) * 4);
+    //2. copy the options
+    if (optionsSize)
+    {
+        OVS_CHECK(pOptions);
+        //make sure the options size is a multiple of 4 bytes (requirement from header length, which is in 4 bytes)
+        OVS_CHECK(optionsSize == (optionsSize / 4) * 4);
 
-		RtlCopyMemory((BYTE*)buffer + destOffset, pOptions, optionsSize);
-		destOffset += optionsSize;
-	}
+        RtlCopyMemory((BYTE*)buffer + destOffset, pOptions, optionsSize);
+        destOffset += optionsSize;
+    }
 
-	//3. copy payload, from last offset
-	//NOTE: offset in src packet is relative to the beginning of the payload of the ipv4 header
-	//therefore, we must compute the src offset as old ipv4 header size + computed src offset for this fragment
-	pSrcBuffer = (BYTE*)pOldIpv4Header + (pOldIpv4Header->HeaderLength * sizeof(DWORD)) + (srcOffset * 8);
+    //3. copy payload, from last offset
+    //NOTE: offset in src packet is relative to the beginning of the payload of the ipv4 header
+    //therefore, we must compute the src offset as old ipv4 header size + computed src offset for this fragment
+    pSrcBuffer = (BYTE*)pOldIpv4Header + (pOldIpv4Header->HeaderLength * sizeof(DWORD)) + (srcOffset * 8);
 
-	RtlCopyMemory((BYTE*)buffer + destOffset, pSrcBuffer, ipFragmentSize);
-	//the fragment size must either be multiple of 8 bytes, or, if it is the last fragment, it can be of any size, if it is small.
-	OVS_CHECK(ipFragmentSize == (ipFragmentSize / 8) * 8 || *pBytesRemaining == ipFragmentSize && curPacketSize <= maxIpPacketSize);
+    RtlCopyMemory((BYTE*)buffer + destOffset, pSrcBuffer, ipFragmentSize);
+    //the fragment size must either be multiple of 8 bytes, or, if it is the last fragment, it can be of any size, if it is small.
+    OVS_CHECK(ipFragmentSize == (ipFragmentSize / 8) * 8 || *pBytesRemaining == ipFragmentSize && curPacketSize <= maxIpPacketSize);
 
-	//increase source offset, so that next time we copy, we'll copy from the next byte in the original packet, onward
-	*pSrcOffset += (ipFragmentSize / 8);
+    //increase source offset, so that next time we copy, we'll copy from the next byte in the original packet, onward
+    *pSrcOffset += (ipFragmentSize / 8);
 
-	OVS_CHECK(*pBytesRemaining >= ipFragmentSize);
-	*pBytesRemaining -= ipFragmentSize;
+    OVS_CHECK(*pBytesRemaining >= ipFragmentSize);
+    *pBytesRemaining -= ipFragmentSize;
 
-	//4. correct the header: IHL, MF, Fragment Offset, TL
-	//ipv4 header's header length must be given in DWORDs
-	ipv4HeaderSize = ipv4HeaderSize / sizeof(DWORD);
-	//the header size is made of 4 bits
-	OVS_CHECK(ipv4HeaderSize <= 0xF);
+    //4. correct the header: IHL, MF, Fragment Offset, TL
+    //ipv4 header's header length must be given in DWORDs
+    ipv4HeaderSize = ipv4HeaderSize / sizeof(DWORD);
+    //the header size is made of 4 bits
+    OVS_CHECK(ipv4HeaderSize <= 0xF);
 
-	pFragIpv4Header->HeaderLength = (UINT8)ipv4HeaderSize;
-	//if we have more bytes to copy in further fragments, MF = TRUE. Else, if we have fragmented a fragment other than the last fragment
-	//(a packet that had MF set), then we need to set MF.
-	pFragIpv4Header->MoreFragments = (*pBytesRemaining > 0 || pOldIpv4Header->MoreFragments ? 1 : 0);
+    pFragIpv4Header->HeaderLength = (UINT8)ipv4HeaderSize;
+    //if we have more bytes to copy in further fragments, MF = TRUE. Else, if we have fragmented a fragment other than the last fragment
+    //(a packet that had MF set), then we need to set MF.
+    pFragIpv4Header->MoreFragments = (*pBytesRemaining > 0 || pOldIpv4Header->MoreFragments ? 1 : 0);
 
-	//we must take into account the old ipv4 offset, for the case where we further fragment a packet that had previously been fragmented.
-	oldFragOffset = Ipv4_GetFragmentOffset(pOldIpv4Header);
-	Ipv4_SetFragmentOffset(pFragIpv4Header, (UINT16)srcOffset + oldFragOffset);
-	pFragIpv4Header->TotalLength = RtlUshortByteSwap((UINT16)curPacketSize);
+    //we must take into account the old ipv4 offset, for the case where we further fragment a packet that had previously been fragmented.
+    oldFragOffset = Ipv4_GetFragmentOffset(pOldIpv4Header);
+    Ipv4_SetFragmentOffset(pFragIpv4Header, (UINT16)srcOffset + oldFragOffset);
+    pFragIpv4Header->TotalLength = RtlUshortByteSwap((UINT16)curPacketSize);
 
-	//5. recompute checksum
-	pFragIpv4Header->HeaderChecksum = (UINT16)ComputeIpChecksum((BYTE*)pFragIpv4Header, ipv4HeaderSize);
-	pFragIpv4Header->HeaderChecksum = RtlUshortByteSwap(pFragIpv4Header->HeaderChecksum);
+    //5. recompute checksum
+    pFragIpv4Header->HeaderChecksum = (UINT16)ComputeIpChecksum((BYTE*)pFragIpv4Header, ipv4HeaderSize);
+    pFragIpv4Header->HeaderChecksum = RtlUshortByteSwap(pFragIpv4Header->HeaderChecksum);
 
-	return pNb;
+    return pNb;
 }
 
 VOID _ONB_AddEthHeader(_In_ NET_BUFFER* pNb, ULONG ethSize, _In_ const OVS_ETHERNET_HEADER* pEthHeader)
 {
-	VOID* buffer = NULL;
+    VOID* buffer = NULL;
 
-	//1. insert eth header
-	if (NDIS_STATUS_SUCCESS != NdisRetreatNetBufferDataStart(pNb, ethSize, 0, NULL))
-	{
-		OVS_CHECK(__UNEXPECTED__);
-	}
+    //1. insert eth header
+    if (NDIS_STATUS_SUCCESS != NdisRetreatNetBufferDataStart(pNb, ethSize, 0, NULL))
+    {
+        OVS_CHECK(__UNEXPECTED__);
+    }
 
-	buffer = NdisGetDataBuffer(pNb, ethSize, NULL, 1, 0);
-	OVS_CHECK(buffer);
+    buffer = NdisGetDataBuffer(pNb, ethSize, NULL, 1, 0);
+    OVS_CHECK(buffer);
 
-	RtlCopyMemory(buffer, pEthHeader, ethSize);
+    RtlCopyMemory(buffer, pEthHeader, ethSize);
 
 #if OVS_DBGPRINT_FRAMES
-	buffer = NdisGetDataBuffer(pNb, NET_BUFFER_DATA_LENGTH(pNb), NULL, 1, 0);
-	DbgPrintNb(pNb, "fragment: ");
+    buffer = NdisGetDataBuffer(pNb, NET_BUFFER_DATA_LENGTH(pNb), NULL, 1, 0);
+    DbgPrintNb(pNb, "fragment: ");
 #endif
 }
 
@@ -997,82 +997,82 @@ To better understand ipv4 fragmentation, read RFC791
 Also, http://www.tcpipguide.com/free/t_IPMessageFragmentationProcess.htm might be useful
 */
 
-//pOvsNb:				the net buffer to be fragmented. Must contain only one NET_BUFFER_LIST, with only one NET_BUFFER.
-//						the net buffer must have it's first byte == the first byte of the eth header
-//maxIpPacketSize:		max size allowed for a packet, excluding the eth header, but considered such as maxIpPacketSize + encaps bytes <= mtu
-//pOldEthHeader			copy of the ethernet header
-//dataOffsetAdd:		how much space to allocate before the beginning of the buffer. This will be used to add the eth header + the encapsulation headers.
+//pOvsNb:                the net buffer to be fragmented. Must contain only one NET_BUFFER_LIST, with only one NET_BUFFER.
+//                       the net buffer must have it's first byte == the first byte of the eth header
+//maxIpPacketSize:       max size allowed for a packet, excluding the eth header, but considered such as maxIpPacketSize + encaps bytes <= mtu
+//pOldEthHeader          copy of the ethernet header
+//dataOffsetAdd:         how much space to allocate before the beginning of the buffer. This will be used to add the eth header + the encapsulation headers.
 //NOTE: checksum offloading must have been dealt with before.
 //NOTE: at the end, each resulting fragment will have its frist byte == the first byte of the eth header.
 NET_BUFFER_LIST* ONB_FragmentBuffer_Ipv4(_Inout_ OVS_NET_BUFFER* pOvsNb, ULONG maxIpPacketSize, const OVS_ETHERNET_HEADER* pOldEthHeader, ULONG dataOffsetAdd)
 {
-	//the buffer before fragmentation
+    //the buffer before fragmentation
     VOID* oldPacketBuffer = NULL;
-	//the amount of bytes that remain to be copied in further ipv4 fragments
+    //the amount of bytes that remain to be copied in further ipv4 fragments
     ULONG bytesRemaining = 0;
-	//resulting NBL
+    //resulting NBL
     NET_BUFFER_LIST* pNbl = NULL;
     USHORT contextSize = MEMORY_ALLOCATION_ALIGNMENT;
-	//the total size of the options that must be copied in the 2nd to the n-th fragment
-	ULONG optionsSize = 0;
-	//the buffer where ipv4 "copied" options are put
+    //the total size of the options that must be copied in the 2nd to the n-th fragment
+    ULONG optionsSize = 0;
+    //the buffer where ipv4 "copied" options are put
     BYTE* pOptionsBuffer = NULL;
-	//NOTE: we assume - and it must be this way - that the eth size == size of simple eth header
-	ULONG ethSize = sizeof(OVS_ETHERNET_HEADER);
-	//the offset in the source packet, from where to copy bytes for the next fragment, in units of 8 bytes
-	ULONG srcOffset = 0;
-	//the ipv4 header of the original / old packet
-	OVS_IPV4_HEADER* pOldIpv4Header = NULL;
-	NET_BUFFER* pNb = NULL, *pCurNb = NULL, *pFirstNb = NULL;
+    //NOTE: we assume - and it must be this way - that the eth size == size of simple eth header
+    ULONG ethSize = sizeof(OVS_ETHERNET_HEADER);
+    //the offset in the source packet, from where to copy bytes for the next fragment, in units of 8 bytes
+    ULONG srcOffset = 0;
+    //the ipv4 header of the original / old packet
+    OVS_IPV4_HEADER* pOldIpv4Header = NULL;
+    NET_BUFFER* pNb = NULL, *pCurNb = NULL, *pFirstNb = NULL;
 
-	ONB_Advance(pOvsNb, sizeof(OVS_ETHERNET_HEADER));
+    ONB_Advance(pOvsNb, sizeof(OVS_ETHERNET_HEADER));
 
-	oldPacketBuffer = ONB_GetData(pOvsNb);
-	pOldIpv4Header = (OVS_IPV4_HEADER*)oldPacketBuffer;
+    oldPacketBuffer = ONB_GetData(pOvsNb);
+    pOldIpv4Header = (OVS_IPV4_HEADER*)oldPacketBuffer;
 
-	//we assume non-vlan fragmes are being fragmented - and thus, eth size == sizeof(sizeof(OVS_ETHERNET_HEADER))
-	OVS_CHECK(pOldEthHeader->type != OVS_ETHERTYPE_QTAG);
-	//a simple check to make sure that pOldIpv4Header does indeed point to the ipv4 header
-	OVS_CHECK(pOldIpv4Header->Version == 4);
-	OVS_CHECK(pOldIpv4Header->HeaderLength >= 5);
+    //we assume non-vlan fragmes are being fragmented - and thus, eth size == sizeof(sizeof(OVS_ETHERNET_HEADER))
+    OVS_CHECK(pOldEthHeader->type != OVS_ETHERTYPE_QTAG);
+    //a simple check to make sure that pOldIpv4Header does indeed point to the ipv4 header
+    OVS_CHECK(pOldIpv4Header->Version == 4);
+    OVS_CHECK(pOldIpv4Header->HeaderLength >= 5);
 
-	pNb = _Ipv4_CreateFirstFragment(pOldIpv4Header, maxIpPacketSize, &bytesRemaining, dataOffsetAdd, &srcOffset);
-	if (!pNb)
-	{
-		ONB_Retreat(pOvsNb, sizeof(OVS_ETHERNET_HEADER));
-		return NULL;
-	}
+    pNb = _Ipv4_CreateFirstFragment(pOldIpv4Header, maxIpPacketSize, &bytesRemaining, dataOffsetAdd, &srcOffset);
+    if (!pNb)
+    {
+        ONB_Retreat(pOvsNb, sizeof(OVS_ETHERNET_HEADER));
+        return NULL;
+    }
 
-	_ONB_AddEthHeader(pNb, ethSize, pOldEthHeader);
+    _ONB_AddEthHeader(pNb, ethSize, pOldEthHeader);
 
-	pOptionsBuffer = Ipv4_CopyHeaderOptions(pOldIpv4Header, &optionsSize);
+    pOptionsBuffer = Ipv4_CopyHeaderOptions(pOldIpv4Header, &optionsSize);
 
-	pFirstNb = pNb;
-	pCurNb = pFirstNb;
+    pFirstNb = pNb;
+    pCurNb = pFirstNb;
 
-	while (bytesRemaining > 0)
-	{
-		pNb = _Ipv4_CreateNextFragment(pOldIpv4Header, pOptionsBuffer, optionsSize, maxIpPacketSize, &bytesRemaining, dataOffsetAdd, &srcOffset);
-		_ONB_AddEthHeader(pNb, ethSize, pOldEthHeader);
+    while (bytesRemaining > 0)
+    {
+        pNb = _Ipv4_CreateNextFragment(pOldIpv4Header, pOptionsBuffer, optionsSize, maxIpPacketSize, &bytesRemaining, dataOffsetAdd, &srcOffset);
+        _ONB_AddEthHeader(pNb, ethSize, pOldEthHeader);
 
-		OVS_CHECK(pNb->Next == NULL);
-		pCurNb->Next = pNb;
-		pCurNb = pCurNb->Next;
-	}
+        OVS_CHECK(pNb->Next == NULL);
+        pCurNb->Next = pNb;
+        pCurNb = pCurNb->Next;
+    }
 
-	if (pOptionsBuffer)
-	{
-		KFree(pOptionsBuffer);
-	}
+    if (pOptionsBuffer)
+    {
+        KFree(pOptionsBuffer);
+    }
 
-	ONB_Retreat(pOvsNb, sizeof(OVS_ETHERNET_HEADER));
+    ONB_Retreat(pOvsNb, sizeof(OVS_ETHERNET_HEADER));
 
-	OVS_CHECK(pFirstNb);
-	pNbl = ONB_CreateNblFromNb(pFirstNb, contextSize);
+    OVS_CHECK(pFirstNb);
+    pNbl = ONB_CreateNblFromNb(pFirstNb, contextSize);
 
-	DEBUGP(LOG_INFO, "NBL: %p\n", pNbl);
+    DEBUGP(LOG_INFO, "NBL: %p\n", pNbl);
 
-	return pNbl;
+    return pNbl;
 }
 
 BOOLEAN ONB_OriginateArpRequest(const BYTE targetIp[4])
@@ -1085,16 +1085,16 @@ BOOLEAN ONB_OriginateArpRequest(const BYTE targetIp[4])
     OVS_GLOBAL_FORWARD_INFO* pForwardInfo = NULL;
     OVS_NIC_INFO externalNicAndPort = { 0 };
     OVS_ARP_HEADER* pArpHeader = NULL;
-	OVS_SWITCH_INFO* pSwitchInfo = NULL;
+    OVS_SWITCH_INFO* pSwitchInfo = NULL;
 
     ULONG bufSize = sizeof(OVS_ETHERNET_HEADER) + sizeof(OVS_ARP_HEADER);
 
-	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
-	if (!pSwitchInfo)
-	{
-		DEBUGP(LOG_ERROR, "failed to originate arp request: the extension appears not to be attached to any switch!\n");
-		return FALSE;
-	}
+    pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
+    if (!pSwitchInfo)
+    {
+        DEBUGP(LOG_ERROR, "failed to originate arp request: the extension appears not to be attached to any switch!\n");
+        return FALSE;
+    }
 
     pForwardInfo = pSwitchInfo->pForwardInfo;
 
@@ -1106,8 +1106,8 @@ BOOLEAN ONB_OriginateArpRequest(const BYTE targetIp[4])
             DEBUGP(LOG_ERROR, "Get destination failed: %s\n", FailReasonMessageA(failReason));
         }
 
-		mustTransfer = FALSE;
-		goto Cleanup;
+        mustTransfer = FALSE;
+        goto Cleanup;
     }
 
     pArpPacket = ONB_Create(bufSize);
@@ -1138,7 +1138,7 @@ BOOLEAN ONB_OriginateArpRequest(const BYTE targetIp[4])
     if (!mustTransfer)
     {
         DEBUGP(LOG_ERROR, "set one destination failed. returning FALSE. Fail Reason:%s\n", FailReasonMessageA(failReason));
-		goto Cleanup;
+        goto Cleanup;
     }
 
 Cleanup:
@@ -1153,35 +1153,35 @@ Cleanup:
         ONB_Destroy(pSwitchInfo, &pArpPacket);
     }
 
-	OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
+    OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
 
     return mustTransfer;
 }
 
 BOOLEAN ONB_NblEqual(_In_ NET_BUFFER_LIST* pLhsNbl, _In_ NET_BUFFER_LIST* pRhsNbl)
 {
-	VOID* pLhBuffer = NULL, *pRhBuffer = NULL;
-	NET_BUFFER* pNb = NULL;
-	ULONG nbLen = 0;
+    VOID* pLhBuffer = NULL, *pRhBuffer = NULL;
+    NET_BUFFER* pNb = NULL;
+    ULONG nbLen = 0;
 
-	if (memcmp(pLhsNbl, pRhsNbl, sizeof(NET_BUFFER_LIST)))
-	{
-		return FALSE;
-	}
+    if (memcmp(pLhsNbl, pRhsNbl, sizeof(NET_BUFFER_LIST)))
+    {
+        return FALSE;
+    }
 
-	if (memcmp(NET_BUFFER_LIST_FIRST_NB(pLhsNbl), NET_BUFFER_LIST_FIRST_NB(pRhsNbl), sizeof(NET_BUFFER)))
-	{
-		return FALSE;
-	}
+    if (memcmp(NET_BUFFER_LIST_FIRST_NB(pLhsNbl), NET_BUFFER_LIST_FIRST_NB(pRhsNbl), sizeof(NET_BUFFER)))
+    {
+        return FALSE;
+    }
 
-	pNb = NET_BUFFER_LIST_FIRST_NB(pLhsNbl);
-	nbLen = NET_BUFFER_DATA_LENGTH(pNb);
-	pLhBuffer = NdisGetDataBuffer(pNb, nbLen, NULL, 1, 0);
-	OVS_CHECK(pLhBuffer);
+    pNb = NET_BUFFER_LIST_FIRST_NB(pLhsNbl);
+    nbLen = NET_BUFFER_DATA_LENGTH(pNb);
+    pLhBuffer = NdisGetDataBuffer(pNb, nbLen, NULL, 1, 0);
+    OVS_CHECK(pLhBuffer);
 
-	pNb = NET_BUFFER_LIST_FIRST_NB(pRhsNbl);
-	pRhBuffer = NdisGetDataBuffer(pNb, nbLen, NULL, 1, 0);
-	OVS_CHECK(pRhBuffer);
+    pNb = NET_BUFFER_LIST_FIRST_NB(pRhsNbl);
+    pRhBuffer = NdisGetDataBuffer(pNb, nbLen, NULL, 1, 0);
+    OVS_CHECK(pRhBuffer);
 
-	return !memcmp(pLhBuffer, pRhBuffer, nbLen);
+    return !memcmp(pLhBuffer, pRhBuffer, nbLen);
 }

@@ -34,35 +34,35 @@ typedef struct _OVS_DATAPATH_STATS {
 
 typedef struct _OVS_DATAPATH
 {
-	//must be the first field in the struct
-	OVS_REF_COUNT refCount;
+    //must be the first field in the struct
+    OVS_REF_COUNT     refCount;
 
-	//entry in OVS_DRIVER
-	LIST_ENTRY		listEntry;
+    //entry in OVS_DRIVER
+    LIST_ENTRY        listEntry;
 
-    char*				name;
+    char*             name;
     //we keep one single datapath, which is created at startup.
     //we set 'deleted' = true, when it is 'deleted' from userspace
     //and we set it to false when it's created from userspace.
     //it tells us if the datapath struct is usable.
-    BOOLEAN				deleted;
-	/* protects stats and any other fields, and allows the replace of pFlowTable with another flow table
-	**  to destroy the pFlowTable, you must;
-	**		acquire this rw lock for write (so no thread would get a reference to it in the mean time)
-	**		replace the pFlowTable
-	**		at this moment we can destroy the pFlowTable only when / if no one else is using it.
-	**		** references to pFlowTable are retrieved (and released) using pDatapath->pRwLock
-	**		call FlowTable_Destroy: if pFlowTable->refCount == 0, it will destroy the flow table
-	**								else, it will mark pFlowTable for deletion, so that the last dereferncing will destroy it.
-	**		unlock the rw lock (now the datapath is safe to use by other threads, and its pFlowTable is safe to be retrieved)
-	*/
-	PNDIS_RW_LOCK_EX	pRwLock;
+    BOOLEAN           deleted;
+    /* protects stats and any other fields, and allows the replace of pFlowTable with another flow table
+    **  to destroy the pFlowTable, you must;
+    **        acquire this rw lock for write (so no thread would get a reference to it in the mean time)
+    **        replace the pFlowTable
+    **        at this moment we can destroy the pFlowTable only when / if no one else is using it.
+    **        ** references to pFlowTable are retrieved (and released) using pDatapath->pRwLock
+    **        call FlowTable_Destroy: if pFlowTable->refCount == 0, it will destroy the flow table
+    **                                else, it will mark pFlowTable for deletion, so that the last dereferncing will destroy it.
+    **        unlock the rw lock (now the datapath is safe to use by other threads, and its pFlowTable is safe to be retrieved)
+    */
+    PNDIS_RW_LOCK_EX    pRwLock;
 
-    OVS_FLOW_TABLE*		pFlowTable;
+    OVS_FLOW_TABLE*     pFlowTable;
 
-	ULONG				switchIfIndex;
+    ULONG               switchIfIndex;
 
-    OVS_DATAPATH_STATS	statistics;
+    OVS_DATAPATH_STATS  statistics;
 }OVS_DATAPATH, *POVS_DATAPATH;
 
 #define DATAPATH_LOCK_READ(pDatapath, pLockState) NdisAcquireRWLockRead(pDatapath->pRwLock, pLockState, 0)

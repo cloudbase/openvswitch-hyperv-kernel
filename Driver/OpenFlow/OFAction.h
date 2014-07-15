@@ -27,11 +27,11 @@ typedef struct _OVS_SWITCH_INFO OVS_SWITCH_INFO;
 typedef struct _OVS_NIC_INFO OVS_NIC_INFO;
 
 typedef struct _OVS_ACTIONS {
-	//must be the first field in the struct
-	OVS_REF_COUNT refCount;
+    //must be the first field in the struct
+    OVS_REF_COUNT refCount;
 
-	//once set, it cannot be modified. Also, the pointer cannot be changed, unless the OVS_ACTIONS struct is destroyed
-	OVS_ARGUMENT_GROUP* pActionGroup;
+    //once set, it cannot be modified. Also, the pointer cannot be changed, unless the OVS_ACTIONS struct is destroyed
+    OVS_ARGUMENT_GROUP* pActionGroup;
 } OVS_ACTIONS, *POVS_ACTIONS;
 
 typedef struct _OVS_ACTION_PUSH_VLAN {

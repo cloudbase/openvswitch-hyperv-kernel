@@ -160,7 +160,7 @@ typedef struct _OVS_GRE_HEADER_2784 {
         UINT8 haveChecksum : 1; // bit 0
 
         //MUST contain the value zero.
-        UINT8 versionNumber : 3;		// bits 13-15
+        UINT8 versionNumber : 3;        // bits 13-15
 
         /*Bits 6-12 are reserved for future use.
         These bits MUST be sent as zero and MUST be ignored on receipt*/

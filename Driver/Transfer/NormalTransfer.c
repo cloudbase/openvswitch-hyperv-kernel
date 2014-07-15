@@ -78,9 +78,9 @@ BOOLEAN ProcessPacket_Normal_SendMulticast(OVS_NET_BUFFER* pOvsNb)
     OVS_CHECK(status == NDIS_STATUS_SUCCESS);
 
     if (status != NDIS_STATUS_SUCCESS)
-	{
+    {
         return FALSE;
-	}
+    }
 
     return TRUE;
 }

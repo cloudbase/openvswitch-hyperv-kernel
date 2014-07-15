@@ -48,7 +48,7 @@ VOID FlowMask_DeleteReference(OVS_FLOW_MASK* pFlowMask)
         return;
     }
 
-	OVS_CHECK(pFlowMask->refCount);
+    OVS_CHECK(pFlowMask->refCount);
     pFlowMask->refCount--;
 
     if (!pFlowMask->refCount)
@@ -68,10 +68,10 @@ VOID Flow_DestroyNow_Unsafe(OVS_FLOW* pFlow)
 
     FlowMask_DeleteReference(pFlow->pMask);
 
-	if (pFlow->pActions)
-	{
-		OVS_REFCOUNT_DESTROY(pFlow->pActions);
-	}
+    if (pFlow->pActions)
+    {
+        OVS_REFCOUNT_DESTROY(pFlow->pActions);
+    }
 
     KFree(pFlow);
 }
@@ -102,7 +102,7 @@ OVS_FLOW* Flow_Create()
     }
 
     pFlow->pRwLock = NdisAllocateRWLock(NULL);
-	pFlow->refCount.Destroy = Flow_DestroyNow_Unsafe;
+    pFlow->refCount.Destroy = Flow_DestroyNow_Unsafe;
 
     return pFlow;
 }
@@ -694,13 +694,13 @@ void DbgPrintAllFlows()
 
     pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
     if (!pDatapath)
-	{
+    {
         return;
     }
 
-	pFlowTable = Datapath_ReferenceFlowTable(pDatapath);
+    pFlowTable = Datapath_ReferenceFlowTable(pDatapath);
 
-	FLOWTABLE_LOCK_READ(pFlowTable, &lockState);
+    FLOWTABLE_LOCK_READ(pFlowTable, &lockState);
 
     if (pFlowTable->countFlows > 0)
     {
@@ -716,9 +716,9 @@ void DbgPrintAllFlows()
             ULONG startRange = (ULONG)pFlow->pMask->piRange.startRange;
             ULONG endRange = (ULONG)pFlow->pMask->piRange.endRange;
 
-			FLOW_LOCK_READ(pFlow, &lockState);
+            FLOW_LOCK_READ(pFlow, &lockState);
             DbgPrintFlowWithActions("flow dump: ", &pFlow->unmaskedPacketInfo, &pFlow->pMask->packetInfo, startRange, endRange, pFlow->pActions->pActionGroup);
-			FLOW_UNLOCK(pFlow, &lockState);
+            FLOW_UNLOCK(pFlow, &lockState);
 
             ++i;
             pCurItem = pCurItem->Flink;
@@ -729,14 +729,14 @@ void DbgPrintAllFlows()
         DEBUGP(LOG_INFO, "flow table empty!\n");
     }
 
-	FLOWTABLE_UNLOCK(pFlowTable, &lockState);
+    FLOWTABLE_UNLOCK(pFlowTable, &lockState);
 
-	OVS_REFCOUNT_DEREFERENCE(pFlowTable);
+    OVS_REFCOUNT_DEREFERENCE(pFlowTable);
 
-	if (pDatapath)
-	{
-		OVS_REFCOUNT_DEREFERENCE(pDatapath);
-	}
+    if (pDatapath)
+    {
+        OVS_REFCOUNT_DEREFERENCE(pDatapath);
+    }
 }
 
 #endif

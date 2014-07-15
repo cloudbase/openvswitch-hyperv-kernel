@@ -27,11 +27,11 @@ typedef struct _OVS_GLOBAL_FORWARD_INFO
 {
     BOOLEAN                 switchIsActive;
 
-    OVS_NIC_LIST_ENTRY*		pExternalNic;
-    OVS_NIC_LIST_ENTRY*		pInternalNic;
+    OVS_NIC_LIST_ENTRY*     pExternalNic;
+    OVS_NIC_LIST_ENTRY*     pInternalNic;
 
-    OVS_PORT_LIST_ENTRY*	pExternalPort;
-    OVS_PORT_LIST_ENTRY*	pInternalPort;
+    OVS_PORT_LIST_ENTRY*    pExternalPort;
+    OVS_PORT_LIST_ENTRY*    pInternalPort;
 
     LIST_ENTRY              nicList;
 
@@ -43,7 +43,7 @@ typedef struct _OVS_GLOBAL_FORWARD_INFO
     UINT32                  countPorts;
     BOOLEAN                 isInitialRestart;
 
-    OVS_PERSISTENT_PORTS_INFO	persistentPortsInfo;
+    OVS_PERSISTENT_PORTS_INFO    persistentPortsInfo;
 } OVS_GLOBAL_FORWARD_INFO, *POVS_GLOBAL_FORWARD_INFO;
 
 typedef enum _OVS_SWITCH_DATAFLOW_STATE {
@@ -59,25 +59,25 @@ typedef enum _OVS_SWITCH_CONTROLFLOW_STATE {
 
 typedef struct _OVS_SWITCH_INFO
 {
-	//must be the first field in the struct
-	OVS_REF_COUNT refCount;
+    //must be the first field in the struct
+    OVS_REF_COUNT             refCount;
 
     //entry in switchList of OVS_DRIVER
-    LIST_ENTRY				listEntry;
+    LIST_ENTRY                listEntry;
 
-    OVS_GLOBAL_FORWARD_INFO* pForwardInfo;
+    OVS_GLOBAL_FORWARD_INFO*  pForwardInfo;
 
-    NDIS_HANDLE filterHandle;
-    NDIS_SWITCH_CONTEXT switchContext;
+    NDIS_HANDLE               filterHandle;
+    NDIS_SWITCH_CONTEXT       switchContext;
     NDIS_SWITCH_OPTIONAL_HANDLERS switchHandlers;
 
-    OVS_SWITCH_DATAFLOW_STATE		dataFlowState;
-    OVS_SWITCH_CONTROLFLOW_STATE	controlFlowState;
+    OVS_SWITCH_DATAFLOW_STATE     dataFlowState;
+    OVS_SWITCH_CONTROLFLOW_STATE  controlFlowState;
 
     volatile LONG pendingInjectedNblCount;
     volatile LONG pendingOidCount;
 
-    NDIS_SWITCH_NIC_OID_REQUEST*	pOldNicRequest;
+    NDIS_SWITCH_NIC_OID_REQUEST*  pOldNicRequest;
 
     NET_IFINDEX datapathIfIndex;
 } OVS_SWITCH_INFO, *POVS_SWITCH_INFO;

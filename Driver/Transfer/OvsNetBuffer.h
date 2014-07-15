@@ -30,29 +30,29 @@ typedef struct _OVS_ACTIONS OVS_ACTIONS;
 
 typedef struct _OVS_NET_BUFFER
 {
-    OVS_SWITCH_INFO*		pSwitchInfo;
-    OVS_NIC_INFO*			pSourceNic;
-    OVS_PERSISTENT_PORT*	pSourcePort;
-    OVS_PERSISTENT_PORT*	pDestinationPort;
+    OVS_SWITCH_INFO*        pSwitchInfo;
+    OVS_NIC_INFO*           pSourceNic;
+    OVS_PERSISTENT_PORT*    pSourcePort;
+    OVS_PERSISTENT_PORT*    pDestinationPort;
 
-    BOOLEAN					sendToPortNormal;
-    ULONG					sendFlags;
+    BOOLEAN                 sendToPortNormal;
+    ULONG                   sendFlags;
 
-	//actions to apply to the packet
-	//the pActions OVS_ARGUMENT_GROUP struct cannot be modified
-	OVS_ACTIONS*		pActions;
+    //actions to apply to the packet
+    //the pActions OVS_ARGUMENT_GROUP struct cannot be modified
+    OVS_ACTIONS*            pActions;
 
     //The flow information extracted from the packet (overwriting packet headers do not affect it). Must not be null.
-	//once set, cannot be modified
-    OVS_OFPACKET_INFO*	pOriginalPacketInfo;
+    //once set, cannot be modified
+    OVS_OFPACKET_INFO*      pOriginalPacketInfo;
 
     //Key for the tunnel that encapsulated this packet. Can be NULL if the packet is not being tunneled.
-    OF_PI_IPV4_TUNNEL*	pTunnelInfo;
+    OF_PI_IPV4_TUNNEL*      pTunnelInfo;
 
     //TODO: packetPriority & packetMark should be removed in the future
     //on windows, we cannot affect QoS with the field priority
-    UINT32	packetPriority;
-    UINT32	packetMark;
+    UINT32           packetPriority;
+    UINT32           packetMark;
 
     NET_BUFFER_LIST* pNbl;
 } OVS_NET_BUFFER, *POVS_NET_BUFFER;

@@ -26,12 +26,12 @@ limitations under the License.
 
 extern ULONG g_debugLevel;
 
-#define DEBUGP(lev, str, ...)	\
-{								\
-	if ((lev) <= g_debugLevel)	\
-    {								\
-	DbgPrint(str, __VA_ARGS__);	\
-    }								\
+#define DEBUGP(lev, str, ...)          \
+{                                      \
+    if ((lev) <= g_debugLevel)         \
+    {                                  \
+         DbgPrint(str, __VA_ARGS__);   \
+    }                                  \
 }
 
 #else
@@ -40,29 +40,29 @@ extern ULONG g_debugLevel;
 
 #endif
 
-#define OVS_DBGPRINT_OID		0
-#define OVS_DBGPRINT_ARG		0
-#define OVS_DBGPRINT_FRAMES		0
-#define OVS_DBGPRINT_FLOW		0
-#define OVS_DBGPRINT_FILE		0
-#define OVS_DBGPRINT_LOCK		0
+#define OVS_DBGPRINT_OID         0
+#define OVS_DBGPRINT_ARG         0
+#define OVS_DBGPRINT_FRAMES      0
+#define OVS_DBGPRINT_FLOW        0
+#define OVS_DBGPRINT_FILE        0
+#define OVS_DBGPRINT_LOCK        0
 
-#define OVS_VERIFY_WINL_MESSAGES	1
-#define OVS_USE_ASSERTS				0
+#define OVS_VERIFY_WINL_MESSAGES    1
+#define OVS_USE_ASSERTS             0
 
 #ifdef DBG
 
-#define OVS_USE_REFCOUNT_CALL_STACK		1
+#define OVS_USE_REFCOUNT_CALL_STACK    1
 
 #undef OVS_USE_ASSERTS
-#define OVS_USE_ASSERTS				1
+#define OVS_USE_ASSERTS                1
 
 #else
-#define OVS_USE_REFCOUNT_CALL_STACK	0
+#define OVS_USE_REFCOUNT_CALL_STACK    0
 
 //we won't verify WINL messages on release mode
 #undef OVS_VERIFY_WINL_MESSAGES
-#define OVS_VERIFY_WINL_MESSAGES	0
+#define OVS_VERIFY_WINL_MESSAGES       0
 #endif //DBG
 
 //OVS_USE_ASSERTS is not #define-d on release mode
@@ -117,7 +117,7 @@ extern ULONG g_debugLevel;
 #endif
 
 #define OVS_IPV4_U32_TO_4_BYTES(ip)     \
-	RtlUlongByteSwap(ip) >> 24,			\
-	(RtlUlongByteSwap(ip) >> 16) & 0xff,\
-	(RtlUlongByteSwap(ip) >> 8) & 0xff, \
-	RtlUlongByteSwap(ip) & 0xff
+    RtlUlongByteSwap(ip) >> 24,            \
+    (RtlUlongByteSwap(ip) >> 16) & 0xff,\
+    (RtlUlongByteSwap(ip) >> 8) & 0xff, \
+    RtlUlongByteSwap(ip) & 0xff

@@ -32,39 +32,39 @@ limitations under the License.
 
 VOID Datapath_DestroyNow_Unsafe(OVS_DATAPATH* pDatapath)
 {
-	OVS_FLOW_TABLE* pFlowTable = NULL;
-	LOCK_STATE_EX lockState;
+    OVS_FLOW_TABLE* pFlowTable = NULL;
+    LOCK_STATE_EX lockState;
 
-	if (pDatapath->name)
-	{
-		KFree(pDatapath->name);
-	}
+    if (pDatapath->name)
+    {
+        KFree(pDatapath->name);
+    }
 
-	DATAPATH_LOCK_WRITE(pDatapath, &lockState);
+    DATAPATH_LOCK_WRITE(pDatapath, &lockState);
 
-	pFlowTable = pDatapath->pFlowTable;
-	pDatapath->pFlowTable = NULL;
-	OVS_REFCOUNT_DESTROY(pFlowTable);
+    pFlowTable = pDatapath->pFlowTable;
+    pDatapath->pFlowTable = NULL;
+    OVS_REFCOUNT_DESTROY(pFlowTable);
 
-	DATAPATH_UNLOCK(pDatapath, &lockState);
+    DATAPATH_UNLOCK(pDatapath, &lockState);
 
-	NdisFreeRWLock(pDatapath->pRwLock);
+    NdisFreeRWLock(pDatapath->pRwLock);
 }
 
 OVS_DATAPATH* GetDefaultDatapath_Ref(const char* funcName)
 {
-	OVS_DATAPATH* pDatapath = NULL;
+    OVS_DATAPATH* pDatapath = NULL;
 
-	DRIVER_LOCK();
+    DRIVER_LOCK();
 
-	OVS_CHECK(!IsListEmpty(&g_driver.datapathList));
+    OVS_CHECK(!IsListEmpty(&g_driver.datapathList));
 
-	pDatapath = CONTAINING_RECORD(g_driver.datapathList.Flink, OVS_DATAPATH, listEntry);
-	pDatapath = RefCount_Reference(pDatapath, funcName);
+    pDatapath = CONTAINING_RECORD(g_driver.datapathList.Flink, OVS_DATAPATH, listEntry);
+    pDatapath = RefCount_Reference(pDatapath, funcName);
 
-	DRIVER_UNLOCK();
+    DRIVER_UNLOCK();
 
-	return pDatapath;
+    return pDatapath;
 }
 
 static void _GetDatapathStats(OVS_DATAPATH* pDatapath, OVS_DATAPATH_STATS* pStats)
@@ -94,20 +94,20 @@ BOOLEAN CreateMsgFromDatapath(OVS_DATAPATH* pDatapath, UINT32 sequence, UINT8 cm
     char* datapathName = NULL;
     OVS_DATAPATH_STATS dpStats = { 0 };
     BOOLEAN ok = TRUE;
-	ULONG nameLen = 0;
-	LOCK_STATE_EX lockState;
+    ULONG nameLen = 0;
+    LOCK_STATE_EX lockState;
 
     OVS_CHECK(pMsg);
 
-	DATAPATH_LOCK_READ(pDatapath, &lockState);
+    DATAPATH_LOCK_READ(pDatapath, &lockState);
 
-	nameLen = (ULONG)strlen(pDatapath->name) + 1;
-	datapathName = KAlloc(nameLen);
-	RtlCopyMemory(datapathName, pDatapath->name, nameLen);
+    nameLen = (ULONG)strlen(pDatapath->name) + 1;
+    datapathName = KAlloc(nameLen);
+    RtlCopyMemory(datapathName, pDatapath->name, nameLen);
 
-	_GetDatapathStats(pDatapath, &dpStats);
+    _GetDatapathStats(pDatapath, &dpStats);
 
-	DATAPATH_UNLOCK(pDatapath, &lockState);
+    DATAPATH_UNLOCK(pDatapath, &lockState);
 
     pArgGroup = AllocArgumentGroup();
 
@@ -155,10 +155,10 @@ BOOLEAN CreateMsgFromDatapath(OVS_DATAPATH* pDatapath, UINT32 sequence, UINT8 cm
     pMsg->pArgGroup = pArgGroup;
 
 Cleanup:
-	if (datapathName)
-	{
-		KFree(datapathName);
-	}
+    if (datapathName)
+    {
+        KFree(datapathName);
+    }
 
     if (ok)
     {
@@ -192,7 +192,7 @@ Cleanup:
 BOOLEAN CreateDefaultDatapath(NDIS_HANDLE ndisFilterHandle)
 {
     OVS_DATAPATH* pDatapath = NULL;
-	OVS_SWITCH_INFO* pSwitchInfo = NULL;
+    OVS_SWITCH_INFO* pSwitchInfo = NULL;
     BOOLEAN ok = TRUE;
 
     pDatapath = KZAlloc(sizeof(OVS_DATAPATH));
@@ -202,15 +202,15 @@ BOOLEAN CreateDefaultDatapath(NDIS_HANDLE ndisFilterHandle)
         goto Cleanup;
     }
 
-	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
-	if (!pSwitchInfo)
-	{
-		ok = FALSE;
-		goto Cleanup;
-	}
+    pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
+    if (!pSwitchInfo)
+    {
+        ok = FALSE;
+        goto Cleanup;
+    }
 
-	pDatapath->switchIfIndex = pSwitchInfo->datapathIfIndex;
-	pDatapath->refCount.Destroy = Datapath_DestroyNow_Unsafe;
+    pDatapath->switchIfIndex = pSwitchInfo->datapathIfIndex;
+    pDatapath->refCount.Destroy = Datapath_DestroyNow_Unsafe;
     pDatapath->name = NULL;
 
     //i.e. at the beginning we don't have a datapath, we expect the userspace to tell us: 'create datapath'
@@ -226,12 +226,12 @@ BOOLEAN CreateDefaultDatapath(NDIS_HANDLE ndisFilterHandle)
 
     pDatapath->pRwLock = NdisAllocateRWLock(ndisFilterHandle);
 
-	OVS_CHECK(!Driver_HaveDatapath());
+    OVS_CHECK(!Driver_HaveDatapath());
 
-	//TODO: use an interlocked single list instead!
-	DRIVER_LOCK();
-	InsertHeadList(&g_driver.datapathList, &pDatapath->listEntry);
-	DRIVER_UNLOCK();
+    //TODO: use an interlocked single list instead!
+    DRIVER_LOCK();
+    InsertHeadList(&g_driver.datapathList, &pDatapath->listEntry);
+    DRIVER_UNLOCK();
 
 Cleanup:
     if (!ok && pDatapath)
@@ -243,10 +243,10 @@ Cleanup:
         ExFreePoolWithTag(pDatapath, g_extAllocationTag);
     }
 
-	if (pSwitchInfo)
-	{
-		OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
-	}
+    if (pSwitchInfo)
+    {
+        OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
+    }
 
     return ok;
 }
@@ -256,39 +256,39 @@ BOOLEAN Datapath_FlushFlows(OVS_DATAPATH* pDatapath)
     OVS_FLOW_TABLE* pOldTable = NULL;
     OVS_FLOW_TABLE* pNewTable = NULL;
     LOCK_STATE_EX lockState = { 0 };
-	BOOLEAN ok = TRUE;
+    BOOLEAN ok = TRUE;
 
-	//pDatapath contains the pFlowTable, so we must lock its rw lock, to replace the pFlowTable
-	DATAPATH_LOCK_WRITE(pDatapath, &lockState);
+    //pDatapath contains the pFlowTable, so we must lock its rw lock, to replace the pFlowTable
+    DATAPATH_LOCK_WRITE(pDatapath, &lockState);
 
     pOldTable = pDatapath->pFlowTable;
     pNewTable = FlowTable_Create();
     if (!pNewTable)
     {
-		ok = FALSE;
-		goto Cleanup;
+        ok = FALSE;
+        goto Cleanup;
     }
 
     pDatapath->pFlowTable = pNewTable;
 
-	OVS_REFCOUNT_DESTROY(pOldTable);
+    OVS_REFCOUNT_DESTROY(pOldTable);
 
 Cleanup:
-	DATAPATH_UNLOCK(pDatapath, &lockState);
+    DATAPATH_UNLOCK(pDatapath, &lockState);
     return ok;
 }
 
 OVS_FLOW_TABLE* Datapath_ReferenceFlowTable(OVS_DATAPATH* pDatapath)
 {
-	OVS_FLOW_TABLE* pFlowTable = NULL;
-	LOCK_STATE_EX lockState;
+    OVS_FLOW_TABLE* pFlowTable = NULL;
+    LOCK_STATE_EX lockState;
 
-	OVS_CHECK(pDatapath);
-	DATAPATH_LOCK_READ(pDatapath, &lockState);
+    OVS_CHECK(pDatapath);
+    DATAPATH_LOCK_READ(pDatapath, &lockState);
 
-	pFlowTable = OVS_REFCOUNT_REFERENCE(pDatapath->pFlowTable);
+    pFlowTable = OVS_REFCOUNT_REFERENCE(pDatapath->pFlowTable);
 
-	DATAPATH_UNLOCK(pDatapath, &lockState);
+    DATAPATH_UNLOCK(pDatapath, &lockState);
 
-	return pFlowTable;
+    return pFlowTable;
 }

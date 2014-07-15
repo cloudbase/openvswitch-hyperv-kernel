@@ -33,7 +33,7 @@ NDIS_RW_LOCK_EX* g_pLogicalPortsLock = NULL;
 static BOOLEAN _AddPersPort_Logical(LIST_ENTRY* pList, _In_ const OVS_PERSISTENT_PORT* pPort)
 {
     OVS_LOGICAL_PORT_ENTRY* pPortEntry = NULL;
-	LOCK_STATE_EX lockState = { 0 };
+    LOCK_STATE_EX lockState = { 0 };
 
     pPortEntry = KAlloc(sizeof(OVS_LOGICAL_PORT_ENTRY));
     if (!pPortEntry)
@@ -43,9 +43,9 @@ static BOOLEAN _AddPersPort_Logical(LIST_ENTRY* pList, _In_ const OVS_PERSISTENT
 
     pPortEntry->pPort = (OVS_PERSISTENT_PORT*)pPort;
 
-	Rwlock_LockWrite(g_pLogicalPortsLock, &lockState);
+    Rwlock_LockWrite(g_pLogicalPortsLock, &lockState);
     InsertTailList(pList, &pPortEntry->listEntry);
-	Rwlock_Unlock(g_pLogicalPortsLock, &lockState);
+    Rwlock_Unlock(g_pLogicalPortsLock, &lockState);
 
     return TRUE;
 }
@@ -53,25 +53,25 @@ static BOOLEAN _AddPersPort_Logical(LIST_ENTRY* pList, _In_ const OVS_PERSISTENT
 static BOOLEAN _RemovePersPort_Logical(LIST_ENTRY* pList, _In_ const OVS_PERSISTENT_PORT* pPort)
 {
     OVS_LOGICAL_PORT_ENTRY* pPortEntry = NULL;
-	BOOLEAN ok = FALSE;
-	LOCK_STATE_EX lockState = { 0 };
+    BOOLEAN ok = FALSE;
+    LOCK_STATE_EX lockState = { 0 };
 
-	Rwlock_LockWrite(g_pLogicalPortsLock, &lockState);
+    Rwlock_LockWrite(g_pLogicalPortsLock, &lockState);
 
-	LIST_FOR_EACH(OVS_LOGICAL_PORT_ENTRY, pPortEntry, pList)
+    LIST_FOR_EACH(OVS_LOGICAL_PORT_ENTRY, pPortEntry, pList)
     {
         if (pPortEntry->pPort == pPort)
         {
             RemoveEntryList(&pPortEntry->listEntry);
 
             KFree(pPortEntry);
-			ok = TRUE;
-			goto Cleanup;
+            ok = TRUE;
+            goto Cleanup;
         }
     }
 
 Cleanup:
-	Rwlock_Unlock(g_pLogicalPortsLock, &lockState);
+    Rwlock_Unlock(g_pLogicalPortsLock, &lockState);
     return ok;
 }
 
@@ -98,23 +98,23 @@ static BOOLEAN _RemovePersPort_Vxlan(_In_ const OVS_PERSISTENT_PORT* pPort)
 static OVS_PERSISTENT_PORT* _PersPort_FindTunnel_Ref(_In_ const LIST_ENTRY* pList, _In_ const OVS_TUNNELING_PORT_OPTIONS* pTunnelOptions)
 {
     OVS_LOGICAL_PORT_ENTRY* pPortEntry = NULL;
-	OVS_PERSISTENT_PORT* pOutPort = NULL;
-	LOCK_STATE_EX lockState = { 0 };
+    OVS_PERSISTENT_PORT* pOutPort = NULL;
+    LOCK_STATE_EX lockState = { 0 };
 
     if (pList == &g_vxlanPorts)
     {
         OVS_CHECK(pTunnelOptions);
     }
 
-	Rwlock_LockRead(g_pLogicalPortsLock, &lockState);
+    Rwlock_LockRead(g_pLogicalPortsLock, &lockState);
 
-	LIST_FOR_EACH(OVS_LOGICAL_PORT_ENTRY, pPortEntry, pList)
+    LIST_FOR_EACH(OVS_LOGICAL_PORT_ENTRY, pPortEntry, pList)
     {
         if (pList == &g_grePorts)
         {
             pPortEntry = CONTAINING_RECORD(pList->Flink, OVS_LOGICAL_PORT_ENTRY, listEntry);
-			pOutPort = OVS_REFCOUNT_REFERENCE(pPortEntry->pPort);
-			goto Cleanup;
+            pOutPort = OVS_REFCOUNT_REFERENCE(pPortEntry->pPort);
+            goto Cleanup;
         }
         else
         {
@@ -129,16 +129,16 @@ static OVS_PERSISTENT_PORT* _PersPort_FindTunnel_Ref(_In_ const LIST_ENTRY* pLis
 
             if (pOptions->udpDestPort == pTunnelOptions->udpDestPort)
             {
-				pOutPort = OVS_REFCOUNT_REFERENCE(pPortEntry->pPort);
-				goto Cleanup;
+                pOutPort = OVS_REFCOUNT_REFERENCE(pPortEntry->pPort);
+                goto Cleanup;
             }
         }
     }
 
 Cleanup:
-	Rwlock_Unlock(g_pLogicalPortsLock, &lockState);
+    Rwlock_Unlock(g_pLogicalPortsLock, &lockState);
 
-	return pOutPort;
+    return pOutPort;
 }
 
 static BOOLEAN _PortFriendlyNameIs(int i, const char* portName, _In_ const OVS_PORT_LIST_ENTRY* pPortEntry)
@@ -163,70 +163,70 @@ static BOOLEAN _PortFriendlyNameIs(int i, const char* portName, _In_ const OVS_P
 //Unsafe = does not lock PersPort
 static VOID _PersPort_SetNicAndPort_Unsafe(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, OVS_PERSISTENT_PORT* pPort)
 {
-	LOCK_STATE_EX lockState = { 0 };
+    LOCK_STATE_EX lockState = { 0 };
     const char* externalPortName = "external";
 
     OVS_CHECK(pPort);
 
-	//care must be taken: we lock here pForwardInfo for read, while having locked pers ports for write.
-	//we must not lock in any other part pForwardInfo before or after pers ports, or we will get into a deadlock.
-	FWDINFO_LOCK_READ(pForwardInfo, &lockState);
+    //care must be taken: we lock here pForwardInfo for read, while having locked pers ports for write.
+    //we must not lock in any other part pForwardInfo before or after pers ports, or we will get into a deadlock.
+    FWDINFO_LOCK_READ(pForwardInfo, &lockState);
 
     if (pPort->ofPortType == OVS_OFPORT_TYPE_MANAG_OS)
     {
-		if (pForwardInfo->pInternalPort)
+        if (pForwardInfo->pInternalPort)
         {
-			pPort->portId = pForwardInfo->pInternalPort->portId;
-			//TODO: should we use interlocked assign for OVS_PORT_LIST_ENTRY's port id?
-			pForwardInfo->pInternalPort->ovsPortNumber = pPort->ovsPortNumber;
-		}
-		else
+            pPort->portId = pForwardInfo->pInternalPort->portId;
+            //TODO: should we use interlocked assign for OVS_PORT_LIST_ENTRY's port id?
+            pForwardInfo->pInternalPort->ovsPortNumber = pPort->ovsPortNumber;
+        }
+        else
         {
-			pPort->portId = NDIS_SWITCH_DEFAULT_PORT_ID;
-		}
+            pPort->portId = NDIS_SWITCH_DEFAULT_PORT_ID;
+        }
     }
     else if (pPort->ofPortType == OVS_OFPORT_TYPE_GRE)
     {
-		pPort->portId = NDIS_SWITCH_DEFAULT_PORT_ID;
+        pPort->portId = NDIS_SWITCH_DEFAULT_PORT_ID;
     }
     else if (pPort->ofPortType == OVS_OFPORT_TYPE_VXLAN)
     {
-		pPort->portId = NDIS_SWITCH_DEFAULT_PORT_ID;
+        pPort->portId = NDIS_SWITCH_DEFAULT_PORT_ID;
     }
-	else if (0 == strcmp(pPort->ovsPortName, externalPortName))
-	{
-		if (pForwardInfo->pExternalPort)
+    else if (0 == strcmp(pPort->ovsPortName, externalPortName))
+    {
+        if (pForwardInfo->pExternalPort)
         {
-			//TODO: should we use interlockd assign for OVS_PORT_LIST_ENTRY's port id?
-			pPort->portId = pForwardInfo->pExternalPort->portId;
-			pPort->isExternal = TRUE;
-			pForwardInfo->pExternalPort->ovsPortNumber = pPort->ovsPortNumber;
-		}
-		else
-		{
-			pPort->portId = NDIS_SWITCH_DEFAULT_PORT_ID;
-		}
-	}
+            //TODO: should we use interlockd assign for OVS_PORT_LIST_ENTRY's port id?
+            pPort->portId = pForwardInfo->pExternalPort->portId;
+            pPort->isExternal = TRUE;
+            pForwardInfo->pExternalPort->ovsPortNumber = pPort->ovsPortNumber;
+        }
+        else
+        {
+            pPort->portId = NDIS_SWITCH_DEFAULT_PORT_ID;
+        }
+    }
     else
     {
-		OVS_PORT_LIST_ENTRY* pPortEntry = NULL;
+        OVS_PORT_LIST_ENTRY* pPortEntry = NULL;
 
-		pPortEntry = Sctx_FindPortBy_Unsafe(pForwardInfo, pPort->ovsPortName, _PortFriendlyNameIs);
+        pPortEntry = Sctx_FindPortBy_Unsafe(pForwardInfo, pPort->ovsPortName, _PortFriendlyNameIs);
 
-		if (pPortEntry)
-		{
-			OVS_NIC_LIST_ENTRY* pNicEntry = NULL;
-			pPort->portId = pPortEntry->portId;
+        if (pPortEntry)
+        {
+            OVS_NIC_LIST_ENTRY* pNicEntry = NULL;
+            pPort->portId = pPortEntry->portId;
 
-			pNicEntry = Sctx_FindNicByPortId_Unsafe(pForwardInfo, pPortEntry->portId);
+            pNicEntry = Sctx_FindNicByPortId_Unsafe(pForwardInfo, pPortEntry->portId);
             if (pNicEntry)
             {
                 pNicEntry->ovsPortNumber = pPort->ovsPortNumber;
             }
-		}
+        }
     }
 
-	FWDINFO_UNLOCK(pForwardInfo, &lockState);
+    FWDINFO_UNLOCK(pForwardInfo, &lockState);
 }
 
 static BOOLEAN _FindNextFreePort(_In_ const OVS_PERSISTENT_PORTS_INFO* pPorts, _Inout_ UINT16* pFirst)
@@ -369,26 +369,26 @@ OVS_PERSISTENT_PORT* PersPort_Create_Ref(_In_opt_ const char* portName, _In_opt_
     OVS_PERSISTENT_PORT* pPort = NULL;
     OVS_PERSISTENT_PORTS_INFO* pPorts = NULL;
     OVS_GLOBAL_FORWARD_INFO* pForwardInfo = NULL;
-	OVS_SWITCH_INFO* pSwitchInfo = NULL;
-	BOOLEAN locked = FALSE;
-	LOCK_STATE_EX lockState;
+    OVS_SWITCH_INFO* pSwitchInfo = NULL;
+    BOOLEAN locked = FALSE;
+    LOCK_STATE_EX lockState;
 
-	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
-	if (!pSwitchInfo)
+    pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
+    if (!pSwitchInfo)
     {
-		ok = FALSE;
-		goto Cleanup;
-	}
+        ok = FALSE;
+        goto Cleanup;
+    }
 
     pForwardInfo = pSwitchInfo->pForwardInfo;
     OVS_CHECK(pForwardInfo);
 
-	pPorts = &pSwitchInfo->pForwardInfo->persistentPortsInfo;
+    pPorts = &pSwitchInfo->pForwardInfo->persistentPortsInfo;
 
-	PERSPORTS_LOCK_WRITE(pPorts, &lockState);
-	locked = TRUE;
+    PERSPORTS_LOCK_WRITE(pPorts, &lockState);
+    locked = TRUE;
 
-	if (pPorts->count >= OVS_MAX_PORTS)
+    if (pPorts->count >= OVS_MAX_PORTS)
     {
         ok = FALSE;
         goto Cleanup;
@@ -403,15 +403,15 @@ OVS_PERSISTENT_PORT* PersPort_Create_Ref(_In_opt_ const char* portName, _In_opt_
         OVS_CHECK(portName);
     }
 
-	pPort = KZAlloc(sizeof(OVS_PERSISTENT_PORT));
+    pPort = KZAlloc(sizeof(OVS_PERSISTENT_PORT));
     if (!pPort)
     {
         ok = FALSE;
         goto Cleanup;
     }
 
-	pPort->refCount.Destroy = PersPort_DestroyNow_Unsafe;
-	pPort->pRwLock = NdisAllocateRWLock(NULL);
+    pPort->refCount.Destroy = PersPort_DestroyNow_Unsafe;
+    pPort->pRwLock = NdisAllocateRWLock(NULL);
 
     //if name for port was not provided, we must have been given a number
     if (!portName)
@@ -472,24 +472,24 @@ OVS_PERSISTENT_PORT* PersPort_Create_Ref(_In_opt_ const char* portName, _In_opt_
         _AddPersPort_Vxlan(pPort);
     }
 
-	//NOTE: we may have more persistent ports than NICS: logical ports don't have nics associated
-	//the same goes with hyper-v switch ports
+    //NOTE: we may have more persistent ports than NICS: logical ports don't have nics associated
+    //the same goes with hyper-v switch ports
 
-	_PersPort_SetNicAndPort_Unsafe(pForwardInfo, pPort);
+    _PersPort_SetNicAndPort_Unsafe(pForwardInfo, pPort);
 
-	if (pPortNumber)
-	{
-		ok = _PersPort_AddByNumber_Unsafe(pPorts, pPort);
-	}
-	else
-	{
-		ok = _PersPort_AddByName_Unsafe(pPorts, pPort);
-	}
+    if (pPortNumber)
+    {
+        ok = _PersPort_AddByNumber_Unsafe(pPorts, pPort);
+    }
+    else
+    {
+        ok = _PersPort_AddByName_Unsafe(pPorts, pPort);
+    }
 
-	if (!ok)
-	{
-		goto Cleanup;
-	}
+    if (!ok)
+    {
+        goto Cleanup;
+    }
 
 Cleanup:
     if (!ok)
@@ -500,14 +500,14 @@ Cleanup:
         }
     }
 
-	if (locked)
+    if (locked)
     {
-		PERSPORTS_UNLOCK(pPorts, &lockState);
-	}
+        PERSPORTS_UNLOCK(pPorts, &lockState);
+    }
 
-	OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
+    OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
 
-	return (ok ? pPort : NULL);
+    return (ok ? pPort : NULL);
 }
 
 /***************************************************/
@@ -527,26 +527,26 @@ OVS_PERSISTENT_PORT* PersPort_FindExternal_Ref()
     ULONG countProcessed = 0;
     OVS_PERSISTENT_PORTS_INFO* pPorts = NULL;
     BOOLEAN ok = TRUE;
-	OVS_PERSISTENT_PORT* pOutPort = NULL;
-	OVS_SWITCH_INFO* pSwitchInfo = NULL;
-	LOCK_STATE_EX lockState;
-	BOOLEAN locked = FALSE;
+    OVS_PERSISTENT_PORT* pOutPort = NULL;
+    OVS_SWITCH_INFO* pSwitchInfo = NULL;
+    LOCK_STATE_EX lockState;
+    BOOLEAN locked = FALSE;
 
-	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
-	if (!pSwitchInfo)
+    pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
+    if (!pSwitchInfo)
     {
-		ok = FALSE;
-		goto Cleanup;
-	}
+        ok = FALSE;
+        goto Cleanup;
+    }
 
-	OVS_CHECK(pSwitchInfo->pForwardInfo);
+    OVS_CHECK(pSwitchInfo->pForwardInfo);
 
-	pPorts = &pSwitchInfo->pForwardInfo->persistentPortsInfo;
+    pPorts = &pSwitchInfo->pForwardInfo->persistentPortsInfo;
 
-	PERSPORTS_LOCK_READ(pPorts, &lockState);
-	locked = TRUE;
+    PERSPORTS_LOCK_READ(pPorts, &lockState);
+    locked = TRUE;
 
-	if (pPorts->count >= OVS_MAX_PORTS)
+    if (pPorts->count >= OVS_MAX_PORTS)
     {
         ok = FALSE;
         goto Cleanup;
@@ -554,44 +554,44 @@ OVS_PERSISTENT_PORT* PersPort_FindExternal_Ref()
 
     for (ULONG i = 0; i < OVS_MAX_PORTS; ++i)
     {
-		OVS_PERSISTENT_PORT* pCurPort = pPorts->portsArray[i];
+        OVS_PERSISTENT_PORT* pCurPort = pPorts->portsArray[i];
 
         if (pCurPort)
         {
-			LOCK_STATE_EX portLockState = { 0 };
+            LOCK_STATE_EX portLockState = { 0 };
 
-			PORT_LOCK_READ(pCurPort, &portLockState);
+            PORT_LOCK_READ(pCurPort, &portLockState);
 
-			if (pCurPort->isExternal == TRUE && pCurPort->portId != NDIS_SWITCH_DEFAULT_PORT_ID)
-			{
-				pOutPort = OVS_REFCOUNT_REFERENCE(pCurPort);
+            if (pCurPort->isExternal == TRUE && pCurPort->portId != NDIS_SWITCH_DEFAULT_PORT_ID)
+            {
+                pOutPort = OVS_REFCOUNT_REFERENCE(pCurPort);
 
-				PORT_UNLOCK(pCurPort, &portLockState);
-				goto Cleanup;
-			}
+                PORT_UNLOCK(pCurPort, &portLockState);
+                goto Cleanup;
+            }
 
-			PORT_UNLOCK(pCurPort, &portLockState);
+            PORT_UNLOCK(pCurPort, &portLockState);
 
             ++countProcessed;
         }
 
-		if (countProcessed >= pPorts->count)
+        if (countProcessed >= pPorts->count)
         {
             break;
         }
     }
 
-	OVS_CHECK(countProcessed == pPorts->count);
+    OVS_CHECK(countProcessed == pPorts->count);
 
 Cleanup:
-	if (locked)
+    if (locked)
     {
-		PERSPORTS_UNLOCK(pPorts, &lockState);
-	}
+        PERSPORTS_UNLOCK(pPorts, &lockState);
+    }
 
-	OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
+    OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
 
-	return pOutPort;
+    return pOutPort;
 }
 
 _Use_decl_annotations_
@@ -600,24 +600,24 @@ OVS_PERSISTENT_PORT* PersPort_FindInternal_Ref()
     ULONG countProcessed = 0;
     OVS_PERSISTENT_PORTS_INFO* pPorts = NULL;
     BOOLEAN ok = TRUE;
-	OVS_PERSISTENT_PORT* pOutPort = NULL;
-	OVS_SWITCH_INFO* pSwitchInfo = NULL;
-	BOOLEAN locked = FALSE;
-	LOCK_STATE_EX lockState;
+    OVS_PERSISTENT_PORT* pOutPort = NULL;
+    OVS_SWITCH_INFO* pSwitchInfo = NULL;
+    BOOLEAN locked = FALSE;
+    LOCK_STATE_EX lockState;
 
-	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
-	if (!pSwitchInfo)
-	{
-		ok = FALSE;
-		goto Cleanup;
-	}
+    pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
+    if (!pSwitchInfo)
+    {
+        ok = FALSE;
+        goto Cleanup;
+    }
 
-	pPorts = &pSwitchInfo->pForwardInfo->persistentPortsInfo;
+    pPorts = &pSwitchInfo->pForwardInfo->persistentPortsInfo;
 
-	PERSPORTS_LOCK_READ(pPorts, &lockState);
-	locked = TRUE;
+    PERSPORTS_LOCK_READ(pPorts, &lockState);
+    locked = TRUE;
 
-	if (pPorts->count >= OVS_MAX_PORTS)
+    if (pPorts->count >= OVS_MAX_PORTS)
     {
         ok = FALSE;
         goto Cleanup;
@@ -625,43 +625,43 @@ OVS_PERSISTENT_PORT* PersPort_FindInternal_Ref()
 
     for (ULONG i = 0; i < OVS_MAX_PORTS; ++i)
     {
-		OVS_PERSISTENT_PORT* pCurPort = pPorts->portsArray[i];
+        OVS_PERSISTENT_PORT* pCurPort = pPorts->portsArray[i];
 
         if (pCurPort)
         {
-			LOCK_STATE_EX portLockState = { 0 };
-			PORT_LOCK_READ(pCurPort, &portLockState);
+            LOCK_STATE_EX portLockState = { 0 };
+            PORT_LOCK_READ(pCurPort, &portLockState);
 
-			if (pCurPort->ofPortType == OVS_OFPORT_TYPE_MANAG_OS && pCurPort->portId != NDIS_SWITCH_DEFAULT_PORT_ID)
-			{
-				pOutPort = OVS_REFCOUNT_REFERENCE(pCurPort);
+            if (pCurPort->ofPortType == OVS_OFPORT_TYPE_MANAG_OS && pCurPort->portId != NDIS_SWITCH_DEFAULT_PORT_ID)
+            {
+                pOutPort = OVS_REFCOUNT_REFERENCE(pCurPort);
 
-				PORT_UNLOCK(pCurPort, &portLockState);
-				goto Cleanup;
-			}
+                PORT_UNLOCK(pCurPort, &portLockState);
+                goto Cleanup;
+            }
 
-			PORT_UNLOCK(pCurPort, &portLockState);
+            PORT_UNLOCK(pCurPort, &portLockState);
 
             ++countProcessed;
         }
 
-		if (countProcessed >= pPorts->count)
+        if (countProcessed >= pPorts->count)
         {
             break;
         }
     }
 
-	OVS_CHECK(countProcessed == pPorts->count);
+    OVS_CHECK(countProcessed == pPorts->count);
 
 Cleanup:
-	if (locked)
-	{
-		PERSPORTS_UNLOCK(pPorts, &lockState);
-	}
+    if (locked)
+    {
+        PERSPORTS_UNLOCK(pPorts, &lockState);
+    }
 
-	OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
+    OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
 
-	return pOutPort;
+    return pOutPort;
 }
 
 _Use_decl_annotations_
@@ -682,7 +682,7 @@ OVS_PERSISTENT_PORT* PersPort_FindVxlanByDestPort_Ref(LE16 udpDestPort)
 {
     OVS_LOGICAL_PORT_ENTRY* pPortEntry = NULL;
 
-	LIST_FOR_EACH(OVS_LOGICAL_PORT_ENTRY, pPortEntry, &g_vxlanPorts)
+    LIST_FOR_EACH(OVS_LOGICAL_PORT_ENTRY, pPortEntry, &g_vxlanPorts)
     {
         OVS_TUNNELING_PORT_OPTIONS* pOptions = NULL;
 
@@ -703,17 +703,17 @@ BOOLEAN PersPort_Initialize()
     InitializeListHead(&g_grePorts);
     InitializeListHead(&g_vxlanPorts);
 
-	g_pLogicalPortsLock = NdisAllocateRWLock(NULL);
+    g_pLogicalPortsLock = NdisAllocateRWLock(NULL);
 
     return TRUE;
 }
 
 VOID PersPort_Uninitialize()
 {
-	OVS_CHECK(g_pLogicalPortsLock);
+    OVS_CHECK(g_pLogicalPortsLock);
 
-	NdisFreeRWLock(g_pLogicalPortsLock);
-	g_pLogicalPortsLock = NULL;
+    NdisFreeRWLock(g_pLogicalPortsLock);
+    g_pLogicalPortsLock = NULL;
 }
 
 BOOLEAN PersPort_CForEach_Unsafe(_In_ const OVS_PERSISTENT_PORTS_INFO* pPorts, VOID* pContext, BOOLEAN(*Action)(int, OVS_PERSISTENT_PORT*, VOID*))
@@ -721,22 +721,22 @@ BOOLEAN PersPort_CForEach_Unsafe(_In_ const OVS_PERSISTENT_PORTS_INFO* pPorts, V
     ULONG countProcessed = 0;
     for (ULONG i = 0; i < OVS_MAX_PORTS; ++i)
     {
-		OVS_PERSISTENT_PORT* pPort = pPorts->portsArray[i];
+        OVS_PERSISTENT_PORT* pPort = pPorts->portsArray[i];
 
-		if (pPort)
+        if (pPort)
         {
-			LOCK_STATE_EX lockState = { 0 };
+            LOCK_STATE_EX lockState = { 0 };
 
-			PORT_LOCK_READ(pPort, &lockState);
+            PORT_LOCK_READ(pPort, &lockState);
 
-			if (!(*Action)(countProcessed, pPort, pContext))
-			{
-				PORT_UNLOCK(pPort, &lockState);
+            if (!(*Action)(countProcessed, pPort, pContext))
+            {
+                PORT_UNLOCK(pPort, &lockState);
 
-				return FALSE;
-			}
+                return FALSE;
+            }
 
-			PORT_UNLOCK(pPort, &lockState);
+            PORT_UNLOCK(pPort, &lockState);
 
             ++countProcessed;
         }
@@ -757,24 +757,24 @@ OVS_PERSISTENT_PORT* PersPort_FindByName_Ref(const char* ofPortName)
     ULONG countProcessed = 0;
     OVS_PERSISTENT_PORTS_INFO* pPorts = NULL;
     BOOLEAN ok = TRUE;
-	OVS_PERSISTENT_PORT* pOutPort = NULL;
-	OVS_SWITCH_INFO* pSwitchInfo = NULL;
-	BOOLEAN locked = FALSE;
-	LOCK_STATE_EX lockState = { 0 };
+    OVS_PERSISTENT_PORT* pOutPort = NULL;
+    OVS_SWITCH_INFO* pSwitchInfo = NULL;
+    BOOLEAN locked = FALSE;
+    LOCK_STATE_EX lockState = { 0 };
 
-	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
-	if (!pSwitchInfo)
-	{
-		ok = FALSE;
-		goto Cleanup;
-	}
+    pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
+    if (!pSwitchInfo)
+    {
+        ok = FALSE;
+        goto Cleanup;
+    }
 
-	pPorts = &pSwitchInfo->pForwardInfo->persistentPortsInfo;
+    pPorts = &pSwitchInfo->pForwardInfo->persistentPortsInfo;
 
-	PERSPORTS_LOCK_READ(pPorts, &lockState);
-	locked = TRUE;
+    PERSPORTS_LOCK_READ(pPorts, &lockState);
+    locked = TRUE;
 
-	if (pPorts->count >= OVS_MAX_PORTS)
+    if (pPorts->count >= OVS_MAX_PORTS)
     {
         ok = FALSE;
         goto Cleanup;
@@ -782,44 +782,44 @@ OVS_PERSISTENT_PORT* PersPort_FindByName_Ref(const char* ofPortName)
 
     for (ULONG i = 0; i < OVS_MAX_PORTS; ++i)
     {
-		OVS_PERSISTENT_PORT* pCurPort = pPorts->portsArray[i];
+        OVS_PERSISTENT_PORT* pCurPort = pPorts->portsArray[i];
 
-		if (pCurPort)
+        if (pCurPort)
         {
-			LOCK_STATE_EX portLockState = { 0 };
+            LOCK_STATE_EX portLockState = { 0 };
 
-			PORT_LOCK_READ(pCurPort, &portLockState);
+            PORT_LOCK_READ(pCurPort, &portLockState);
 
-			if (0 == strcmp(pCurPort->ovsPortName, ofPortName))
-			{
-				pOutPort = OVS_REFCOUNT_REFERENCE(pCurPort);
+            if (0 == strcmp(pCurPort->ovsPortName, ofPortName))
+            {
+                pOutPort = OVS_REFCOUNT_REFERENCE(pCurPort);
 
-				PORT_UNLOCK(pCurPort, &portLockState);
-				goto Cleanup;
-			}
+                PORT_UNLOCK(pCurPort, &portLockState);
+                goto Cleanup;
+            }
 
-			PORT_UNLOCK(pCurPort, &portLockState);
+            PORT_UNLOCK(pCurPort, &portLockState);
 
             ++countProcessed;
         }
 
-		if (countProcessed >= pPorts->count)
+        if (countProcessed >= pPorts->count)
         {
             break;
         }
     }
 
-	OVS_CHECK(countProcessed == pPorts->count);
+    OVS_CHECK(countProcessed == pPorts->count);
 
 Cleanup:
-	if (locked)
-	{
-		PERSPORTS_UNLOCK(pPorts, &lockState);
-	}
+    if (locked)
+    {
+        PERSPORTS_UNLOCK(pPorts, &lockState);
+    }
 
-	OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
+    OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
 
-	return pOutPort;
+    return pOutPort;
 }
 
 OVS_PERSISTENT_PORT* PersPort_FindById_Ref(NDIS_SWITCH_PORT_ID portId)
@@ -827,26 +827,26 @@ OVS_PERSISTENT_PORT* PersPort_FindById_Ref(NDIS_SWITCH_PORT_ID portId)
     ULONG countProcessed = 0;
     OVS_PERSISTENT_PORTS_INFO* pPorts = NULL;
     BOOLEAN ok = TRUE;
-	OVS_PERSISTENT_PORT* pOutPort = NULL;
-	OVS_SWITCH_INFO* pSwitchInfo = NULL;
-	BOOLEAN locked = FALSE;
-	LOCK_STATE_EX lockState = { 0 };
+    OVS_PERSISTENT_PORT* pOutPort = NULL;
+    OVS_SWITCH_INFO* pSwitchInfo = NULL;
+    BOOLEAN locked = FALSE;
+    LOCK_STATE_EX lockState = { 0 };
 
-	OVS_CHECK(portId != NDIS_SWITCH_DEFAULT_PORT_ID);
+    OVS_CHECK(portId != NDIS_SWITCH_DEFAULT_PORT_ID);
 
-	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
-	if (!pSwitchInfo)
-	{
-		ok = FALSE;
-		goto Cleanup;
-	}
+    pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
+    if (!pSwitchInfo)
+    {
+        ok = FALSE;
+        goto Cleanup;
+    }
 
-	pPorts = &pSwitchInfo->pForwardInfo->persistentPortsInfo;
+    pPorts = &pSwitchInfo->pForwardInfo->persistentPortsInfo;
 
-	PERSPORTS_LOCK_READ(pPorts, &lockState);
-	locked = TRUE;
+    PERSPORTS_LOCK_READ(pPorts, &lockState);
+    locked = TRUE;
 
-	if (pPorts->count >= OVS_MAX_PORTS)
+    if (pPorts->count >= OVS_MAX_PORTS)
     {
         ok = FALSE;
         goto Cleanup;
@@ -854,25 +854,25 @@ OVS_PERSISTENT_PORT* PersPort_FindById_Ref(NDIS_SWITCH_PORT_ID portId)
 
     for (ULONG i = 0; i < OVS_MAX_PORTS; ++i)
     {
-		OVS_PERSISTENT_PORT* pCurPort = pPorts->portsArray[i];
+        OVS_PERSISTENT_PORT* pCurPort = pPorts->portsArray[i];
 
-		if (pCurPort)
+        if (pCurPort)
         {
-			LOCK_STATE_EX portLockState = { 0 };
+            LOCK_STATE_EX portLockState = { 0 };
 
-			PORT_LOCK_READ(pCurPort, &portLockState);
+            PORT_LOCK_READ(pCurPort, &portLockState);
 
-			if (pCurPort->portId == portId)
-			{
-				pOutPort = OVS_REFCOUNT_REFERENCE(pCurPort);
+            if (pCurPort->portId == portId)
+            {
+                pOutPort = OVS_REFCOUNT_REFERENCE(pCurPort);
 
-				PORT_UNLOCK(pCurPort, &portLockState);
-				goto Cleanup;
-			}
+                PORT_UNLOCK(pCurPort, &portLockState);
+                goto Cleanup;
+            }
 
-			PORT_UNLOCK(pCurPort, &portLockState);
+            PORT_UNLOCK(pCurPort, &portLockState);
 
-			++countProcessed;
+            ++countProcessed;
         }
 
         if (countProcessed >= pPorts->count)
@@ -881,77 +881,77 @@ OVS_PERSISTENT_PORT* PersPort_FindById_Ref(NDIS_SWITCH_PORT_ID portId)
         }
     }
 
-	OVS_CHECK(countProcessed == pPorts->count);
+    OVS_CHECK(countProcessed == pPorts->count);
 
 Cleanup:
-	if (locked)
-	{
-		PERSPORTS_UNLOCK(pPorts, &lockState);
-	}
+    if (locked)
+    {
+        PERSPORTS_UNLOCK(pPorts, &lockState);
+    }
 
-	OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
+    OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
 
-	return pOutPort;
+    return pOutPort;
 }
 
 OVS_PERSISTENT_PORT* PersPort_FindById_Unsafe(NDIS_SWITCH_PORT_ID portId)
 {
-	ULONG countProcessed = 0;
-	OVS_PERSISTENT_PORTS_INFO* pPorts = NULL;
-	BOOLEAN ok = TRUE;
-	OVS_PERSISTENT_PORT* pOutPort = NULL;
-	OVS_SWITCH_INFO* pSwitchInfo = NULL;
+    ULONG countProcessed = 0;
+    OVS_PERSISTENT_PORTS_INFO* pPorts = NULL;
+    BOOLEAN ok = TRUE;
+    OVS_PERSISTENT_PORT* pOutPort = NULL;
+    OVS_SWITCH_INFO* pSwitchInfo = NULL;
 
-	OVS_CHECK(portId != NDIS_SWITCH_DEFAULT_PORT_ID);
+    OVS_CHECK(portId != NDIS_SWITCH_DEFAULT_PORT_ID);
 
-	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
-	if (!pSwitchInfo)
-	{
-		ok = FALSE;
-		goto Cleanup;
-	}
+    pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
+    if (!pSwitchInfo)
+    {
+        ok = FALSE;
+        goto Cleanup;
+    }
 
-	pPorts = &pSwitchInfo->pForwardInfo->persistentPortsInfo;
+    pPorts = &pSwitchInfo->pForwardInfo->persistentPortsInfo;
 
-	if (pPorts->count >= OVS_MAX_PORTS)
-	{
-		ok = FALSE;
-		goto Cleanup;
-	}
+    if (pPorts->count >= OVS_MAX_PORTS)
+    {
+        ok = FALSE;
+        goto Cleanup;
+    }
 
-	for (ULONG i = 0; i < OVS_MAX_PORTS; ++i)
-	{
-		OVS_PERSISTENT_PORT* pCurPort = pPorts->portsArray[i];
+    for (ULONG i = 0; i < OVS_MAX_PORTS; ++i)
+    {
+        OVS_PERSISTENT_PORT* pCurPort = pPorts->portsArray[i];
 
-		if (pCurPort)
-		{
-			LOCK_STATE_EX portLockState;
+        if (pCurPort)
+        {
+            LOCK_STATE_EX portLockState;
 
-			//no need to lock for pCurPort, because it never changed in an OVS_PERSISTENT_PORT
-			//also the pCurPort cannot be deleted (assuming pPorts was locked before calling this UNSAFE function)
-			if (pCurPort->portId == portId)
-			{
-				pOutPort = pCurPort;
-				goto Cleanup;
-			}
+            //no need to lock for pCurPort, because it never changed in an OVS_PERSISTENT_PORT
+            //also the pCurPort cannot be deleted (assuming pPorts was locked before calling this UNSAFE function)
+            if (pCurPort->portId == portId)
+            {
+                pOutPort = pCurPort;
+                goto Cleanup;
+            }
 
-			PORT_UNLOCK(pCurPort, &portLockState);
+            PORT_UNLOCK(pCurPort, &portLockState);
 
-			++countProcessed;
-		}
+            ++countProcessed;
+        }
 
         if (countProcessed >= pPorts->count)
         {
             break;
         }
-	}
+    }
 
-	OVS_CHECK(countProcessed == pPorts->count);
+    OVS_CHECK(countProcessed == pPorts->count);
 
 Cleanup:
-	OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
+    OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
 
-	return pOutPort;
+    return pOutPort;
 }
 
 OVS_PERSISTENT_PORT* PersPort_FindByNumber_Ref(UINT16 portNumber)
@@ -960,24 +960,24 @@ OVS_PERSISTENT_PORT* PersPort_FindByNumber_Ref(UINT16 portNumber)
     OVS_PERSISTENT_PORTS_INFO* pPorts = NULL;
     BOOLEAN ok = TRUE;
     OVS_PERSISTENT_PORT* pOutPort = NULL;
-	OVS_SWITCH_INFO* pSwitchInfo = NULL;
-	BOOLEAN locked = FALSE;
-	LOCK_STATE_EX lockState = { 0 };
+    OVS_SWITCH_INFO* pSwitchInfo = NULL;
+    BOOLEAN locked = FALSE;
+    LOCK_STATE_EX lockState = { 0 };
 
-	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
-	if (!pSwitchInfo)
-	{
-		goto Cleanup;
-	}
+    pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
+    if (!pSwitchInfo)
+    {
+        goto Cleanup;
+    }
 
-	OVS_CHECK(pSwitchInfo->pForwardInfo);
+    OVS_CHECK(pSwitchInfo->pForwardInfo);
 
-	pPorts = &pSwitchInfo->pForwardInfo->persistentPortsInfo;
+    pPorts = &pSwitchInfo->pForwardInfo->persistentPortsInfo;
 
-	PERSPORTS_LOCK_READ(pPorts, &lockState);
-	locked = TRUE;
+    PERSPORTS_LOCK_READ(pPorts, &lockState);
+    locked = TRUE;
 
-	if (pPorts->count >= OVS_MAX_PORTS)
+    if (pPorts->count >= OVS_MAX_PORTS)
     {
         ok = FALSE;
         goto Cleanup;
@@ -985,37 +985,37 @@ OVS_PERSISTENT_PORT* PersPort_FindByNumber_Ref(UINT16 portNumber)
 
     for (ULONG i = 0; i < OVS_MAX_PORTS; ++i)
     {
-		OVS_PERSISTENT_PORT* pCurPort = pPorts->portsArray[i];
+        OVS_PERSISTENT_PORT* pCurPort = pPorts->portsArray[i];
 
-		if (pCurPort)
+        if (pCurPort)
         {
-			//the ovs port number is never modified, so we don't need another lock for it
-			if (pCurPort->ovsPortNumber == portNumber)
+            //the ovs port number is never modified, so we don't need another lock for it
+            if (pCurPort->ovsPortNumber == portNumber)
             {
-				pOutPort = OVS_REFCOUNT_REFERENCE(pCurPort);
+                pOutPort = OVS_REFCOUNT_REFERENCE(pCurPort);
                 goto Cleanup;
             }
 
             ++countProcessed;
         }
 
-		if (countProcessed >= pPorts->count)
+        if (countProcessed >= pPorts->count)
         {
             break;
         }
     }
 
-	OVS_CHECK(countProcessed == pPorts->count);
+    OVS_CHECK(countProcessed == pPorts->count);
 
 Cleanup:
-	if (locked)
-	{
-		PERSPORTS_UNLOCK(pPorts, &lockState);
-	}
+    if (locked)
+    {
+        PERSPORTS_UNLOCK(pPorts, &lockState);
+    }
 
-	OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
+    OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
 
-	return pOutPort;
+    return pOutPort;
 }
 
 //TODO: if it comes here unreferenced, then it means it might have been deleted, I think
@@ -1023,21 +1023,21 @@ BOOLEAN PersPort_Delete(OVS_PERSISTENT_PORT* pPort)
 {
     OVS_PERSISTENT_PORTS_INFO* pPorts = NULL;
     BOOLEAN ok = TRUE;
-	OVS_SWITCH_INFO* pSwitchInfo = NULL;
-	BOOLEAN portsLocked = FALSE;
-	LOCK_STATE_EX lockState = { 0 };
+    OVS_SWITCH_INFO* pSwitchInfo = NULL;
+    BOOLEAN portsLocked = FALSE;
+    LOCK_STATE_EX lockState = { 0 };
 
-	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
-	if (!pSwitchInfo)
-	{
-		ok = FALSE;
-		goto Cleanup;
-	}
+    pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
+    if (!pSwitchInfo)
+    {
+        ok = FALSE;
+        goto Cleanup;
+    }
 
-	OVS_CHECK(pSwitchInfo->pForwardInfo);
+    OVS_CHECK(pSwitchInfo->pForwardInfo);
 
-	PERSPORTS_LOCK_WRITE(pPorts, &lockState);
-	portsLocked = TRUE;
+    PERSPORTS_LOCK_WRITE(pPorts, &lockState);
+    portsLocked = TRUE;
 
     if (pPort->ofPortType == OVS_OFPORT_TYPE_GRE)
     {
@@ -1064,16 +1064,16 @@ BOOLEAN PersPort_Delete(OVS_PERSISTENT_PORT* pPort)
     OVS_CHECK(pPorts->count > 0);
     --(pPorts->count);
 
-	OVS_REFCOUNT_DEREFERENCE_ONLY(pPort);
-	OVS_REFCOUNT_DESTROY(pPort);
+    OVS_REFCOUNT_DEREFERENCE_ONLY(pPort);
+    OVS_REFCOUNT_DESTROY(pPort);
 
 Cleanup:
-	if (portsLocked)
-	{
-		PERSPORTS_UNLOCK(pPorts, &lockState);
-	}
+    if (portsLocked)
+    {
+        PERSPORTS_UNLOCK(pPorts, &lockState);
+    }
 
-	OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
+    OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
 
     return ok;
 }
@@ -1082,75 +1082,75 @@ OVS_PERSISTENT_PORT* PersPort_GetInternal_Ref()
 {
     OVS_PERSISTENT_PORTS_INFO* pPorts = NULL;
     OVS_PERSISTENT_PORT* pInternalPort = NULL;
-	OVS_SWITCH_INFO* pSwitchInfo = NULL;
-	BOOLEAN locked = FALSE;
-	LOCK_STATE_EX lockState = { 0 };
+    OVS_SWITCH_INFO* pSwitchInfo = NULL;
+    BOOLEAN locked = FALSE;
+    LOCK_STATE_EX lockState = { 0 };
 
-	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
-	if (!pSwitchInfo)
-	{
-		goto Cleanup;
-	}
-
-	pPorts = &pSwitchInfo->pForwardInfo->persistentPortsInfo;
-
-	PERSPORTS_LOCK_READ(pPorts, &lockState);
-	locked = TRUE;
-
-	if (pPorts->count >= OVS_MAX_PORTS)
+    pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
+    if (!pSwitchInfo)
     {
-		goto Cleanup;
+        goto Cleanup;
     }
 
-	if (pPorts->count == 0)
+    pPorts = &pSwitchInfo->pForwardInfo->persistentPortsInfo;
+
+    PERSPORTS_LOCK_READ(pPorts, &lockState);
+    locked = TRUE;
+
+    if (pPorts->count >= OVS_MAX_PORTS)
     {
-		goto Cleanup;
+        goto Cleanup;
     }
 
-	pInternalPort = OVS_REFCOUNT_REFERENCE(pPorts->portsArray[0]);
+    if (pPorts->count == 0)
+    {
+        goto Cleanup;
+    }
+
+    pInternalPort = OVS_REFCOUNT_REFERENCE(pPorts->portsArray[0]);
     if (pInternalPort)
     {
-		LOCK_STATE_EX portLockState = { 0 };
+        LOCK_STATE_EX portLockState = { 0 };
 
-		PORT_LOCK_READ(pInternalPort, &portLockState);
+        PORT_LOCK_READ(pInternalPort, &portLockState);
 
-		OVS_CHECK(pInternalPort->ovsPortNumber == OVS_LOCAL_PORT_NUMBER);
+        OVS_CHECK(pInternalPort->ovsPortNumber == OVS_LOCAL_PORT_NUMBER);
 
-		PORT_UNLOCK(pInternalPort, &portLockState);
+        PORT_UNLOCK(pInternalPort, &portLockState);
     }
 
 Cleanup:
-	if (locked)
-	{
-		PERSPORTS_UNLOCK(pPorts, &lockState);
-	}
+    if (locked)
+    {
+        PERSPORTS_UNLOCK(pPorts, &lockState);
+    }
 
-	OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
+    OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
 
     return pInternalPort;
 }
 
 VOID PersPort_DestroyNow_Unsafe(OVS_PERSISTENT_PORT* pPort)
 {
-	KFree(pPort->ovsPortName);
+    KFree(pPort->ovsPortName);
 
-	/* previously, we 'unset' the nic and port: the hyper-v switch ports & nics were set to have pPort = NULL
-	** Now we use numbers instead. Anyway, there's no need to do unset now, because:
-	** o) the only reason we keep the mapping between ovs port numbers and hyper-v switch port ids is because we need to find a port id, given an ovs port number (or ovs port name)
-	** o) we need to be able to find a persistent port, when knowing a port id, only when setting a hyper-v switch port name.
-	** o) any packet is sent out using an ovs port number (persistent port)
-	** o) it never happens for a port (hyper-v switch port or ovs port) to be created with the same number as one that had been deleted.
-	*/
+    /* previously, we 'unset' the nic and port: the hyper-v switch ports & nics were set to have pPort = NULL
+    ** Now we use numbers instead. Anyway, there's no need to do unset now, because:
+    ** o) the only reason we keep the mapping between ovs port numbers and hyper-v switch port ids is because we need to find a port id, given an ovs port number (or ovs port name)
+    ** o) we need to be able to find a persistent port, when knowing a port id, only when setting a hyper-v switch port name.
+    ** o) any packet is sent out using an ovs port number (persistent port)
+    ** o) it never happens for a port (hyper-v switch port or ovs port) to be created with the same number as one that had been deleted.
+    */
 
-	if (pPort->pOptions)
-	{
-		KFree(pPort->pOptions);
-	}
+    if (pPort->pOptions)
+    {
+        KFree(pPort->pOptions);
+    }
 
-	if (pPort->pRwLock)
-	{
-		NdisFreeRWLock(pPort->pRwLock);
-	}
+    if (pPort->pRwLock)
+    {
+        NdisFreeRWLock(pPort->pRwLock);
+    }
 
-	KFree(pPort);
+    KFree(pPort);
 }

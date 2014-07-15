@@ -16,7 +16,7 @@ limitations under the License.
 
 #pragma once
 
-#define OVS_NIC_ENTRY_NAME_SIZE		IF_MAX_STRING_SIZE
+#define OVS_NIC_ENTRY_NAME_SIZE        IF_MAX_STRING_SIZE
 
 #include "Switch.h"
 #include "Ethernet.h"
@@ -24,21 +24,21 @@ limitations under the License.
 /* STRUCTS AND FUNCTIONS FOR HANDLING HYPER-V SWITCH NICS */
 
 typedef struct _OVS_NIC_INFO {
-    BYTE					mac[OVS_ETHERNET_ADDRESS_LENGTH];
+    BYTE                    mac[OVS_ETHERNET_ADDRESS_LENGTH];
     NDIS_SWITCH_PORT_ID     portId;
     NDIS_SWITCH_NIC_INDEX   nicIndex;
-    ULONG	                mtu;
+    ULONG                   mtu;
     BOOLEAN                 nicConnected;
 
 #ifdef DBG
-    CHAR					nicName[OVS_NIC_ENTRY_NAME_SIZE + 1];
-    CHAR					vmName[OVS_NIC_ENTRY_NAME_SIZE + 1];
+    CHAR                    nicName[OVS_NIC_ENTRY_NAME_SIZE + 1];
+    CHAR                    vmName[OVS_NIC_ENTRY_NAME_SIZE + 1];
 #endif
 }OVS_NIC_INFO, *POVS_NIC_INFO;
 
 typedef struct _OVS_NIC_LIST_ENTRY
 {
-	OVS_REF_COUNT						refCount;
+    OVS_REF_COUNT                       refCount;
 
     LIST_ENTRY                          listEntry;
     UINT8                               macAddress[OVS_ETHERNET_ADDRESS_LENGTH];
@@ -47,15 +47,15 @@ typedef struct _OVS_NIC_LIST_ENTRY
     NDIS_SWITCH_NIC_TYPE                nicType;
 
     BOOLEAN                             connected;
-    ULONG								mtu;
+    ULONG                               mtu;
 
-    //OVS_OFPORT_STATS					portStats;
+    //OVS_OFPORT_STATS                  portStats;
 
-	//OVS_INVALID_PORT_NUMBER (0xFFFF) if we don't have one
-	UINT16								ovsPortNumber;
+    //OVS_INVALID_PORT_NUMBER (0xFFFF) if we don't have one
+    UINT16                              ovsPortNumber;
 #ifdef DBG
-    CHAR								vmName[OVS_NIC_ENTRY_NAME_SIZE + 1];
-    CHAR								adapName[OVS_NIC_ENTRY_NAME_SIZE + 1];
+    CHAR                                vmName[OVS_NIC_ENTRY_NAME_SIZE + 1];
+    CHAR                                adapName[OVS_NIC_ENTRY_NAME_SIZE + 1];
 #endif
 } OVS_NIC_LIST_ENTRY, *POVS_NIC_LIST_ENTRY;
 

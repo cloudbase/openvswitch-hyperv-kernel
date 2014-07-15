@@ -35,7 +35,7 @@ typedef struct _WINL_DEVICE_EXTENSION
     ULONG deviceState;
 }WINL_DEVICE_EXTENSION, *PWINL_DEVICE_EXTENSION;
 
-#define WINL_OVS_DEVICE_TYPE	0xB360
+#define WINL_OVS_DEVICE_TYPE    0xB360
 
 static PDEVICE_OBJECT g_pOvsDeviceObject;
 
@@ -229,7 +229,7 @@ NTSTATUS _WinlIrpRead(PDEVICE_OBJECT pDeviceObject, PIRP pIrp)
     ULONG userReadBufferLen = 0, bytesRead = 0;
     LOCK_STATE_EX lockState = { 0 };
     FILE_OBJECT* pFileObject = NULL;
-	VOID* pReadBuffer = NULL;
+    VOID* pReadBuffer = NULL;
 #if DBG
     BOOLEAN dbgPrintData = FALSE;
 #endif
@@ -253,20 +253,20 @@ NTSTATUS _WinlIrpRead(PDEVICE_OBJECT pDeviceObject, PIRP pIrp)
 
     BufferCtl_LockWrite(&lockState);
 
-	//when using direct io, sys buffer is NULL for read and for write
-	OVS_CHECK(pDeviceObject->Flags & DO_DIRECT_IO);
-	OVS_CHECK(pIrp->AssociatedIrp.SystemBuffer == NULL);
+    //when using direct io, sys buffer is NULL for read and for write
+    OVS_CHECK(pDeviceObject->Flags & DO_DIRECT_IO);
+    OVS_CHECK(pIrp->AssociatedIrp.SystemBuffer == NULL);
 
-	pReadBuffer = MmGetSystemAddressForMdlSafe(pIrp->MdlAddress, NormalPagePriority | MdlMappingNoExecute);
-	if (pReadBuffer)
-	{
-		status = BufferCtl_Read_Unsafe(pFileObject, pReadBuffer, userReadBufferLen, &bytesRead);
-	}
-	else
-	{
-		status = STATUS_INSUFFICIENT_RESOURCES;
-		DEBUGP(LOG_ERROR, __FUNCTION__ " MmGetSystemAddressForMdlSafe failed: read buffer is NULL!\n");
-	}
+    pReadBuffer = MmGetSystemAddressForMdlSafe(pIrp->MdlAddress, NormalPagePriority | MdlMappingNoExecute);
+    if (pReadBuffer)
+    {
+        status = BufferCtl_Read_Unsafe(pFileObject, pReadBuffer, userReadBufferLen, &bytesRead);
+    }
+    else
+    {
+        status = STATUS_INSUFFICIENT_RESOURCES;
+        DEBUGP(LOG_ERROR, __FUNCTION__ " MmGetSystemAddressForMdlSafe failed: read buffer is NULL!\n");
+    }
 
     BufferCtl_Unlock(&lockState);
 
@@ -447,8 +447,8 @@ NTSTATUS _WinlIrpWrite(PDEVICE_OBJECT pDeviceObject, PIRP pIrp)
     UINT groupId = OVS_MULTICAST_GROUP_NONE;
     OVS_NLMSGHDR* pNlMsg = NULL;
     OVS_MESSAGE* pMsg = NULL;
-	VOID* pWriteBuffer = NULL;
-	OVS_SWITCH_INFO* pSwitchInfo = NULL;
+    VOID* pWriteBuffer = NULL;
+    OVS_SWITCH_INFO* pSwitchInfo = NULL;
 #if DBG
     BOOLEAN dbgPrintData = FALSE;
 #endif
@@ -464,7 +464,7 @@ NTSTATUS _WinlIrpWrite(PDEVICE_OBJECT pDeviceObject, PIRP pIrp)
         goto Cleanup;
     }
 
-	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
+    pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
     if (!pSwitchInfo)
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " hyper-v extension not enabled!n");
@@ -473,17 +473,17 @@ NTSTATUS _WinlIrpWrite(PDEVICE_OBJECT pDeviceObject, PIRP pIrp)
     }
 
     //when using direct io, sys buffer is NULL for read and for write
-	OVS_CHECK(pDeviceObject->Flags & DO_DIRECT_IO);
-	OVS_CHECK(pIrp->AssociatedIrp.SystemBuffer == NULL);
+    OVS_CHECK(pDeviceObject->Flags & DO_DIRECT_IO);
+    OVS_CHECK(pIrp->AssociatedIrp.SystemBuffer == NULL);
 
-	pWriteBuffer = MmGetSystemAddressForMdlSafe(pIrp->MdlAddress, NormalPagePriority | MdlMappingNoExecute);
-	if (!pWriteBuffer)
-	{
-		status = STATUS_INSUFFICIENT_RESOURCES;
-		DEBUGP(LOG_ERROR, __FUNCTION__ " MmGetSystemAddressForMdlSafe failed: read buffer is NULL!\n");
+    pWriteBuffer = MmGetSystemAddressForMdlSafe(pIrp->MdlAddress, NormalPagePriority | MdlMappingNoExecute);
+    if (!pWriteBuffer)
+    {
+        status = STATUS_INSUFFICIENT_RESOURCES;
+        DEBUGP(LOG_ERROR, __FUNCTION__ " MmGetSystemAddressForMdlSafe failed: read buffer is NULL!\n");
 
-		goto Cleanup;
-	}
+        goto Cleanup;
+    }
 
     //messages from here are always OVS_MESSAGE, not done, not error
     if (!ParseReceivedMessage(pWriteBuffer, (UINT16)length, &pNlMsg))
@@ -699,7 +699,7 @@ NTSTATUS _WinlIrpWrite(PDEVICE_OBJECT pDeviceObject, PIRP pIrp)
     }
 
 Cleanup:
-	OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
+    OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
 
     if (pNlMsg)
     {
@@ -722,7 +722,7 @@ Cleanup:
     }
 
     pIrp->IoStatus.Status = status;
-	pIrp->IoStatus.Information = (status == STATUS_SUCCESS ? length : 0);
+    pIrp->IoStatus.Information = (status == STATUS_SUCCESS ? length : 0);
 
     IoCompleteRequest(pIrp, IO_NO_INCREMENT);
 

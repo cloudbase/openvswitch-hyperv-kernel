@@ -64,49 +64,49 @@ typedef enum _OVS_NBL_FAIL_REASON {
     OVS_NBL_FAIL_CLONING_FAILED
 }OVS_NBL_FAIL_REASON, *POVS_NBL_FAIL_REASON;
 
-#define __OVS_NBL_FAIL_SUCCESS_MESSAGE						"Success"
-#define __OVS_NBL_FAIL_LENGTH_MESSAGE						"Invalid NBL length for NIC"
-#define __OVS_NBL_FAIL_RESOURCES_MESSAGE					"Insufficient resources"
-#define __OVS_NBL_FAIL_UNKNOWN_MESSAGE						"Unknown reason"
-#define __OVS_NBL_FAIL_SEND_ABORTED_MESSAGE					"Send aborted by miniport"
-#define __OVS_NBL_FAIL_RESET_IN_PROGRESS_MESSAGE			"Reset in progress"
-#define __OVS_NBL_FAIL_PAUSED_MESSAGE						"Driver/Extension is paused"
-#define __OVS_NBL_FAIL_SOURCE_NIC_DENY_SENDS_MESSAGE		"Source NIC does not allow sends"
-#define __OVS_NBL_FAIL_SOURCE_NIC_NOT_FOUND					"Source NIC was not found."
-#define __OVS_NBL_FAIL_CANNOT_GROW_DEST_MESSAGE				"Failed to grow destination list"
-#define __OVS_NBL_FAIL_NO_EXTERNAL_PORT_MESSAGE				"Have no external port / nic"
-#define __OVS_NBL_FAIL_DESTINATION_IS_SOURCE_MESSAGE		"Destination port = Source port"
-#define __OVS_NBL_FAIL_DESTINATION_NOT_CONNECTED_MESSAGE	"Destination NIC is not connected"
-#define __OVS_NBL_FAIL_CLONING_FAILED_MESSAGE				"could not clone NBL."
-#define __OVS_NBL_FAIL_INVALID_MESSAGE						"<invalid msg>"
+#define __OVS_NBL_FAIL_SUCCESS_MESSAGE                        "Success"
+#define __OVS_NBL_FAIL_LENGTH_MESSAGE                         "Invalid NBL length for NIC"
+#define __OVS_NBL_FAIL_RESOURCES_MESSAGE                      "Insufficient resources"
+#define __OVS_NBL_FAIL_UNKNOWN_MESSAGE                        "Unknown reason"
+#define __OVS_NBL_FAIL_SEND_ABORTED_MESSAGE                   "Send aborted by miniport"
+#define __OVS_NBL_FAIL_RESET_IN_PROGRESS_MESSAGE              "Reset in progress"
+#define __OVS_NBL_FAIL_PAUSED_MESSAGE                         "Driver/Extension is paused"
+#define __OVS_NBL_FAIL_SOURCE_NIC_DENY_SENDS_MESSAGE          "Source NIC does not allow sends"
+#define __OVS_NBL_FAIL_SOURCE_NIC_NOT_FOUND                   "Source NIC was not found."
+#define __OVS_NBL_FAIL_CANNOT_GROW_DEST_MESSAGE               "Failed to grow destination list"
+#define __OVS_NBL_FAIL_NO_EXTERNAL_PORT_MESSAGE               "Have no external port / nic"
+#define __OVS_NBL_FAIL_DESTINATION_IS_SOURCE_MESSAGE          "Destination port = Source port"
+#define __OVS_NBL_FAIL_DESTINATION_NOT_CONNECTED_MESSAGE      "Destination NIC is not connected"
+#define __OVS_NBL_FAIL_CLONING_FAILED_MESSAGE                 "could not clone NBL."
+#define __OVS_NBL_FAIL_INVALID_MESSAGE                        "<invalid msg>"
 
 #define __OVS_TO_UNICODE(x) L##x
 #define OVS_TO_UNICODE(x) __OVS_TO_UNICODE(x)
 #define __OVS_STR_SAME(x) x
 
 #define __FailReasonMessageBody(reason, T) {                                                                \
-	switch (reason)																							\
-	{                                                                                       				\
-	case OVS_NBL_FAIL_SUCCESS: return T(__OVS_NBL_FAIL_SUCCESS_MESSAGE);	                                \
-	case OVS_NBL_FAIL_LENGTH: return T(__OVS_NBL_FAIL_LENGTH_MESSAGE);	                                    \
-	case OVS_NBL_FAIL_RESOURCES: return T(__OVS_NBL_FAIL_RESOURCES_MESSAGE);	                            \
-	case OVS_NBL_FAIL_UNKNOWN: return T(__OVS_NBL_FAIL_UNKNOWN_MESSAGE);		                            \
-	case OVS_NBL_FAIL_SEND_ABORTED: return T(__OVS_NBL_FAIL_SEND_ABORTED_MESSAGE);		                    \
-	case OVS_NBL_FAIL_RESET_IN_PROGRESS: return T(__OVS_NBL_FAIL_RESET_IN_PROGRESS_MESSAGE);		        \
-	case OVS_NBL_FAIL_PAUSED: return T(__OVS_NBL_FAIL_PAUSED_MESSAGE);		                                \
-	case OVS_NBL_FAIL_SOURCE_NIC_DENY_SENDS: return T(__OVS_NBL_FAIL_SOURCE_NIC_DENY_SENDS_MESSAGE);        \
-	case OVS_NBL_FAIL_SOURCE_NIC_NOT_FOUND: return T(__OVS_NBL_FAIL_SOURCE_NIC_NOT_FOUND);                  \
-	case OVS_NBL_FAIL_CANNOT_GROW_DEST: return T(__OVS_NBL_FAIL_CANNOT_GROW_DEST_MESSAGE);		            \
-	case OVS_NBL_FAIL_NO_EXTERNAL_PORT: return T(__OVS_NBL_FAIL_NO_EXTERNAL_PORT_MESSAGE);		            \
-	case OVS_NBL_FAIL_DESTINATION_IS_SOURCE: return T(__OVS_NBL_FAIL_DESTINATION_IS_SOURCE_MESSAGE);        \
-	case OVS_NBL_FAIL_DESTINATION_NOT_CONNECTED: return T(__OVS_NBL_FAIL_DESTINATION_NOT_CONNECTED_MESSAGE);\
-	case OVS_NBL_FAIL_CLONING_FAILED: return T(__OVS_NBL_FAIL_CLONING_FAILED_MESSAGE);                      \
-			                                                                                                \
-	default:                                                                                                \
-		OVS_CHECK(0);                                                                                       \
-		return T(__OVS_NBL_FAIL_INVALID_MESSAGE);                                                           \
-    	}                                                                                                       \
-	}
+    switch (reason)                                                                                         \
+    {                                                                                                       \
+    case OVS_NBL_FAIL_SUCCESS: return T(__OVS_NBL_FAIL_SUCCESS_MESSAGE);                                    \
+    case OVS_NBL_FAIL_LENGTH: return T(__OVS_NBL_FAIL_LENGTH_MESSAGE);                                      \
+    case OVS_NBL_FAIL_RESOURCES: return T(__OVS_NBL_FAIL_RESOURCES_MESSAGE);                                \
+    case OVS_NBL_FAIL_UNKNOWN: return T(__OVS_NBL_FAIL_UNKNOWN_MESSAGE);                                    \
+    case OVS_NBL_FAIL_SEND_ABORTED: return T(__OVS_NBL_FAIL_SEND_ABORTED_MESSAGE);                          \
+    case OVS_NBL_FAIL_RESET_IN_PROGRESS: return T(__OVS_NBL_FAIL_RESET_IN_PROGRESS_MESSAGE);                \
+    case OVS_NBL_FAIL_PAUSED: return T(__OVS_NBL_FAIL_PAUSED_MESSAGE);                                      \
+    case OVS_NBL_FAIL_SOURCE_NIC_DENY_SENDS: return T(__OVS_NBL_FAIL_SOURCE_NIC_DENY_SENDS_MESSAGE);        \
+    case OVS_NBL_FAIL_SOURCE_NIC_NOT_FOUND: return T(__OVS_NBL_FAIL_SOURCE_NIC_NOT_FOUND);                  \
+    case OVS_NBL_FAIL_CANNOT_GROW_DEST: return T(__OVS_NBL_FAIL_CANNOT_GROW_DEST_MESSAGE);                  \
+    case OVS_NBL_FAIL_NO_EXTERNAL_PORT: return T(__OVS_NBL_FAIL_NO_EXTERNAL_PORT_MESSAGE);                  \
+    case OVS_NBL_FAIL_DESTINATION_IS_SOURCE: return T(__OVS_NBL_FAIL_DESTINATION_IS_SOURCE_MESSAGE);        \
+    case OVS_NBL_FAIL_DESTINATION_NOT_CONNECTED: return T(__OVS_NBL_FAIL_DESTINATION_NOT_CONNECTED_MESSAGE);\
+    case OVS_NBL_FAIL_CLONING_FAILED: return T(__OVS_NBL_FAIL_CLONING_FAILED_MESSAGE);                      \
+                                                                                                            \
+    default:                                                                                                \
+        OVS_CHECK(0);                                                                                       \
+        return T(__OVS_NBL_FAIL_INVALID_MESSAGE);                                                           \
+        }                                                                                                   \
+    }
 
 __inline LPCWSTR FailReasonMessageW(OVS_NBL_FAIL_REASON failReason)
 {

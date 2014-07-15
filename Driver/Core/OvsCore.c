@@ -50,7 +50,7 @@ NDIS_STATUS OvsInit(NDIS_HANDLE ndisHandle)
 
 VOID OvsUninit()
 {
-	Driver_RemoveDatapath();
+    Driver_RemoveDatapath();
 
     PersPort_Uninitialize();
 }

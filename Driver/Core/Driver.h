@@ -33,12 +33,12 @@ extern NDIS_STRING g_extensionFriendlyName;
 extern NDIS_STRING g_extensionGuid;
 
 typedef struct _OVS_DRIVER {
-	//the pRwLock will protect against dp removal, but the dp object will need an OVS_REF_COUNT struct
-	NDIS_SPIN_LOCK	lock;
+    //the pRwLock will protect against dp removal, but the dp object will need an OVS_REF_COUNT struct
+    NDIS_SPIN_LOCK        lock;
 
-	//ATM one switch
-	LIST_ENTRY			switchList;
-	LIST_ENTRY			datapathList;
+    //ATM one switch
+    LIST_ENTRY            switchList;
+    LIST_ENTRY            datapathList;
 } OVS_DRIVER, *POVS_DRIVER;
 
 extern OVS_DRIVER g_driver;

@@ -97,12 +97,12 @@ NTSTATUS DriverEntry(PDRIVER_OBJECT pDriverObject, PUNICODE_STRING pRegistryPath
     driverChars.NetPnPEventHandler = FilterNetPnPEvent;
     driverChars.StatusHandler = FilterStatus;
 
-	NdisAllocateSpinLock(&g_driver.lock);
-	NdisAllocateSpinLock(&g_nbPoolLock);
-	g_pRefRwLock = NdisAllocateRWLock(NULL);
+    NdisAllocateSpinLock(&g_driver.lock);
+    NdisAllocateSpinLock(&g_nbPoolLock);
+    g_pRefRwLock = NdisAllocateRWLock(NULL);
 
-	InitializeListHead(&g_driver.switchList);
-	InitializeListHead(&g_driver.datapathList);
+    InitializeListHead(&g_driver.switchList);
+    InitializeListHead(&g_driver.datapathList);
 
     pDriverObject->DriverUnload = DriverUnload;
 
@@ -133,8 +133,8 @@ Cleanup:
             g_driverHandle = NULL;
         }
 
-		NdisFreeRWLock(g_pRefRwLock);
-		NdisFreeSpinLock(&g_driver.lock);
+        NdisFreeRWLock(g_pRefRwLock);
+        NdisFreeSpinLock(&g_driver.lock);
     }
 
     return status;
@@ -155,8 +155,8 @@ VOID DriverUnload(PDRIVER_OBJECT pDriverObject)
 
     NdisFDeregisterFilterDriver(g_driverHandle);
 
-	NdisFreeRWLock(g_pRefRwLock);
-	NdisFreeSpinLock(&g_driver.lock);
+    NdisFreeRWLock(g_pRefRwLock);
+    NdisFreeSpinLock(&g_driver.lock);
     NdisFreeSpinLock(&g_nbPoolLock);
 }
 
@@ -215,15 +215,15 @@ NDIS_STATUS FilterAttach(NDIS_HANDLE ndisFilterHandle, NDIS_HANDLE hDriverContex
     }
 
     switchObjectSize = sizeof(OVS_SWITCH_INFO);
-	pSwitchInfo = KZAlloc(switchObjectSize);
+    pSwitchInfo = KZAlloc(switchObjectSize);
     if (pSwitchInfo == NULL)
     {
         status = NDIS_STATUS_RESOURCES;
         goto Cleanup;
     }
 
-	pSwitchInfo->refCount.Destroy = Switch_DestroyNow_Unsafe;
-	pSwitchInfo->datapathIfIndex = 1;
+    pSwitchInfo->refCount.Destroy = Switch_DestroyNow_Unsafe;
+    pSwitchInfo->datapathIfIndex = 1;
 
     pSwitchInfo->filterHandle = ndisFilterHandle;
     pSwitchInfo->switchContext = switchContext;
@@ -254,15 +254,15 @@ NDIS_STATUS FilterAttach(NDIS_HANDLE ndisFilterHandle, NDIS_HANDLE hDriverContex
     pSwitchInfo->controlFlowState = OVS_SWITCH_ATTACHED;
     pSwitchInfo->dataFlowState = OVS_SWITCH_PAUSED;
 
-	DRIVER_LOCK();
-	InsertHeadList(&g_driver.switchList, &pSwitchInfo->listEntry);
-	DRIVER_UNLOCK();
+    DRIVER_LOCK();
+    InsertHeadList(&g_driver.switchList, &pSwitchInfo->listEntry);
+    DRIVER_UNLOCK();
 
-	status = OvsInit(g_driverHandle);
-	if (status != NDIS_STATUS_SUCCESS)
-	{
-		goto Cleanup;
-	}
+    status = OvsInit(g_driverHandle);
+    if (status != NDIS_STATUS_SUCCESS)
+    {
+        goto Cleanup;
+    }
 
     //the NBL pool handle
     nbl_pool_params.Header.Revision = NET_BUFFER_LIST_POOL_PARAMETERS_REVISION_1;
@@ -343,7 +343,7 @@ VOID FilterDetach(NDIS_HANDLE filterModuleContext)
     NdisFreeNetBufferListPool(g_hNblPool);
     NdisReleaseSpinLock(&g_nbPoolLock);
 
-	Driver_DetachExtension(pSwitchInfo);
+    Driver_DetachExtension(pSwitchInfo);
 
     DEBUGP(LOG_TRACE, "Detach Successfully\n");
     return;
@@ -552,15 +552,15 @@ VOID FilterSendNetBufferLists(NDIS_HANDLE filterModuleContext, PNET_BUFFER_LIST 
     OVS_SWITCH_INFO* pSwitchInfo = (OVS_SWITCH_INFO*)filterModuleContext;
     UNREFERENCED_PARAMETER(portNumber);
 
-	DRIVER_LOCK();
-	pSwitchInfo = OVS_REFCOUNT_REFERENCE(pSwitchInfo);
-	DRIVER_UNLOCK();
+    DRIVER_LOCK();
+    pSwitchInfo = OVS_REFCOUNT_REFERENCE(pSwitchInfo);
+    DRIVER_UNLOCK();
 
-	OVS_CHECK(pSwitchInfo);
+    OVS_CHECK(pSwitchInfo);
 
     Nbls_SendIngress(pSwitchInfo, pSwitchInfo->pForwardInfo, netBufferLists, sendFlags);
 
-	OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
+    OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
 }
 
 _Use_decl_annotations_

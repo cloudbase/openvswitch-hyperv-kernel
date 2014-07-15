@@ -19,9 +19,9 @@ limitations under the License.
 #include "precomp.h"
 #include "OFPort.h"
 
-#define OVS_LOCAL_PORT_NUMBER			((UINT32)0)
-#define OVS_MAX_PORTS					MAXUINT16
-#define OVS_INVALID_PORT_NUMBER			OVS_MAX_PORTS
+#define OVS_LOCAL_PORT_NUMBER            ((UINT32)0)
+#define OVS_MAX_PORTS                    MAXUINT16
+#define OVS_INVALID_PORT_NUMBER          OVS_MAX_PORTS
 
 typedef struct _OVS_NIC_LIST_ENTRY OVS_NIC_LIST_ENTRY;
 typedef struct _OVS_PORT_LIST_ENTRY OVS_PORT_LIST_ENTRY;
@@ -31,29 +31,29 @@ typedef struct _OVS_SWITCH_INFO OVS_SWITCH_INFO;
 
 typedef struct _OVS_PERSISTENT_PORT
 {
-	//must be the first field in the struct
-	OVS_REF_COUNT refCount;
+    //must be the first field in the struct
+    OVS_REF_COUNT refCount;
 
-	NDIS_RW_LOCK_EX* pRwLock;
+    NDIS_RW_LOCK_EX* pRwLock;
 
     //port number assigned by OVS (userspace, or computed in driver)
-    UINT16				ovsPortNumber;
+    UINT16           ovsPortNumber;
 
     //port name assigned by OVS (userspace, or computed in driver)
-    char*			ovsPortName;
+    char*            ovsPortName;
 
     //OpenFlow / ovs port type
-    OVS_OFPORT_TYPE		ofPortType;
-    OVS_OFPORT_STATS	stats;
-    UINT32				upcallPortId;
+    OVS_OFPORT_TYPE  ofPortType;
+    OVS_OFPORT_STATS stats;
+    UINT32           upcallPortId;
 
-    OVS_TUNNELING_PORT_OPTIONS*	pOptions;
+    OVS_TUNNELING_PORT_OPTIONS*    pOptions;
 
-	//NDIS_SWITCH_DEFAULT_PORT_ID (i.e. 0), if not connected
-	NDIS_SWITCH_PORT_ID			portId;
+    //NDIS_SWITCH_DEFAULT_PORT_ID (i.e. 0), if not connected
+    NDIS_SWITCH_PORT_ID            portId;
 
-	//if it's the external port of the switch or not
-	BOOLEAN						isExternal;
+    //if it's the external port of the switch or not
+    BOOLEAN                        isExternal;
 }OVS_PERSISTENT_PORT;
 
 #define PORT_LOCK_READ(pPort, pLockState) NdisAcquireRWLockRead(pPort->pRwLock, pLockState, 0)
@@ -66,7 +66,7 @@ typedef struct _OVS_LOGICAL_PORT_ENTRY {
 }OVS_LOGICAL_PORT_ENTRY;
 
 typedef struct _OVS_PERSISTENT_PORTS_INFO {
-	NDIS_RW_LOCK_EX* pRwLock;
+    NDIS_RW_LOCK_EX* pRwLock;
 
     OVS_PERSISTENT_PORT* portsArray[OVS_MAX_PORTS];
     UINT16 count;

@@ -80,7 +80,7 @@ static BOOLEAN _GetSourceInfo(_In_ const OVS_GLOBAL_FORWARD_INFO* pForwardInfo, 
     pSourceInfo->portId = sourcePort;
 
 Cleanup:
-	FWDINFO_UNLOCK(pForwardInfo, &lockState);
+    FWDINFO_UNLOCK(pForwardInfo, &lockState);
     return ok;
 }
 
@@ -120,7 +120,7 @@ OVS_NBL_FAIL_REASON* pFailReason)
 
     ok = _GetExternalDestinationInfo_Unsafe(pForwardInfo, sourcePort, pCurDestination, pFailReason);
 
-	FWDINFO_UNLOCK(pForwardInfo, &lockState);
+    FWDINFO_UNLOCK(pForwardInfo, &lockState);
 
     return ok;
 }
@@ -164,7 +164,7 @@ OVS_NIC_INFO* pCurDestination, OVS_NBL_FAIL_REASON* pFailReason)
     }
 
 Cleanup:
-	FWDINFO_UNLOCK(pForwardInfo, &lockState);
+    FWDINFO_UNLOCK(pForwardInfo, &lockState);
     return ok;
 }
 
@@ -236,7 +236,7 @@ const OVS_NIC_INFO* pSourceInfo, NET_BUFFER_LIST* pNbl, OVS_NBL_FAIL_REASON* pFa
 
     OVS_CHECK(*pCountAdded <= neededDestinations);
 
-	FWDINFO_UNLOCK(pForwardInfo, &lockState);
+    FWDINFO_UNLOCK(pForwardInfo, &lockState);
 
     return pBroadcastArray;
 }
@@ -304,25 +304,25 @@ static BOOLEAN _FragmentAndEncapsulateIpv4Packet(_In_ OVS_NET_BUFFER* pOvsNb, OV
     NDIS_STATUS status = NDIS_STATUS_SUCCESS;
     PNDIS_SWITCH_FORWARDING_DETAIL_NET_BUFFER_LIST_INFO pFwdDetail = NULL;
     BOOLEAN ok = TRUE;
-	//max ipv4 packet size (i.e. not including eth header), and not including the encapsulation bytes
-	ULONG maxIpPacketSize = 0;
-	//the amount of bytes to reserve, for encapsulation. For gre, it is: eth delivery + ipv4 delivery + gre + eth payload.
-	ULONG dataOffset = 0;
+    //max ipv4 packet size (i.e. not including eth header), and not including the encapsulation bytes
+    ULONG maxIpPacketSize = 0;
+    //the amount of bytes to reserve, for encapsulation. For gre, it is: eth delivery + ipv4 delivery + gre + eth payload.
+    ULONG dataOffset = 0;
 
-	maxIpPacketSize = pEncapsData->mtu - pEncapsData->encapsHeadersSize;
-	dataOffset = pEncapsData->encapsHeadersSize + sizeof(OVS_ETHERNET_HEADER);
+    maxIpPacketSize = pEncapsData->mtu - pEncapsData->encapsHeadersSize;
+    dataOffset = pEncapsData->encapsHeadersSize + sizeof(OVS_ETHERNET_HEADER);
 
-	HandleChecksumOffload(pOvsNb, pEncapsData->isFromExternal, pEncapsData->encapsHeadersSize, pEncapsData->mtu);
-	//TODO: we do not currently support fragmentation of LSO packets
-	//NOTE that TCP packets should normally not be concerned with LSO because Tcp's MSS is being negociated
-	OVS_CHECK(!NblIsLso(pOvsNb->pNbl));
+    HandleChecksumOffload(pOvsNb, pEncapsData->isFromExternal, pEncapsData->encapsHeadersSize, pEncapsData->mtu);
+    //TODO: we do not currently support fragmentation of LSO packets
+    //NOTE that TCP packets should normally not be concerned with LSO because Tcp's MSS is being negociated
+    OVS_CHECK(!NblIsLso(pOvsNb->pNbl));
 
-	//This function will fragment the ipv4 packet, having dataOffset bytes as unused bytes in the beginning of the packet.
-	pFragmentedNbl = ONB_FragmentBuffer_Ipv4(pOvsNb, maxIpPacketSize, pEncapsData->pPayloadEthHeader, dataOffset);
-	if (!pFragmentedNbl)
-	{
-		return FALSE;
-	}
+    //This function will fragment the ipv4 packet, having dataOffset bytes as unused bytes in the beginning of the packet.
+    pFragmentedNbl = ONB_FragmentBuffer_Ipv4(pOvsNb, maxIpPacketSize, pEncapsData->pPayloadEthHeader, dataOffset);
+    if (!pFragmentedNbl)
+    {
+        return FALSE;
+    }
 
     status = pOvsNb->pSwitchInfo->switchHandlers.CopyNetBufferListInfo(pOvsNb->pSwitchInfo->switchContext, pFragmentedNbl, pOvsNb->pNbl, 0);
     if (status != NDIS_STATUS_SUCCESS)
@@ -362,20 +362,20 @@ static BOOLEAN _OutputPacketToPort_Encaps(OVS_NET_BUFFER* pOvsNb)
     OF_PI_IPV4_TUNNEL tunnelInfo = { 0 };
     LOCK_STATE_EX lockState = { 0 };
     OVS_GLOBAL_FORWARD_INFO* pForwardInfo = pOvsNb->pSwitchInfo->pForwardInfo;
-	BOOLEAN haveExternal = FALSE;
+    BOOLEAN haveExternal = FALSE;
 
-	FWDINFO_LOCK_READ(pForwardInfo, &lockState);
+    FWDINFO_LOCK_READ(pForwardInfo, &lockState);
 
     if (pForwardInfo->pExternalNic)
     {
         NicListEntry_To_NicInfo(pForwardInfo->pExternalNic, &externalNicInfo);
-		haveExternal = TRUE;
+        haveExternal = TRUE;
     }
 
-	FWDINFO_UNLOCK(pForwardInfo, &lockState);
+    FWDINFO_UNLOCK(pForwardInfo, &lockState);
 
-	if (!haveExternal)
-	{
+    if (!haveExternal)
+    {
         DEBUGP(LOG_ERROR, __FUNCTION__ " cannot out to prot encap because we have no port external!\n");
         return FALSE;
     }
@@ -383,7 +383,7 @@ static BOOLEAN _OutputPacketToPort_Encaps(OVS_NET_BUFFER* pOvsNb)
     DEBUGP(LOG_LOUD, "Sending unicast to: nic index: %d; port id: %d; adap name: \"%s\"; vm name: \"%s\"\n",
         externalNicInfo.nicIndex, externalNicInfo.portId, externalNicInfo.nicName, externalNicInfo.vmName);
 
-	PORT_LOCK_READ(pOvsNb->pDestinationPort, &lockState);
+    PORT_LOCK_READ(pOvsNb->pDestinationPort, &lockState);
 
     if (pOvsNb->pDestinationPort->pOptions)
     {
@@ -401,7 +401,7 @@ static BOOLEAN _OutputPacketToPort_Encaps(OVS_NET_BUFFER* pOvsNb)
         pOvsNb->pTunnelInfo = &tunnelInfo;
     }
 
-	PORT_UNLOCK(pOvsNb->pDestinationPort, &lockState);
+    PORT_UNLOCK(pOvsNb->pDestinationPort, &lockState);
 
     OVS_CHECK(pOvsNb->pTunnelInfo);
 
@@ -487,14 +487,14 @@ static BOOLEAN _OutputPacketToPort_Encaps(OVS_NET_BUFFER* pOvsNb)
     encapData.isFromExternal = (pOvsNb->pSourceNic->portId == externalNicInfo.portId);
     encapData.encapsHeadersSize = encapsulator.BytesNeeded(pOvsNb->pTunnelInfo->tunnelFlags);
 
-	//TODO: should we use the DF of the packet to see if we should fragment or not,
-	//or use the tunnel info's flag DON'T FRAGMENT?
+    //TODO: should we use the DF of the packet to see if we should fragment or not,
+    //or use the tunnel info's flag DON'T FRAGMENT?
 
     //try to encapsulate. if it fails, and the cause is encaps_size + payload size > mtu:
-    //		if ipv4:
-    //			if DF is set: originate icmp4 "packet too big and DF is set"
-    //			if DF is not set: fragment the buffer, and encapsulate each buffer
-    //		if ipv6: originate icmp6 "Packet Too Big"
+    //        if ipv4:
+    //            if DF is set: originate icmp4 "packet too big and DF is set"
+    //            if DF is not set: fragment the buffer, and encapsulate each buffer
+    //        if ipv6: originate icmp6 "Packet Too Big"
     if (nbLen + encapData.encapsHeadersSize <= encapData.mtu)
     {
         ok = Encaps_EncapsulateOnb(&encapsulator, &encapData);
@@ -511,7 +511,7 @@ static BOOLEAN _OutputPacketToPort_Encaps(OVS_NET_BUFFER* pOvsNb)
 
             if (RtlUshortByteSwap(pOriginalEthHeader->type) == OVS_ETHERTYPE_IPV6)
             {
-				ONB_OriginateIcmp6Packet_Type2Code0(pOvsNb, newMtu, pOvsNb->pSourceNic);
+                ONB_OriginateIcmp6Packet_Type2Code0(pOvsNb, newMtu, pOvsNb->pSourceNic);
 
                 DEBUGP(LOG_ERROR, "encapsulation failed. originated icmp error. now returning FALSE\n");
                 return FALSE;
@@ -522,7 +522,7 @@ static BOOLEAN _OutputPacketToPort_Encaps(OVS_NET_BUFFER* pOvsNb)
 
                 if (pIpv4Header->DontFragment)
                 {
-					ONB_OriginateIcmpPacket_Ipv4_Type3Code4(pOvsNb, newMtu, pOvsNb->pSourceNic);
+                    ONB_OriginateIcmpPacket_Ipv4_Type3Code4(pOvsNb, newMtu, pOvsNb->pSourceNic);
 
                     DEBUGP(LOG_ERROR, "encapsulation failed. originated icmp error. now returning FALSE\n");
                     return FALSE;
@@ -607,15 +607,15 @@ static BOOLEAN _OutputPacketToPort_Physical(OVS_NET_BUFFER* pOvsNb)
 
     FWDINFO_LOCK_READ(pForwardInfo, &lockState);
 
-	//we don't need to lock pDestinationPort, because its field, portId, never changed
-	pNicEntry = Sctx_FindNicByPortId_Unsafe(pForwardInfo, pOvsNb->pDestinationPort->portId);
+    //we don't need to lock pDestinationPort, because its field, portId, never changed
+    pNicEntry = Sctx_FindNicByPortId_Unsafe(pForwardInfo, pOvsNb->pDestinationPort->portId);
 
     if (pNicEntry)
     {
         OVS_NIC_INFO nicInfo = { 0 };
         OVS_NBL_FAIL_REASON failReason = OVS_NBL_FAIL_SUCCESS;
 
-		//TODO: stats lock
+        //TODO: stats lock
         pOvsNb->pDestinationPort->stats.packetsSent++;
         pOvsNb->pDestinationPort->stats.bytesSent += bytesSent;
 
@@ -668,7 +668,7 @@ BOOLEAN OutputPacketToPort(OVS_NET_BUFFER* pOvsNb)
         {
             _ComputePacketsAndBytesSent(pOvsNb->pNbl, &bytesSent, &packetsSent);
 
-			//TODO: lock for stats
+            //TODO: lock for stats
             pPortStats->packetsSent += packetsSent;
             pPortStats->bytesSent += bytesSent;
         }
@@ -689,7 +689,7 @@ BOOLEAN OutputPacketToPort(OVS_NET_BUFFER* pOvsNb)
         {
             _ComputePacketsAndBytesSent(pOvsNb->pNbl, &bytesSent, &packetsSent);
 
-			//TODO: lock for stats
+            //TODO: lock for stats
             pPortStats->packetsSent += packetsSent;
             pPortStats->bytesSent += bytesSent;
         }
@@ -712,10 +712,10 @@ BOOLEAN OutputPacketToPort(OVS_NET_BUFFER* pOvsNb)
     }
 
 Cleanup:
-	if (pDatapath)
-	{
-		OVS_REFCOUNT_DEREFERENCE(pDatapath);
-	}
+    if (pDatapath)
+    {
+        OVS_REFCOUNT_DEREFERENCE(pDatapath);
+    }
 
     if (ok)
     {
@@ -725,7 +725,7 @@ Cleanup:
     return ok;
 }
 
-/*	extract packet info / packet info from ONB
+/*    extract packet info / packet info from ONB
     find if the packet info matches any registered flow
     if no match is found:
     call QueuePacketToUserspace() - the userspace will decide what to do with it
@@ -748,13 +748,13 @@ static BOOLEAN _ProcessPacket(OVS_NET_BUFFER* pOvsNb, _In_ const OVS_PERSISTENT_
     LOCK_STATE_EX lockState = { 0 };
     VOID* pNbBuffer = NULL;
     UINT16 ovsInPortNumber = OVS_INVALID_PORT_NUMBER;
-	OVS_FLOW_TABLE* pFlowTable = NULL;
+    OVS_FLOW_TABLE* pFlowTable = NULL;
 
     pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
-	if (!pDatapath)
-	{
-		return FALSE;
-	}
+    if (!pDatapath)
+    {
+        return FALSE;
+    }
 
     //note: no need to set pOvsNb->pTunnelInfo because:
     //a) it's being reset to 0 at exec actions;
@@ -773,14 +773,14 @@ static BOOLEAN _ProcessPacket(OVS_NET_BUFFER* pOvsNb, _In_ const OVS_PERSISTENT_
     if (!PacketInfo_Extract(pNbBuffer, nbLen, ovsInPortNumber, &packetInfo))
     {
         sent = FALSE;
-		goto Cleanup;
+        goto Cleanup;
     }
 
     //we do this after PacketInfo_Extract, because PacketInfo_Extract updates the ARP table
     if (!pSourcePort)
     {
         sent = FALSE;
-		goto Cleanup;
+        goto Cleanup;
     }
 
     nbLen = ONB_GetDataLength(pOvsNb);
@@ -790,8 +790,8 @@ static BOOLEAN _ProcessPacket(OVS_NET_BUFFER* pOvsNb, _In_ const OVS_PERSISTENT_
         packetInfo.tunnelInfo = *pTunnelInfo;
     }
 
-	//the pFlowTable will not be deleted by a different thread until we call deref.
-	pFlowTable = Datapath_ReferenceFlowTable(pDatapath);
+    //the pFlowTable will not be deleted by a different thread until we call deref.
+    pFlowTable = Datapath_ReferenceFlowTable(pDatapath);
     pFlow = FlowTable_FindFlowMatchingMaskedPI_Ref(pDatapath->pFlowTable, &packetInfo);
 
     pOvsNb->pOriginalPacketInfo = &packetInfo;
@@ -815,15 +815,15 @@ static BOOLEAN _ProcessPacket(OVS_NET_BUFFER* pOvsNb, _In_ const OVS_PERSISTENT_
         goto Cleanup;
     }
 
-	//else -- if pFlow
+    //else -- if pFlow
 
-	FLOW_LOCK_READ(pFlow, &lockState);
+    FLOW_LOCK_READ(pFlow, &lockState);
 
-	pOvsNb->pActions = OVS_REFCOUNT_REFERENCE(pFlow->pActions);
+    pOvsNb->pActions = OVS_REFCOUNT_REFERENCE(pFlow->pActions);
 
-	Flow_UpdateTimeUsed_Unsafe(pFlow, pOvsNb);
+    Flow_UpdateTimeUsed_Unsafe(pFlow, pOvsNb);
 
-	FLOW_UNLOCK(pFlow, &lockState);
+    FLOW_UNLOCK(pFlow, &lockState);
 
     if (dbgPrintPacket)
     {
@@ -841,30 +841,30 @@ Cleanup:
     {
         ++pDatapath->statistics.flowTableMatches;
 
-		//we don't use the pActions anymore
-		//the actions are not modified, once set in a flow, so there's no need to lock the pFlow to dereference pActions
-		OVS_REFCOUNT_DEREFERENCE(pOvsNb->pActions);
-		pOvsNb->pActions = NULL;
+        //we don't use the pActions anymore
+        //the actions are not modified, once set in a flow, so there's no need to lock the pFlow to dereference pActions
+        OVS_REFCOUNT_DEREFERENCE(pOvsNb->pActions);
+        pOvsNb->pActions = NULL;
 
-		OVS_REFCOUNT_DEREFERENCE(pFlow);
+        OVS_REFCOUNT_DEREFERENCE(pFlow);
     }
     else
     {
         ++pDatapath->statistics.flowTableMissed;
     }
 
-	//we don't use the pFlowTable anymore.
-	OVS_REFCOUNT_DEREFERENCE(pFlowTable);
+    //we don't use the pFlowTable anymore.
+    OVS_REFCOUNT_DEREFERENCE(pFlowTable);
 
     DATAPATH_UNLOCK(pDatapath, &lockState);
 
-	OVS_REFCOUNT_DEREFERENCE(pDatapath);
+    OVS_REFCOUNT_DEREFERENCE(pDatapath);
 
     return sent;
 }
 
 static BOOLEAN _DecapsulateIfNeeded_Ref(_In_ const BYTE managOsMac[OVS_ETHERNET_ADDRESS_LENGTH],
-	OVS_NET_BUFFER* pOvsNb, _Out_ OF_PI_IPV4_TUNNEL* pTunnelInfo, BOOLEAN* pWasEncapsulated, _Out_ OVS_PERSISTENT_PORT** ppPersPort)
+    OVS_NET_BUFFER* pOvsNb, _Out_ OF_PI_IPV4_TUNNEL* pTunnelInfo, BOOLEAN* pWasEncapsulated, _Out_ OVS_PERSISTENT_PORT** ppPersPort)
 {
     BOOLEAN ok = TRUE;
     const OVS_DECAPSULATOR* pDecapsulator = NULL;
@@ -928,28 +928,28 @@ static BOOLEAN _DecapsulateIfNeeded_Ref(_In_ const BYTE managOsMac[OVS_ETHERNET_
 
         pEthHeader = (OVS_ETHERNET_HEADER*)ONB_GetDataOfSize(pOvsNb, sizeof(OVS_ETHERNET_HEADER));
 
-		if (pInternalPort && pInternalPort->portId != NDIS_SWITCH_DEFAULT_PORT_ID)
+        if (pInternalPort && pInternalPort->portId != NDIS_SWITCH_DEFAULT_PORT_ID)
         {
             //if the src eth addr = external nic (the internal nic has the same eth addr) => we say the src port is internal, so the destination may be external port
             //otherwise, we say the src is external, and the destination may be the internal port
-			if (!memcmp(pEthHeader->source_addr, managOsMac, OVS_ETHERNET_ADDRESS_LENGTH))
+            if (!memcmp(pEthHeader->source_addr, managOsMac, OVS_ETHERNET_ADDRESS_LENGTH))
             {
                 ++pInternalPort->stats.packetsReceived;
                 pInternalPort->stats.bytesReceived += ONB_GetDataLength(pOvsNb);
 
                 *ppPersPort = pInternalPort;
-				OVS_REFCOUNT_DEREFERENCE(pExternalPort);
+                OVS_REFCOUNT_DEREFERENCE(pExternalPort);
             }
             else
             {
                 *ppPersPort = pExternalPort;
-				OVS_REFCOUNT_DEREFERENCE(pInternalPort);
+                OVS_REFCOUNT_DEREFERENCE(pInternalPort);
             }
         }
         else
         {
             *ppPersPort = pExternalPort;
-			OVS_REFCOUNT_DEREFERENCE(pInternalPort);
+            OVS_REFCOUNT_DEREFERENCE(pInternalPort);
         }
     }
 
@@ -980,7 +980,7 @@ static VOID _ProcessAllNblsIngress(_In_ OVS_SWITCH_INFO* pSwitchInfo, _In_ OVS_G
     NET_BUFFER* pNb = NULL;
     BOOLEAN isFromExternal = FALSE;
     BOOLEAN isFromInternal = FALSE;
-	BYTE managOsMac[OVS_ETHERNET_ADDRESS_LENGTH] = { 0 };
+    BYTE managOsMac[OVS_ETHERNET_ADDRESS_LENGTH] = { 0 };
 
     UNREFERENCED_PARAMETER(sendFlags);
 
@@ -998,7 +998,7 @@ static VOID _ProcessAllNblsIngress(_In_ OVS_SWITCH_INFO* pSwitchInfo, _In_ OVS_G
     //TODO:we could check the nblFlags of each nbl.
     for (pNbl = nbls; pNbl != NULL; pNbl = NET_BUFFER_LIST_NEXT_NBL(pNbl))
     {
-		LOCK_STATE_EX lockState = { 0 };
+        LOCK_STATE_EX lockState = { 0 };
         mustTransfer = TRUE;
 
         DEBUGP(LOG_LOUD, "current nbl: %p\n", pNbl);
@@ -1020,7 +1020,7 @@ static VOID _ProcessAllNblsIngress(_In_ OVS_SWITCH_INFO* pSwitchInfo, _In_ OVS_G
             pSourceInfo->nicIndex, pSourceInfo->portId,
             pSourceInfo->nicName, pSourceInfo->vmName);
 
-		FWDINFO_LOCK_READ(pForwardInfo, &lockState);
+        FWDINFO_LOCK_READ(pForwardInfo, &lockState);
         if (pForwardInfo->pExternalNic && pSourceInfo->portId == pForwardInfo->pExternalNic->portId)
         {
             /*If the source port is connected to the external network adapter, the non-extensible switch OOB data will be in a receive format.
@@ -1031,18 +1031,18 @@ static VOID _ProcessAllNblsIngress(_In_ OVS_SWITCH_INFO* pSwitchInfo, _In_ OVS_G
         {
             isFromExternal = FALSE;
 
-			if (pForwardInfo->pInternalNic)
-			{
-				RtlCopyMemory(managOsMac, pForwardInfo->pInternalNic->macAddress, OVS_ETHERNET_ADDRESS_LENGTH);
+            if (pForwardInfo->pInternalNic)
+            {
+                RtlCopyMemory(managOsMac, pForwardInfo->pInternalNic->macAddress, OVS_ETHERNET_ADDRESS_LENGTH);
 
-				if (pSourceInfo->portId == pForwardInfo->pInternalNic->portId)
-				{
-					isFromInternal = TRUE;
-				}
-			}
+                if (pSourceInfo->portId == pForwardInfo->pInternalNic->portId)
+                {
+                    isFromInternal = TRUE;
+                }
+            }
         }
 
-		FWDINFO_UNLOCK(pForwardInfo, &lockState);
+        FWDINFO_UNLOCK(pForwardInfo, &lockState);
 
         OVS_CHECK(mustTransfer);
 
@@ -1062,10 +1062,10 @@ static VOID _ProcessAllNblsIngress(_In_ OVS_SWITCH_INFO* pSwitchInfo, _In_ OVS_G
             if (isFromExternal)
             {
                 //if has gre / vxlan => decapsulates
-				BOOLEAN ok = _DecapsulateIfNeeded_Ref(managOsMac, pOvsNb, &tunnelInfo, &wasEncapsulated, &pPersPort);
+                BOOLEAN ok = _DecapsulateIfNeeded_Ref(managOsMac, pOvsNb, &tunnelInfo, &wasEncapsulated, &pPersPort);
                 if (!ok)
                 {
-					OVS_REFCOUNT_DEREFERENCE(pPersPort);
+                    OVS_REFCOUNT_DEREFERENCE(pPersPort);
 
                     ONB_Destroy(pSwitchInfo, &pOvsNb);
                     continue;
@@ -1078,7 +1078,7 @@ static VOID _ProcessAllNblsIngress(_In_ OVS_SWITCH_INFO* pSwitchInfo, _In_ OVS_G
             }
             else
             {
-				pPersPort = PersPort_FindById_Ref(pSourceInfo->portId);
+                pPersPort = PersPort_FindById_Ref(pSourceInfo->portId);
             }
 
             pOvsNb->pSwitchInfo = pSwitchInfo;
@@ -1101,11 +1101,11 @@ static VOID _ProcessAllNblsIngress(_In_ OVS_SWITCH_INFO* pSwitchInfo, _In_ OVS_G
                 ExFreePoolWithTag(pOvsNb, g_extAllocationTag);
             }
 
-			OVS_REFCOUNT_DEREFERENCE(pPersPort);
+            OVS_REFCOUNT_DEREFERENCE(pPersPort);
         }
     }
 
-	Nbls_DropAllIngress(pSwitchInfo, nbls, completeFlags, OVS_NBL_FAIL_SUCCESS);
+    Nbls_DropAllIngress(pSwitchInfo, nbls, completeFlags, OVS_NBL_FAIL_SUCCESS);
 }
 
 //drops the packets if the switch is not running (or, switch extension?)
@@ -1120,7 +1120,7 @@ VOID Nbls_SendIngress(OVS_SWITCH_INFO* pSwitchInfo, NDIS_HANDLE extensionContext
     OVS_NBL_FAIL_REASON failReason = OVS_NBL_FAIL_SUCCESS;
     OVS_NIC_INFO* pSourceInfo = NULL;
 
-	OVS_CHECK(pSwitchInfo);
+    OVS_CHECK(pSwitchInfo);
 
     //FIRST THINGS FIRST: if pSwitchInfo is not running, drop all
     if (pSwitchInfo->dataFlowState != OVS_SWITCH_RUNNING)
