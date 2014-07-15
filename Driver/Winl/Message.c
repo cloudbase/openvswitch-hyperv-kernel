@@ -308,7 +308,6 @@ Cleanup:
     {
         *ppNlMessage = pNlMessage;
     }
-
     else
     {
         KFree(pNlMessage);
@@ -340,7 +339,6 @@ static VOID _DestroyAttribute(OVS_ATTRIBUTE* pAttribute)
         {
             FreeArgument(pAttrArray);
         }
-
         else
         {
             OVS_CHECK(dataLen == 0);
@@ -410,7 +408,6 @@ static OVS_ARGUMENT* _ArgumentsToAttributes(ULONG target, ULONG cmd, OVS_ARGTYPE
                 break;
             }
         }
-
         else
         {
             //NOTE: arg data is not copied, the pointer is copied!
@@ -517,7 +514,6 @@ BOOLEAN WriteMsgsToBuffer(_In_ OVS_NLMSGHDR* pMsgs, int countMsgs, OVS_BUFFER* p
         {
             OVS_CHECK(pNlMsg->length == sizeof(OVS_MESSAGE_ERROR));
         }
-
         else
         {
             OVS_MESSAGE* pMsg = (OVS_MESSAGE*)pNlMsg;
@@ -543,13 +539,11 @@ BOOLEAN WriteMsgsToBuffer(_In_ OVS_NLMSGHDR* pMsgs, int countMsgs, OVS_BUFFER* p
             groupSize = 0;
             bufSize = sizeof(OVS_MESSAGE_DONE);
         }
-
         else if (pNlMsg->type == OVS_MESSAGE_TARGET_ERROR)
         {
             groupSize = 0;
             bufSize = sizeof(OVS_MESSAGE_ERROR);
         }
-
         else
         {
             OVS_MESSAGE* pMsg = (OVS_MESSAGE*)pNlMsg;
@@ -828,7 +822,6 @@ static BOOLEAN _VerifyFlowMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_
 				}
                 break;
             }
-
             else
             {
                 DEBUGP_ARG(LOG_ERROR, "Flow cmd DUMP should not have main argtype: 0x%x", argType);
@@ -1119,7 +1112,6 @@ static BOOLEAN _VerifyDatapathMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ 
             DEBUGP_ARG(LOG_ERROR, "Datapath request GET should have max 1 args. Found count: 0x%x", pMsg->pArgGroup->count);
             return FALSE;
         }
-
         else if (pMsg->pArgGroup->count == 1)
         {
             OVS_ARGUMENT* pArg = pMsg->pArgGroup->args;

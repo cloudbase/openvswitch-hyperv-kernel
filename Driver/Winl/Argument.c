@@ -806,7 +806,6 @@ VOID DestroyArgumentData(_In_ OVS_ARGUMENT* pArg)
             DestroyArgumentGroup(pGroup);
         }
     }
-
     else
     {
         //free arg data
@@ -1094,7 +1093,6 @@ Cleanup:
     {
         FreeArgList(ppHeadArg);
     }
-
     else
     {
         //also destroys pArgs and its children
@@ -1160,7 +1158,6 @@ BOOLEAN CopyArgument(_Out_ OVS_ARGUMENT* pDest, _In_ const OVS_ARGUMENT* pSource
             }
         }
     }
-
     else
     {
         RtlCopyMemory(pDest->data, pSource->data, pDest->length);
@@ -1574,7 +1571,6 @@ VOID DbgPrintArgType(OVS_ARGTYPE argType, const char* padding, int index)
         default: OVS_CHECK(0);
         }
     }
-
     else
     {
         OVS_ARGTYPE groupType = GetParentGroupType(argType);
@@ -1927,7 +1923,6 @@ static __inline BOOLEAN _VerifyArg_PacketInfo_DpInputPort(OVS_ARGUMENT* pArg, BO
             DEBUGP_ARG(LOG_ERROR, "the in port id is too big. max is: 0x%x; given is: 0x%x\n", OVS_MAX_PORTS, inPort);
         }
     }
-
     else if (isRequest)
     {
         DEBUGP_ARG(LOG_INFO, "the mask shouldn't be set for dp in port: it is always set as exact match (~0)\n");
@@ -2145,7 +2140,6 @@ static __inline BOOLEAN _VerifyArg_PacketInfo_Ipv4(OVS_ARGUMENT* pArg, BOOLEAN i
             return FALSE;
         }
     }
-
     else if (isRequest)
     {
         OVS_PI_IPV4 wildcard = { OVS_PI_MASK_MATCH_WILDCARD(UINT) };
@@ -2237,7 +2231,6 @@ static __inline BOOLEAN _VerifyArg_PacketInfo_Ipv6(OVS_ARGUMENT* pArg, BOOLEAN i
             return FALSE;
         }
     }
-
     else if (isRequest)
     {
         OVS_PI_IPV6 wildcard = { OVS_PI_MASK_MATCH_WILDCARD(UINT) };
@@ -2271,7 +2264,6 @@ static __inline BOOLEAN _VerifyArg_PacketInfo_NeighborDiscovery(OVS_ARGUMENT* pA
             return FALSE;
 		}
     }
-
     else if (isRequest)
     {
         OVS_PI_NEIGHBOR_DISCOVERY wildcard = { OVS_PI_MASK_MATCH_WILDCARD(UINT) };
@@ -2336,7 +2328,6 @@ static __inline BOOLEAN _VerifyArg_PacketInfo_Sctp(OVS_ARGUMENT* pArg, BOOLEAN i
                 return FALSE;
         }
     }
-
     else if (isRequest)
     {
         OVS_PI_SCTP wildcard = { OVS_PI_MASK_MATCH_WILDCARD(UINT) };
@@ -2365,7 +2356,6 @@ static __inline BOOLEAN _VerifyArg_PacketInfo_Tcp(OVS_ARGUMENT* pArg, BOOLEAN is
                 return FALSE;
         }
     }
-
     else if (isRequest)
     {
         OVS_PI_TCP wildcard = { OVS_PI_MASK_MATCH_WILDCARD(UINT) };

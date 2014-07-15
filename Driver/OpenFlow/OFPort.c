@@ -174,7 +174,6 @@ Cleanup:
 
         return TRUE;
     }
-
     else
     {
         if (pArgPortNumber)

@@ -51,7 +51,6 @@ BOOLEAN NblIsLso(_In_ NET_BUFFER_LIST* pNbl)
         {
             return TRUE;
         }
-
         else
         {
             //TODO: if there is no LSO, should NET_BUFFER_LIST_INFO return a NULL ptr or set some invalid value?
@@ -682,7 +681,6 @@ BOOLEAN ONB_OriginateIcmpPacket_Ipv4_Type3Code4(OVS_NET_BUFFER* pOvsNb, ULONG mt
 
         ExFreePoolWithTag(pIcmpPacket, g_extAllocationTag);
     }
-
     else
     {
         ONB_Destroy(pOvsNb->pSwitchInfo, &pIcmpPacket);
@@ -790,7 +788,6 @@ BOOLEAN ONB_OriginateIcmp6Packet_Type2Code0(OVS_NET_BUFFER* pOvsNb, ULONG mtu, _
 
         ExFreePoolWithTag(pIcmp6Packet, g_extAllocationTag);
     }
-
     else
     {
         ONB_Destroy(pSwitchInfo, &pIcmp6Packet);
@@ -1151,7 +1148,6 @@ Cleanup:
 
         ExFreePoolWithTag(pArpPacket, g_extAllocationTag);
     }
-
     else
     {
         ONB_Destroy(pSwitchInfo, &pArpPacket);

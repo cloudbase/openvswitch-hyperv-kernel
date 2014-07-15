@@ -326,7 +326,6 @@ OVS_ERROR Datapath_Dump(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
         ExFreePoolWithTag(msgs, g_extAllocationTag);
     }
-
     else
     {
         replyMsg.type = OVS_MESSAGE_TARGET_DUMP_DONE;

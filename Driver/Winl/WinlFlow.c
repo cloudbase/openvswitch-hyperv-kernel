@@ -98,7 +98,6 @@ OVS_ERROR Flow_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
             goto Cleanup;
         }
     }
-
     else
     {
 		DEBUGP(LOG_ERROR, "flow create fail: have no actions arg!\n");
@@ -163,7 +162,6 @@ OVS_ERROR Flow_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 		DBGPRINT_FLOW(LOG_LOUD, "flow created: ", pFlow);
         FlowTable_InsertFlow_Unsafe(pFlowTable, pFlow);
     }
-
     else
     {
         OVS_ACTIONS* pOldActions = NULL;
@@ -353,7 +351,6 @@ OVS_ERROR Flow_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         error = OVS_ERROR_NOENT;
         goto Cleanup;
     }
-
     else
     {
         OVS_ACTIONS* pOldActions = NULL;
@@ -484,7 +481,6 @@ OVS_ERROR Flow_Get(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
             pFlow = NULL;
         }
-
 		else
 		{
 			FLOW_UNLOCK(pFlow, &lockState);
@@ -560,7 +556,6 @@ OVS_ERROR Flow_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 			goto Cleanup;
         }
     }
-
     else
     {
 		if (!Datapath_FlushFlows(pDatapath))
@@ -599,7 +594,6 @@ OVS_ERROR Flow_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
             pFlow = NULL;
         }
-
 		else
 		{
 			FLOW_UNLOCK(pFlow, &lockState);

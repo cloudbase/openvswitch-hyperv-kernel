@@ -224,7 +224,6 @@ const OVS_NIC_INFO* pSourceInfo, NET_BUFFER_LIST* pNbl, OVS_NBL_FAIL_REASON* pFa
             return NULL;
         }
     }
-
     else
     {
         pSwitchInfo->switchHandlers.GetNetBufferListDestinations(pSwitchInfo->switchContext, pNbl, &pBroadcastArray);
@@ -452,7 +451,6 @@ static BOOLEAN _OutputPacketToPort_Encaps(OVS_NET_BUFFER* pOvsNb)
 
         encapData.encapProtocol = OVS_IPPROTO_GRE;
     }
-
     else if (pOvsNb->pDestinationPort->ofPortType == OVS_OFPORT_TYPE_VXLAN)
     {
         OVS_TUNNELING_PORT_OPTIONS* pPortOptions = pOvsNb->pDestinationPort->pOptions;
@@ -476,7 +474,6 @@ static BOOLEAN _OutputPacketToPort_Encaps(OVS_NET_BUFFER* pOvsNb)
             pPortOptions->optionsFlags |= OVS_TUNNEL_OPTIONS_HAVE_UDP_DST_PORT;
         }
     }
-
     else
     {
         DEBUGP(LOG_ERROR, "unknown encap port type: %d", pOvsNb->pDestinationPort->ofPortType);
@@ -502,7 +499,6 @@ static BOOLEAN _OutputPacketToPort_Encaps(OVS_NET_BUFFER* pOvsNb)
     {
         ok = Encaps_EncapsulateOnb(&encapsulator, &encapData);
     }
-
     else
     {
         if (nbLen + encapData.encapsHeadersSize > encapData.mtu)
@@ -520,7 +516,6 @@ static BOOLEAN _OutputPacketToPort_Encaps(OVS_NET_BUFFER* pOvsNb)
                 DEBUGP(LOG_ERROR, "encapsulation failed. originated icmp error. now returning FALSE\n");
                 return FALSE;
             }
-
             else if (RtlUshortByteSwap(pOriginalEthHeader->type) == OVS_ETHERTYPE_IPV4)
             {
                 OVS_IPV4_HEADER* pIpv4Header = AdvanceEthernetHeader(pOriginalEthHeader, sizeof(OVS_ETHERNET_HEADER));
@@ -535,14 +530,12 @@ static BOOLEAN _OutputPacketToPort_Encaps(OVS_NET_BUFFER* pOvsNb)
 
                 ok = _FragmentAndEncapsulateIpv4Packet(pOvsNb, &encapsulator, &encapData);
             }
-
             else
             {
                 DEBUGP(LOG_ERROR, "encapsulation failed. returning FALSE\n");
                 return FALSE;
             }
         }
-
         else
         {
             DEBUGP(LOG_ERROR, "encapsulation failed. returning FALSE\n");
@@ -577,7 +570,6 @@ static BOOLEAN _OutputPacketToPort_Normal(OVS_NET_BUFFER* pOvsNb)
         For other ports, this OOB data will be in a send format.*/
         isSrcExternal = FALSE;
     }
-
     else
     {
         isSrcExternal = TRUE;
@@ -594,7 +586,6 @@ static BOOLEAN _OutputPacketToPort_Normal(OVS_NET_BUFFER* pOvsNb)
 
         ok = ProcessPacket_Normal_SendMulticast(pOvsNb);
     }
-
     else
     {
         ok = ProcessPacket_Normal_SendUnicast(pOvsNb, pEthHeader->destination_addr);
@@ -635,7 +626,6 @@ static BOOLEAN _OutputPacketToPort_Physical(OVS_NET_BUFFER* pOvsNb)
             DEBUGP(LOG_ERROR, "set one destination failed. returning FALSE. Fail Reason:%s\n", FailReasonMessageA(failReason));
         }
     }
-
     else
     {
         DEBUGP(LOG_LOUD, "ovs port %s does not have a nic associated!\n", pOvsNb->pDestinationPort->ovsPortName);
@@ -682,7 +672,6 @@ BOOLEAN OutputPacketToPort(OVS_NET_BUFFER* pOvsNb)
             pPortStats->packetsSent += packetsSent;
             pPortStats->bytesSent += bytesSent;
         }
-
         else
         {
             ++pPortStats->errorsOnSend;
@@ -704,7 +693,6 @@ BOOLEAN OutputPacketToPort(OVS_NET_BUFFER* pOvsNb)
             pPortStats->packetsSent += packetsSent;
             pPortStats->bytesSent += bytesSent;
         }
-
         else
         {
             ++pPortStats->errorsOnSend;
@@ -860,7 +848,6 @@ Cleanup:
 
 		OVS_REFCOUNT_DEREFERENCE(pFlow);
     }
-
     else
     {
         ++pDatapath->statistics.flowTableMissed;
@@ -911,7 +898,6 @@ static BOOLEAN _DecapsulateIfNeeded_Ref(_In_ const BYTE managOsMac[OVS_ETHERNET_
 
         *ppPersPort = pGrePort;
     }
-
     else if (Encap_GetDecapsulator_Vxlan() == pDecapsulator)
     {
         OVS_PERSISTENT_PORT* pVxlanPort = NULL;
@@ -929,7 +915,6 @@ static BOOLEAN _DecapsulateIfNeeded_Ref(_In_ const BYTE managOsMac[OVS_ETHERNET_
 
         *ppPersPort = pVxlanPort;
     }
-
     else
     {
         OVS_PERSISTENT_PORT* pInternalPort = NULL;
@@ -955,14 +940,12 @@ static BOOLEAN _DecapsulateIfNeeded_Ref(_In_ const BYTE managOsMac[OVS_ETHERNET_
                 *ppPersPort = pInternalPort;
 				OVS_REFCOUNT_DEREFERENCE(pExternalPort);
             }
-
             else
             {
                 *ppPersPort = pExternalPort;
 				OVS_REFCOUNT_DEREFERENCE(pInternalPort);
             }
         }
-
         else
         {
             *ppPersPort = pExternalPort;
@@ -1044,7 +1027,6 @@ static VOID _ProcessAllNblsIngress(_In_ OVS_SWITCH_INFO* pSwitchInfo, _In_ OVS_G
             For other ports, this OOB data will be in a send format.*/
             isFromExternal = TRUE;
         }
-
         else
         {
             isFromExternal = FALSE;
@@ -1094,7 +1076,6 @@ static VOID _ProcessAllNblsIngress(_In_ OVS_SWITCH_INFO* pSwitchInfo, _In_ OVS_G
                     pTunnelInfo = &tunnelInfo;
                 }
             }
-
             else
             {
 				pPersPort = PersPort_FindById_Ref(pSourceInfo->portId);
@@ -1113,7 +1094,6 @@ static VOID _ProcessAllNblsIngress(_In_ OVS_SWITCH_INFO* pSwitchInfo, _In_ OVS_G
 
                 ONB_Destroy(pSwitchInfo, &pOvsNb);
             }
-
             else
             {
                 OVS_CHECK(pOvsNb->pNbl != pNbl);

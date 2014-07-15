@@ -209,7 +209,6 @@ VOID Packet_Execute(_In_ OVS_ARGUMENT_GROUP* pArgGroup, const FILE_OBJECT* pFile
 	{
 		ok = ExecuteActions(pOvsNb, OutputPacketToPort);
 	}
-
 	else
     {
 		ok = FALSE;
@@ -235,7 +234,6 @@ Cleanup:
         //NOTE: the NET_BUFFER_LIST and NET_BUFFER and MDL are destroyed on NDIS callback
         KFree(pOvsNb);
     }
-
     else
     {
 		if (pSwitchInfo)
@@ -389,7 +387,6 @@ Out:
             FreeArgument(pPacketInfoArg);
         }
     }
-
     else
     {
         if (pNbArg)

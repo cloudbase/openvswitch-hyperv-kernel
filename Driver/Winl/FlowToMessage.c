@@ -549,7 +549,6 @@ Cleanup:
     {
         FreeArgList(&pArgHead);
     }
-
     else
     {
         if (pTunnelArg)
@@ -789,7 +788,6 @@ Cleanup:
     {
         FreeArgList(&pArgHead);
     }
-
     else
     {
         if (pActionsArg)
@@ -993,7 +991,6 @@ static BOOLEAN _CreateEthernetArgsInList(const OVS_OFPACKET_INFO* pPacketInfo, c
         {
             ethType = RtlUshortByteSwap(OVS_ETHERTYPE_QTAG);
         }
-
         else
         {
             ethType = OVS_PI_MASK_MATCH_EXACT(UINT16);
@@ -1054,21 +1051,18 @@ static BOOLEAN _CreateInPortArgInList(const OVS_OFPACKET_INFO* pPacketInfo, cons
             {
                 inputPortValue = OVS_PI_MASK_MATCH_EXACT(UINT32);
             }
-
             else
             {
                 OVS_CHECK(__UNEXPECTED__);
                 return TRUE;
             }
         }
-
         else
         {
             OVS_CHECK(__UNEXPECTED__);
             return TRUE;
         }
     }
-
     else
     {
         UINT16 highBits = 0;

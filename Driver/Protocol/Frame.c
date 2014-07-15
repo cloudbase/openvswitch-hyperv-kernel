@@ -55,12 +55,10 @@ VOID DbgPrintNbFrames(NET_BUFFER* pNb, const char* msg)
 
         ReadIpv4ProtocolFrame(pIpv4Header);
     }
-
     else if (pEthHeader->type == RtlUshortByteSwap(OVS_ETHERTYPE_IPV6))
     {
         DEBUGP_FRAMES(LOG_INFO, "ipv6\n");
     }
-
     else if (pEthHeader->type == RtlUshortByteSwap(OVS_ETHERTYPE_ARP))
     {
         OVS_ARP_HEADER* pArpHeader = NULL;

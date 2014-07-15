@@ -62,7 +62,6 @@ static void _Ipv4_SetAddress(VOID* buffer, OVS_IPV4_HEADER* pIpv4Header, BE32* p
         csumRecomp = RtlUshortByteSwap(csumRecomp);
         pTcpHeader->checksum = csumRecomp;
     }
-
     else if (pIpv4Header->Protocol == IPPROTO_UDP)
     {
         OVS_UDP_HEADER* pUdpHeader = GetUdpHeader(buffer);

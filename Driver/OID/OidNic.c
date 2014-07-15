@@ -177,14 +177,12 @@ VOID Nic_Disconnect(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH_NIC
             pNicEntry = pForwardInfo->pExternalNic;
         }
     }
-
     else if (pNic->NicType == NdisSwitchNicTypeInternal)
     {
         OVS_CHECK(pForwardInfo->pInternalNic);
 
         pNicEntry = pForwardInfo->pInternalNic;
     }
-
     else
     {
         pNicEntry = Sctx_FindNicByPortIdAndNicIndex_Unsafe(pForwardInfo, pNic->PortId, pNic->NicIndex);
@@ -225,7 +223,6 @@ VOID Nic_Delete(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH_NIC_PAR
             pForwardInfo->pExternalNic = NULL;
         }
     }
-
     else if (pNic->NicType == NdisSwitchNicTypeInternal)
     {
         OVS_CHECK(pForwardInfo->pInternalNic);

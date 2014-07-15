@@ -724,7 +724,6 @@ void DbgPrintAllFlows()
             pCurItem = pCurItem->Flink;
         }
     }
-
     else
     {
         DEBUGP(LOG_INFO, "flow table empty!\n");

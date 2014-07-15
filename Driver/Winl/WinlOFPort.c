@@ -232,7 +232,6 @@ OVS_ERROR OFPort_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
             goto Cleanup;
         }
     }
-
     else
     {
         OVS_CHECK(ofPortName);
@@ -298,7 +297,6 @@ Cleanup:
 			//NOTE: must be referenced when called for delete
 			PersPort_Delete(pPersPort);
 		}
-
 		else
 		{
 			OVS_REFCOUNT_DEREFERENCE(pPersPort);
@@ -343,7 +341,6 @@ OVS_ERROR OFPort_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         ofPortName = pArg->data;
         pPersPort = PersPort_FindByName_Ref(ofPortName);
     }
-
     else
     {
         pArg = FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_OFPORT_NUMBER);
@@ -360,7 +357,6 @@ OVS_ERROR OFPort_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
             pPersPort = PersPort_FindByNumber_Ref((UINT16)portNumber);
         }
-
         else
         {
             error = OVS_ERROR_INVAL;
@@ -479,7 +475,6 @@ OVS_ERROR OFPort_Get(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         ofPortName = pArg->data;
         pPersPort = PersPort_FindByName_Ref(ofPortName);
     }
-
     else
     {
         pArg = FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_OFPORT_NUMBER);
@@ -496,7 +491,6 @@ OVS_ERROR OFPort_Get(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
             pPersPort = PersPort_FindByNumber_Ref((UINT16)portNumber);
         }
-
         else
         {
             error = OVS_ERROR_INVAL;
@@ -576,7 +570,6 @@ OVS_ERROR OFPort_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         ofPortName = pArg->data;
         pPersPort = PersPort_FindByName_Ref(ofPortName);
     }
-
     else
     {
         pArg = FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_OFPORT_NUMBER);
@@ -593,7 +586,6 @@ OVS_ERROR OFPort_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
             pPersPort = PersPort_FindByNumber_Ref((UINT16)portNumber);
         }
-
         else
         {
             error = OVS_ERROR_INVAL;
@@ -723,7 +715,6 @@ OVS_ERROR OFPort_Dump(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
         error = WriteMsgsToDevice((OVS_NLMSGHDR*)msgs, countMsgs, pFileObject, OVS_VPORT_MCGROUP);
     }
-
     else
     {
         OVS_MESSAGE msgDone = { 0 };

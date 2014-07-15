@@ -124,7 +124,6 @@ VOID Arp_InsertTableEntry(_In_ const BYTE ip[4], _In_ const BYTE mac[OVS_ETHERNE
 
         InsertHeadList(&g_arpTable, &pArpEntry->listEntry);
     }
-
     else
     {
         RtlCopyMemory(pMacAddr, mac, OVS_ETHERNET_ADDRESS_LENGTH);

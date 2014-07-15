@@ -173,7 +173,6 @@ VOID Port_Teardown(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH_PORT
                 pPortEntry = pForwardInfo->pExternalPort;
             }
         }
-
         else if (pPort->PortType == NdisSwitchPortTypeInternal)
         {
             OVS_CHECK(pForwardInfo->pInternalPort);
@@ -181,7 +180,6 @@ VOID Port_Teardown(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH_PORT
 
             pPortEntry = pForwardInfo->pInternalPort;
         }
-
         else
         {
             pPortEntry = Sctx_FindPortById_Unsafe(pForwardInfo, pPort->PortId);
@@ -228,7 +226,6 @@ Port_Delete(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH_PORT_PARAME
                 pForwardInfo->pExternalPort = NULL;
             }
         }
-
         else if (pPort->PortType == NdisSwitchPortTypeInternal)
         {
             OVS_CHECK(pForwardInfo->pInternalNic);

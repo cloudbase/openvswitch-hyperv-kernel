@@ -136,7 +136,6 @@ static BOOLEAN _VerifyMasks(_In_ const OVS_FLOW_MATCH* pFlowMatch, _In_ const OV
             OVS_CHECK(__UNEXPECTED__);
             return FALSE;
         }
-
         else if (!isWildcard && !pPacketInfoArg)
         {
             DEBUGP(LOG_ERROR, __FUNCTION__ " arg type %u -- mask for eth type is 'exact', but we don't have the key!\n", OVS_ARGTYPE_PI_ARP);
@@ -163,7 +162,6 @@ static BOOLEAN _VerifyMasks(_In_ const OVS_FLOW_MATCH* pFlowMatch, _In_ const OV
             OVS_CHECK(__UNEXPECTED__);
             return FALSE;
         }
-
         else if (!isWildcard && !pPacketInfoArg)
         {
             DEBUGP(LOG_ERROR, __FUNCTION__ " arg type %u -- mask for eth type is 'exact', but we don't have the key!\n", OVS_ARGTYPE_PI_IPV4);
@@ -190,7 +188,6 @@ static BOOLEAN _VerifyMasks(_In_ const OVS_FLOW_MATCH* pFlowMatch, _In_ const OV
             OVS_CHECK(__UNEXPECTED__);
             return FALSE;
         }
-
         else if (!isWildcard && !pPacketInfoArg)
         {
             DEBUGP(LOG_ERROR, __FUNCTION__ " arg type %u -- mask for eth type is 'exact', but we don't have the key!\n", OVS_ARGTYPE_PI_IPV6);
@@ -216,7 +213,6 @@ static BOOLEAN _VerifyMasks(_In_ const OVS_FLOW_MATCH* pFlowMatch, _In_ const OV
     {
         isWildcard = (pMask->ipInfo.protocol == OVS_PI_MASK_MATCH_WILDCARD(UINT8) ? TRUE : FALSE);
     }
-
     else
     {
         isWildcard = FALSE;
@@ -388,7 +384,6 @@ static BOOLEAN _VerifyMasks(_In_ const OVS_FLOW_MATCH* pFlowMatch, _In_ const OV
 
         return FALSE;
     }
-
     else if (!isWildcard && !pPacketInfoArg)
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " arg type %u -- mask for ipv6 src port is 'exact', but we don't have the key!\n", OVS_ARGTYPE_PI_NEIGHBOR_DISCOVERY);
@@ -557,7 +552,6 @@ BOOLEAN GetFlowMatchFromArguments(_Inout_ OVS_FLOW_MATCH* pFlowMatch, _In_ const
             memset(pStart, OVS_PI_MASK_MATCH_EXACT(UINT8), range);
         }
     }
-
     else
     {
         OVS_ARGUMENT* pEncapArg = NULL;

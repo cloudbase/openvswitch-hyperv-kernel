@@ -463,7 +463,6 @@ const OVS_DECAPSULATOR* Encap_FindDecapsulator(NET_BUFFER* pNb, BYTE* pEncapProt
             *pEncapProtoType = OVS_IPPROTO_GRE;
             pDecapsulator = Encap_GetDecapsulator_Gre();
         }
-
         else if (pIpv4Header->Protocol == OVS_IPPROTO_UDP)
         {
             OVS_UDP_HEADER* pUdpHeader = (OVS_UDP_HEADER*)AdvanceIpv4Header(pIpv4Header);

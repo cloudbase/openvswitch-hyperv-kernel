@@ -165,7 +165,6 @@ Cleanup:
         FreeArgument(pNameArg);
         FreeArgument(pStatsArg);
     }
-
     else
     {
         if (pNameArg)

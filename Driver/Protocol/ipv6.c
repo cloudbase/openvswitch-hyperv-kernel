@@ -66,7 +66,6 @@ static void _Ipv6_SetAddress(OVS_NET_BUFFER* pOvsNb, UINT8 protocol, BE32 oldAdd
             csumRecomp = RtlUshortByteSwap(csumRecomp);
             pTcpHeader->checksum = csumRecomp;
         }
-
         else if (protocol == IPPROTO_UDP)
         {
             OVS_UDP_HEADER* pUdpHeader = GetUdpHeader(buffer);

@@ -241,7 +241,6 @@ static VOID _HandleChecksumOffload_Tcp(LE16 ethType, ULONG ethSize, ULONG encaps
 		}
 #endif
 	}
-
 	else
 	{
 		OVS_CHECK(pChecksumOffloadInfo->Transmit.IsIPv6);
@@ -399,7 +398,6 @@ VOID HandleChecksumOffload(_In_ OVS_NET_BUFFER* pOvsNb, BOOLEAN isFromExternal, 
 	{
 		_HandleChecksumOffload_Tcp(ethType, ethSize, encapsSize, mtu, netHeader, pChecksumOffloadInfo);
 	}
-
 	else if (pChecksumOffloadInfo->Transmit.UdpChecksum)
 	{
 		_HandleChecksumOffload_Udp(ethType, netHeader, pChecksumOffloadInfo);

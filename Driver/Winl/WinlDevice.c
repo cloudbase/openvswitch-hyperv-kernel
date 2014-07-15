@@ -262,7 +262,6 @@ NTSTATUS _WinlIrpRead(PDEVICE_OBJECT pDeviceObject, PIRP pIrp)
 	{
 		status = BufferCtl_Read_Unsafe(pFileObject, pReadBuffer, userReadBufferLen, &bytesRead);
 	}
-
 	else
 	{
 		status = STATUS_INSUFFICIENT_RESOURCES;

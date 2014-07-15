@@ -266,7 +266,6 @@ BOOLEAN ExecuteActions(_Inout_ OVS_NET_BUFFER* pOvsNb, _In_ const OutputToPortCa
                 {
                     KFree(pDuplicateOnb);
                 }
-
                 else
                 {
                     ONB_Destroy(pDuplicateOnb->pSwitchInfo, &pDuplicateOnb);
@@ -288,7 +287,6 @@ BOOLEAN ExecuteActions(_Inout_ OVS_NET_BUFFER* pOvsNb, _In_ const OutputToPortCa
 			{
 				pDestPersPort = _FindDestPort_Ref(pOvsNb->pSourcePort, persPortNumber);
 			}
-
 			else
 			{
 				DEBUGP(LOG_ERROR, __FUNCTION__ " invalid port number from userspace: %u\n", persPortNumber);
@@ -338,7 +336,6 @@ BOOLEAN ExecuteActions(_Inout_ OVS_NET_BUFFER* pOvsNb, _In_ const OutputToPortCa
 		OVS_REFCOUNT_DEREFERENCE(pDestPersPort);
 		pDestPersPort = NULL;
     }
-
     else
     {
         //i.e. did not send pOvsNb, _ProcessAllNblsIngress will destroy it.
@@ -395,14 +392,12 @@ static BOOLEAN _ValidateTransportPort(const OVS_OFPACKET_INFO* pPacketInfo)
         {
             return TRUE;
         }
-
         else
         {
             DEBUGP(LOG_ERROR, __FUNCTION__ " src port == wildcard & dest port == wildcard: invalid\n");
             return FALSE;
         }
     }
-
     else if (pPacketInfo->ethInfo.type == RtlUshortByteSwap(OVS_ETHERTYPE_IPV6))
     {
         if (pPacketInfo->netProto.ipv6Info.sourcePort != OVS_PI_MASK_MATCH_WILDCARD(UINT16) ||
@@ -410,7 +405,6 @@ static BOOLEAN _ValidateTransportPort(const OVS_OFPACKET_INFO* pPacketInfo)
         {
             return TRUE;
         }
-
         else
         {
             DEBUGP(LOG_ERROR, __FUNCTION__ " src port == wildcard & dest port == wildcard: invalid\n");

@@ -51,7 +51,6 @@ static void _UpdateRange(_Inout_ OVS_PI_RANGE* pPiRange, SIZE_T offset, SIZE_T s
         pPiRange->startRange = startPos;
         pPiRange->endRange = endPos;
     }
-
     else
     {
         //i.e. if it was set before
@@ -103,7 +102,6 @@ static BOOLEAN _ExtractIpv4(VOID* pNbBuffer, _Inout_ OVS_OFPACKET_INFO* pPacketI
         pPacketInfo->netProto.ipv4Info.sourcePort = pTcpHeader->sourcePort;
         pPacketInfo->netProto.ipv4Info.destinationPort = pTcpHeader->destinationPort;
     }
-
     else if (pPacketInfo->ipInfo.protocol == OVS_IPPROTO_UDP)
     {
         OVS_UDP_HEADER* pUdpHeader = (OVS_UDP_HEADER*)AdvanceIpv4Header(pIpv4Header);
@@ -111,7 +109,6 @@ static BOOLEAN _ExtractIpv4(VOID* pNbBuffer, _Inout_ OVS_OFPACKET_INFO* pPacketI
         pPacketInfo->netProto.ipv4Info.sourcePort = pUdpHeader->sourcePort;
         pPacketInfo->netProto.ipv4Info.destinationPort = pUdpHeader->destinationPort;
     }
-
     else if (pPacketInfo->ipInfo.protocol == OVS_IPPROTO_SCTP)
     {
         OVS_SCTP_HEADER* pSctpHeader = (OVS_SCTP_HEADER*)AdvanceIpv4Header(pIpv4Header);
@@ -119,7 +116,6 @@ static BOOLEAN _ExtractIpv4(VOID* pNbBuffer, _Inout_ OVS_OFPACKET_INFO* pPacketI
         pPacketInfo->netProto.ipv4Info.sourcePort = pSctpHeader->sourcePort;
         pPacketInfo->netProto.ipv4Info.destinationPort = pSctpHeader->destinationPort;
     }
-
     else if (pPacketInfo->ipInfo.protocol == OVS_IPPROTO_ICMP)
     {
         OVS_ICMP_HEADER* pIcmpHeader = (OVS_ICMP_HEADER*)AdvanceIpv4Header(pIpv4Header);
@@ -207,7 +203,6 @@ static VOID _ExtractIcmp6(VOID* pNbBuffer, ULONG nbLen, OVS_ICMP_HEADER* pIcmpHe
                     pOption = (OVS_ICMP6_ND_OPTION*)((BYTE*)pOption + optionLen);
                 }
             }
-
             else if (pIcmpHeader->type == OVS_ICMP6_ND_NEIGHBOR_ADVERTISMENT)
             {
                 OVS_ICMP6_NEIGHBOR_ADVERTISMENT* pNA = (OVS_ICMP6_NEIGHBOR_ADVERTISMENT*)pIcmpHeader;
@@ -287,7 +282,6 @@ static BOOLEAN _ExtractIpv6(VOID* pNbBuffer, ULONG nbLen, _Inout_ OVS_OFPACKET_I
                     pPacketInfo->ipInfo.fragment = OVS_FRAGMENT_TYPE_NOT_FRAG;
                 }
             }
-
             else
             {
                 pPacketInfo->ipInfo.fragment = OVS_FRAGMENT_TYPE_FRAG_N;
@@ -310,7 +304,6 @@ static BOOLEAN _ExtractIpv6(VOID* pNbBuffer, ULONG nbLen, _Inout_ OVS_OFPACKET_I
         pPacketInfo->netProto.ipv6Info.sourcePort = pTcpHeader->sourcePort;
         pPacketInfo->netProto.ipv6Info.destinationPort = pTcpHeader->destinationPort;
     }
-
     else if (extensionType == OVS_IPV6_EXTH_UDP)
     {
         OVS_UDP_HEADER* pUdpHeader = (OVS_UDP_HEADER*)buffer;
@@ -318,7 +311,6 @@ static BOOLEAN _ExtractIpv6(VOID* pNbBuffer, ULONG nbLen, _Inout_ OVS_OFPACKET_I
         pPacketInfo->netProto.ipv6Info.sourcePort = pUdpHeader->sourcePort;
         pPacketInfo->netProto.ipv6Info.destinationPort = pUdpHeader->destinationPort;
     }
-
     else if (extensionType == OVS_IPV6_EXTH_SCTP)
     {
         OVS_SCTP_HEADER* pSctpHeader = (OVS_SCTP_HEADER*)buffer;
@@ -326,7 +318,6 @@ static BOOLEAN _ExtractIpv6(VOID* pNbBuffer, ULONG nbLen, _Inout_ OVS_OFPACKET_I
         pPacketInfo->netProto.ipv6Info.sourcePort = pSctpHeader->sourcePort;
         pPacketInfo->netProto.ipv6Info.destinationPort = pSctpHeader->destinationPort;
     }
-
     else if (extensionType == OVS_IPV6_EXTH_ICMP6)
     {
         OVS_ICMP_HEADER* pIcmpHeader = (OVS_ICMP_HEADER*)buffer;
@@ -376,7 +367,6 @@ BOOLEAN PacketInfo_Extract(_In_ VOID* pNbBuffer, ULONG nbLen, UINT16 ovsSourcePo
 
         return ok;
     }
-
     else if (pPacketInfo->ethInfo.type == RtlUshortByteSwap(OVS_ETHERTYPE_ARP))
     {
         OVS_ARP_HEADER* pArp = GetArpHeader(pEthHeader);
@@ -401,12 +391,10 @@ BOOLEAN PacketInfo_Extract(_In_ VOID* pNbBuffer, ULONG nbLen, UINT16 ovsSourcePo
             }
         }
     }
-
     else if (pPacketInfo->ethInfo.type == RtlUshortByteSwap(OVS_ETHERTYPE_IPV6))
     {
         return _ExtractIpv6(pNbBuffer, nbLen, pPacketInfo);
     }
-
     else
     {
         return FALSE;
@@ -581,7 +569,6 @@ BOOLEAN PIFromArg_DatapathInPort(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout_
     {
         inPort = OVS_PI_MASK_MATCH_EXACT(UINT32);
     }
-
     else if (inPort >= OVS_MAX_PORTS)
     {
         return FALSE;
@@ -616,7 +603,6 @@ VOID PIFromArg_SetDefaultDatapathInPort(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, 
     {
         //if isMask and mask attr not specified, we assume it's 'any'
     }
-
     else
     {
         offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, physical, OVS_PHYSICAL, ovsInPort);
@@ -682,7 +668,6 @@ static BOOLEAN _GetPIFromArg_EthType(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _In
     {
         ethType = OVS_PI_MASK_MATCH_EXACT(UINT16);
     }
-
     else if (RtlUshortByteSwap(ethType) < OVS_ETHERTYPE_802_3_MIN)
     {
         DEBUGP(LOG_ERROR, "INVALID ETH TYPE: %X. MINIMUM ACCEPTABLE IS 802.3 (I.E. 0X0600)\n", RtlUshortByteSwap(ethType));
@@ -892,7 +877,6 @@ static VOID _GetPIFromArg_Tcp(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout_ OV
         _UpdateRange(pPiRange, offset, size);
         pPacketInfo->netProto.ipv4Info.destinationPort = pTcpPI->destination;
     }
-
     else
     {
         //src port
@@ -932,7 +916,6 @@ static VOID _GetPIFromArg_Udp(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout_ OV
         _UpdateRange(pPiRange, offset, size);
         pPacketInfo->netProto.ipv4Info.destinationPort = pUdpPI->destination;
     }
-
     else
     {
         //src port
@@ -972,7 +955,6 @@ static VOID _GetPIFromArg_Sctp(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout_ O
         _UpdateRange(pPiRange, offset, size);
         pPacketInfo->netProto.ipv4Info.destinationPort = pSctpPI->destination;
     }
-
     else
     {
         //src port
@@ -1205,7 +1187,6 @@ BOOLEAN GetPacketInfoFromArguments(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inou
             _UpdateRange(pPiRange, offset, size);
             pPacketInfo->ethInfo.type = OVS_PI_MASK_MATCH_EXACT(UINT16);
         }
-
         else
         {
             //TODO: in the future, we might need to support OVS_ETHERTYPE_802_2. i.e. here, to set ethInfo.type == OVS_ETHERTYPE_802_2

@@ -116,7 +116,6 @@ static OVS_PERSISTENT_PORT* _PersPort_FindTunnel_Ref(_In_ const LIST_ENTRY* pLis
 			pOutPort = OVS_REFCOUNT_REFERENCE(pPortEntry->pPort);
 			goto Cleanup;
         }
-
         else
         {
             //VXLAN
@@ -181,23 +180,19 @@ static VOID _PersPort_SetNicAndPort_Unsafe(OVS_GLOBAL_FORWARD_INFO* pForwardInfo
 			//TODO: should we use interlocked assign for OVS_PORT_LIST_ENTRY's port id? 
 			pForwardInfo->pInternalPort->ovsPortNumber = pPort->ovsPortNumber;
 		}
-
 		else
         {
 			pPort->portId = NDIS_SWITCH_DEFAULT_PORT_ID;
 		}
     }
-
     else if (pPort->ofPortType == OVS_OFPORT_TYPE_GRE)
     {
 		pPort->portId = NDIS_SWITCH_DEFAULT_PORT_ID;
     }
-
     else if (pPort->ofPortType == OVS_OFPORT_TYPE_VXLAN)
     {
 		pPort->portId = NDIS_SWITCH_DEFAULT_PORT_ID;
     }
-
 	else if (0 == strcmp(pPort->ovsPortName, externalPortName))
 	{
 		if (pForwardInfo->pExternalPort)
@@ -207,13 +202,11 @@ static VOID _PersPort_SetNicAndPort_Unsafe(OVS_GLOBAL_FORWARD_INFO* pForwardInfo
 			pPort->isExternal = TRUE;
 			pForwardInfo->pExternalPort->ovsPortNumber = pPort->ovsPortNumber;
 		}
-
 		else
 		{
 			pPort->portId = NDIS_SWITCH_DEFAULT_PORT_ID;
 		}
 	}
-
     else
     {
 		OVS_PORT_LIST_ENTRY* pPortEntry = NULL;
@@ -474,7 +467,6 @@ OVS_PERSISTENT_PORT* PersPort_Create_Ref(_In_opt_ const char* portName, _In_opt_
             goto Cleanup;
         }
     }
-
     else if (portType == OVS_OFPORT_TYPE_VXLAN)
     {
         _AddPersPort_Vxlan(pPort);
@@ -1051,7 +1043,6 @@ BOOLEAN PersPort_Delete(OVS_PERSISTENT_PORT* pPort)
     {
         _RemovePersPort_Gre(pPort);
     }
-
     else if (pPort->ofPortType == OVS_OFPORT_TYPE_VXLAN)
     {
         _RemovePersPort_Vxlan(pPort);

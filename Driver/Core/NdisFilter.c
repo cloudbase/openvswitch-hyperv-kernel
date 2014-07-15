@@ -520,7 +520,6 @@ VOID FilterOidRequestComplete(NDIS_HANDLE filterModuleContext, PNDIS_OID_REQUEST
         {
             Port_Delete(pSwitchInfo->pForwardInfo, (PNDIS_SWITCH_PORT_PARAMETERS)header);
         }
-
         else if (oidRequest->DATA.METHOD_INFORMATION.Oid == OID_SWITCH_PORT_CREATE && status != NDIS_STATUS_SUCCESS)
         {
             Nic_Delete(pSwitchInfo->pForwardInfo, (PNDIS_SWITCH_NIC_PARAMETERS)header);

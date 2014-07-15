@@ -174,7 +174,6 @@ static __inline VOID* RefCount_Reference(VOID* pObj, const char* funcName)
 		{
 			pObj = NULL;
 		}
-
 		else
 		{
 #if OVS_USE_REFCOUNT_CALL_STACK
@@ -249,7 +248,6 @@ static __inline VOID RefCount_Destroy(VOID* pObj)
 		{
 			pRefCount->deletionPending = TRUE;
 		}
-
 		else
 		{
 			pRefCount->Destroy(pObj);

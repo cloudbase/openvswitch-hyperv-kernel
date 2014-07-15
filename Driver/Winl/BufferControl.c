@@ -287,7 +287,6 @@ BOOLEAN _RemoveMulticastBuffer_Unsafe(OVS_DEVICE_FILE_INFO* pFileInfo)
     {
         --pBufferEntry->refCount;
     }
-
     else
     {
         if (IsBufferEmpty(&pBufferEntry->buffer))
@@ -452,7 +451,6 @@ OVS_ERROR _BufferCtl_ReadMulticast_Unsafe(_Inout_ OVS_BUFFER* pBuffer, _Inout_ V
 
         return OVS_ERROR_AGAIN;
     }
-
     else
     {
         VOID* srcBuffer = (BYTE*)pBuffer->p;
