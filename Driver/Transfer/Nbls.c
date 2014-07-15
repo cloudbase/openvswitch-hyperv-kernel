@@ -823,7 +823,6 @@ static BOOLEAN _VerifyTransportHeader(VOID* buffer, ULONG* pLength, UINT16 ethTy
     switch (protoType)
     {
     case OVS_IPPROTO_GRE:
-    {
         advancedBuffer = VerifyGreHeader(advancedBuffer, pLength, &ethType);
         if (!advancedBuffer)
         {
@@ -831,8 +830,6 @@ static BOOLEAN _VerifyTransportHeader(VOID* buffer, ULONG* pLength, UINT16 ethTy
         }
 
         return VerifyProtocolHeader(advancedBuffer, pLength, &ethType);
-    }
-        break;
 
     case OVS_IPPROTO_ICMP:
         if (RtlUshortByteSwap(ethType) != OVS_ETHERTYPE_IPV4)

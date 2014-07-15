@@ -542,39 +542,27 @@ static void _DbgPrintFlow_Set(_In_ const OVS_ARGUMENT_GROUP* pArgs, _In_ ULONG m
         break;
 
     case OVS_ARGTYPE_PI_ETH_ADDRESS:
-    {
         RtlStringCchCatA(str, maxLen, "eth_addr; ");
-    }
         break;
 
     case OVS_ARGTYPE_PI_IPV4:
-    {
         RtlStringCchCatA(str, maxLen, "ipv4; ");
-    }
         break;
 
     case OVS_ARGTYPE_PI_IPV6:
-    {
         RtlStringCchCatA(str, maxLen, "ipv6; ");
-    }
         break;
 
     case OVS_ARGTYPE_PI_TCP:
-    {
         RtlStringCchCatA(str, maxLen, "tcp; ");
-    }
         break;
 
     case OVS_ARGTYPE_PI_UDP:
-    {
         RtlStringCchCatA(str, maxLen, "udp; ");
-    }
         break;
 
     case OVS_ARGTYPE_PI_SCTP:
-    {
         RtlStringCchCatA(str, maxLen, "sctp; ");
-    }
         break;
     }
 }
@@ -614,21 +602,15 @@ void FlowWithActions_ToString(const char* msg, _In_ const OVS_OFPACKET_INFO* pPa
     switch (RtlUshortByteSwap(pPacketInfo->ethInfo.type))
     {
     case OVS_ETHERTYPE_ARP:
-    {
         _DbgPrintFlow_Arp(pPacketInfo, pMask, maxLen, str, &len);
-    }
         break;
 
     case OVS_ETHERTYPE_IPV4:
-    {
         _DbgPrintFlow_Ipv4(pPacketInfo, pMask, maxLen, str, &len);
-    }
         break;
 
     case OVS_ETHERTYPE_IPV6:
-    {
         _DbgPrintFlow_Ipv6(pPacketInfo, pMask, maxLen, str, &len);
-    }
         break;
 
     default:
@@ -661,9 +643,7 @@ void FlowWithActions_ToString(const char* msg, _In_ const OVS_OFPACKET_INFO* pPa
                 break;
 
             case OVS_ARGTYPE_GROUP_ACTIONS_UPCALL:
-            {
                 RtlStringCchCatA(str, maxLen - 1, "upcall; ");
-            }
                 break;
 
             case OVS_ARGTYPE_GROUP_ACTIONS_SETINFO:
@@ -671,21 +651,15 @@ void FlowWithActions_ToString(const char* msg, _In_ const OVS_OFPACKET_INFO* pPa
                 break;
 
             case OVS_ARGTYPE_GROUP_ACTIONS_SAMPLE:
-            {
                 RtlStringCchCatA(str, maxLen - 1, "sample; ");
-            }
                 break;
 
             case OVS_ARGTYPE_ACTION_PUSH_VLAN:
-            {
                 RtlStringCchCatA(str, maxLen - 1, "push vlan; ");
-            }
                 break;
 
             case OVS_ARGTYPE_ACTION_POP_VLAN:
-            {
                 RtlStringCchCatA(str, maxLen - 1, "pop vlan; ");
-            }
                 break;
             }
         }

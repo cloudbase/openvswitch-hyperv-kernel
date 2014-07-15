@@ -71,10 +71,8 @@ static BOOLEAN _ExecuteAction_OutToUserspace(_In_ NET_BUFFER* pNb, _In_ const OV
         switch (argType)
         {
         case OVS_ARGTYPE_ACTION_UPCALL_DATA:
-        {
             //it is released in send packet to userspace
             upcallInfo.pUserData = pArg;
-        }
             break;
 
         case OVS_ARGTYPE_ACTION_UPCALL_PORT_ID:
@@ -284,7 +282,6 @@ BOOLEAN ExecuteActions(_Inout_ OVS_NET_BUFFER* pOvsNb, _In_ const OutputToPortCa
         switch (argType)
         {
         case OVS_ARGTYPE_ACTION_OUTPUT_TO_PORT:
-        {
             persPortNumber = GET_ARG_DATA(pArg, UINT32);
 
 			if (persPortNumber < OVS_MAX_PORTS)
@@ -297,7 +294,7 @@ BOOLEAN ExecuteActions(_Inout_ OVS_NET_BUFFER* pOvsNb, _In_ const OutputToPortCa
 				DEBUGP(LOG_ERROR, __FUNCTION__ " invalid port number from userspace: %u\n", persPortNumber);
 				ok = FALSE;
 			}
-        }
+			
             break;
 
         case OVS_ARGTYPE_GROUP_ACTIONS_UPCALL:

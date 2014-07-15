@@ -188,10 +188,8 @@ static BOOLEAN _Reply_SetAttrType_PITunnel(OVS_ARGUMENT* pArg)
         break;
 
     default:
-    {
         DEBUGP(LOG_ERROR, "unexpected flow/key/tunnel arg: %u\n", pArg->type);
         return FALSE;
-    }
     }
 
     return TRUE;

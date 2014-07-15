@@ -72,14 +72,13 @@ BOOLEAN GetPacketContextFromPIArgs(_In_ const OVS_ARGUMENT_GROUP* pArgGroup, _In
             break;
 
         case OVS_ARGTYPE_GROUP_PI_TUNNEL:
-        {
             OVS_CHECK(IsArgTypeGroup(pArg->type));
 
             if (!PIFromArg_Tunnel(pArg->data, pPacketInfo, pPiRange, /*is mask*/ FALSE))
             {
                 return FALSE;
             }
-        }
+			
             break;
 
         default:

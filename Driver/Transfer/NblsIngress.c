@@ -714,9 +714,7 @@ BOOLEAN OutputPacketToPort(OVS_NET_BUFFER* pOvsNb)
 
     case OVS_OFPORT_TYPE_MANAG_OS:
     case OVS_OFPORT_TYPE_PHYSICAL:
-    {
         ok = _OutputPacketToPort_Physical(pOvsNb);
-    }
         break;
 
     default:
