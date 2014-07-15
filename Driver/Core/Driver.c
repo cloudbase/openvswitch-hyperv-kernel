@@ -37,7 +37,6 @@ VOID Driver_Uninit()
 
 	if (!IsListEmpty(&g_driver.datapathList))
 	{
-
 		pDatapath = CONTAINING_RECORD(g_driver.datapathList.Flink, OVS_DATAPATH, listEntry);
 		RemoveEntryList(&pDatapath->listEntry);
 		OVS_CHECK(IsListEmpty(&g_driver.datapathList));
@@ -48,7 +47,6 @@ VOID Driver_Uninit()
 
 	if (!IsListEmpty(&g_driver.switchList))
 	{
-
 		OVS_SWITCH_INFO* pSwitchInfo = CONTAINING_RECORD(g_driver.switchList.Flink, OVS_SWITCH_INFO, listEntry);
 
 		OVS_CHECK(pSwitchInfo->dataFlowState == OVS_SWITCH_PAUSED);

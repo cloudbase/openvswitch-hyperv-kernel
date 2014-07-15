@@ -55,17 +55,14 @@ BOOLEAN GetPacketContextFromPIArgs(_In_ const OVS_ARGUMENT_GROUP* pArgGroup, _In
         switch (argType)
         {
         case OVS_ARGTYPE_PI_PACKET_PRIORITY:
-
             PIFromArg_PacketPriority(pPacketInfo, pPiRange, pArg);
             break;
 
         case OVS_ARGTYPE_PI_PACKET_MARK:
-
             PIFromArg_PacketMark(pPacketInfo, pPiRange, pArg);
             break;
 
         case OVS_ARGTYPE_PI_DP_INPUT_PORT:
-
             pDatapathInPortArg = pArg;
             if (!PIFromArg_DatapathInPort(pPacketInfo, pPiRange, pArg, /*is mask*/FALSE))
 			{

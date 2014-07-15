@@ -40,7 +40,6 @@ static BOOLEAN _CreateIpv4Args(const OVS_OFPACKET_INFO* pPacketInfo, OVS_ARGUMEN
     ipv4PI.fragmentType = pPacketInfo->ipInfo.fragment;
 
     if (!CreateArgInList(OVS_ARGTYPE_PI_IPV4, &ipv4PI, ppArgList))
-
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " failed appending ipv4 packet info\n");
         return FALSE;
@@ -63,7 +62,6 @@ static BOOLEAN _CreateIpv6Args(const OVS_OFPACKET_INFO* pPacketInfo, OVS_ARGUMEN
     ipv6PI.fragmentType = pPacketInfo->ipInfo.fragment;
 
     if (!CreateArgInList(OVS_ARGTYPE_PI_IPV6, &ipv6PI, ppArgList))
-
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " failed appending ipv6 packet info\n");
         return FALSE;
@@ -84,7 +82,6 @@ static BOOLEAN _CreateArpArgs(const OVS_OFPACKET_INFO* pPacketInfo, OVS_ARGUMENT
     RtlCopyMemory(arpPI.targetMac, pPacketInfo->netProto.arpInfo.destinationMac, OVS_ETHERNET_ADDRESS_LENGTH);
 
     if (!CreateArgInList(OVS_ARGTYPE_PI_ARP, &arpPI, ppArgList))
-
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " failed appending arp packet info\n");
         return FALSE;
@@ -113,7 +110,6 @@ static BOOLEAN _CreateTcpArgs(const OVS_OFPACKET_INFO* pPacketInfo, const OVS_OF
     }
 
     if (!CreateArgInList(OVS_ARGTYPE_PI_TCP, &tcpPI, ppArgList))
-
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " failed appending tcp packet info\n");
         return FALSE;
@@ -142,7 +138,6 @@ static BOOLEAN _CreateUdpArgs(const OVS_OFPACKET_INFO* pPacketInfo, const OVS_OF
     }
 
     if (!CreateArgInList(OVS_ARGTYPE_PI_UDP, &udpPI, ppArgList))
-
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " failed appending udp packet info\n");
         return FALSE;
@@ -171,7 +166,6 @@ static BOOLEAN _CreateSctpArgs(const OVS_OFPACKET_INFO* pPacketInfo, const OVS_O
     }
 
     if (!CreateArgInList(OVS_ARGTYPE_PI_SCTP, &sctpPI, ppArgList))
-
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " failed appending sctp packet info\n");
         return FALSE;
@@ -188,7 +182,6 @@ static BOOLEAN _CreateIcmp4Args(const OVS_OFPACKET_INFO* pPacketInfo, OVS_ARGUME
     icmpPI.code = (UINT8)RtlUshortByteSwap(pPacketInfo->netProto.ipv4Info.destinationPort);
 
     if (!CreateArgInList(OVS_ARGTYPE_PI_ICMP, &icmpPI, ppArgList))
-
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " failed appending icmp packet info\n");
         return FALSE;
@@ -205,7 +198,6 @@ static BOOLEAN _CreateIcmp6Args(const OVS_OFPACKET_INFO* pPacketInfo, OVS_ARGUME
     pIcmp6PI->code = (UINT8)RtlUshortByteSwap(pPacketInfo->netProto.ipv6Info.destinationPort);
 
     if (!CreateArgInList(OVS_ARGTYPE_PI_ICMP6, pIcmp6PI, ppArgList))
-
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " failed appending icmp6 packet info\n");
         return FALSE;
@@ -223,7 +215,6 @@ static BOOLEAN _CreateIp6NeighborDiscoveryArgs(const OVS_OFPACKET_INFO* pPacketI
     RtlCopyMemory(neighborDiscoveryPI.targetMac, pPacketInfo->netProto.ipv6Info.neighborDiscovery.ndTargetMac, OVS_ETHERNET_ADDRESS_LENGTH);
 
     if (!CreateArgInList(OVS_ARGTYPE_PI_NEIGHBOR_DISCOVERY, &neighborDiscoveryPI, ppArgList))
-
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " failed appending icmp6 nd packet info\n");
         return FALSE;
@@ -464,7 +455,6 @@ static OVS_ARGUMENT* _CreateIpv4TunnelGroup(const OF_PI_IPV4_TUNNEL* pTunnelInfo
     if (pTunnelInfo->tunnelFlags & OVS_TUNNEL_FLAG_KEY)
     {
         if (!CreateArgInList(OVS_ARGTYPE_PI_TUNNEL_ID, &pTunnelInfo->tunnelId, &pArgListCur))
-
         {
             ok = FALSE;
             goto Cleanup;
@@ -474,7 +464,6 @@ static OVS_ARGUMENT* _CreateIpv4TunnelGroup(const OF_PI_IPV4_TUNNEL* pTunnelInfo
     if (pTunnelInfo->tunnelFlags & OVS_TUNNEL_FLAG_DONT_FRAGMENT)
     {
         if (!CreateArgInList(OVS_ARGTYPE_PI_TUNNEL_DONT_FRAGMENT, NULL, &pArgListCur))
-
         {
             ok = FALSE;
             goto Cleanup;
@@ -484,7 +473,6 @@ static OVS_ARGUMENT* _CreateIpv4TunnelGroup(const OF_PI_IPV4_TUNNEL* pTunnelInfo
     if (pTunnelInfo->tunnelFlags & OVS_TUNNEL_FLAG_CHECKSUM)
     {
         if (!CreateArgInList(OVS_ARGTYPE_PI_TUNNEL_CHECKSUM, NULL, &pArgListCur))
-
         {
             ok = FALSE;
             goto Cleanup;
@@ -495,7 +483,6 @@ static OVS_ARGUMENT* _CreateIpv4TunnelGroup(const OF_PI_IPV4_TUNNEL* pTunnelInfo
     if (pTunnelInfo->ipv4Source)
     {
         if (!CreateArgInList(OVS_ARGTYPE_PI_TUNNEL_IPV4_SRC, &pTunnelInfo->ipv4Source, &pArgListCur))
-
         {
             ok = FALSE;
             goto Cleanup;
@@ -506,7 +493,6 @@ static OVS_ARGUMENT* _CreateIpv4TunnelGroup(const OF_PI_IPV4_TUNNEL* pTunnelInfo
     if (pTunnelInfo->ipv4Destination)
     {
         if (!CreateArgInList(OVS_ARGTYPE_PI_TUNNEL_IPV4_DST, &pTunnelInfo->ipv4Destination, &pArgListCur))
-
         {
             ok = FALSE;
             goto Cleanup;
@@ -517,7 +503,6 @@ static OVS_ARGUMENT* _CreateIpv4TunnelGroup(const OF_PI_IPV4_TUNNEL* pTunnelInfo
     if (pTunnelInfo->ipv4TypeOfService)
     {
         if (!CreateArgInList(OVS_ARGTYPE_PI_TUNNEL_TOS, &pTunnelInfo->ipv4TypeOfService, &pArgListCur))
-
         {
             ok = FALSE;
             goto Cleanup;
@@ -525,7 +510,6 @@ static OVS_ARGUMENT* _CreateIpv4TunnelGroup(const OF_PI_IPV4_TUNNEL* pTunnelInfo
     }
 
     if (!CreateArgInList(OVS_ARGTYPE_PI_TUNNEL_TTL, &pTunnelInfo->ipv4TimeToLive, &pArgListCur))
-
     {
         ok = FALSE;
         goto Cleanup;
@@ -611,7 +595,6 @@ static OVS_ARGUMENT* _CreateSetActionArg(const OVS_ARGUMENT* pArgument)
     switch (argType)
     {
     case OVS_ARGTYPE_PI_IPV4_TUNNEL:
-
     {
         OVS_ARGUMENT* pArg = _CreateIpv4TunnelGroup(pArgument->data);
         return pArg;
@@ -993,7 +976,6 @@ static BOOLEAN _CreateEthernetArgsInList(const OVS_OFPACKET_INFO* pPacketInfo, c
 
     //ETH ADDRESS
     if (!CreateArgInList(OVS_ARGTYPE_PI_ETH_ADDRESS, &ethAddrPI, ppArgList))
-
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " failed appending eth addr key\n");
         return FALSE;
@@ -1107,7 +1089,6 @@ static BOOLEAN _CreateInPortArgInList(const OVS_OFPACKET_INFO* pPacketInfo, cons
     }
 
     if (!CreateArgInList(OVS_ARGTYPE_PI_DP_INPUT_PORT, &inputPortValue, ppArgList))
-
     {
         return FALSE;
     }
@@ -1164,14 +1145,12 @@ static OVS_ARGUMENT_SLIST_ENTRY* _CreateArgListFromPacketInfo(const OVS_OFPACKET
     packetMark = (pMask ? pMask->physical.packetMark : pPacketInfo->physical.packetMark);
 
     if (!CreateArgInList(OVS_ARGTYPE_PI_PACKET_PRIORITY, &packetPriority, &pArgListCur))
-
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " failed appending packet priority\n");
         return NULL;
     }
 
     if (!CreateArgInList(OVS_ARGTYPE_PI_PACKET_MARK, &packetMark, &pArgListCur))
-
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " failed appending packet mark\n");
         ok = FALSE;

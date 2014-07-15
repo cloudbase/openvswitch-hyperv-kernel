@@ -646,7 +646,6 @@ static BOOLEAN _VerifyFlowMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_
         }
 
         if (!FindArgument(pArg->data, OVS_ARGTYPE_PI_ETH_TYPE))
-
         {
             DEBUGP_ARG(LOG_ERROR, "Flow cmd NEW does not have key argtype: 0x%x", OVS_ARGTYPE_PI_ETH_TYPE);
 
@@ -655,9 +654,8 @@ static BOOLEAN _VerifyFlowMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_
         }
 
         if (!FindArgument(pArg->data, OVS_ARGTYPE_PI_ETH_ADDRESS))
-
         {
-            DEBUGP_ARG(LOG_ERROR, "Flow cmd NEW does not have key argtype: 0x%x", OVS_ARGTYPE_PI_ETH_ADDRESS);
+			DEBUGP_ARG(LOG_ERROR, "Flow cmd NEW does not have key argtype: 0x%x", OVS_ARGTYPE_PI_ETH_ADDRESS);
 
             OVS_CHECK(0);
             return FALSE;

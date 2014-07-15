@@ -514,7 +514,6 @@ static void _DbgPrintFlow_Set(_In_ const OVS_ARGUMENT_GROUP* pArgs, _In_ ULONG m
     switch (argType)
     {
     case OVS_ARGTYPE_PI_PACKET_PRIORITY:
-
     {
         UINT32 priority = GET_ARG_DATA(pArg, UINT32);
         RtlStringCchPrintfA(tempStr, 100, "priority=%u; ", priority);
@@ -523,7 +522,6 @@ static void _DbgPrintFlow_Set(_In_ const OVS_ARGUMENT_GROUP* pArgs, _In_ ULONG m
         break;
 
     case OVS_ARGTYPE_PI_PACKET_MARK:
-
     {
         UINT32 mark = GET_ARG_DATA(pArg, UINT32);
         RtlStringCchPrintfA(tempStr, 100, "mark=%u; ", mark);
@@ -532,7 +530,6 @@ static void _DbgPrintFlow_Set(_In_ const OVS_ARGUMENT_GROUP* pArgs, _In_ ULONG m
         break;
 
     case OVS_ARGTYPE_PI_IPV4_TUNNEL:
-
     {
         OF_PI_IPV4_TUNNEL* pTunnel = pArg->data;
         RtlStringCchPrintfA(tempStr, 100, "tunnel={id=%016llx,src=%u.%u.%u.%u, dst=%u.%u.%u.%u, tos=%u, ttl=%u, %flags=0x%x;}; ",
@@ -545,42 +542,36 @@ static void _DbgPrintFlow_Set(_In_ const OVS_ARGUMENT_GROUP* pArgs, _In_ ULONG m
         break;
 
     case OVS_ARGTYPE_PI_ETH_ADDRESS:
-
     {
         RtlStringCchCatA(str, maxLen, "eth_addr; ");
     }
         break;
 
     case OVS_ARGTYPE_PI_IPV4:
-
     {
         RtlStringCchCatA(str, maxLen, "ipv4; ");
     }
         break;
 
     case OVS_ARGTYPE_PI_IPV6:
-
     {
         RtlStringCchCatA(str, maxLen, "ipv6; ");
     }
         break;
 
     case OVS_ARGTYPE_PI_TCP:
-
     {
         RtlStringCchCatA(str, maxLen, "tcp; ");
     }
         break;
 
     case OVS_ARGTYPE_PI_UDP:
-
     {
         RtlStringCchCatA(str, maxLen, "udp; ");
     }
         break;
 
     case OVS_ARGTYPE_PI_SCTP:
-
     {
         RtlStringCchCatA(str, maxLen, "sctp; ");
     }

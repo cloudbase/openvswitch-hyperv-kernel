@@ -106,42 +106,34 @@ static BOOLEAN _ExecuteAction_Set(OVS_NET_BUFFER* pONb, const OVS_ARGUMENT_GROUP
         break;
 
     case OVS_ARGTYPE_PI_PACKET_PRIORITY:
-
         pONb->packetPriority = GET_ARG_DATA(pArg, UINT32);
         break;
 
     case OVS_ARGTYPE_PI_IPV4_TUNNEL:
-
         pONb->pTunnelInfo = pArg->data;
         break;
 
     case OVS_ARGTYPE_PI_ETH_ADDRESS:
-
         ok = ONB_SetEthernetAddress(pONb, pArg->data);
         break;
 
     case OVS_ARGTYPE_PI_IPV4:
-
         ok = ONB_SetIpv4(pONb, pArg->data);
         break;
 
     case OVS_ARGTYPE_PI_IPV6:
-
         ok = ONB_SetIpv6(pONb, pArg->data);
         break;
 
     case OVS_ARGTYPE_PI_TCP:
-
         ok = ONB_SetTcp(pONb, pArg->data);
         break;
 
     case OVS_ARGTYPE_PI_UDP:
-
         ok = ONB_SetUdp(pONb, pArg->data);
         break;
 
     case OVS_ARGTYPE_PI_SCTP:
-
         ok = ONB_SetSctp(pONb, pArg->data);
         break;
     }
@@ -488,11 +480,8 @@ static BOOLEAN _Action_SetInfo(_Inout_ OVS_ARGUMENT_GROUP* pActionGroup, const O
     switch (argType)
     {
     case OVS_ARGTYPE_PI_PACKET_PRIORITY:
-
     case OVS_ARGTYPE_PI_PACKET_MARK:
-
     case OVS_ARGTYPE_PI_ETH_ADDRESS:
-
         //nothing to do here
         break;
 
@@ -517,7 +506,6 @@ static BOOLEAN _Action_SetInfo(_Inout_ OVS_ARGUMENT_GROUP* pActionGroup, const O
         break;
 
     case OVS_ARGTYPE_PI_IPV4:
-
         if (pPacketInfo->ethInfo.type != RtlUshortByteSwap(OVS_ETHERTYPE_IPV4))
         {
             DEBUGP(LOG_ERROR, __FUNCTION__ " packet info's eth type != ipv4\n");
@@ -546,7 +534,6 @@ static BOOLEAN _Action_SetInfo(_Inout_ OVS_ARGUMENT_GROUP* pActionGroup, const O
         break;
 
     case OVS_ARGTYPE_PI_IPV6:
-
         if (pPacketInfo->ethInfo.type != RtlUshortByteSwap(OVS_ETHERTYPE_IPV6))
         {
             DEBUGP(LOG_ERROR, __FUNCTION__ " packet info's eth type != ipv6\n");
@@ -581,7 +568,6 @@ static BOOLEAN _Action_SetInfo(_Inout_ OVS_ARGUMENT_GROUP* pActionGroup, const O
         break;
 
     case OVS_ARGTYPE_PI_TCP:
-
         if (pPacketInfo->ipInfo.protocol != IPPROTO_TCP)
         {
             DEBUGP(LOG_ERROR, __FUNCTION__ " packet info's proto != tcp\n");
@@ -607,6 +593,7 @@ static BOOLEAN _Action_SetInfo(_Inout_ OVS_ARGUMENT_GROUP* pActionGroup, const O
         }
 
         return _ValidateTransportPort(pPacketInfo);
+		
     default:
         DEBUGP(LOG_ERROR, __FUNCTION__ " invalid PI type to set: 0x%x\n", argType);
         return FALSE;

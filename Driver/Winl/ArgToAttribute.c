@@ -160,37 +160,30 @@ static BOOLEAN _Reply_SetAttrType_PITunnel(OVS_ARGUMENT* pArg)
     switch (argType)
     {
     case OVS_ARGTYPE_PI_TUNNEL_ID:
-
         pArg->type = OVS_USPACE_TUNNEL_KEY_ATTRIBUTE_ID;
         break;
 
     case OVS_ARGTYPE_PI_TUNNEL_IPV4_SRC:
-
         pArg->type = OVS_USPACE_TUNNEL_KEY_ATTRIBUTE_IPV4_SRC;
         break;
 
     case OVS_ARGTYPE_PI_TUNNEL_IPV4_DST:
-
         pArg->type = OVS_USPACE_TUNNEL_KEY_ATTRIBUTE_IPV4_DST;
         break;
 
     case OVS_ARGTYPE_PI_TUNNEL_TOS:
-
         pArg->type = OVS_USPACE_TUNNEL_KEY_ATTRIBUTE_TOS;
         break;
 
     case OVS_ARGTYPE_PI_TUNNEL_TTL:
-
         pArg->type = OVS_USPACE_TUNNEL_KEY_ATTRIBUTE_TTL;
         break;
 
     case OVS_ARGTYPE_PI_TUNNEL_DONT_FRAGMENT:
-
         pArg->type = OVS_USPACE_TUNNEL_KEY_ATTRIBUTE_DONT_FRAGMENT;
         break;
 
     case OVS_ARGTYPE_PI_TUNNEL_CHECKSUM:
-
         pArg->type = OVS_USPACE_TUNNEL_KEY_ATTRIBUTE_CSUM;
         break;
 
@@ -211,77 +204,62 @@ static BOOLEAN _Reply_SetAttrType_PacketInfo(OVS_ARGUMENT* pArg)
     switch (argType)
     {
     case OVS_ARGTYPE_PI_PACKET_PRIORITY:
-
         pArg->type = OVS_USPACE_KEY_ATTRIBUTE_PRIORITY;
         break;
 
     case OVS_ARGTYPE_PI_DP_INPUT_PORT:
-
         pArg->type = OVS_USPACE_KEY_ATTRIBUTE_IN_PORT;
         break;
 
     case OVS_ARGTYPE_PI_ETH_ADDRESS:
-
         pArg->type = OVS_USPACE_KEY_ATTRIBUTE_ETHERNET;
         break;
 
     case OVS_ARGTYPE_PI_ETH_TYPE:
-
         pArg->type = OVS_USPACE_KEY_ATTRIBUTE_ETHERTYPE;
         break;
 
     case OVS_ARGTYPE_PI_VLAN_TCI:
-
         pArg->type = OVS_USPACE_KEY_ATTRIBUTE_VLAN;
         break;
 
     case OVS_ARGTYPE_PI_IPV4:
-
         pArg->type = OVS_USPACE_KEY_ATTRIBUTE_IPV4;
         break;
 
     case OVS_ARGTYPE_PI_IPV6:
-
         pArg->type = OVS_USPACE_KEY_ATTRIBUTE_IPV6;
         break;
 
     case OVS_ARGTYPE_PI_TCP:
-
         pArg->type = OVS_USPACE_KEY_ATTRIBUTE_TCP;
         break;
 
     case OVS_ARGTYPE_PI_UDP:
-
         pArg->type = OVS_USPACE_KEY_ATTRIBUTE_UDP;
         break;
 
     case OVS_ARGTYPE_PI_SCTP:
-
         pArg->type = OVS_USPACE_KEY_ATTRIBUTE_SCTP;
         break;
 
     case OVS_ARGTYPE_PI_ICMP:
-
         pArg->type = OVS_USPACE_KEY_ATTRIBUTE_ICMP;
         break;
 
     case OVS_ARGTYPE_PI_ICMP6:
-
         pArg->type = OVS_USPACE_KEY_ATTRIBUTE_ICMPV6;
         break;
 
     case OVS_ARGTYPE_PI_ARP:
-
         pArg->type = OVS_USPACE_KEY_ATTRIBUTE_ARP;
         break;
 
     case OVS_ARGTYPE_PI_NEIGHBOR_DISCOVERY:
-
         pArg->type = OVS_USPACE_KEY_ATTRIBUTE_ND;
         break;
 
     case OVS_ARGTYPE_PI_PACKET_MARK:
-
         pArg->type = OVS_USPACE_KEY_ATTRIBUTE_SKB_MARK;
         break;
 
@@ -290,13 +268,11 @@ static BOOLEAN _Reply_SetAttrType_PacketInfo(OVS_ARGUMENT* pArg)
         break;
 
     case OVS_ARGTYPE_PI_IPV4_TUNNEL:
-
         //NOT SUPPORTED - it's a kernel attr only!
         OVS_CHECK(__UNEXPECTED__);
         break;
 
     case OVS_ARGTYPE_PI_MPLS:
-
         pArg->type = OVS_USPACE_KEY_ATTRIBUTE_MPLS;
         OVS_CHECK(__NOT_IMPLEMENTED__);
         break;

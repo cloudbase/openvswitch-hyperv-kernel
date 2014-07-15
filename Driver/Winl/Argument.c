@@ -64,88 +64,70 @@ static BOOLEAN _GetPIArgExpectedSize(OVS_ARGTYPE argumentType, UINT* pSize)
     switch (argumentType)
     {
     case OVS_ARGTYPE_PI_PACKET_PRIORITY:
-
         *pSize = sizeof(UINT32);
         return TRUE;
 
     case OVS_ARGTYPE_PI_DP_INPUT_PORT:
-
         *pSize = sizeof(UINT32);
         return TRUE;
 
     case OVS_ARGTYPE_PI_ETH_ADDRESS:
-
         *pSize = sizeof(OVS_PI_ETH_ADDRESS);
         return TRUE;
 
     case OVS_ARGTYPE_PI_ETH_TYPE:
-
         *pSize = sizeof(UINT16);
         return TRUE;
 
     case OVS_ARGTYPE_PI_VLAN_TCI:
-
         *pSize = sizeof(BE16);
         return TRUE;
 
     case OVS_ARGTYPE_PI_IPV4:
-
         *pSize = sizeof(OVS_PI_IPV4);
         return TRUE;
 
     case OVS_ARGTYPE_PI_IPV6:
-
         *pSize = sizeof(OVS_PI_IPV6);
         return TRUE;
 
     case OVS_ARGTYPE_PI_TCP:
-
         *pSize = sizeof(OVS_PI_TCP);
         return TRUE;
 
     case OVS_ARGTYPE_PI_UDP:
-
         *pSize = sizeof(OVS_PI_UDP);
         return TRUE;
 
     case OVS_ARGTYPE_PI_SCTP:
-
         *pSize = sizeof(OVS_ARGTYPE_PI_SCTP);
-
         return TRUE;
 
     case OVS_ARGTYPE_PI_ICMP:
-
         *pSize = sizeof(OVS_PI_ICMP);
         return TRUE;
 
     case OVS_ARGTYPE_PI_ICMP6:
-
         *pSize = sizeof(OVS_PI_ICMP6);
         return TRUE;
 
     case OVS_ARGTYPE_PI_ARP:
-
         *pSize = sizeof(OVS_PI_ARP);
         return TRUE;
 
     case OVS_ARGTYPE_PI_NEIGHBOR_DISCOVERY:
-
         *pSize = sizeof(OVS_PI_NEIGHBOR_DISCOVERY);
         return TRUE;
 
     case OVS_ARGTYPE_PI_PACKET_MARK:
-
         *pSize = sizeof(UINT32);
         return TRUE;
 
     case OVS_ARGTYPE_PI_IPV4_TUNNEL:
-
         *pSize = sizeof(OF_PI_IPV4_TUNNEL);
         return TRUE;
 
     case OVS_ARGTYPE_PI_MPLS:
-
         *pSize = sizeof(OVS_PI_MPLS);
         return TRUE;
 
@@ -159,37 +141,30 @@ static BOOLEAN _GetFlowKeyTunnelArgExpectedSize(OVS_ARGTYPE argumentType, UINT* 
     switch (argumentType)
     {
     case OVS_ARGTYPE_PI_TUNNEL_ID:
-
         *pSize = sizeof(BE64);
         return TRUE;
 
     case OVS_ARGTYPE_PI_TUNNEL_IPV4_SRC:
-
         *pSize = sizeof(BE32);
         return TRUE;
 
     case OVS_ARGTYPE_PI_TUNNEL_IPV4_DST:
-
         *pSize = sizeof(BE32);
         return TRUE;
 
     case OVS_ARGTYPE_PI_TUNNEL_TOS:
-
         *pSize = sizeof(UINT8);
         return TRUE;
 
     case OVS_ARGTYPE_PI_TUNNEL_TTL:
-
         *pSize = sizeof(UINT8);
         return TRUE;
 
     case OVS_ARGTYPE_PI_TUNNEL_DONT_FRAGMENT:
-
         *pSize = 0;
         return TRUE;
 
     case OVS_ARGTYPE_PI_TUNNEL_CHECKSUM:
-
         *pSize = 0;
         return TRUE;
 
@@ -1284,87 +1259,70 @@ static __inline VOID _DbgPrintArgType_PacketInfo(OVS_ARGTYPE argType)
     switch (argType)
     {
     case OVS_ARGTYPE_PI_PACKET_PRIORITY:
-
         DEBUGP_ARG(LOG_INFO, "FLOW/KEY: PACKET PRIORITY\n");
         break;
 
     case OVS_ARGTYPE_PI_DP_INPUT_PORT:
-
         DEBUGP_ARG(LOG_INFO, "FLOW/KEY: IN PORT\n");
         break;
 
     case OVS_ARGTYPE_PI_ETH_ADDRESS:
-
         DEBUGP_ARG(LOG_INFO, "FLOW/KEY: ETH ADDR\n");
         break;
 
     case OVS_ARGTYPE_PI_ETH_TYPE:
-
         DEBUGP_ARG(LOG_INFO, "FLOW/KEY: ETH TYPE\n");
         break;
 
     case OVS_ARGTYPE_PI_VLAN_TCI:
-
         DEBUGP_ARG(LOG_INFO, "FLOW/KEY: VLAN TCI\n");
         break;
 
     case OVS_ARGTYPE_PI_IPV4:
-
         DEBUGP_ARG(LOG_INFO, "FLOW/KEY: IPV4\n");
         break;
 
     case OVS_ARGTYPE_PI_IPV6:
-
         DEBUGP_ARG(LOG_INFO, "FLOW/KEY: IPV6\n");
         break;
 
     case OVS_ARGTYPE_PI_TCP:
-
         DEBUGP_ARG(LOG_INFO, "FLOW/KEY: TCP\n");
         break;
 
     case OVS_ARGTYPE_PI_UDP:
-
         DEBUGP_ARG(LOG_INFO, "FLOW/KEY: UDP\n");
         break;
 
     case OVS_ARGTYPE_PI_SCTP:
-
         DEBUGP_ARG(LOG_INFO, "FLOW/KEY: SCTP\n");
         break;
 
     case OVS_ARGTYPE_PI_ICMP:
-
         DEBUGP_ARG(LOG_INFO, "FLOW/KEY: ICMP\n");
         break;
 
     case OVS_ARGTYPE_PI_ICMP6:
-
         DEBUGP_ARG(LOG_INFO, "FLOW/KEY: ICMP6\n");
         break;
 
     case OVS_ARGTYPE_PI_ARP:
-
         DEBUGP_ARG(LOG_INFO, "FLOW/KEY: ARP\n");
         break;
 
     case OVS_ARGTYPE_PI_NEIGHBOR_DISCOVERY:
-
         DEBUGP_ARG(LOG_INFO, "FLOW/KEY: ND\n");
         break;
 
     case OVS_ARGTYPE_PI_PACKET_MARK:
-
         DEBUGP_ARG(LOG_INFO, "FLOW/KEY: PACKET MARK\n");
         break;
 
     case OVS_ARGTYPE_PI_IPV4_TUNNEL:
-
         DEBUGP_ARG(LOG_INFO, "FLOW/KEY: IPV4 TUNNEL\n");
         break;
 
     case OVS_ARGTYPE_PI_MPLS:
-
         DEBUGP_ARG(LOG_INFO, "FLOW/KEY: MPLS\n");
         break;
 
@@ -1378,37 +1336,30 @@ static __inline VOID _DbgPrintArgType_PITunnel(OVS_ARGTYPE argType)
     switch (argType)
     {
     case OVS_ARGTYPE_PI_TUNNEL_ID:
-
         DEBUGP_ARG(LOG_INFO, "FLOW/KEY/TUNNEL: ID\n");
         break;
 
     case OVS_ARGTYPE_PI_TUNNEL_IPV4_SRC:
-
         DEBUGP_ARG(LOG_INFO, "FLOW/KEY/TUNNEL:IPV4 SRC\n");
         break;
 
     case OVS_ARGTYPE_PI_TUNNEL_IPV4_DST:
-
         DEBUGP_ARG(LOG_INFO, "FLOW/KEY/TUNNEL:IPV4 DST\n");
         break;
 
     case OVS_ARGTYPE_PI_TUNNEL_TOS:
-
         DEBUGP_ARG(LOG_INFO, "FLOW/KEY/TUNNEL:TOS\n");
         break;
 
     case OVS_ARGTYPE_PI_TUNNEL_TTL:
-
         DEBUGP_ARG(LOG_INFO, "FLOW/KEY/TUNNEL:TTL\n");
         break;
 
     case OVS_ARGTYPE_PI_TUNNEL_DONT_FRAGMENT:
-
         DEBUGP_ARG(LOG_INFO, "FLOW/KEY/TUNNEL:DON'T FRAGMENT\n");
         break;
 
     case OVS_ARGTYPE_PI_TUNNEL_CHECKSUM:
-
         DEBUGP_ARG(LOG_INFO, "FLOW/KEY/TUNNEL:CHECKSUM\n");
         break;
 
@@ -1895,7 +1846,6 @@ static __inline BOOLEAN _VerifyGroup_FlowKeyTunnel(OVS_ARGUMENT* pParentArg, BOO
         switch (argType)
         {
         case OVS_ARGTYPE_PI_TUNNEL_CHECKSUM:
-
             if (!_VerifyArg_PacketInfoTunnelChecksum(pArg, isMask))
 			{
                 return FALSE;
@@ -1903,7 +1853,6 @@ static __inline BOOLEAN _VerifyGroup_FlowKeyTunnel(OVS_ARGUMENT* pParentArg, BOO
             break;
 
         case OVS_ARGTYPE_PI_TUNNEL_DONT_FRAGMENT:
-
             if (!_VerifyArg_PacketInfoTunnelDontFragment(pArg, isMask))
 			{
                 return FALSE;
@@ -1911,7 +1860,6 @@ static __inline BOOLEAN _VerifyGroup_FlowKeyTunnel(OVS_ARGUMENT* pParentArg, BOO
             break;
 
         case OVS_ARGTYPE_PI_TUNNEL_ID:
-
             if (!_VerifyArg_PacketInfoTunnelId(pArg, isMask, isRequest))
 			{
                 return FALSE;
@@ -1919,7 +1867,6 @@ static __inline BOOLEAN _VerifyGroup_FlowKeyTunnel(OVS_ARGUMENT* pParentArg, BOO
             break;
 
         case OVS_ARGTYPE_PI_TUNNEL_IPV4_DST:
-
             if (!_VerifyArg_PacketInfoTunnelIpv4Dst(pArg, isMask, isRequest))
 			{
                 return FALSE;
@@ -1929,7 +1876,6 @@ static __inline BOOLEAN _VerifyGroup_FlowKeyTunnel(OVS_ARGUMENT* pParentArg, BOO
             break;
 
         case OVS_ARGTYPE_PI_TUNNEL_IPV4_SRC:
-
             if (!_VerifyArg_PacketInfoTunnelIpv4Src(pArg, isMask, isRequest))
 			{
                 return FALSE;
@@ -1937,7 +1883,6 @@ static __inline BOOLEAN _VerifyGroup_FlowKeyTunnel(OVS_ARGUMENT* pParentArg, BOO
             break;
 
         case OVS_ARGTYPE_PI_TUNNEL_TOS:
-
             if (!_VerifyArg_PacketInfoTunnelTos(pArg, isMask, isRequest))
 			{
                 return FALSE;
@@ -1945,7 +1890,6 @@ static __inline BOOLEAN _VerifyGroup_FlowKeyTunnel(OVS_ARGUMENT* pParentArg, BOO
             break;
 
         case OVS_ARGTYPE_PI_TUNNEL_TTL:
-
             if (!_VerifyArg_PacketInfoTunnelTtl(pArg, isMask, isRequest))
 			{
                 return FALSE;
@@ -2031,7 +1975,6 @@ static __inline BOOLEAN _VerifyArg_PacketInfo_EthType(OVS_ARGUMENT* pArg, BOOLEA
         case OVS_ETHERTYPE_ARP:
         case OVS_ETHERTYPE_RARP:
             if (!FindArgument(pParentArg->data, OVS_ARGTYPE_PI_ARP))
-
             {
                 DEBUGP_ARG(LOG_ERROR, "eth key specified as (r)arp, but no arp key found!\n");
                 return FALSE;
@@ -2040,7 +1983,6 @@ static __inline BOOLEAN _VerifyArg_PacketInfo_EthType(OVS_ARGUMENT* pArg, BOOLEA
 
         case OVS_ETHERTYPE_IPV4:
             if (!FindArgument(pParentArg->data, OVS_ARGTYPE_PI_IPV4))
-
             {
                 DEBUGP_ARG(LOG_ERROR, "eth key specified as ipv4, but no ipv4 key found!\n");
                 return FALSE;
@@ -2049,7 +1991,6 @@ static __inline BOOLEAN _VerifyArg_PacketInfo_EthType(OVS_ARGUMENT* pArg, BOOLEA
 
         case OVS_ETHERTYPE_IPV6:
             if (!FindArgument(pParentArg->data, OVS_ARGTYPE_PI_IPV6))
-
             {
                 DEBUGP_ARG(LOG_ERROR, "eth key specified as ipv6, but no ipv6 key found!\n");
                 return FALSE;
@@ -2059,7 +2000,6 @@ static __inline BOOLEAN _VerifyArg_PacketInfo_EthType(OVS_ARGUMENT* pArg, BOOLEA
         case OVS_ETHERTYPE_QTAG:
             //must have vlan tci & encapsulation
             if (!FindArgument(pParentArg->data, OVS_ARGTYPE_PI_VLAN_TCI))
-
             {
                 return FALSE;
             }
@@ -2534,7 +2474,6 @@ static __inline BOOLEAN _VerifyArg_PacketInfo_Encap(OVS_ARGUMENT* pEncArg, BOOLE
         switch (argType)
         {
         case OVS_ARGTYPE_PI_ETH_TYPE:
-
             if (!_VerifyArg_PacketInfo_EthType(pArg, isMask, isRequest, pEncArg))
 			{
                 return FALSE;
@@ -2542,7 +2481,6 @@ static __inline BOOLEAN _VerifyArg_PacketInfo_Encap(OVS_ARGUMENT* pEncArg, BOOLE
             break;
 
         case OVS_ARGTYPE_PI_ICMP:
-
             if (!_VerifyArg_PacketInfo_Icmp(pArg, isMask, isRequest, pEncArg))
 			{
                 return FALSE;
@@ -2550,7 +2488,6 @@ static __inline BOOLEAN _VerifyArg_PacketInfo_Encap(OVS_ARGUMENT* pEncArg, BOOLE
             break;
 
         case OVS_ARGTYPE_PI_ICMP6:
-
             if (!_VerifyArg_PacketInfo_Icmp6(pArg, isMask, isRequest, pEncArg))
 			{
                 return FALSE;
@@ -2558,7 +2495,6 @@ static __inline BOOLEAN _VerifyArg_PacketInfo_Encap(OVS_ARGUMENT* pEncArg, BOOLE
             break;
 
         case OVS_ARGTYPE_PI_IPV4:
-
             if (!_VerifyArg_PacketInfo_Ipv4(pArg, isMask, isRequest, pEncArg, checkTransportLayer))
 			{
                 return FALSE;
@@ -2566,7 +2502,6 @@ static __inline BOOLEAN _VerifyArg_PacketInfo_Encap(OVS_ARGUMENT* pEncArg, BOOLE
             break;
 
         case OVS_ARGTYPE_PI_IPV6:
-
             if (!_VerifyArg_PacketInfo_Ipv6(pArg, isMask, isRequest, pEncArg, checkTransportLayer))
 			{
                 return FALSE;
@@ -2574,7 +2509,6 @@ static __inline BOOLEAN _VerifyArg_PacketInfo_Encap(OVS_ARGUMENT* pEncArg, BOOLE
             break;
 
         case OVS_ARGTYPE_PI_NEIGHBOR_DISCOVERY:
-
             if (!_VerifyArg_PacketInfo_NeighborDiscovery(pArg, isMask, isRequest, pEncArg))
 			{
                 return FALSE;
@@ -2582,7 +2516,6 @@ static __inline BOOLEAN _VerifyArg_PacketInfo_Encap(OVS_ARGUMENT* pEncArg, BOOLE
             break;
 
         case OVS_ARGTYPE_PI_SCTP:
-
             if (!_VerifyArg_PacketInfo_Sctp(pArg, isMask, isRequest, pEncArg, seekIp))
 			{
                 return FALSE;
@@ -2590,7 +2523,6 @@ static __inline BOOLEAN _VerifyArg_PacketInfo_Encap(OVS_ARGUMENT* pEncArg, BOOLE
             break;
 
         case OVS_ARGTYPE_PI_TCP:
-
             if (!_VerifyArg_PacketInfo_Tcp(pArg, isMask, isRequest, pEncArg, seekIp))
 			{
                 return FALSE;
@@ -2598,7 +2530,6 @@ static __inline BOOLEAN _VerifyArg_PacketInfo_Encap(OVS_ARGUMENT* pEncArg, BOOLE
             break;
 
         case OVS_ARGTYPE_PI_UDP:
-
             if (!_VerifyArg_PacketInfo_Udp(pArg, isMask, isRequest, pEncArg, seekIp))
 			{
                 return FALSE;
@@ -2640,7 +2571,6 @@ BOOLEAN VerifyGroup_PacketInfo(BOOLEAN isMask, BOOLEAN isRequest, _In_ OVS_ARGUM
             break;
 
         case OVS_ARGTYPE_PI_DP_INPUT_PORT:
-
             if (!_VerifyArg_PacketInfo_DpInputPort(pArg, isMask, isRequest))
 			{
                 return FALSE;
@@ -2648,7 +2578,6 @@ BOOLEAN VerifyGroup_PacketInfo(BOOLEAN isMask, BOOLEAN isRequest, _In_ OVS_ARGUM
             break;
 
         case OVS_ARGTYPE_PI_ETH_ADDRESS:
-
             if (!_VerifyArg_PacketInfo_EthAddress(pArg, isMask, isRequest))
 			{
                 return FALSE;
@@ -2656,7 +2585,6 @@ BOOLEAN VerifyGroup_PacketInfo(BOOLEAN isMask, BOOLEAN isRequest, _In_ OVS_ARGUM
             break;
 
         case OVS_ARGTYPE_PI_ETH_TYPE:
-
             if (!_VerifyArg_PacketInfo_EthType(pArg, isMask, isRequest, pParentArg))
 			{
                 return FALSE;
@@ -2664,7 +2592,6 @@ BOOLEAN VerifyGroup_PacketInfo(BOOLEAN isMask, BOOLEAN isRequest, _In_ OVS_ARGUM
             break;
 
         case OVS_ARGTYPE_PI_ICMP:
-
             if (!_VerifyArg_PacketInfo_Icmp(pArg, isMask, isRequest, pParentArg))
 			{
                 return FALSE;
@@ -2672,7 +2599,6 @@ BOOLEAN VerifyGroup_PacketInfo(BOOLEAN isMask, BOOLEAN isRequest, _In_ OVS_ARGUM
             break;
 
         case OVS_ARGTYPE_PI_ICMP6:
-
             if (!_VerifyArg_PacketInfo_Icmp6(pArg, isMask, isRequest, pParentArg))
 			{
                 return FALSE;
@@ -2680,7 +2606,6 @@ BOOLEAN VerifyGroup_PacketInfo(BOOLEAN isMask, BOOLEAN isRequest, _In_ OVS_ARGUM
             break;
 
         case OVS_ARGTYPE_PI_IPV4:
-
             if (!_VerifyArg_PacketInfo_Ipv4(pArg, isMask, isRequest, pParentArg, checkTransportLayer))
 			{
                 return FALSE;
@@ -2688,7 +2613,6 @@ BOOLEAN VerifyGroup_PacketInfo(BOOLEAN isMask, BOOLEAN isRequest, _In_ OVS_ARGUM
             break;
 
         case OVS_ARGTYPE_PI_IPV4_TUNNEL:
-
             if (!_VerifyArg_PacketInfo_Ipv4Tunnel(pArg, isMask, isRequest))
 			{
                 return FALSE;
@@ -2696,7 +2620,6 @@ BOOLEAN VerifyGroup_PacketInfo(BOOLEAN isMask, BOOLEAN isRequest, _In_ OVS_ARGUM
             break;
 
         case OVS_ARGTYPE_PI_IPV6:
-
             if (!_VerifyArg_PacketInfo_Ipv6(pArg, isMask, isRequest, pParentArg, checkTransportLayer))
 			{
                 return FALSE;
@@ -2704,7 +2627,6 @@ BOOLEAN VerifyGroup_PacketInfo(BOOLEAN isMask, BOOLEAN isRequest, _In_ OVS_ARGUM
             break;
 
         case OVS_ARGTYPE_PI_MPLS:
-
             if (!_VerifyArg_PacketInfo_Mpls(pArg, isMask))
 			{
                 return FALSE;
@@ -2712,7 +2634,6 @@ BOOLEAN VerifyGroup_PacketInfo(BOOLEAN isMask, BOOLEAN isRequest, _In_ OVS_ARGUM
             break;
 
         case OVS_ARGTYPE_PI_NEIGHBOR_DISCOVERY:
-
             if (!_VerifyArg_PacketInfo_NeighborDiscovery(pArg, isMask, isRequest, pParentArg))
 			{
                 return FALSE;
@@ -2720,7 +2641,6 @@ BOOLEAN VerifyGroup_PacketInfo(BOOLEAN isMask, BOOLEAN isRequest, _In_ OVS_ARGUM
             break;
 
         case OVS_ARGTYPE_PI_PACKET_MARK:
-
             if (!_VerifyArg_PacketInfo_PacketMark(pArg, isMask, isRequest))
 			{
                 return FALSE;
@@ -2728,7 +2648,6 @@ BOOLEAN VerifyGroup_PacketInfo(BOOLEAN isMask, BOOLEAN isRequest, _In_ OVS_ARGUM
             break;
 
         case OVS_ARGTYPE_PI_PACKET_PRIORITY:
-
             if (!_VerifyArg_PacketInfo_PacketPriority(pArg, isMask, isRequest))
 			{
                 return FALSE;
@@ -2736,7 +2655,6 @@ BOOLEAN VerifyGroup_PacketInfo(BOOLEAN isMask, BOOLEAN isRequest, _In_ OVS_ARGUM
             break;
 
         case OVS_ARGTYPE_PI_SCTP:
-
             if (!_VerifyArg_PacketInfo_Sctp(pArg, isMask, isRequest, pParentArg, seekIp))
 			{
                 return FALSE;
@@ -2744,7 +2662,6 @@ BOOLEAN VerifyGroup_PacketInfo(BOOLEAN isMask, BOOLEAN isRequest, _In_ OVS_ARGUM
             break;
 
         case OVS_ARGTYPE_PI_TCP:
-
             if (!_VerifyArg_PacketInfo_Tcp(pArg, isMask, isRequest, pParentArg, seekIp))
 			{
                 return FALSE;
@@ -2752,7 +2669,6 @@ BOOLEAN VerifyGroup_PacketInfo(BOOLEAN isMask, BOOLEAN isRequest, _In_ OVS_ARGUM
             break;
 
         case OVS_ARGTYPE_PI_UDP:
-
             if (!_VerifyArg_PacketInfo_Udp(pArg, isMask, isRequest, pParentArg, seekIp))
 			{
                 return FALSE;
@@ -2760,7 +2676,6 @@ BOOLEAN VerifyGroup_PacketInfo(BOOLEAN isMask, BOOLEAN isRequest, _In_ OVS_ARGUM
             break;
 
         case OVS_ARGTYPE_PI_ARP:
-
             if (!_VerifyArg_PacketInfo_Arp(pArg, isMask, isRequest, pParentArg))
 			{
                 return FALSE;
@@ -2768,7 +2683,6 @@ BOOLEAN VerifyGroup_PacketInfo(BOOLEAN isMask, BOOLEAN isRequest, _In_ OVS_ARGUM
             break;
 
         case OVS_ARGTYPE_PI_VLAN_TCI:
-
             if (!_VerifyArg_PacketInfo_VlanTci(pArg, isMask, isRequest))
 			{
                 return FALSE;

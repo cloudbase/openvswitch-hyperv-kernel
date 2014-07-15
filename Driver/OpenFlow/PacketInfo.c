@@ -430,7 +430,6 @@ BOOLEAN PIFromArg_Tunnel(const OVS_ARGUMENT_GROUP* pArgs, _Inout_ OVS_OFPACKET_I
         switch (argType)
         {
         case OVS_ARGTYPE_PI_TUNNEL_ID:
-
             offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, tunnelInfo, OF_PI_IPV4_TUNNEL, tunnelId);
             size = sizeof(pPacketInfo->tunnelInfo.tunnelId);
 
@@ -441,7 +440,6 @@ BOOLEAN PIFromArg_Tunnel(const OVS_ARGUMENT_GROUP* pArgs, _Inout_ OVS_OFPACKET_I
             break;
 
         case OVS_ARGTYPE_PI_TUNNEL_IPV4_SRC:
-
             offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, tunnelInfo, OF_PI_IPV4_TUNNEL, ipv4Source);
             size = sizeof(pPacketInfo->tunnelInfo.ipv4Source);
 
@@ -450,7 +448,6 @@ BOOLEAN PIFromArg_Tunnel(const OVS_ARGUMENT_GROUP* pArgs, _Inout_ OVS_OFPACKET_I
 
             break;
         case OVS_ARGTYPE_PI_TUNNEL_IPV4_DST:
-
             offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, tunnelInfo, OF_PI_IPV4_TUNNEL, ipv4Destination);
             size = sizeof(pPacketInfo->tunnelInfo.ipv4Destination);
 
@@ -459,7 +456,6 @@ BOOLEAN PIFromArg_Tunnel(const OVS_ARGUMENT_GROUP* pArgs, _Inout_ OVS_OFPACKET_I
             break;
 
         case OVS_ARGTYPE_PI_TUNNEL_TOS:
-
             offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, tunnelInfo, OF_PI_IPV4_TUNNEL, ipv4TypeOfService);
             size = sizeof(pPacketInfo->tunnelInfo.ipv4TypeOfService);
 
@@ -468,7 +464,6 @@ BOOLEAN PIFromArg_Tunnel(const OVS_ARGUMENT_GROUP* pArgs, _Inout_ OVS_OFPACKET_I
             break;
 
         case OVS_ARGTYPE_PI_TUNNEL_TTL:
-
             offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, tunnelInfo, OF_PI_IPV4_TUNNEL, ipv4TimeToLive);
             size = sizeof(pPacketInfo->tunnelInfo.ipv4TimeToLive);
 
@@ -479,12 +474,10 @@ BOOLEAN PIFromArg_Tunnel(const OVS_ARGUMENT_GROUP* pArgs, _Inout_ OVS_OFPACKET_I
             break;
 
         case OVS_ARGTYPE_PI_TUNNEL_DONT_FRAGMENT:
-
             tunnelFlags |= OVS_TUNNEL_FLAG_DONT_FRAGMENT;
             break;
 
         case OVS_ARGTYPE_PI_TUNNEL_CHECKSUM:
-
             tunnelFlags |= OVS_TUNNEL_FLAG_CHECKSUM;
             break;
 
@@ -529,39 +522,32 @@ BOOLEAN GetIpv4TunnelFromArgumentsSimple(const OVS_ARGUMENT_GROUP* pArgs, _Inout
         switch (argType)
         {
         case OVS_ARGTYPE_PI_TUNNEL_ID:
-
             pTunnelInfo->tunnelId = GET_ARG_DATA(pArg, BE64);
 
             tunnelFlags |= OVS_TUNNEL_FLAG_KEY;
             break;
 
         case OVS_ARGTYPE_PI_TUNNEL_IPV4_SRC:
-
             pTunnelInfo->ipv4Source = GET_ARG_DATA(pArg, BE32);
             break;
 
         case OVS_ARGTYPE_PI_TUNNEL_IPV4_DST:
-
             pTunnelInfo->ipv4Destination = GET_ARG_DATA(pArg, BE32);
             break;
 
         case OVS_ARGTYPE_PI_TUNNEL_TOS:
-
             pTunnelInfo->ipv4TypeOfService = GET_ARG_DATA(pArg, UINT8);
             break;
 
         case OVS_ARGTYPE_PI_TUNNEL_TTL:
-
             pTunnelInfo->ipv4TimeToLive = GET_ARG_DATA(pArg, UINT8);
             break;
 
         case OVS_ARGTYPE_PI_TUNNEL_DONT_FRAGMENT:
-
             tunnelFlags |= OVS_TUNNEL_FLAG_DONT_FRAGMENT;
             break;
 
         case OVS_ARGTYPE_PI_TUNNEL_CHECKSUM:
-
             tunnelFlags |= OVS_TUNNEL_FLAG_CHECKSUM;
             break;
 
@@ -1087,12 +1073,10 @@ BOOLEAN GetPacketInfoFromArguments(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inou
         switch (argType)
         {
         case OVS_ARGTYPE_PI_PACKET_PRIORITY:
-
             PIFromArg_PacketPriority(pPacketInfo, pPiRange, pArg);
             break;
 
         case OVS_ARGTYPE_PI_DP_INPUT_PORT:
-
             pDatapathInPortArg = pArg;
             if (!PIFromArg_DatapathInPort(pPacketInfo, pPiRange, pArg, isMask))
             {
@@ -1102,7 +1086,6 @@ BOOLEAN GetPacketInfoFromArguments(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inou
             break;
 
         case OVS_ARGTYPE_PI_PACKET_MARK:
-
             PIFromArg_PacketMark(pPacketInfo, pPiRange, pArg);
             break;
 
@@ -1118,12 +1101,10 @@ BOOLEAN GetPacketInfoFromArguments(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inou
             break;
 
         case OVS_ARGTYPE_PI_ETH_ADDRESS:
-
             _GetPIFromArg_EthAddress(pPacketInfo, pPiRange, pArg);
             break;
 
         case OVS_ARGTYPE_PI_VLAN_TCI:
-
             pVlanTciArg = pArg;
             if (!_GetPIFromArg_VlanTci(pPacketInfo, pPiRange, pArg, isMask))
             {
@@ -1132,7 +1113,6 @@ BOOLEAN GetPacketInfoFromArguments(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inou
             break;
 
         case OVS_ARGTYPE_PI_ETH_TYPE:
-
             pEthTypeArg = pArg;
             if (!_GetPIFromArg_EthType(pPacketInfo, pPiRange, pArg, isMask))
             {
@@ -1142,7 +1122,6 @@ BOOLEAN GetPacketInfoFromArguments(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inou
             break;
 
         case OVS_ARGTYPE_PI_IPV4:
-
             haveIpv4 = TRUE;
 
             if (!_GetPIFromArg_Ipv4(pPacketInfo, pPiRange, pArg, isMask))
@@ -1152,7 +1131,6 @@ BOOLEAN GetPacketInfoFromArguments(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inou
             break;
 
         case OVS_ARGTYPE_PI_IPV6:
-
             if (!_GetPIFromArg_Ipv6(pPacketInfo, pPiRange, pArg, isMask))
             {
                 return FALSE;
@@ -1161,7 +1139,6 @@ BOOLEAN GetPacketInfoFromArguments(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inou
             break;
 
         case OVS_ARGTYPE_PI_ARP:
-
             if (!_GetPIFromArg_Arp(pPacketInfo, pPiRange, pArg, isMask))
             {
                 return FALSE;
@@ -1170,32 +1147,26 @@ BOOLEAN GetPacketInfoFromArguments(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inou
             break;
 
         case OVS_ARGTYPE_PI_TCP:
-
             _GetPIFromArg_Tcp(pPacketInfo, pPiRange, pArg, haveIpv4);
             break;
 
         case OVS_ARGTYPE_PI_UDP:
-
             _GetPIFromArg_Udp(pPacketInfo, pPiRange, pArg, haveIpv4);
             break;
 
         case OVS_ARGTYPE_PI_SCTP:
-
             _GetPIFromArg_Sctp(pPacketInfo, pPiRange, pArg, haveIpv4);
             break;
 
         case OVS_ARGTYPE_PI_ICMP:
-
             _GetPIFromArg_Icmp4(pPacketInfo, pPiRange, pArg);
             break;
 
         case OVS_ARGTYPE_PI_ICMP6:
-
             _GetPIFromArg_Icmp6(pPacketInfo, pPiRange, pArg);
             break;
 
         case OVS_ARGTYPE_PI_NEIGHBOR_DISCOVERY:
-
             _GetPIFromArg_NeighborDiscovery(pPacketInfo, pPiRange, pArg);
             break;
 
