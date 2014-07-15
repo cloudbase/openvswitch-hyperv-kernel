@@ -23,7 +23,8 @@ limitations under the License.
 
 /* STRUCTS AND FUNCTIONS FOR HANDLING HYPER-V SWITCH NICS */
 
-typedef struct _OVS_NIC_INFO {
+typedef struct _OVS_NIC_INFO
+{
     BYTE                    mac[OVS_ETHERNET_ADDRESS_LENGTH];
     NDIS_SWITCH_PORT_ID     portId;
     NDIS_SWITCH_NIC_INDEX   nicIndex;

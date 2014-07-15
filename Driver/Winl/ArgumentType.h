@@ -23,7 +23,8 @@ limitations under the License.
 
 /******************************************/
 
-typedef enum _OVS_ARGTYPE {
+typedef enum _OVS_ARGTYPE
+{
     OVS_ARGTYPE_GROUP_MAIN = 0x000,
     OVS_ARGTYPE_FIRST_GROUP = OVS_ARGTYPE_GROUP_MAIN,
 

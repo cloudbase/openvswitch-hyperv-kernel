@@ -67,7 +67,8 @@ typedef struct _OVS_ETHERNET_HEADER_TAGGED
 C_ASSERT(sizeof(OVS_ETHERNET_HEADER_TAGGED) == 18);
 
 //TEB = Transparent Ethernet Bridging
-typedef enum {
+typedef enum
+{
     OVS_ETHERTYPE_TEB = 0x6558,
     OVS_ETHERTYPE_IPV4 = 0x800,
     OVS_ETHERTYPE_IPV6 = 0x86DD,

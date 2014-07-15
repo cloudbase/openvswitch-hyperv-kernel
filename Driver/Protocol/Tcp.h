@@ -25,7 +25,8 @@ typedef struct _OVS_PI_TCP OVS_PI_TCP;
 /*************************************/
 
 //TODO: must test to see if the bitfields are set ok (considering LE system)
-typedef struct _OVS_TCP_HEADER {
+typedef struct _OVS_TCP_HEADER
+{
     UINT16    sourcePort;
     UINT16    destinationPort;
     SEQ_NUM   sequenceNo;//DWORD
@@ -47,7 +48,8 @@ typedef struct _OVS_TCP_HEADER {
 
 C_ASSERT(sizeof(OVS_TCP_HEADER) == 20);
 
-typedef struct _OVS_TRANSPORT_PSEUDO_HEADER_IPV4 {
+typedef struct _OVS_TRANSPORT_PSEUDO_HEADER_IPV4
+{
     BYTE srcIp[4];
     BYTE destIp[4];
     BYTE reserved;
@@ -57,7 +59,8 @@ typedef struct _OVS_TRANSPORT_PSEUDO_HEADER_IPV4 {
 
 C_ASSERT(sizeof(OVS_TRANSPORT_PSEUDO_HEADER_IPV4) == 12);
 
-typedef struct _OVS_TRANSPORT_PSEUDO_HEADER_IPV6 {
+typedef struct _OVS_TRANSPORT_PSEUDO_HEADER_IPV6
+{
     BYTE srcIp[16];
     BYTE destIp[16];
     BYTE reserved;
@@ -69,9 +72,17 @@ C_ASSERT(sizeof(OVS_TRANSPORT_PSEUDO_HEADER_IPV6) == 36);
 
 /*************************************/
 
-enum TcpOptionKind {
-    TcpOptionKind_EndOfOptions = 0x0, TcpOptionKind_NoOperation = 0x01, TcpOptionKind_MSS = 0x02, TcpOptionKind_WindowScale = 0x03, TcpOptionKind_SelAckPermitted = 0x04,
-    TcpOptionKind_SelAcknowledgment = 0x05, TcpOptionKind_Timestamp = 0x08, TcpOptionKind_AltCsumRequest = 0xe, TcpOptionKind_AltCsum = 0xf
+enum TcpOptionKind
+{
+    TcpOptionKind_EndOfOptions =        0x0,
+    TcpOptionKind_NoOperation =         0x01,
+    TcpOptionKind_MSS =                 0x02,
+    TcpOptionKind_WindowScale =         0x03,
+    TcpOptionKind_SelAckPermitted =     0x04,
+    TcpOptionKind_SelAcknowledgment =   0x05,
+    TcpOptionKind_Timestamp =           0x08,
+    TcpOptionKind_AltCsumRequest =      0xe,
+    TcpOptionKind_AltCsum =             0xf
 };
 
 /********************************************************************/

@@ -27,7 +27,8 @@ typedef struct _OVS_NET_BUFFER OVS_NET_BUFFER;
 typedef struct _OVS_MESSAGE OVS_MESSAGE;
 typedef struct _OVS_ACTIONS OVS_ACTIONS;
 
-typedef struct _OVS_PI_RANGE {
+typedef struct _OVS_PI_RANGE
+{
     SIZE_T startRange;
     SIZE_T endRange;
 }OVS_PI_RANGE, *POVS_PI_RANGE;
@@ -43,7 +44,8 @@ typedef struct _OVS_FLOW_MASK
     OVS_OFPACKET_INFO   packetInfo;
 }OVS_FLOW_MASK, *POVS_FLOW_MASK;
 
-typedef struct _OVS_FLOW_STATS {
+typedef struct _OVS_FLOW_STATS
+{
     UINT64 lastUsedTime;
     UINT64 packetsMached;
     UINT64 bytesMatched;
@@ -79,13 +81,15 @@ typedef struct _OVS_FLOW
 #define FLOW_UNLOCK(pFlow, pLockState) NdisReleaseRWLock(pFlow->pRwLock, pLockState)
 
 //a match is a pair (packet info, mask), with PI range = to apply mask and compare [startRange, endRange]
-typedef struct _OVS_FLOW_MATCH {
+typedef struct _OVS_FLOW_MATCH
+{
     OVS_OFPACKET_INFO*        pPacketInfo;
     OVS_FLOW_MASK*            pFlowMask;
     OVS_PI_RANGE              piRange;
 }OVS_FLOW_MATCH, *POVS_FLOW_MATCH;
 
-typedef struct _OVS_WINL_FLOW_STATS {
+typedef struct _OVS_WINL_FLOW_STATS
+{
     UINT64 noOfMatchedPackets;
     UINT64 noOfMatchedBytes;
 }OVS_WINL_FLOW_STATS, *POVS_WINL_FLOW_STATS;

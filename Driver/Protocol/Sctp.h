@@ -19,7 +19,8 @@ limitations under the License.
 #include "precomp.h"
 
 //RFC 4960
-typedef struct _OVS_SCTP_HEADER {
+typedef struct _OVS_SCTP_HEADER
+{
     UINT16 sourcePort;
     UINT16 destinationPort;
     UINT32 verificationTag;

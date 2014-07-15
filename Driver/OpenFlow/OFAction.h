@@ -26,7 +26,8 @@ typedef struct _OVS_ARGUMENT_GROUP OVS_ARGUMENT_GROUP;
 typedef struct _OVS_SWITCH_INFO OVS_SWITCH_INFO;
 typedef struct _OVS_NIC_INFO OVS_NIC_INFO;
 
-typedef struct _OVS_ACTIONS {
+typedef struct _OVS_ACTIONS
+{
     //must be the first field in the struct
     OVS_REF_COUNT refCount;
 
@@ -34,7 +35,8 @@ typedef struct _OVS_ACTIONS {
     OVS_ARGUMENT_GROUP* pActionGroup;
 } OVS_ACTIONS, *POVS_ACTIONS;
 
-typedef struct _OVS_ACTION_PUSH_VLAN {
+typedef struct _OVS_ACTION_PUSH_VLAN
+{
     //usually / normally OVS_ETHERTYPE_QTAG
     BE16 protocol;
     //802.1Q TCI (user priority + cfi + vlan id).

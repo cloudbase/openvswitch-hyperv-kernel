@@ -20,7 +20,8 @@ limitations under the License.
 extern PNDIS_RW_LOCK_EX g_pArpRWLock;
 extern LIST_ENTRY g_arpTable;
 
-typedef struct _OVS_ARP_TABLE_ENTRY {
+typedef struct _OVS_ARP_TABLE_ENTRY
+{
     LIST_ENTRY listEntry;
     BYTE ip[4];
     BYTE mac[OVS_ETHERNET_ADDRESS_LENGTH];

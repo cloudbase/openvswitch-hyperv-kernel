@@ -21,7 +21,8 @@ limitations under the License.
 typedef struct _OVS_NET_BUFFER OVS_NET_BUFFER;
 typedef struct _OVS_PI_UDP OVS_PI_UDP;
 
-typedef struct _OVS_UDP_HEADER {
+typedef struct _OVS_UDP_HEADER
+{
     UINT16 sourcePort;
     UINT16 destinationPort;
     UINT16 length;

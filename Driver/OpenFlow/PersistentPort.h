@@ -60,12 +60,14 @@ typedef struct _OVS_PERSISTENT_PORT
 #define PORT_LOCK_WRITE(pPort, pLockState) NdisAcquireRWLockWrite(pPort->pRwLock, pLockState, 0)
 #define PORT_UNLOCK(pPort, pLockState) NdisReleaseRWLock(pPort->pRwLock, pLockState)
 
-typedef struct _OVS_LOGICAL_PORT_ENTRY {
+typedef struct _OVS_LOGICAL_PORT_ENTRY
+{
     LIST_ENTRY listEntry;
     OVS_PERSISTENT_PORT* pPort;
 }OVS_LOGICAL_PORT_ENTRY;
 
-typedef struct _OVS_PERSISTENT_PORTS_INFO {
+typedef struct _OVS_PERSISTENT_PORTS_INFO
+{
     NDIS_RW_LOCK_EX* pRwLock;
 
     OVS_PERSISTENT_PORT* portsArray[OVS_MAX_PORTS];

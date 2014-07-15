@@ -35,7 +35,8 @@ VOID Nbls_SendIngress(_In_ OVS_SWITCH_INFO* pSwitchInfo, _In_ NDIS_HANDLE extens
 
 VOID Nbls_CompletedInjected(_Inout_ OVS_SWITCH_INFO* pSwitchInfo, ULONG numInjectedNetBufferLists);
 
-typedef enum _OVS_NBL_FAIL_REASON {
+typedef enum _OVS_NBL_FAIL_REASON
+{
     OVS_NBL_FAIL_SUCCESS, //corresponds to NDIS_STATUS_SUCCESS,
     //The size of the data in some NET_BUFFER structures associated with this NET_BUFFER_LIST structure was too large for the underlying NIC.
     OVS_NBL_FAIL_LENGTH, //corresponds to NDIS_STATUS_INVALID_LENGTH,

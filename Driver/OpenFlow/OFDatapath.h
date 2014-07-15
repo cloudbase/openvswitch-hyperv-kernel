@@ -23,7 +23,8 @@ limitations under the License.
 
 typedef struct _OVS_FLOW_TABLE OVS_FLOW_TABLE;
 
-typedef struct _OVS_DATAPATH_STATS {
+typedef struct _OVS_DATAPATH_STATS
+{
     UINT64 flowTableMatches;
     UINT64 flowTableMissed;
     //i.e. lost = not sent to usr space

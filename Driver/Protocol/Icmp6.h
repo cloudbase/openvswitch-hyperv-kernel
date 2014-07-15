@@ -21,7 +21,11 @@ limitations under the License.
 #include "Ipv6.h"
 #include "Ethernet.h"
 
-enum { OVS_ICMP6_ND_NEIGHBOR_SOLICITATION = 135, OVS_ICMP6_ND_NEIGHBOR_ADVERTISMENT = 136 };
+enum
+{
+    OVS_ICMP6_ND_NEIGHBOR_SOLICITATION = 135,
+    OVS_ICMP6_ND_NEIGHBOR_ADVERTISMENT = 136
+};
 
 //NEIGHBOR SOLICITATION
 /*
@@ -44,7 +48,8 @@ enum { OVS_ICMP6_ND_NEIGHBOR_SOLICITATION = 135, OVS_ICMP6_ND_NEIGHBOR_ADVERTISM
 + -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
 */
 
-typedef struct _OVS_ICMP6_NEIGHBOR_SOLICITATION {
+typedef struct _OVS_ICMP6_NEIGHBOR_SOLICITATION
+{
     BYTE          type;
     BYTE          code;
     UINT16        checksum;
@@ -88,7 +93,8 @@ C_ASSERT(sizeof(OVS_ICMP6_NEIGHBOR_SOLICITATION) == 24);
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 */
 
-typedef struct _OVS_ICMP6_NEIGHBOR_ADVERTISMENT {
+typedef struct _OVS_ICMP6_NEIGHBOR_ADVERTISMENT
+{
     BYTE        type;
     BYTE        code;
     UINT16      checksum;
@@ -131,7 +137,8 @@ C_ASSERT(sizeof(OVS_ICMP6_NEIGHBOR_SOLICITATION) == 24);
 
 minimum Ipv6 MTU: 1280 (RFC2460)
 */
-typedef struct _OVS_ICMP6_PACKET_TOO_BIG {
+typedef struct _OVS_ICMP6_PACKET_TOO_BIG
+{
     BYTE          type;
     BYTE          code;
     UINT16        checksum;
@@ -146,16 +153,22 @@ C_ASSERT(sizeof(OVS_ICMP6_PACKET_TOO_BIG) == 48);
 
 /***********************************************************/
 
-typedef enum { OVS_ICMP6_ND_OPTION_SOURCE_LINK_ADDRESS = 1, OVS_ICMP6_ND_OPTION_TARGET_LINK_ADDRESS = 2, } OVS_ICMP6_ND_OPTION_TYPE;
+typedef enum
+{
+    OVS_ICMP6_ND_OPTION_SOURCE_LINK_ADDRESS = 1,
+    OVS_ICMP6_ND_OPTION_TARGET_LINK_ADDRESS = 2
+} OVS_ICMP6_ND_OPTION_TYPE;
 
-typedef struct _OVS_ICMP6_ND_OPTION {
+typedef struct _OVS_ICMP6_ND_OPTION
+{
     BYTE type;
     BYTE length;
 }OVS_ICMP6_ND_OPTION, *POVS_ICMP6_ND_OPTION;
 
 C_ASSERT(sizeof(OVS_ICMP6_ND_OPTION) == 2);
 
-typedef struct _OVS_ICMP6_ND_OPTION_LINK_ADDRESS {
+typedef struct _OVS_ICMP6_ND_OPTION_LINK_ADDRESS
+{
     //1 for Source Link-layer Address
     //2 for Target Link - layer Address
     BYTE type;

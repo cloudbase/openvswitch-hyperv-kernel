@@ -45,26 +45,36 @@ typedef struct _OVS_TRANSPORT_PSEUDO_HEADER_IPV4 OVS_TRANSPORT_PSEUDO_HEADER_IPV
 // 3168 redefine the unused 2 bits in the traffic class octet as used by
 // ECN.
 //
-typedef struct _OVS_IPV4_HEADER {
-    union {
+typedef struct _OVS_IPV4_HEADER
+{
+    union
+    {
         UINT8 VersionAndHeaderLength;   // Version and header length.
-        struct {
+        struct
+        {
             UINT8 HeaderLength : 4;
             UINT8 Version : 4;
         };
     };
-    union {
+
+    union
+    {
         UINT8 TypeOfServiceAndEcnField; // Type of service & ECN (RFC 3168).
-        struct {
+        struct
+        {
             UINT8 EcnField : 2;
             UINT8 TypeOfService : 6;
         };
     };
+
     UINT16 TotalLength;                 // Total length of datagram.
     UINT16 Identification;
-    union {
+
+    union
+    {
         UINT16 FlagsAndOffset;          // Flags and fragment offset.
-        struct {
+        struct
+        {
             UINT16 DontUse1 : 5;        // High bits of fragment offset.
             UINT16 MoreFragments : 1;
             UINT16 DontFragment : 1;
@@ -83,7 +93,16 @@ C_ASSERT(sizeof(OVS_IPV4_HEADER) == 20);
 
 /*********************************/
 
-enum { OVS_IPPROTO_ICMP = 0x01, OVS_IPPROTO_IGMP = 0x02, OVS_IPPROTO_TCP = 0x06, OVS_IPPROTO_UDP = 0x11, OVS_IPPROTO_GRE = 0x2F, OVS_IPPROTO_SCTP = 0x84 };
+enum
+{
+    OVS_IPPROTO_ICMP = 0x01,
+    OVS_IPPROTO_IGMP = 0x02,
+    OVS_IPPROTO_TCP = 0x06,
+    OVS_IPPROTO_UDP = 0x11,
+    OVS_IPPROTO_GRE = 0x2F,
+    OVS_IPPROTO_SCTP = 0x84
+};
+
 enum { OVS_IPPROTO_VERSION_4 = 0x04 };
 
 /*********************************/

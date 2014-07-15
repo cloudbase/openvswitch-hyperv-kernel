@@ -19,7 +19,8 @@ limitations under the License.
 #include "precomp.h"
 #include "Ethernet.h"
 
-typedef struct _OVS_ARP_HEADER {
+typedef struct _OVS_ARP_HEADER
+{
     UINT16      hardwareType;
     UINT16      protocolType;
 

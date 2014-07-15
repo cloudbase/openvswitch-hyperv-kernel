@@ -31,7 +31,8 @@ limitations under the License.
 #include "PersistentPort.h"
 #include "Error.h"
 
-typedef struct _PORT_FETCH_CTXT{
+typedef struct _PORT_FETCH_CTXT
+{
     OVS_MESSAGE* pReplyMsg;
     UINT sequence;
     UINT dpIfIndex;

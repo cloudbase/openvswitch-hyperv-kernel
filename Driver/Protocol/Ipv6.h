@@ -28,7 +28,8 @@ typedef struct _OVS_TRANSPORT_PSEUDO_HEADER_IPV6 OVS_TRANSPORT_PSEUDO_HEADER_IPV
 
 /******************************/
 
-typedef struct _OVS_IPV6_HEADER {
+typedef struct _OVS_IPV6_HEADER
+{
     //4 bits version; 8 traffic class (= 6 traffic class + 2 ECN); 20 flow label
     UINT32        vcf;// 4 bits Version, 8 Traffic Class, 20 Flow Label.
 
@@ -60,7 +61,8 @@ typedef struct _OVS_IPV6_ROUTING_HEADER
 
 /*********************************/
 
-enum {
+enum
+{
     OVS_IPV6_EXTH_HOPBYHOP = 0,
     OVS_IPV6_EXTH_ICMP4 = 1,
     OVS_IPV6_EXTH_IGMP4 = 2,

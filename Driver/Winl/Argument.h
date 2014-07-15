@@ -21,7 +21,8 @@ limitations under the License.
 
 #define STRUCT_FIELD_SIZE(structType, fieldName) sizeof(((structType*)0)->fieldName)
 
-typedef struct _OVS_ARGUMENT {
+typedef struct _OVS_ARGUMENT
+{
     UINT16 length;
     UINT16 type;
 
@@ -44,7 +45,8 @@ C_ASSERT(sizeof(OVS_ARGUMENT) == 16);
 
 typedef struct _OVS_ARGUMENT OVS_ATTRIBUTE;
 
-typedef struct _OVS_ARGUMENT_GROUP {
+typedef struct _OVS_ARGUMENT_GROUP
+{
     //the number of args in the group
     UINT16 count;
     //the total size of the group: sizeof each OVS_ARGUMENT + length of allocated "data" of each arg
@@ -59,7 +61,8 @@ typedef struct _OVS_ARGUMENT_GROUP {
 C_ASSERT(OVS_ARGUMENT_GROUP_HEADER_SIZE == 4);
 C_ASSERT(sizeof(OVS_ARGUMENT_GROUP) == 16);
 
-typedef struct _OVS_ARGUMENT_SLIST_ENTRY {
+typedef struct _OVS_ARGUMENT_SLIST_ENTRY
+{
     OVS_ARGUMENT* pArg;
     struct _OVS_ARGUMENT_SLIST_ENTRY* pNext;
 } OVS_ARGUMENT_SLIST_ENTRY;

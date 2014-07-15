@@ -24,7 +24,8 @@ limitations under the License.
 typedef struct _OVS_ARGUMENT_GROUP OVS_ARGUMENT_GROUP;
 typedef struct _OVS_MESSAGE OVS_MESSAGE;
 
-typedef enum {
+typedef enum
+{
     OVS_OFPORT_TYPE_INVALID = 0,
 
     //a specific physical port, i.e. one that has a port id (vm port, external)
@@ -57,7 +58,8 @@ typedef enum {
 C_ASSERT(sizeof(OVS_OFPORT_TYPE) == sizeof(UINT));
 
 //NOTE: here it's OVS virtual port (OpenFlow port), not Hyper-V virtual port!
-typedef struct _OVS_OFPORT_STATS{
+typedef struct _OVS_OFPORT_STATS
+{
     UINT64   packetsReceived;
     UINT64   packetsSent;
     UINT64   bytesReceived;
@@ -68,7 +70,8 @@ typedef struct _OVS_OFPORT_STATS{
     UINT64   droppedOnSend;
 }OVS_OFPORT_STATS, *POVS_OFPORT_STATS;
 
-typedef struct _OVS_WINL_PORT {
+typedef struct _OVS_WINL_PORT
+{
     UINT32            number;
     OVS_OFPORT_TYPE   type;
     const char*       name;
@@ -82,7 +85,8 @@ typedef struct _OVS_WINL_PORT {
     OVS_ARGUMENT_GROUP* pOptions;
 }OVS_WINL_PORT, *POVS_WINL_PORT;
 
-typedef struct _OVS_TUNNELING_PORT_OPTIONS {
+typedef struct _OVS_TUNNELING_PORT_OPTIONS
+{
     //OVS_TUNNEL_OPTIONS_HAVE_*
     DWORD   optionsFlags;
 

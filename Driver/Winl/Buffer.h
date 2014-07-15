@@ -18,7 +18,8 @@ limitations under the License.
 
 #include "precomp.h"
 
-typedef struct _OVS_BUFFER {
+typedef struct _OVS_BUFFER
+{
     VOID*    p;
     UINT     size;
     UINT     offset;

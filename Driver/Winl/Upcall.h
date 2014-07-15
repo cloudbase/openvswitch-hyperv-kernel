@@ -21,7 +21,8 @@ limitations under the License.
 typedef struct _OVS_OFPACKET_INFO OVS_OFPACKET_INFO;
 typedef struct _OVS_ARGUMENT OVS_ARGUMENT;
 
-typedef struct _OVS_UPCALL_INFO {
+typedef struct _OVS_UPCALL_INFO
+{
     UINT8 command;
     const OVS_OFPACKET_INFO* pPacketInfo;
     const OVS_ARGUMENT* pUserData;

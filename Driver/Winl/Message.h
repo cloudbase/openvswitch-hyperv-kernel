@@ -32,7 +32,8 @@ typedef struct _OVS_BUFFER OVS_BUFFER;
 
 #define OVS_VPORT_MCGROUP 33
 
-typedef enum _OVS_MESSAGE_TARGET_TYPE {
+typedef enum _OVS_MESSAGE_TARGET_TYPE
+{
     OVS_MESSAGE_TARGET_RTM_GETROUTE = 0,
     OVS_MESSAGE_TARGET_NO_OPERATION = 1,
     OVS_MESSAGE_TARGET_ERROR = 2,
@@ -53,7 +54,8 @@ typedef enum _OVS_MESSAGE_TARGET_TYPE {
     OVS_MESSAGE_TARGET_INVALID = 0xFFFF
 }OVS_MESSAGE_TARGET_TYPE;
 
-typedef enum _OVS_MESSAGE_COMMAND_TYPE {
+typedef enum _OVS_MESSAGE_COMMAND_TYPE
+{
     OVS_MESSAGE_COMMAND_INVALID,
     OVS_MESSAGE_COMMAND_NEW,
     OVS_MESSAGE_COMMAND_DELETE,
@@ -68,7 +70,8 @@ typedef enum _OVS_MESSAGE_COMMAND_TYPE {
     OVS_MESSAGE_COMMAND_PACKET_UPCALL_EXECUTE
 }OVS_MESSAGE_COMMAND_TYPE;
 
-typedef struct _OVS_NLMSGHDR {
+typedef struct _OVS_NLMSGHDR
+{
     //length of the message, including header
     UINT32 length;
 
@@ -84,13 +87,15 @@ typedef struct _OVS_NLMSGHDR {
 
 C_ASSERT(16 == sizeof(OVS_NLMSGHDR));
 
-typedef struct _OVS_NL_ATTRIBUTE{
+typedef struct _OVS_NL_ATTRIBUTE
+{
     UINT16 length;
     UINT16 type;
 }OVS_NL_ATTRIBUTE;
 
 //message from / to the user space
-typedef struct _OVS_MESSAGE {
+typedef struct _OVS_MESSAGE
+{
     OVS_NLMSGHDR;
 
     //new / delete / get / set /dump / error
@@ -109,7 +114,8 @@ typedef struct _OVS_MESSAGE {
 C_ASSERT(OVS_MESSAGE_HEADER_SIZE == 24);
 
 //message to the userspace
-typedef struct _OVS_MESSAGE_ERROR {
+typedef struct _OVS_MESSAGE_ERROR
+{
     OVS_NLMSGHDR;
 
     int error;
@@ -119,20 +125,23 @@ typedef struct _OVS_MESSAGE_ERROR {
 C_ASSERT(sizeof(OVS_MESSAGE_ERROR) == 36);
 
 //message to the userspace
-typedef struct _OVS_MESSAGE_DONE {
+typedef struct _OVS_MESSAGE_DONE
+{
     OVS_NLMSGHDR;
 }OVS_MESSAGE_DONE, *POVS_MESSAGE_DONE;
 
 C_ASSERT(sizeof(OVS_MESSAGE_DONE) == 16);
 
-typedef struct _OVS_MESSAGE_ROUTE_TABLE {
+typedef struct _OVS_MESSAGE_ROUTE_TABLE
+{
     OVS_NLMSGHDR;
 
     //e.g. AF_INET
     BYTE socketFamily;
 }OVS_MESSAGE_ROUTE_TABLE;
 
-typedef struct _OVS_MESSAGE_MULTICAST {
+typedef struct _OVS_MESSAGE_MULTICAST
+{
     OVS_NLMSGHDR;
 
     //if true, join; if else, leave
@@ -141,7 +150,8 @@ typedef struct _OVS_MESSAGE_MULTICAST {
 }OVS_MESSAGE_MULTICAST;
 
 //message from the user space
-typedef struct _OVS_MESSAGE_SET_FILE_PID {
+typedef struct _OVS_MESSAGE_SET_FILE_PID
+{
     OVS_NLMSGHDR;
 }OVS_MESSAGE_SET_FILE_PID, *POVS_MESSAGE_SET_FILE_PID;
 

@@ -25,19 +25,22 @@ limitations under the License.
 
 /*****************************************/
 
-typedef struct _OVS_BUFFER_ENTRY {
+typedef struct _OVS_BUFFER_ENTRY
+{
     LIST_ENTRY listEntry;
     OVS_BUFFER buffer;
 }OVS_BUFFER_ENTRY;
 
-typedef struct _OVS_UNICAST_BUFFER_ENTRY {
+typedef struct _OVS_UNICAST_BUFFER_ENTRY
+{
     LIST_ENTRY listEntry;
     UINT portId;
     OVS_BUFFER buffer;
     const FILE_OBJECT* pFileObject;
 }OVS_UNICAST_BUFFER_ENTRY, *POVS_UNICAST_BUFFER_ENTRY;
 
-typedef struct _OVS_MULTICAST_BUFFER_ENTRY {
+typedef struct _OVS_MULTICAST_BUFFER_ENTRY
+{
     LIST_ENTRY listEntry;
     UINT32 groupId;
     //TODO: we need a queue of buffers for multicast / notifications
@@ -48,7 +51,8 @@ typedef struct _OVS_MULTICAST_BUFFER_ENTRY {
     //NOTE: each multicast group has port Ids -- should we consider them when working with groupId-s?
 } OVS_MULTICAST_BUFFER_ENTRY;
 
-typedef struct _OVS_QUEUED_BUFFER_ENTRY {
+typedef struct _OVS_QUEUED_BUFFER_ENTRY
+{
     LIST_ENTRY    listEntry;
     UINT          portId;
 
@@ -56,7 +60,8 @@ typedef struct _OVS_QUEUED_BUFFER_ENTRY {
     UINT          count;
 }OVS_QUEUED_BUFFER_ENTRY;
 
-typedef struct _OVS_DEVICE_FILE_INFO {
+typedef struct _OVS_DEVICE_FILE_INFO
+{
     const FILE_OBJECT* pFileObject;
     //TRUE = a request (write) was set, so a unicast reply (read) is expected; else, a read will search a multicast (notify) buffer
     //for 'send packet to userspace', it should be FALSE.
@@ -66,7 +71,8 @@ typedef struct _OVS_DEVICE_FILE_INFO {
     UINT               groupId;
 }OVS_DEVICE_FILE_INFO;
 
-typedef struct _OVS_DEVICE_FILE_INFO_ENTRY {
+typedef struct _OVS_DEVICE_FILE_INFO_ENTRY
+{
     LIST_ENTRY listEntry;
     OVS_DEVICE_FILE_INFO info;
 }OVS_DEVICE_FILE_INFO_ENTRY;
@@ -398,7 +404,8 @@ OVS_ERROR _BufferCtl_ReadUnicast_Unsafe(_Inout_ OVS_BUFFER* pBuffer, _Inout_ VOI
         bytesRead = min(toRead, bytesLeft);
 
         //copy from our data to device io buffer
-        __try {
+        __try
+        {
             RtlCopyMemory(pOutBuf, srcBuffer, bytesRead);
         }
         __except (EXCEPTION_EXECUTE_HANDLER)
