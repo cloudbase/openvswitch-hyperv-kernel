@@ -74,7 +74,8 @@ OVS_ERROR Flow_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         OVS_ARGUMENT_GROUP* pOriginalGroup = pFlowActionGroupArg->data;
 		
 		pActions = Actions_Create();
-		if (NULL == pActions) {
+		if (NULL == pActions)
+	    {
 			DEBUGP(LOG_ERROR, "flow create fail: create actions!\n");
 			return OVS_ERROR_INVAL;
 		}
@@ -312,7 +313,8 @@ OVS_ERROR Flow_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         ApplyMaskToPacketInfo(&maskedPacketInfo, &packetInfo, &flowMask);
 
 		pActions = Actions_Create();
-		if (NULL == pActions) {
+		if (NULL == pActions)
+	    {
 			DEBUGP(LOG_ERROR, "flow set fail: actions create!\n");
 			return OVS_ERROR_INVAL;
 		}
@@ -425,7 +427,9 @@ Cleanup:
     if (error != OVS_ERROR_NOERROR)
     {
         if (pActions)
+		{
 			Actions_DestroyNow_Unsafe(pActions);
+		}
     }
 
     return error;

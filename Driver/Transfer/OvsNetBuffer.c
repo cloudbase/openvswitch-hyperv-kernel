@@ -58,7 +58,8 @@ BOOLEAN NblIsLso(_In_ NET_BUFFER_LIST* pNbl)
             OVS_CHECK(0);
         }
     }
-    else {
+    else
+    {
         return FALSE;//no LSO
     }
 
@@ -304,7 +305,8 @@ OVS_NET_BUFFER* ONB_CreateFromBuffer(_In_ const OVS_BUFFER* pBuffer, ULONG addSi
     OVS_CHECK(!pBuffer->offset);
 
 	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
-	if (!pSwitchInfo) {
+	if (!pSwitchInfo)
+	{
 		return NULL;
 	}
 
@@ -381,7 +383,8 @@ OVS_NET_BUFFER* ONB_CreateFromBuffer(_In_ const OVS_BUFFER* pBuffer, ULONG addSi
     OVS_CHECK(buffer);
 
 Cleanup:
-	if (pSwitchInfo) {
+	if (pSwitchInfo)
+	{
 		OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
 	}
 
@@ -407,7 +410,8 @@ OVS_NET_BUFFER* ONB_Create(ULONG bufSize)
 	BOOLEAN ok = TRUE;
 
 	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
-	if (!pSwitchInfo) {
+	if (!pSwitchInfo)
+	{
 		return NULL;
 	}
 
@@ -481,7 +485,8 @@ OVS_NET_BUFFER* ONB_Create(ULONG bufSize)
     OVS_CHECK(buffer);
 
 Cleanup:
-	if (pSwitchInfo) {
+	if (pSwitchInfo)
+	{
 		OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
 	}
 
@@ -538,7 +543,8 @@ NET_BUFFER_LIST* ONB_CreateNblFromNb(_In_ NET_BUFFER* pNb, USHORT contextSize)
 	OVS_SWITCH_INFO* pSwitchInfo = NULL;
 
 	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
-	if (!pSwitchInfo) {
+	if (!pSwitchInfo)
+	{
 		return NULL;
 	}
 
@@ -565,7 +571,8 @@ NET_BUFFER_LIST* ONB_CreateNblFromNb(_In_ NET_BUFFER* pNb, USHORT contextSize)
 	}
 
 //Cleanup:
-	if (pSwitchInfo) {
+	if (pSwitchInfo)
+	{
 		OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
 	}
 
@@ -1056,7 +1063,8 @@ NET_BUFFER_LIST* ONB_FragmentBuffer_Ipv4(_Inout_ OVS_NET_BUFFER* pOvsNb, ULONG m
 		pCurNb = pCurNb->Next;
 	}
 
-	if (pOptionsBuffer) {
+	if (pOptionsBuffer)
+	{
 		KFree(pOptionsBuffer);
 	}
 
@@ -1085,7 +1093,8 @@ BOOLEAN ONB_OriginateArpRequest(const BYTE targetIp[4])
     ULONG bufSize = sizeof(OVS_ETHERNET_HEADER) + sizeof(OVS_ARP_HEADER);
 
 	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
-	if (!pSwitchInfo) {
+	if (!pSwitchInfo)
+	{
 		DEBUGP(LOG_ERROR, "failed to originate arp request: the extension appears not to be attached to any switch!\n");
 		return FALSE;
 	}
@@ -1160,10 +1169,14 @@ BOOLEAN ONB_NblEqual(_In_ NET_BUFFER_LIST* pLhsNbl, _In_ NET_BUFFER_LIST* pRhsNb
 	ULONG nbLen = 0;
 
 	if (memcmp(pLhsNbl, pRhsNbl, sizeof(NET_BUFFER_LIST)))
+	{
 		return FALSE;
+	}
 
 	if (memcmp(NET_BUFFER_LIST_FIRST_NB(pLhsNbl), NET_BUFFER_LIST_FIRST_NB(pRhsNbl), sizeof(NET_BUFFER)))
+	{
 		return FALSE;
+	}
 
 	pNb = NET_BUFFER_LIST_FIRST_NB(pLhsNbl);
 	nbLen = NET_BUFFER_DATA_LENGTH(pNb);

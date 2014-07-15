@@ -365,7 +365,9 @@ VOID HandleChecksumOffload(_In_ OVS_NET_BUFFER* pOvsNb, BOOLEAN isFromExternal, 
 	//NOTE: pChecksumOffloadInfo has valid values for checksum offloading (i.e. pChecksumOffloadInfo->Transmit) only when the src port id != external
 	//when src is external, we have pChecksumOffloadInfo->Receive, which does not concern us
 	if (isFromExternal)
+	{
 		return;
+	}
 
 	netBuffer = ONB_GetData(pOvsNb);
 	pEthHeader = GetEthernetHeader(netBuffer, &ethSize);
@@ -377,10 +379,14 @@ VOID HandleChecksumOffload(_In_ OVS_NET_BUFFER* pOvsNb, BOOLEAN isFromExternal, 
     pChecksumOffloadInfo = GetChecksumOffloadInfo(pOvsNb->pNbl);
 
 	if (pChecksumOffloadInfo->Value == 0)
+	{
 		return;
+	}
 
 	if (!pChecksumOffloadInfo->Transmit.IsIPv4 && !pChecksumOffloadInfo->Transmit.IsIPv6)
+	{
 		return;
+	}
 
 	netHeader = AdvanceEthernetHeader(pEthHeader, ethSize);
 

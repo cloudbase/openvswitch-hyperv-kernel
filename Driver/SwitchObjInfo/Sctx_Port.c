@@ -28,7 +28,8 @@ OVS_PORT_LIST_ENTRY* Sctx_FindPortById_Unsafe(_In_ const OVS_GLOBAL_FORWARD_INFO
         goto Cleanup;
     }
 
-    do {
+    do
+    {
         pPortEntry = CONTAINING_RECORD(pCurEntry, OVS_PORT_LIST_ENTRY, listEntry);
 
         if (pPortEntry->portId == portId)
@@ -132,7 +133,8 @@ OVS_PORT_LIST_ENTRY* Sctx_FindPortBy_Unsafe(_In_ OVS_GLOBAL_FORWARD_INFO* pForwa
         goto Cleanup;
     }
 
-    do {
+    do
+    {
         pPortEntry = CONTAINING_RECORD(pCurEntry, OVS_PORT_LIST_ENTRY, listEntry);
 
         if ((*Predicate)(i, pContext, pPortEntry))

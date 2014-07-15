@@ -397,13 +397,15 @@ VOID DbgPrintMdl(MDL* pMdl)
     buffer = (BYTE*)MmGetSystemAddressForMdlSafe(pMdl, NormalPagePriority);
     OVS_CHECK(buffer);
 
-    /*for (i = 0; i < MmGetMdlByteCount(pMdl); ++i) {
-        if (i % 16 == 0) {
+    /*for (i = 0; i < MmGetMdlByteCount(pMdl); ++i)
+    {
+        if (i % 16 == 0)
+        {
         DEBUGP("\n");
         }
 
         DEBUGP("%02x ", buffer[i]);
-        }*/
+    }*/
 
     DEBUGP("\n--end MDL--\n");
 #endif
@@ -442,9 +444,10 @@ VOID DbgPrintNb(NET_BUFFER* pNb, LPCSTR msg)
     DEBUGP(LOG_INFO, "NB: 0x%x; data len=%d; data offset=%d; cur mdl=0x%x; cur mdl offset=%d; count mdls=%d\n", pNb,
         NET_BUFFER_DATA_LENGTH(pNb), NET_BUFFER_DATA_OFFSET(pNb), NET_BUFFER_CURRENT_MDL(pNb), NET_BUFFER_CURRENT_MDL_OFFSET(pNb), _CountMdls(pNb));
 
-    /*for (pMdl = NET_BUFFER_CURRENT_MDL(pNb); pMdl != NULL; pMdl = pMdl->Next) {
+    /*for (pMdl = NET_BUFFER_CURRENT_MDL(pNb); pMdl != NULL; pMdl = pMdl->Next)
+    {
         DbgPrintMdl(pMdl);
-        }*/
+    }*/
 
     //BYTE* NdisGetDataBuffer(pNb, NET_BUFFER_DATA_LENGTH(pNb), 0, 0, 1);
 
@@ -531,7 +534,8 @@ VOID DbgPrintNbl(NET_BUFFER_LIST* pNbl, LPCSTR msg)
 #else
     NET_BUFFER* pNb = NULL;
 
-    if (msg) {
+    if (msg)
+    {
         DEBUGP(msg);
         DEBUGP("----------");
     }
@@ -539,7 +543,8 @@ VOID DbgPrintNbl(NET_BUFFER_LIST* pNbl, LPCSTR msg)
     DEBUGP("NBL: 0x%x; context=0x%x; context data start=0x%x; context data size=%d\n; count nbs:%d\n", pNbl,
         pNbl->Context, NET_BUFFER_LIST_CONTEXT_DATA_START(pNbl), NET_BUFFER_LIST_CONTEXT_DATA_SIZE(pNbl), _CountNbs(pNbl));
 
-    for (pNb = NET_BUFFER_LIST_FIRST_NB(pNbl); pNb != NULL; pNb = NET_BUFFER_NEXT_NB(pNb)) {
+    for (pNb = NET_BUFFER_LIST_FIRST_NB(pNbl); pNb != NULL; pNb = NET_BUFFER_NEXT_NB(pNb))
+    {
         DbgPrintNb(pNb, NULL);
     }
 
@@ -569,7 +574,8 @@ VOID DbgPrintNblList(NET_BUFFER_LIST* pNbl)
 {
     DEBUGP(LOG_LOUD, "NBL list: ");
 
-    while (pNbl != NULL) {
+    while (pNbl != NULL)
+    {
         DEBUGP(LOG_LOUD, "%p -> ", pNbl);
         pNbl = NET_BUFFER_LIST_NEXT_NBL(pNbl);
     }
@@ -676,7 +682,8 @@ void DbgPrintArp(OVS_ARP_HEADER* pArpHeader)
 {
     OVS_CHECK(pArpHeader);
 
-    if (RtlUshortByteSwap(pArpHeader->operation) == 1) {
+    if (RtlUshortByteSwap(pArpHeader->operation) == 1)
+    {
         DEBUGP(LOG_INFO, "ARP request: from mac = %02x-%02x-%02x-%02x-%02x-%02x; ip = %d.%d.%d.%d: who has %d.%d.%d.%d?\n",
             pArpHeader->senderHardwareAddress[0],
             pArpHeader->senderHardwareAddress[1],
@@ -758,14 +765,18 @@ BOOLEAN VerifyProtocolHeader(BYTE* buffer, ULONG* pLength, UINT16* pEthType)
 
 		nextHeader = VerifyIpv4Frame(buffer, pLength, &protoType);
 		if (!nextHeader)
+		{
 			return FALSE;
+		}
 
 		offset = Ipv4_GetFragmentOffset(pIpv4Header);
 
 		if (offset == 0)
 		{
 			if (!_VerifyTransportHeader(nextHeader, pLength, *pEthType, protoType))
+			{
 				return FALSE;
+			}
 		}
 	}
         break;
@@ -773,10 +784,14 @@ BOOLEAN VerifyProtocolHeader(BYTE* buffer, ULONG* pLength, UINT16* pEthType)
     case OVS_ETHERTYPE_IPV6:
         nextHeader = VerifyIpv6Frame(buffer, pLength, &protoType);
         if (!nextHeader)
+		{
             return FALSE;
+		}
 
         if (!_VerifyTransportHeader(nextHeader, pLength, *pEthType, protoType))
+		{
             return FALSE;
+		}
 
         break;
 
@@ -892,7 +907,9 @@ BOOLEAN VerifyNetBuffer(VOID* buffer, ULONG length)
     nextHeader = VerifyEthernetFrame(buffer, &sizeLeft, &ethType);
 
     if (!nextHeader)
+	{
         return FALSE;
+	}
 
     return VerifyProtocolHeader(nextHeader, &length, &ethType);
 }

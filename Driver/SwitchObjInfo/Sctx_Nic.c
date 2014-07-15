@@ -95,7 +95,8 @@ OVS_NIC_LIST_ENTRY* Sctx_FindNicByMacAddressUnsafe(_In_ const OVS_GLOBAL_FORWARD
         goto Cleanup;
     }
 
-    do {
+    do
+    {
         pNicEntry = CONTAINING_RECORD(pCurEntry, OVS_NIC_LIST_ENTRY, listEntry);
 
         if (RtlEqualMemory(pMacAddress, pNicEntry->macAddress, sizeof(pNicEntry->macAddress)))
@@ -125,7 +126,8 @@ BOOLEAN Sctx_ForEachNic_Unsafe(_In_ const OVS_GLOBAL_FORWARD_INFO* pForwardInfo,
         goto Cleanup;
     }
 
-    do {
+    do
+    {
         pNicEntry = CONTAINING_RECORD(pCurEntry, OVS_NIC_LIST_ENTRY, listEntry);
 
         if (!(*Action)(i, pNicEntry, pContext))
@@ -158,7 +160,8 @@ BOOLEAN Sctx_CForEachNic_Unsafe(_In_ const OVS_GLOBAL_FORWARD_INFO* pForwardInfo
         goto Cleanup;
     }
 
-    do {
+    do
+    {
         pNicEntry = CONTAINING_RECORD(pCurEntry, OVS_NIC_LIST_ENTRY, listEntry);
 
         if (!(*Action)(i, pNicEntry, pContext))
@@ -190,7 +193,8 @@ const OVS_NIC_LIST_ENTRY* Sctx_CFindNic_Unsafe(_In_ const OVS_GLOBAL_FORWARD_INF
         goto Cleanup;
     }
 
-    do {
+    do
+    {
         pNicEntry = CONTAINING_RECORD(pCurEntry, OVS_NIC_LIST_ENTRY, listEntry);
 
         if ((*Predicate)(i, pNicEntry))
@@ -221,7 +225,8 @@ OVS_NIC_LIST_ENTRY* Sctx_FindNicBy_Unsafe(_In_ OVS_GLOBAL_FORWARD_INFO* pForward
         goto Cleanup;
     }
 
-    do {
+    do
+    {
         pNicEntry = CONTAINING_RECORD(pCurEntry, OVS_NIC_LIST_ENTRY, listEntry);
 
         if ((*Predicate)(i, pContext, pNicEntry))
@@ -252,7 +257,8 @@ OVS_NIC_LIST_ENTRY* Sctx_FindNicByPortIdAndNicIndex_Unsafe(_In_ const OVS_GLOBAL
         goto Cleanup;
     }
 
-    do {
+    do
+    {
         pNicEntry = CONTAINING_RECORD(pCurEntry, OVS_NIC_LIST_ENTRY, listEntry);
 
         if (pNicEntry->portId == portId && pNicEntry->nicIndex == nicIndex)
@@ -280,7 +286,8 @@ OVS_NIC_LIST_ENTRY* Sctx_FindNicByPortId_Unsafe(_In_ const OVS_GLOBAL_FORWARD_IN
         goto Cleanup;
     }
 
-    do {
+    do
+    {
         pNicEntry = CONTAINING_RECORD(pCurEntry, OVS_NIC_LIST_ENTRY, listEntry);
 
         if (pNicEntry->portId == portId)

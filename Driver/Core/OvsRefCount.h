@@ -108,7 +108,9 @@ static VOID __inline RefCount_Dereference(VOID* pObj)
 	OVS_REF_COUNT* pRefCount = pObj;
 
 	if (!pObj)
-		return;	
+	{
+		return;
+	}
 
 	OVS_CHECK(pRefCount->Destroy);
 
@@ -149,7 +151,8 @@ static VOID __inline RefCount_Dereference(VOID* pObj)
 #endif
 	--pRefCount->refCount;
 
-	if (pRefCount->refCount == 0 && pRefCount->deletionPending) {
+	if (pRefCount->refCount == 0 && pRefCount->deletionPending)
+	{
 		pRefCount->Destroy(pObj);
 	}
 
@@ -167,7 +170,8 @@ static __inline VOID* RefCount_Reference(VOID* pObj, const char* funcName)
 
 		NdisAcquireRWLockWrite(g_pRefRwLock, &lockState, 0);
 
-		if (pRefCount->deletionPending) {
+		if (pRefCount->deletionPending)
+		{
 			pObj = NULL;
 		}
 
@@ -241,11 +245,13 @@ static __inline VOID RefCount_Destroy(VOID* pObj)
 
 		NdisAcquireRWLockWrite(g_pRefRwLock, &lockState, 0);
 
-		if (pRefCount->refCount > 0) {
+		if (pRefCount->refCount > 0)
+		{
 			pRefCount->deletionPending = TRUE;
 		}
 
-		else {
+		else
+		{
 			pRefCount->Destroy(pObj);
 		}
 

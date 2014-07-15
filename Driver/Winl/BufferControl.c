@@ -197,7 +197,9 @@ static OVS_DEVICE_FILE_INFO_ENTRY* _FindDeviceFileInfo_Unsafe(_In_ const FILE_OB
     LIST_FOR_EACH(OVS_DEVICE_FILE_INFO_ENTRY, pEntry, &g_deviceFileInfoList)
     {
         if (pEntry->info.pFileObject == pFileObject)
+        {
             return pEntry;
+        }
     }
 
     return NULL;
@@ -213,7 +215,9 @@ static OVS_DEVICE_FILE_INFO_ENTRY* _FindDeviceFileInfoByPortId_Unsafe(UINT portI
     LIST_FOR_EACH(OVS_DEVICE_FILE_INFO_ENTRY, pEntry, &g_deviceFileInfoList)
     {
         if (pEntry->info.portId == portId)
+		{
             return pEntry;
+		}
     }
 
     return NULL;
@@ -287,7 +291,9 @@ BOOLEAN _RemoveMulticastBuffer_Unsafe(OVS_DEVICE_FILE_INFO* pFileInfo)
     else
     {
         if (IsBufferEmpty(&pBufferEntry->buffer))
+		{
             FreeBufferData(&pBufferEntry->buffer);
+		}
 
         RemoveEntryList(&pBufferEntry->listEntry);
 
@@ -765,7 +771,9 @@ OVS_ERROR BufferCtl_Read_Unsafe(const FILE_OBJECT* pFileObject, VOID* pOutBuf, U
             {
                 error = _PopBufferFromQueue_Unsafe(pQBufferEntry, &buffer);
                 if (error != OVS_ERROR_NOERROR)
+				{
                     return error;
+				}
             } while (IsBufferEmpty(&buffer));
 
             //mcast read reads without concern for offset in buffer.

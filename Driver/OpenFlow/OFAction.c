@@ -166,7 +166,9 @@ static BOOLEAN _ExecuteAction_Sample(_Inout_ OVS_NET_BUFFER *pOvsNb, _In_ const 
             UINT32 value = GET_ARG_DATA(pArg, UINT32);
 
             if ((UINT32)QuickRandom(100) >= value)
-                return 0;
+            {
+				return 0;
+            }
         }
             break;
 
@@ -321,7 +323,9 @@ BOOLEAN ExecuteActions(_Inout_ OVS_NET_BUFFER* pOvsNb, _In_ const OutputToPortCa
         case OVS_ARGTYPE_ACTION_PUSH_VLAN:
             ok = Vlan_Push(pOvsNb, pArg->data);
 			if (!ok)
+			{
 				goto Cleanup;
+			}
             break;
 
         case OVS_ARGTYPE_ACTION_POP_VLAN:
@@ -696,7 +700,9 @@ VOID Actions_DestroyNow_Unsafe(_Inout_ OVS_ACTIONS* pActions)
 	OVS_CHECK(pActions);
 
 	if (pActions->pActionGroup)
+	{
 		DestroyArgumentGroup((OVS_ARGUMENT_GROUP*)pActions->pActionGroup);
+	}
 
 	KFree(pActions);
 }
@@ -706,10 +712,13 @@ OVS_ACTIONS* Actions_Create()
 	OVS_ACTIONS* pActions = KZAlloc(sizeof(OVS_ACTIONS));
 
 	if (!pActions)
+	{
 		return NULL;
+	}
 
 	pActions->pActionGroup = AllocArgumentGroup();
-	if (!pActions->pActionGroup) {
+	if (!pActions->pActionGroup)
+    {
 		KFree(pActions);
 		return NULL;
 	}

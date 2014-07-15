@@ -85,7 +85,8 @@ typedef enum _OVS_NBL_FAIL_REASON {
 #define __OVS_STR_SAME(x) x
 
 #define __FailReasonMessageBody(reason, T) {                                                                \
-	switch (reason) {                                                                                       \
+	switch (reason)																							\
+	{                                                                                       				\
 	case OVS_NBL_FAIL_SUCCESS: return T(__OVS_NBL_FAIL_SUCCESS_MESSAGE);	                                \
 	case OVS_NBL_FAIL_LENGTH: return T(__OVS_NBL_FAIL_LENGTH_MESSAGE);	                                    \
 	case OVS_NBL_FAIL_RESOURCES: return T(__OVS_NBL_FAIL_RESOURCES_MESSAGE);	                            \

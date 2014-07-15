@@ -351,7 +351,8 @@ UINT Sctx_MakeBroadcastArrayUnsafe(_In_ const OVS_GLOBAL_FORWARD_INFO* pForwardI
         goto Cleanup;
     }
 
-    do {
+    do
+    {
         pNicEntry = CONTAINING_RECORD(pCurEntry, OVS_NIC_LIST_ENTRY, listEntry);
 
         if (!pNicEntry->connected ||

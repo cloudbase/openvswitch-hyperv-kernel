@@ -40,7 +40,8 @@ VOID DbgPrintNbFrames(NET_BUFFER* pNb, const char* msg)
 
     OVS_CHECK(buffer);
 
-    if (pEthHeader->type == RtlUshortByteSwap(OVS_ETHERTYPE_QTAG)) {
+    if (pEthHeader->type == RtlUshortByteSwap(OVS_ETHERTYPE_QTAG))
+    {
         pEthHeader += OVS_ETHERNET_VLAN_LEN;
     }
 
@@ -55,7 +56,8 @@ VOID DbgPrintNbFrames(NET_BUFFER* pNb, const char* msg)
         ReadIpv4ProtocolFrame(pIpv4Header);
     }
 
-    else if (pEthHeader->type == RtlUshortByteSwap(OVS_ETHERTYPE_IPV6)) {
+    else if (pEthHeader->type == RtlUshortByteSwap(OVS_ETHERTYPE_IPV6))
+    {
         DEBUGP_FRAMES(LOG_INFO, "ipv6\n");
     }
 

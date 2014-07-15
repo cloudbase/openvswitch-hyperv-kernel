@@ -113,13 +113,15 @@ VOID Packet_Execute(_In_ OVS_ARGUMENT_GROUP* pArgGroup, const FILE_OBJECT* pFile
     }
 
     ok = PacketInfo_Extract(ONB_GetData(pOvsNb), ONB_GetDataLength(pOvsNb), OVS_INVALID_PORT_NUMBER, &pFlow->maskedPacketInfo);
-    if (!ok) {
+    if (!ok)
+    {
         DEBUGP(LOG_ERROR, __FUNCTION__ " fail: could not extract keys from packet!\n");
         goto Cleanup;
     }
 
     ok = GetPacketContextFromPIArgs(pPacketInfoArgs, &pFlow->maskedPacketInfo);
-    if (!ok) {
+    if (!ok)
+    {
         DEBUGP(LOG_ERROR, __FUNCTION__ " fail: could not extract context keys from packet!\n");
         goto Cleanup;
     }
@@ -157,7 +159,8 @@ VOID Packet_Execute(_In_ OVS_ARGUMENT_GROUP* pArgGroup, const FILE_OBJECT* pFile
     pOvsNb->pSourceNic = &sourcePort;
 
 	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
-	if (!pSwitchInfo) {
+	if (!pSwitchInfo)
+	{
 		goto Cleanup;
 	}
 
@@ -181,7 +184,8 @@ VOID Packet_Execute(_In_ OVS_ARGUMENT_GROUP* pArgGroup, const FILE_OBJECT* pFile
 
 			//actually, pNicEntry might have been deleted, even before Packet_Execute
 			pNicEntry = Sctx_FindNicByPortId_Unsafe(pSwitchInfo->pForwardInfo, portId);
-			if (pNicEntry) {
+			if (pNicEntry)
+	        {
 				NicListEntry_To_NicInfo(pNicEntry, &sourcePort);
 			}
 
@@ -201,11 +205,13 @@ VOID Packet_Execute(_In_ OVS_ARGUMENT_GROUP* pArgGroup, const FILE_OBJECT* pFile
 
     pOvsNb->pTunnelInfo = NULL;
 
-	if (pOvsNb->pSwitchInfo) {
+	if (pOvsNb->pSwitchInfo)
+	{
 		ok = ExecuteActions(pOvsNb, OutputPacketToPort);
 	}
 
-	else {
+	else
+    {
 		ok = FALSE;
 	}
 
@@ -213,7 +219,9 @@ Cleanup:
 	OVS_REFCOUNT_DEREFERENCE(pTargetActions);
 
 	if (pFlow)
+	{
 		Flow_DestroyNow_Unsafe(pFlow);
+	}
 
 	OVS_REFCOUNT_DEREFERENCE(pDatapath);
 
@@ -230,7 +238,8 @@ Cleanup:
 
     else
     {
-		if (pSwitchInfo) {
+		if (pSwitchInfo)
+	    {
 			ONB_Destroy(pSwitchInfo, &pOvsNb);
 		}
 
@@ -258,7 +267,8 @@ static OVS_ERROR _QueueUserspacePacket(_In_ NET_BUFFER* pNb, _In_ const OVS_UPCA
 	ULONG bufLen = NET_BUFFER_DATA_LENGTH(pNb);
 
 	pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
-	if (!pDatapath) {
+	if (!pDatapath)
+	{
 		return OVS_ERROR_INVAL;
 	}
 
@@ -415,7 +425,8 @@ BOOLEAN QueuePacketToUserspace(_In_ NET_BUFFER* pNb, _In_ const OVS_UPCALL_INFO*
     BOOLEAN queuePacket = FALSE;
 #endif
 
-    if (pUpcallInfo->portId == 0) {
+    if (pUpcallInfo->portId == 0)
+    {
         ok = FALSE;
         goto Cleanup;
     }

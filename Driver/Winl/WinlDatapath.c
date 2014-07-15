@@ -158,7 +158,8 @@ OVS_ERROR Datapath_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObjec
 
 	DATAPATH_UNLOCK(pDatapath, &lockState);
 
-    if (error != OVS_ERROR_NOERROR) {
+    if (error != OVS_ERROR_NOERROR)
+    {
         goto Cleanup;
     }
 

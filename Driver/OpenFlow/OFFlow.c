@@ -68,7 +68,8 @@ VOID Flow_DestroyNow_Unsafe(OVS_FLOW* pFlow)
 
     FlowMask_DeleteReference(pFlow->pMask);
 
-	if (pFlow->pActions) {
+	if (pFlow->pActions)
+	{
 		OVS_REFCOUNT_DESTROY(pFlow->pActions);
 	}
 
@@ -727,7 +728,8 @@ void DbgPrintAllFlows()
     UINT countMsgs = 0;
 
     pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
-    if (!pDatapath) {
+    if (!pDatapath)
+	{
         return;
     }
 
@@ -767,7 +769,8 @@ void DbgPrintAllFlows()
 
 	OVS_REFCOUNT_DEREFERENCE(pFlowTable);
 
-	if (pDatapath) {
+	if (pDatapath)
+	{
 		OVS_REFCOUNT_DEREFERENCE(pDatapath);
 	}
 }

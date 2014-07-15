@@ -726,7 +726,8 @@ BOOLEAN OutputPacketToPort(OVS_NET_BUFFER* pOvsNb)
     }
 
 Cleanup:
-	if (pDatapath) {
+	if (pDatapath)
+	{
 		OVS_REFCOUNT_DEREFERENCE(pDatapath);
 	}
 
@@ -764,7 +765,8 @@ static BOOLEAN _ProcessPacket(OVS_NET_BUFFER* pOvsNb, _In_ const OVS_PERSISTENT_
 	OVS_FLOW_TABLE* pFlowTable = NULL;
 
     pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
-	if (!pDatapath) {
+	if (!pDatapath)
+	{
 		return FALSE;
 	}
 
@@ -797,7 +799,8 @@ static BOOLEAN _ProcessPacket(OVS_NET_BUFFER* pOvsNb, _In_ const OVS_PERSISTENT_
 
     nbLen = ONB_GetDataLength(pOvsNb);
 
-    if (pTunnelInfo) {
+    if (pTunnelInfo)
+    {
         packetInfo.tunnelInfo = *pTunnelInfo;
     }
 
@@ -1044,7 +1047,8 @@ static VOID _ProcessAllNblsIngress(_In_ OVS_SWITCH_INFO* pSwitchInfo, _In_ OVS_G
             isFromExternal = TRUE;
         }
 
-        else {
+        else
+        {
             isFromExternal = FALSE;
 
 			if (pForwardInfo->pInternalNic)
@@ -1052,7 +1056,9 @@ static VOID _ProcessAllNblsIngress(_In_ OVS_SWITCH_INFO* pSwitchInfo, _In_ OVS_G
 				RtlCopyMemory(managOsMac, pForwardInfo->pInternalNic->macAddress, OVS_ETHERNET_ADDRESS_LENGTH);
 
 				if (pSourceInfo->portId == pForwardInfo->pInternalNic->portId)
+				{
 					isFromInternal = TRUE;
+				}
 			}
         }
 

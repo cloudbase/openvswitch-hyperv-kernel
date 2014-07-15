@@ -36,7 +36,9 @@ VOID Datapath_DestroyNow_Unsafe(OVS_DATAPATH* pDatapath)
 	LOCK_STATE_EX lockState;
 
 	if (pDatapath->name)
+	{
 		KFree(pDatapath->name);
+	}
 
 	DATAPATH_LOCK_WRITE(pDatapath, &lockState);
 
@@ -154,7 +156,9 @@ BOOLEAN CreateMsgFromDatapath(OVS_DATAPATH* pDatapath, UINT32 sequence, UINT8 cm
 
 Cleanup:
 	if (datapathName)
+	{
 		KFree(datapathName);
+	}
 
     if (ok)
     {
@@ -200,7 +204,8 @@ BOOLEAN CreateDefaultDatapath(NDIS_HANDLE ndisFilterHandle)
     }
 
 	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
-	if (!pSwitchInfo) {
+	if (!pSwitchInfo)
+	{
 		ok = FALSE;
 		goto Cleanup;
 	}
@@ -239,7 +244,8 @@ Cleanup:
         ExFreePoolWithTag(pDatapath, g_extAllocationTag);
     }
 
-	if (pSwitchInfo) {
+	if (pSwitchInfo)
+	{
 		OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
 	}
 

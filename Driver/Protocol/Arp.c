@@ -86,7 +86,8 @@ static BYTE* _Arp_FindTableEntry_Unsafe(_In_ const BYTE ip[4])
         return NULL;
     }
 
-    do {
+    do
+    {
         OVS_ARP_TABLE_ENTRY* pArpEntry = CONTAINING_RECORD(pCurEntry, OVS_ARP_TABLE_ENTRY, listEntry);
 
         if (RtlEqualMemory(ip, pArpEntry->ip, sizeof(OVS_IPV4_ADDRESS_LENGTH)))

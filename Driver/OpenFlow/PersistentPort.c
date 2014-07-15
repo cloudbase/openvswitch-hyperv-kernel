@@ -175,13 +175,15 @@ static VOID _PersPort_SetNicAndPort_Unsafe(OVS_GLOBAL_FORWARD_INFO* pForwardInfo
 
     if (pPort->ofPortType == OVS_OFPORT_TYPE_MANAG_OS)
     {
-		if (pForwardInfo->pInternalPort) {
+		if (pForwardInfo->pInternalPort)
+        {
 			pPort->portId = pForwardInfo->pInternalPort->portId;
 			//TODO: should we use interlocked assign for OVS_PORT_LIST_ENTRY's port id? 
 			pForwardInfo->pInternalPort->ovsPortNumber = pPort->ovsPortNumber;
 		}
 
-		else {
+		else
+        {
 			pPort->portId = NDIS_SWITCH_DEFAULT_PORT_ID;
 		}
     }
@@ -198,7 +200,8 @@ static VOID _PersPort_SetNicAndPort_Unsafe(OVS_GLOBAL_FORWARD_INFO* pForwardInfo
 
 	else if (0 == strcmp(pPort->ovsPortName, externalPortName))
 	{
-		if (pForwardInfo->pExternalPort) {
+		if (pForwardInfo->pExternalPort)
+        {
 			//TODO: should we use interlockd assign for OVS_PORT_LIST_ENTRY's port id?
 			pPort->portId = pForwardInfo->pExternalPort->portId;
 			pPort->isExternal = TRUE;
@@ -223,8 +226,10 @@ static VOID _PersPort_SetNicAndPort_Unsafe(OVS_GLOBAL_FORWARD_INFO* pForwardInfo
 			pPort->portId = pPortEntry->portId;
 
 			pNicEntry = Sctx_FindNicByPortId_Unsafe(pForwardInfo, pPortEntry->portId);
-			if (pNicEntry)
-				pNicEntry->ovsPortNumber = pPort->ovsPortNumber;
+            if (pNicEntry)
+            {
+                pNicEntry->ovsPortNumber = pPort->ovsPortNumber;
+            }
 		}
     }
 
@@ -376,7 +381,8 @@ OVS_PERSISTENT_PORT* PersPort_Create_Ref(_In_opt_ const char* portName, _In_opt_
 	LOCK_STATE_EX lockState;
 
 	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
-	if (!pSwitchInfo) {
+	if (!pSwitchInfo)
+    {
 		ok = FALSE;
 		goto Cleanup;
 	}
@@ -502,7 +508,8 @@ Cleanup:
         }
     }
 
-	if (locked) {
+	if (locked)
+    {
 		PERSPORTS_UNLOCK(pPorts, &lockState);
 	}
 
@@ -534,7 +541,8 @@ OVS_PERSISTENT_PORT* PersPort_FindExternal_Ref()
 	BOOLEAN locked = FALSE;
 
 	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
-	if (!pSwitchInfo) {
+	if (!pSwitchInfo)
+    {
 		ok = FALSE;
 		goto Cleanup;
 	}
@@ -584,7 +592,8 @@ OVS_PERSISTENT_PORT* PersPort_FindExternal_Ref()
 	OVS_CHECK(countProcessed == pPorts->count);
 
 Cleanup:
-	if (locked) {
+	if (locked)
+    {
 		PERSPORTS_UNLOCK(pPorts, &lockState);
 	}
 
@@ -605,7 +614,8 @@ OVS_PERSISTENT_PORT* PersPort_FindInternal_Ref()
 	LOCK_STATE_EX lockState;
 
 	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
-	if (!pSwitchInfo) {
+	if (!pSwitchInfo)
+	{
 		ok = FALSE;
 		goto Cleanup;
 	}
@@ -652,7 +662,8 @@ OVS_PERSISTENT_PORT* PersPort_FindInternal_Ref()
 	OVS_CHECK(countProcessed == pPorts->count);
 
 Cleanup:
-	if (locked) {
+	if (locked)
+	{
 		PERSPORTS_UNLOCK(pPorts, &lockState);
 	}
 
@@ -760,7 +771,8 @@ OVS_PERSISTENT_PORT* PersPort_FindByName_Ref(const char* ofPortName)
 	LOCK_STATE_EX lockState = { 0 };
 
 	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
-	if (!pSwitchInfo) {
+	if (!pSwitchInfo)
+	{
 		ok = FALSE;
 		goto Cleanup;
 	}
@@ -808,7 +820,8 @@ OVS_PERSISTENT_PORT* PersPort_FindByName_Ref(const char* ofPortName)
 	OVS_CHECK(countProcessed == pPorts->count);
 
 Cleanup:
-	if (locked) {
+	if (locked)
+	{
 		PERSPORTS_UNLOCK(pPorts, &lockState);
 	}
 
@@ -830,7 +843,8 @@ OVS_PERSISTENT_PORT* PersPort_FindById_Ref(NDIS_SWITCH_PORT_ID portId)
 	OVS_CHECK(portId != NDIS_SWITCH_DEFAULT_PORT_ID);
 
 	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
-	if (!pSwitchInfo) {
+	if (!pSwitchInfo)
+	{
 		ok = FALSE;
 		goto Cleanup;
 	}
@@ -869,14 +883,17 @@ OVS_PERSISTENT_PORT* PersPort_FindById_Ref(NDIS_SWITCH_PORT_ID portId)
 			++countProcessed;
         }
 
-		if (countProcessed >= pPorts->count)
+        if (countProcessed >= pPorts->count)
+        {
             break;
+        }
     }
 
 	OVS_CHECK(countProcessed == pPorts->count);
 
 Cleanup:
-	if (locked) {
+	if (locked)
+	{
 		PERSPORTS_UNLOCK(pPorts, &lockState);
 	}
 
@@ -896,7 +913,8 @@ OVS_PERSISTENT_PORT* PersPort_FindById_Unsafe(NDIS_SWITCH_PORT_ID portId)
 	OVS_CHECK(portId != NDIS_SWITCH_DEFAULT_PORT_ID);
 
 	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
-	if (!pSwitchInfo) {
+	if (!pSwitchInfo)
+	{
 		ok = FALSE;
 		goto Cleanup;
 	}
@@ -930,8 +948,10 @@ OVS_PERSISTENT_PORT* PersPort_FindById_Unsafe(NDIS_SWITCH_PORT_ID portId)
 			++countProcessed;
 		}
 
-		if (countProcessed >= pPorts->count)
-			break;
+        if (countProcessed >= pPorts->count)
+        {
+            break;
+        }
 	}
 
 	OVS_CHECK(countProcessed == pPorts->count);
@@ -953,7 +973,8 @@ OVS_PERSISTENT_PORT* PersPort_FindByNumber_Ref(UINT16 portNumber)
 	LOCK_STATE_EX lockState = { 0 };
 
 	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
-	if (!pSwitchInfo) {
+	if (!pSwitchInfo)
+	{
 		goto Cleanup;
 	}
 
@@ -995,7 +1016,8 @@ OVS_PERSISTENT_PORT* PersPort_FindByNumber_Ref(UINT16 portNumber)
 	OVS_CHECK(countProcessed == pPorts->count);
 
 Cleanup:
-	if (locked) {
+	if (locked)
+	{
 		PERSPORTS_UNLOCK(pPorts, &lockState);
 	}
 
@@ -1014,7 +1036,8 @@ BOOLEAN PersPort_Delete(OVS_PERSISTENT_PORT* pPort)
 	LOCK_STATE_EX lockState = { 0 };
 
 	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
-	if (!pSwitchInfo) {
+	if (!pSwitchInfo)
+	{
 		ok = FALSE;
 		goto Cleanup;
 	}
@@ -1054,7 +1077,8 @@ BOOLEAN PersPort_Delete(OVS_PERSISTENT_PORT* pPort)
 	OVS_REFCOUNT_DESTROY(pPort);
 
 Cleanup:
-	if (portsLocked) {
+	if (portsLocked)
+	{
 		PERSPORTS_UNLOCK(pPorts, &lockState);
 	}
 
@@ -1072,7 +1096,8 @@ OVS_PERSISTENT_PORT* PersPort_GetInternal_Ref()
 	LOCK_STATE_EX lockState = { 0 };
 
 	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
-	if (!pSwitchInfo) {
+	if (!pSwitchInfo)
+	{
 		goto Cleanup;
 	}
 
@@ -1104,7 +1129,8 @@ OVS_PERSISTENT_PORT* PersPort_GetInternal_Ref()
     }
 
 Cleanup:
-	if (locked) {
+	if (locked)
+	{
 		PERSPORTS_UNLOCK(pPorts, &lockState);
 	}
 
@@ -1130,7 +1156,8 @@ VOID PersPort_DestroyNow_Unsafe(OVS_PERSISTENT_PORT* pPort)
 		KFree(pPort->pOptions);
 	}
 
-	if (pPort->pRwLock) {
+	if (pPort->pRwLock)
+	{
 		NdisFreeRWLock(pPort->pRwLock);
 	}
 

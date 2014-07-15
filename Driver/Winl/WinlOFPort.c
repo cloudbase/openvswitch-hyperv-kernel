@@ -115,7 +115,9 @@ static OVS_ARGUMENT_GROUP* _OFPort_OptionsToGroup(_In_ const OVS_TUNNELING_PORT_
 
 Cleanup:
     if (!ok)
+	{
         DestroyArgumentsFromGroup(pOptionsGroup);
+	}
 
     return pOptionsGroup;
 }
@@ -286,7 +288,8 @@ OVS_ERROR OFPort_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 Cleanup:
 	if (pPersPort)
 	{
-		if (locked) {
+		if (locked)
+	    {
 			PORT_UNLOCK(pPersPort, &lockState);
 		}
 
@@ -305,7 +308,9 @@ Cleanup:
 	OVS_REFCOUNT_DEREFERENCE(pDatapath);
 
 	if (replyMsg.pArgGroup)
+	{
 		DestroyArgumentGroup(replyMsg.pArgGroup);
+	}
 
     return error;
 }
@@ -430,7 +435,8 @@ OVS_ERROR OFPort_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 Cleanup:
 	if (pPersPort)
 	{
-		if (locked) {
+		if (locked)
+	    {
 			PORT_UNLOCK(pPersPort, &lockState);
 		}
 
@@ -526,7 +532,8 @@ OVS_ERROR OFPort_Get(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 Cleanup:
 	if (pPersPort)
 	{
-		if (locked) {
+		if (locked)
+	    {
 			PORT_UNLOCK(pPersPort, &lockState);
 		}
 
@@ -594,7 +601,8 @@ OVS_ERROR OFPort_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         }
     }
 
-    if (!pPersPort) {
+    if (!pPersPort)
+    {
         error = OVS_ERROR_INVAL;
         goto Cleanup;
     }
@@ -627,7 +635,8 @@ OVS_ERROR OFPort_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 Cleanup:
 	if (pPersPort)
 	{
-		if (locked) {
+		if (locked)
+	    {
 			PORT_UNLOCK(pPersPort, &lockState);
 		}
 
@@ -663,7 +672,9 @@ OVS_ERROR OFPort_Dump(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
 	pSwitchInfo = Driver_GetDefaultSwitch_Ref(__FUNCTION__);
 	if (!pSwitchInfo)
+	{
 		return OVS_ERROR_NODEV;
+	}
 
     RtlZeroMemory(&context, sizeof(context));
     context.sequence = pMsg->sequence;

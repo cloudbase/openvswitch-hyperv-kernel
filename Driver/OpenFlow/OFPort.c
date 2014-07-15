@@ -203,7 +203,9 @@ Cleanup:
         }
 
         if (pArgPortOpts)
+		{
             DestroyArgument(pArgPortOpts);
+		}
 
         if (pMsg->pArgGroup)
         {

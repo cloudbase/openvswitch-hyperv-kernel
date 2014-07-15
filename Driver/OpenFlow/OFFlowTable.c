@@ -215,11 +215,15 @@ Cleanup:
     {
 		OVS_CHECK_RET(pFlowTable, NULL);
 
-		if (pFlowTable->pFlowList) 
+		if (pFlowTable->pFlowList)
+		{
 			KFree(pFlowTable->pFlowList);
+		}
 
 		if (pFlowTable->pMaskList)
+		{
 			KFree(pFlowTable->pMaskList);
+		}
 
 		KFree(pFlowTable);
 

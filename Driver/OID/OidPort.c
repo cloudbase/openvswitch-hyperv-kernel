@@ -58,9 +58,12 @@ NDIS_STATUS Port_Create(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH
 		FWDINFO_UNLOCK(pForwardInfo, &lockState);
 
 		if (status != NDIS_STATUS_SUCCESS)
+		{
 			return status;
+		}
 
-		if (ovsPortName) {
+		if (ovsPortName)
+		{
 			ovsPortNumber = Sctx_Port_SetPersistentPort(ovsPortName, portId);
 		}
 
@@ -72,7 +75,9 @@ NDIS_STATUS Port_Create(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH
 
 		//Cleanup
 		if (ovsPortName)
+		{
 			KFree(ovsPortName);
+		}
 
 		OVS_REFCOUNT_DEREFERENCE(pPortEntry);
 
@@ -136,7 +141,9 @@ VOID Port_Update(const OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH_
 
 		//Cleanup
 		if (ovsPortName)
+		{
 			KFree(ovsPortName);
+		}
 
 		OVS_REFCOUNT_DEREFERENCE(pPortEntry);
     }

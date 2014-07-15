@@ -135,7 +135,9 @@ static BOOLEAN _ParseArgGroup_FromAttributes(_In_ BYTE** ppBuffer, UINT16* pByte
     {
         //the main group must have count args > 0
         if (parentArgType == OVS_ARGTYPE_GROUP_MAIN)
+		{
             return FALSE;
+		}
 
         RtlZeroMemory(pGroup, sizeof(OVS_ARGUMENT_GROUP));
         return TRUE;
@@ -705,24 +707,32 @@ static BOOLEAN _VerifyFlowMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_
                 //TODO: "Flow"??
             case OVS_ARGTYPE_GROUP_PI:
                 if (!VerifyGroup_PacketInfo(/*mask*/ FALSE, /*request*/TRUE, pMainGroupArg, /*check transport layer*/ TRUE, /*seek ip*/ TRUE))
+				{
                     return FALSE;
+				}
                 break;
 
             case OVS_ARGTYPE_GROUP_MASK:
                 if (!VerifyGroup_PacketInfo(/*mask*/ TRUE, /*request*/ TRUE, pMainGroupArg, /*check transport layer*/ TRUE, /*seek ip*/ TRUE))
+				{
                     return FALSE;
+				}
                 break;
 
                 //NOTE: set info cannot check here if the given packet info specify eth type / proto acc to set info
                 //nor can check the masks.
             case OVS_ARGTYPE_GROUP_ACTIONS:
                 if (!VerifyGroup_PacketActions(pMainGroupArg, /*request*/ TRUE))
+				{
                     return FALSE;
+				}
                 break;
 
             case OVS_ARGTYPE_FLOW_CLEAR:
                 if (!VerifyArg_Flow_Clear(pMainGroupArg))
+				{
                     return FALSE;
+				}
                 break;
 
             default:
@@ -739,22 +749,30 @@ static BOOLEAN _VerifyFlowMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_
                 //TODO: "Flow"??
             case OVS_ARGTYPE_GROUP_PI:
                 if (!VerifyGroup_PacketInfo(/*mask*/ FALSE, /*request*/ TRUE, pMainGroupArg, /*check transport layer*/ TRUE, /*seek ip*/ TRUE))
+				{
                     return FALSE;
+				}
                 break;
 
             case OVS_ARGTYPE_GROUP_MASK:
                 if (!VerifyGroup_PacketInfo(/*mask*/ TRUE, /*request*/ TRUE, pMainGroupArg, /*check transport layer*/ TRUE, /*seek ip*/ TRUE))
+				{
                     return FALSE;
+				}
                 break;
 
             case OVS_ARGTYPE_GROUP_ACTIONS:
                 if (!VerifyGroup_PacketActions(pMainGroupArg, /*request*/ TRUE))
+				{
                     return FALSE;
+				}
                 break;
 
             case OVS_ARGTYPE_FLOW_CLEAR:
                 if (!VerifyArg_Flow_Clear(pMainGroupArg))
+				{
                     return FALSE;
+				}
                 break;
 
             default:
@@ -771,7 +789,9 @@ static BOOLEAN _VerifyFlowMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_
                 //TODO: "Flow"??
             case OVS_ARGTYPE_GROUP_PI:
                 if (!VerifyGroup_PacketInfo(/*mask*/ FALSE, /*request*/ TRUE, pMainGroupArg, /*check transport layer*/ TRUE, /*seek ip*/ TRUE))
+				{
                     return FALSE;
+				}
                 break;
 
             default:
@@ -788,7 +808,9 @@ static BOOLEAN _VerifyFlowMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_
                 //TODO: "Flow"??
             case OVS_ARGTYPE_GROUP_PI:
                 if (!VerifyGroup_PacketInfo(/*mask*/ FALSE, /*request*/ TRUE, pMainGroupArg, /*check transport layer*/ TRUE, /*seek ip*/ TRUE))
+				{
                     return FALSE;
+				}
                 break;
 
             default:
@@ -803,7 +825,9 @@ static BOOLEAN _VerifyFlowMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_
             if (argType == OVS_ARGTYPE_GROUP_MASK)
             {
                 if (!VerifyGroup_PacketInfo(/*mask*/ TRUE, /*request*/ TRUE, pMainGroupArg, /*check transport layer*/ TRUE, /*seek ip*/ TRUE))
+				{
                     return FALSE;
+				}
                 break;
             }
 
@@ -857,32 +881,44 @@ static BOOLEAN _VerifyFlowMessageReply(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_ME
         {
         case OVS_ARGTYPE_GROUP_ACTIONS:
             if (!VerifyGroup_PacketActions(pMainGroupArg, /*request*/ FALSE))
+			{
                 return FALSE;
+			}
             break;
 
         case OVS_ARGTYPE_FLOW_STATS:
             if (!VerifyArg_Flow_Stats(pMainGroupArg))
+			{
                 return FALSE;
+			}
             break;
 
         case OVS_ARGTYPE_FLOW_TCP_FLAGS:
             if (!VerifyArg_Flow_TcpFlags(pMainGroupArg))
+			{
                 return FALSE;
+			}
             break;
 
         case OVS_ARGTYPE_FLOW_TIME_USED:
             if (!VerifyArg_Flow_TimeUsed(pMainGroupArg))
+			{
                 return FALSE;
+			}
             break;
 
         case OVS_ARGTYPE_GROUP_PI:
             if (!VerifyGroup_PacketInfo(/*mask*/ FALSE, /*request*/ FALSE, pMainGroupArg, /*check transport layer*/ TRUE, /*seek ip*/ TRUE))
+			{
                 return FALSE;
+			}
             break;
 
         case OVS_ARGTYPE_GROUP_MASK:
             if (!VerifyGroup_PacketInfo(/*mask*/ TRUE, /*request*/ FALSE, pMainGroupArg, /*check transport layer*/ TRUE, /*seek ip*/ TRUE))
+			{
                 return FALSE;
+			}
             break;
 
         default:
@@ -902,7 +938,8 @@ static BOOLEAN _VerifyFlowMessageReply(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_ME
 
 static BOOLEAN _VerifyArg_PacketBuffer(OVS_ARGUMENT* pPacketBufferArg)
 {
-    if (!VerifyNetBuffer(pPacketBufferArg->data, pPacketBufferArg->length)) {
+    if (!VerifyNetBuffer(pPacketBufferArg->data, pPacketBufferArg->length))
+    {
         DEBUGP_ARG(LOG_ERROR, "invalid packet buffer!");
         return FALSE;
     }
@@ -955,19 +992,25 @@ static BOOLEAN _VerifyPacketMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OV
         {
         case OVS_ARGTYPE_NETBUFFER:
             if (!_VerifyArg_PacketBuffer(pMainGroupArg))
+			{
                 return FALSE;
+			}
             break;
 
         case OVS_ARGTYPE_GROUP_PI:
             if (!VerifyGroup_PacketInfo(/*mask*/ FALSE, /*request*/TRUE, pMainGroupArg, /*check transport layer*/ TRUE, /*seek ip*/ TRUE))
+			{
                 return FALSE;
+			}
             break;
 
             //NOTE: set info cannot check here if the given packet info-s specify eth type / proto acc to set info
             //nor can check the masks.
         case OVS_ARGTYPE_GROUP_ACTIONS:
             if (!VerifyGroup_PacketActions(pMainGroupArg, /*request*/ TRUE))
+			{
                 return FALSE;
+			}
             break;
 
         default:
@@ -1029,17 +1072,23 @@ static BOOLEAN _VerifyPacketMessageReply(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_
         {
         case OVS_ARGTYPE_GROUP_PI:
             if (!VerifyGroup_PacketInfo(/*mask*/ FALSE, /*request*/ FALSE, pMainGroupArg, /*check transport layer*/ TRUE, /*seek ip*/ TRUE))
+			{
                 return FALSE;
+			}
             break;
 
         case OVS_ARGTYPE_NETBUFFER_USERDATA:
             if (!_VerifyArg_UserData(pMainGroupArg))
+			{
                 return FALSE;
+			}
             break;
 
         case OVS_ARGTYPE_NETBUFFER:
             if (!_VerifyArg_PacketBuffer(pMainGroupArg))
+			{
                 return FALSE;
+			}
             break;
 
         default:
@@ -1078,7 +1127,9 @@ static BOOLEAN _VerifyDatapathMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ 
             OVS_ARGUMENT* pArg = pMsg->pArgGroup->args;
 
             if (pArg->type != OVS_ARGTYPE_DATAPATH_NAME)
+			{
                 DEBUGP_ARG(LOG_ERROR, "Datapath request GET has 1 arg, and it's not datapath name. It is: 0x%x", pArg->type);
+			}
 
             return TRUE;
         }
@@ -1102,7 +1153,9 @@ static BOOLEAN _IsStringPrintableA(const char* str, UINT16 len)
     for (UINT16 i = 0; i < len; ++i)
     {
         if (str[i] == 0)
+		{
             break;
+		}
 
         //verify that all chars are printable chars
         if (!(str[i] >= 0x20 && str[i] <= 0x7e))
@@ -1264,7 +1317,9 @@ static BOOLEAN _VerifyPortMessageReply(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_ME
             for (UINT16 i = 0; i < pMainGroupArg->length; ++i)
             {
                 if (name[i] == 0)
+				{
                     break;
+				}
 
                 //verify that all chars are printable chars
                 if (!(name[i] >= 0x20 && name[i] <= 0x7e))

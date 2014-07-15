@@ -112,7 +112,8 @@ VOID Nic_Connect(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH_NIC_PA
 
 	FWDINFO_UNLOCK(pForwardInfo, &lockState);
 
-	if (portId != NDIS_SWITCH_DEFAULT_PORT_ID) {
+	if (portId != NDIS_SWITCH_DEFAULT_PORT_ID)
+	{
 		ovsPortNumber = Sctx_Nic_SetPersistentPort(pForwardInfo, portId);
 	}
 
@@ -129,7 +130,8 @@ VOID Nic_Connect(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH_NIC_PA
 	FWDINFO_UNLOCK(pForwardInfo, &lockState);
 
 	//Cleanup
-	if (pNicEntry) {
+	if (pNicEntry)
+	{
 		OVS_REFCOUNT_DEREFERENCE(pNicEntry);
 	}
 }

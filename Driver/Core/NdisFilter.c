@@ -259,7 +259,8 @@ NDIS_STATUS FilterAttach(NDIS_HANDLE ndisFilterHandle, NDIS_HANDLE hDriverContex
 	DRIVER_UNLOCK();
 
 	status = OvsInit(g_driverHandle);
-	if (status != NDIS_STATUS_SUCCESS) {
+	if (status != NDIS_STATUS_SUCCESS)
+	{
 		goto Cleanup;
 	}
 

@@ -670,7 +670,8 @@ static BOOLEAN _GetPIFromArg_VlanTci(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _In
         {
             DEBUGP(LOG_ERROR, "VLAN TCI MASK: EXPECTED EXACT MATCH FOR THE OVS_VLAN_TAG_PRESENT BIT.\n");
         }
-        else {
+        else
+        {
             DEBUGP(LOG_ERROR, "VLAN TCI PI: EXPECTED OVS_VLAN_TAG_PRESENT BIT TO BE SET.\n");
         }
 

@@ -182,7 +182,9 @@ static __inline BYTE GetIpv6ExtensionLength(_In_ const VOID* extBuffer)
     OVS_CHECK(IsIpv6Extension(type));
 
     if (type == OVS_IPV6_EXTH_FRAGMENTATION)
+	{
         return 8;
+	}
 
     len = *((BYTE*)extBuffer + 1);
 

@@ -683,7 +683,9 @@ static BOOLEAN _CreateActionsArgsToList(const OVS_ARGUMENT_GROUP* pArgGroup, OVS
         case OVS_ARGTYPE_GROUP_ACTIONS_SAMPLE:
             ok = _SampleActionToList(pArg->data, ppArgList);
             if (!ok)
+			{
                 return FALSE;
+			}
 
             break;
 
@@ -1502,7 +1504,9 @@ Cleanup:
     else
     {
         if (pFlowGroup->args)
+		{
             FreeArguments(pFlowGroup);
+		}
 
         FreeArgGroup(pFlowGroup);
 
