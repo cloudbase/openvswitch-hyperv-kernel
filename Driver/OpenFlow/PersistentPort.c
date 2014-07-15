@@ -177,7 +177,7 @@ static VOID _PersPort_SetNicAndPort_Unsafe(OVS_GLOBAL_FORWARD_INFO* pForwardInfo
 		if (pForwardInfo->pInternalPort)
         {
 			pPort->portId = pForwardInfo->pInternalPort->portId;
-			//TODO: should we use interlocked assign for OVS_PORT_LIST_ENTRY's port id? 
+			//TODO: should we use interlocked assign for OVS_PORT_LIST_ENTRY's port id?
 			pForwardInfo->pInternalPort->ovsPortNumber = pPort->ovsPortNumber;
 		}
 		else

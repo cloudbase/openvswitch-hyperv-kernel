@@ -72,7 +72,7 @@ OVS_ERROR Flow_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     if (pFlowActionGroupArg)
     {
         OVS_ARGUMENT_GROUP* pOriginalGroup = pFlowActionGroupArg->data;
-		
+
 		pActions = Actions_Create();
 		if (NULL == pActions)
 	    {
@@ -385,7 +385,7 @@ OVS_ERROR Flow_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         {
             Flow_ClearStats_Unsafe(pFlow);
         }
-        
+
 		FLOW_UNLOCK(pFlow, &lockState);
     }
 

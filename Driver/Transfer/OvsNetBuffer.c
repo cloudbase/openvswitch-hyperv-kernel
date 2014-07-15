@@ -703,7 +703,7 @@ BOOLEAN ONB_OriginateIcmp6Packet_Type2Code0(OVS_NET_BUFFER* pOvsNb, ULONG mtu, _
     LE16 ethType = 0;
     OVS_SWITCH_INFO* pSwitchInfo = pOvsNb->pSwitchInfo;
 
-	//the payload of the "icmp6 packet too big" must be: 
+	//the payload of the "icmp6 packet too big" must be:
 	//As much of invoking packet as possible without the ICMPv6 packet exceeding the minimum IPv6 MTU
     ULONG destBufSize = sizeof(OVS_ETHERNET_HEADER) + sizeof(OVS_IPV6_HEADER) + OVS_ICMP6_PACKET_TOO_BIG_SIZE_BARE;
 	//payload to attached ipv6 frame
@@ -720,7 +720,7 @@ BOOLEAN ONB_OriginateIcmp6Packet_Type2Code0(OVS_NET_BUFFER* pOvsNb, ULONG mtu, _
 	destBufSize += sizeof(OVS_IPV6_HEADER);
 	OVS_CHECK(OVS_IPV6_MINIMUM_MTU > destBufSize);
 	payloadSize = min(RtlUshortByteSwap(pOriginalIpv6Header->payloadLength), OVS_IPV6_MINIMUM_MTU - destBufSize);
-    
+
 	//ATM destBufSize is size of: eth + ipv6 + icmp6 + attached ipv6 headers.
 	//we need to add the payload of the attached ipv6 frame
 	destBufSize += payloadSize;
@@ -826,7 +826,7 @@ NET_BUFFER* _Ipv4_CreateFirstFragment(_In_ const OVS_IPV4_HEADER* pOldIpv4Header
 	oldIpv4TotalLength = RtlUshortByteSwap(pOldIpv4Header->TotalLength);
 	ipv4HeaderSize = Ipv4_GetHeaderSize(pOldIpv4Header);
 
-	//a LSO packet may have TL == 0. 
+	//a LSO packet may have TL == 0.
 	//TODO: we currently have no support for fragmentation of LSO packets
 	//(LSO packets appear to have ipv4 total length == 0)
 	OVS_CHECK(oldIpv4TotalLength > 0);
@@ -873,7 +873,7 @@ FO <-OFO + NFB;  MF <-OMF;  Recompute Checksum;
 (10) Submit this fragment to the fragmentation test; DONE.
 */
 
-NET_BUFFER* _Ipv4_CreateNextFragment(_In_ const OVS_IPV4_HEADER* pOldIpv4Header, _In_opt_ const BYTE* pOptions, ULONG optionsSize, 
+NET_BUFFER* _Ipv4_CreateNextFragment(_In_ const OVS_IPV4_HEADER* pOldIpv4Header, _In_opt_ const BYTE* pOptions, ULONG optionsSize,
 	ULONG maxIpPacketSize, _Inout_ ULONG* pBytesRemaining, ULONG dataOffsetAdd, _Inout_ ULONG* pSrcOffset)
 {
 	//resulting NB
@@ -923,7 +923,7 @@ NET_BUFFER* _Ipv4_CreateNextFragment(_In_ const OVS_IPV4_HEADER* pOldIpv4Header,
 	destOffset = sizeof(OVS_IPV4_HEADER);
 
 	//2. copy the options
-	if (optionsSize) 
+	if (optionsSize)
 	{
 		OVS_CHECK(pOptions);
 		//make sure the options size is a multiple of 4 bytes (requirement from header length, which is in 4 bytes)

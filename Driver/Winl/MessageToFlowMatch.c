@@ -78,7 +78,7 @@ BOOLEAN GetPacketContextFromPIArgs(_In_ const OVS_ARGUMENT_GROUP* pArgGroup, _In
             {
                 return FALSE;
             }
-			
+
             break;
 
         default:

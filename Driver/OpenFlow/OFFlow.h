@@ -136,7 +136,7 @@ void DbgPrintFlowWithActions(const char* msg, _In_ const OVS_OFPACKET_INFO* pPac
 
 void DbgPrintAllFlows();
 
-void FlowWithActions_ToString(const char* msg, _In_ const OVS_OFPACKET_INFO* pPacketInfo, _In_ const OVS_OFPACKET_INFO* pMask, 
+void FlowWithActions_ToString(const char* msg, _In_ const OVS_OFPACKET_INFO* pPacketInfo, _In_ const OVS_OFPACKET_INFO* pMask,
 	ULONG start, ULONG end, _In_ const OVS_ARGUMENT_GROUP* pActions, _Out_ CHAR str[501]);
 
 #define DBGPRINT_FLOW(logLevel, msg, pFlow) DbgPrintFlow(msg, &(pFlow->unmaskedPacketInfo), &(pFlow->pMask->packetInfo),		\

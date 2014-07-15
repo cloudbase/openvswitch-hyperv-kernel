@@ -203,7 +203,7 @@ static OVS_PERSISTENT_PORT* _FindDestPort_Ref(_In_ const OVS_PERSISTENT_PORT* pS
 
 	//if the src port = internal / external, we won't output to gre / vxlan:
 	//for external: we would be sending the packet back whence it came
-	//for internal: when outputting via NORMAL from hypervisor to hypervisor, we don't want to send to the hypervisor both via external and gre 
+	//for internal: when outputting via NORMAL from hypervisor to hypervisor, we don't want to send to the hypervisor both via external and gre
 	if (pDestPersPort->ofPortType == OVS_OFPORT_TYPE_GRE || pDestPersPort->ofPortType == OVS_OFPORT_TYPE_VXLAN)
 	{
 		if (pSourcePort->portId != NDIS_SWITCH_DEFAULT_PORT_ID &&
@@ -292,7 +292,7 @@ BOOLEAN ExecuteActions(_Inout_ OVS_NET_BUFFER* pOvsNb, _In_ const OutputToPortCa
 				DEBUGP(LOG_ERROR, __FUNCTION__ " invalid port number from userspace: %u\n", persPortNumber);
 				ok = FALSE;
 			}
-			
+
             break;
 
         case OVS_ARGTYPE_GROUP_ACTIONS_UPCALL:
@@ -584,7 +584,7 @@ static BOOLEAN _Action_SetInfo(_Inout_ OVS_ARGUMENT_GROUP* pActionGroup, const O
         }
 
         return _ValidateTransportPort(pPacketInfo);
-		
+
     default:
         DEBUGP(LOG_ERROR, __FUNCTION__ " invalid PI type to set: 0x%x\n", argType);
         return FALSE;

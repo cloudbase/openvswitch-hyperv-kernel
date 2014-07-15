@@ -1078,7 +1078,7 @@ BOOLEAN GetPacketInfoFromArguments(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inou
             {
                 return FALSE;
             }
-			
+
             break;
 
         case OVS_ARGTYPE_PI_ETH_ADDRESS:
@@ -1091,7 +1091,7 @@ BOOLEAN GetPacketInfoFromArguments(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inou
             {
                 return FALSE;
             }
-			
+
             break;
 
         case OVS_ARGTYPE_PI_ETH_TYPE:

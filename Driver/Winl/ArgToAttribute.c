@@ -296,7 +296,7 @@ static BOOLEAN _Reply_SetAttrType_Flow(OVS_MESSAGE_COMMAND_TYPE cmd, OVS_ARGTYPE
     OVS_ARGTYPE argType = pArg->type;
 
     UNREFERENCED_PARAMETER(cmd);
-    OVS_CHECK(cmd == OVS_MESSAGE_COMMAND_NEW || 
+    OVS_CHECK(cmd == OVS_MESSAGE_COMMAND_NEW ||
 		cmd == OVS_MESSAGE_COMMAND_DELETE);
 
     if (parentArgType == OVS_ARGTYPE_GROUP_PI)
