@@ -89,22 +89,6 @@ static __inline VOID FreeArgumentData(VOID* pData)
     }
 }
 
-//allocates an OVS_ARGUMENT and initializes it
-static __inline OVS_ARGUMENT* AllocArgument()
-{
-    OVS_ARGUMENT* pArg = ExAllocatePoolWithTag(NonPagedPool, sizeof(OVS_ARGUMENT), g_extAllocationTag);
-    if (!pArg)
-    {
-        return NULL;
-    }
-
-    pArg->data = NULL;
-    pArg->length = 0;
-    pArg->type = OVS_ARGTYPE_INVALID;
-
-    return pArg;
-}
-
 static __inline VOID FreeArgument(OVS_ARGUMENT* pArg)
 {
     if (pArg)

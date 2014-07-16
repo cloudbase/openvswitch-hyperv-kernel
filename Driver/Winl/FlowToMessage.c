@@ -602,7 +602,7 @@ static OVS_ARGUMENT* _CreateSetActionArg(const OVS_ARGUMENT* pArgument)
 
     default:
     {
-        OVS_ARGUMENT* pPacketInfoArg = AllocArgument();
+        OVS_ARGUMENT* pPacketInfoArg = KZAlloc(sizeof(OVS_ARGUMENT));
         if (!pPacketInfoArg)
         {
             DEBUGP(LOG_ERROR, "could not alloc key arg\n");
@@ -650,7 +650,7 @@ static BOOLEAN _CreateActionsArgsToList(const OVS_ARGUMENT_GROUP* pArgGroup, OVS
             pSetGroup->count = 1;
             pSetGroup->groupSize = pPacketInfoArg->length + OVS_ARGUMENT_HEADER_SIZE;
 
-            pSetArg = AllocArgument();
+            pSetArg = KZAlloc(sizeof(OVS_ARGUMENT));
             pSetArg->data = pSetGroup;
             pSetArg->type = OVS_ARGTYPE_GROUP_ACTIONS_SETINFO;
             pSetArg->length = pSetGroup->groupSize + OVS_ARGUMENT_GROUP_HEADER_SIZE;
@@ -772,7 +772,7 @@ static OVS_ARGUMENT* _CreateActionsGroup(const OVS_ARGUMENT_GROUP* pActions)
     pActionsGroup->count = countArgs;
     pActionsGroup->groupSize = (UINT16)totalSize;
 
-    pActionsArg = AllocArgument();
+    pActionsArg = KZAlloc(sizeof(OVS_ARGUMENT));
     if (!pActionsArg)
     {
         ok = FALSE;
@@ -838,7 +838,7 @@ static OVS_ARGUMENT* _CreateEncapsulationArg(const OVS_OFPACKET_INFO* pPacketInf
         return FALSE;
     }
 
-    pEncapsArg = AllocArgument();
+    pEncapsArg = KZAlloc(sizeof(OVS_ARGUMENT));
     if (!pEncapsArg)
     {
         ok = FALSE;

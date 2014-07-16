@@ -548,9 +548,10 @@ BOOLEAN AllocateArgumentsToGroup(UINT16 count, _Out_ OVS_ARGUMENT_GROUP* pGroup)
 
 OVS_ARGUMENT* CreateArgument(OVS_ARGTYPE argType, const VOID* buffer)
 {
-    OVS_ARGUMENT* pArg = AllocArgument();
+    OVS_ARGUMENT* pArg = NULL;
     UINT expectedSize = 0;
 
+    pArg = KZAlloc(sizeof(OVS_ARGUMENT));
     if (!pArg)
     {
         return NULL;
@@ -584,12 +585,13 @@ OVS_ARGUMENT* CreateArgument(OVS_ARGTYPE argType, const VOID* buffer)
 
 OVS_ARGUMENT* CreateArgumentWithSize(OVS_ARGTYPE argType, const VOID* buffer, ULONG size)
 {
-    OVS_ARGUMENT* pArg = pArg = AllocArgument();
+    OVS_ARGUMENT* pArg = NULL;
     UINT expectedSize = 0;
 
     OVS_CHECK(size > 0);
     OVS_CHECK(size <= MAXUINT);
 
+    pArg = KZAlloc(sizeof(OVS_ARGUMENT));
     if (!pArg)
     {
         return NULL;
@@ -661,7 +663,7 @@ OVS_ARGUMENT* CreateArgumentFromGroup(OVS_ARGTYPE argType, const OVS_ARGUMENT_GR
 {
     OVS_ARGUMENT* pArg = NULL;
 
-    pArg = AllocArgument();
+    pArg = KZAlloc(sizeof(OVS_ARGUMENT));
     if (!pArg)
     {
         return NULL;
@@ -682,7 +684,7 @@ OVS_ARGUMENT* CreateArgumentStringA(OVS_ARGTYPE argType, const char* buffer)
 {
     OVS_ARGUMENT* pArg;
 
-    pArg = AllocArgument();
+    pArg = KZAlloc(sizeof(OVS_ARGUMENT));
     if (!pArg)
     {
         return NULL;
@@ -701,10 +703,11 @@ OVS_ARGUMENT* CreateArgumentStringA(OVS_ARGTYPE argType, const char* buffer)
 
 OVS_ARGUMENT* CreateArgumentStringA_Alloc(OVS_ARGTYPE argType, const char* buffer)
 {
-    OVS_ARGUMENT* pArg = AllocArgument();
+    OVS_ARGUMENT* pArg = NULL;
     VOID* newBuffer = NULL;
     UINT16 size = 0;
 
+    pArg = KZAlloc(sizeof(OVS_ARGUMENT));
     if (!pArg)
     {
         return NULL;
@@ -1065,7 +1068,7 @@ OVS_ARGUMENT* CreateGroupArgFromList(OVS_ARGTYPE groupType, _Inout_ OVS_ARGUMENT
         goto Cleanup;
     }
 
-    pGroupArg = AllocArgument();
+    pGroupArg = KZAlloc(sizeof(OVS_ARGUMENT));
     if (!pGroupArg)
     {
         ok = FALSE;
