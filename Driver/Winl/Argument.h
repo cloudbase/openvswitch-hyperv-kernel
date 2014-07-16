@@ -191,11 +191,8 @@ BOOLEAN CreateArgInList_WithSize(OVS_ARGTYPE argType, const VOID* buffer, UINT16
 //*ppLastEntry then points to the appended listItem
 BOOLEAN AppendArgumentToList(OVS_ARGUMENT* pArg, _Inout_ OVS_ARGUMENT_SLIST_ENTRY** ppLastEntry);
 
-//destroys each OVS_ARGUMENT in the list, and frees all list items
-VOID DestroyArgList(_Inout_ OVS_ARGUMENT_SLIST_ENTRY** ppFirstEntry);
-
-//also frees the OVS_ARGUMENT-s within (the OVS_ARGUMENT::data is not freed)
-VOID FreeArgList(_Inout_ OVS_ARGUMENT_SLIST_ENTRY** ppHeadEntry);
+//destroys each OVS_ARGUMENT in the list, and frees all list items; or frees the OVS_ARGUMENT-s within
+VOID DestroyOrFreeArgList(_Inout_ OVS_ARGUMENT_SLIST_ENTRY** ppHeadEntry, BOOLEAN destroy);
 
 //creates an OVS_ARGUMENT array, argArray, with the args of the list, whose head is *pHeadArg
 //creates an OVS_ARGUMENT_GROUP to have pGroup->args = argArray, and encapsulates it in an OVS_ARGUMENT, pArg

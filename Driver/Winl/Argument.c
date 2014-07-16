@@ -969,7 +969,7 @@ BOOLEAN CreateArgInList_WithSize(OVS_ARGTYPE argType, const VOID* buffer, UINT16
     return TRUE;
 }
 
-VOID DestroyArgList(_Inout_ OVS_ARGUMENT_SLIST_ENTRY** ppHeadEntry)
+VOID DestroyOrFreeArgList(_Inout_ OVS_ARGUMENT_SLIST_ENTRY** ppHeadEntry, BOOLEAN destroy)
 {
     OVS_ARGUMENT_SLIST_ENTRY* pArgListCur = *ppHeadEntry;
     OVS_ARGUMENT_SLIST_ENTRY* pNext = NULL;
@@ -990,39 +990,17 @@ VOID DestroyArgList(_Inout_ OVS_ARGUMENT_SLIST_ENTRY** ppHeadEntry)
         pNext = pArgListCur->pNext;
 
         //1. destroy the arg
-        DestroyArgument(pArgListCur->pArg);
+        if (destroy)
+        {
+            DestroyArgument(pArgListCur->pArg);
+        }
+        else
+        {
+            KFree(pArgListCur->pArg);
+        }
 
         //2. free the list entry
         KFree(pArgListCur);
-
-        pArgListCur = pNext;
-    }
-
-    *ppHeadEntry = NULL;
-}
-
-//also frees the OVS_ARGUMENT-s within (the OVS_ARGUMENT::data is not freed)
-VOID FreeArgList(_Inout_ OVS_ARGUMENT_SLIST_ENTRY** ppHeadEntry)
-{
-    OVS_ARGUMENT_SLIST_ENTRY* pArgListCur = *ppHeadEntry;
-    OVS_ARGUMENT_SLIST_ENTRY* pNext = NULL;
-
-    if (!pArgListCur)
-        return;
-
-    //the pArgListFirst points to a head, which has pArg = NULL
-    OVS_CHECK(!pArgListCur->pArg);
-
-    pArgListCur = pArgListCur->pNext;
-    //free head
-    KFree(*ppHeadEntry);
-
-    while (pArgListCur)
-    {
-        pNext = pArgListCur->pNext;
-
-        KFree(pArgListCur);
-        KFree(pArgListCur->pArg);
 
         pArgListCur = pNext;
     }
@@ -1071,7 +1049,7 @@ OVS_ARGUMENT* CreateGroupArgFromList(OVS_ARGTYPE groupType, _Inout_ OVS_ARGUMENT
 Cleanup:
     if (ok)
     {
-        FreeArgList(ppHeadArg);
+        DestroyOrFreeArgList(ppHeadArg, /*destroy*/ FALSE);
     }
     else
     {

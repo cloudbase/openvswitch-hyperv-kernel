@@ -547,11 +547,11 @@ Cleanup:
 
     if (ok)
     {
-        FreeArgList(&pArgHead);
+        DestroyOrFreeArgList(&pArgHead, /*destroy*/ FALSE);
     }
     else
     {
-        DestroyArgList(&pArgHead);
+        DestroyOrFreeArgList(&pArgHead, /*destroy*/ TRUE);
         KFree(argArray);
         KFree(pTunnelGroup);
         KFree(pTunnelArg);
@@ -766,11 +766,11 @@ static OVS_ARGUMENT* _CreateActionsGroup(const OVS_ARGUMENT_GROUP* pActions)
 Cleanup:
     if (ok)
     {
-        FreeArgList(&pArgHead);
+        DestroyOrFreeArgList(&pArgHead, /*destroy*/ FALSE);
     }
     else
     {
-        DestroyArgList(&pArgHead);
+        DestroyOrFreeArgList(&pArgHead, /*destroy*/ TRUE);
         KFree(argArray);
         KFree(pActionsGroup);
         KFree(pActionsArg);
@@ -864,11 +864,11 @@ Cleanup:
 
     if (ok)
     {
-        FreeArgList(&pArgHead);
+        DestroyOrFreeArgList(&pArgHead, /*destroy*/ FALSE);
         return pEncapsArg;
     }
     
-    DestroyArgList(&pArgHead);
+    DestroyOrFreeArgList(&pArgHead, /*destroy*/ TRUE);
     KFree(argArray);
     KFree(pEncapsGroup);
     KFree(pEncapsArg);
@@ -1124,7 +1124,7 @@ static OVS_ARGUMENT_SLIST_ENTRY* _CreateArgListFromPacketInfo(const OVS_OFPACKET
 Cleanup:
     if (!ok)
     {
-        DestroyArgList(&pArgHead);
+        DestroyOrFreeArgList(&pArgHead, /*destroy*/ TRUE);
         return NULL;
     }
 
@@ -1150,7 +1150,7 @@ OVS_ARGUMENT* CreateArgFromPacketInfo(const OVS_OFPACKET_INFO* pPacketInfo, cons
     if (!args)
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " could not convert arg list to array\n");
-        DestroyArgList(&pList);
+        DestroyOrFreeArgList(&pList, /*destroy*/ TRUE);
         return NULL;
     }
 
@@ -1161,7 +1161,7 @@ OVS_ARGUMENT* CreateArgFromPacketInfo(const OVS_OFPACKET_INFO* pPacketInfo, cons
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " failed allocating arg group\n");
 
-        DestroyArgList(&pList);
+        DestroyOrFreeArgList(&pList, /*destroy*/ TRUE);
         KFree(args);
         return NULL;
     }
@@ -1174,14 +1174,14 @@ OVS_ARGUMENT* CreateArgFromPacketInfo(const OVS_OFPACKET_INFO* pPacketInfo, cons
     if (!pResult)
     {
         DEBUGP(LOG_ERROR, "CreateArgumentFromGroup failed\n");
-        DestroyArgList(&pList);
+        DestroyOrFreeArgList(&pList, /*destroy*/ TRUE);
         KFree(args);
         return NULL;
     }
 
     DbgPrintArg(pResult, 0, 0);
 
-    FreeArgList(&pList);
+    DestroyOrFreeArgList(&pList, /*destroy*/ FALSE);
 
     VerifyArgGroupSize(pArgGroup);
 
