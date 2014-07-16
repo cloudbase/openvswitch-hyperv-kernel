@@ -544,16 +544,6 @@ BOOLEAN AllocateArgumentsToGroup(UINT16 count, _Out_ OVS_ARGUMENT_GROUP* pGroup)
     return TRUE;
 }
 
-OVS_ARGUMENT* AllocateArguments(int count)
-{
-    OVS_ARGUMENT* argArray = NULL;
-
-    OVS_CHECK(count);
-    argArray = ExAllocatePoolWithTag(NonPagedPool, count * sizeof(OVS_ARGUMENT), g_extAllocationTag);
-
-    return argArray;
-}
-
 /******************************************* CREATION & DESTRUCTION FUNCTIONS **********************************************************************/
 
 OVS_ARGUMENT* CreateArgument(OVS_ARGTYPE argType, const VOID* buffer)
@@ -939,7 +929,7 @@ OVS_ARGUMENT* ArgumentListToArray(_In_ OVS_ARGUMENT_SLIST_ENTRY* pHeadArg, _Inou
         pArgListEntry = pArgListEntry->pNext;
     }
 
-    args = AllocateArguments(countArgs);
+    args = KZAlloc(countArgs);
     if (!args)
     {
         return NULL;

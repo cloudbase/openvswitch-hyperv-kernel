@@ -113,9 +113,6 @@ static __inline VOID FreeArgument(OVS_ARGUMENT* pArg)
     }
 }
 
-//allocates an array of count OVS_ARGUMENT-s and returns the array.
-OVS_ARGUMENT* AllocateArguments(int count);
-
 //allocates an array of count OVS_ARGUMENT-s, and assigns it to pGroup->args
 BOOLEAN AllocateArgumentsToGroup(UINT16 count, _Out_ OVS_ARGUMENT_GROUP* pGroup);
 

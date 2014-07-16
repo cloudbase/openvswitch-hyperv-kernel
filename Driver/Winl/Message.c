@@ -366,7 +366,7 @@ static OVS_ARGUMENT* _ArgumentsToAttributes(ULONG target, ULONG cmd, OVS_ARGTYPE
 
     OVS_CHECK(count != 0);
 
-    pAttributes = AllocateArguments(count);
+    pAttributes = KZAlloc(count);
 
     for (UINT16 i = 0; i < count; ++i)
     {
