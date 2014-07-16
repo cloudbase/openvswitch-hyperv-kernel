@@ -29,41 +29,28 @@ ULONG g_extOidRequestId = 'xsvO';
 
 OVS_DRIVER g_driver;
 
-VOID Driver_Uninit()
+static __inline VOID _Driver_RemoveDatapath_Unsafe()
 {
-    OVS_DATAPATH* pDatapath = NULL;
-
-    DRIVER_LOCK();
-
     if (!IsListEmpty(&g_driver.datapathList))
     {
-        pDatapath = CONTAINING_RECORD(g_driver.datapathList.Flink, OVS_DATAPATH, listEntry);
+        OVS_DATAPATH* pDatapath = CONTAINING_RECORD(g_driver.datapathList.Flink, OVS_DATAPATH, listEntry);
         RemoveEntryList(&pDatapath->listEntry);
         OVS_CHECK(IsListEmpty(&g_driver.datapathList));
 
-        OVS_REFCOUNT_DEREF_AND_DESTROY(pDatapath);
+        OVS_REFCOUNT_DESTROY(pDatapath);
     }
+}
+
+VOID Driver_Uninit()
+{
+    DRIVER_LOCK();
+
+    _Driver_RemoveDatapath_Unsafe();
 
     if (!IsListEmpty(&g_driver.switchList))
     {
         OVS_SWITCH_INFO* pSwitchInfo = CONTAINING_RECORD(g_driver.switchList.Flink, OVS_SWITCH_INFO, listEntry);
-
-        OVS_CHECK(pSwitchInfo->dataFlowState == OVS_SWITCH_PAUSED);
-        pSwitchInfo->controlFlowState = OVS_SWITCH_DETACHED;
-
-        KeMemoryBarrier();
-
-        while (pSwitchInfo->pendingOidCount > 0)
-        {
-            NdisMSleep(1000);
-        }
-
-        Switch_DeleteForwardInfo(pSwitchInfo->pForwardInfo);
-
-        RemoveEntryList(&pSwitchInfo->listEntry);
-        OVS_CHECK(IsListEmpty(&g_driver.switchList));
-
-        KFree(pSwitchInfo);
+        Switch_DestroyNow_Unsafe(pSwitchInfo);
     }
 
     DRIVER_UNLOCK();
@@ -93,22 +80,7 @@ VOID Driver_DetachExtension(OVS_SWITCH_INFO* pSwitchInfo)
 {
     DRIVER_LOCK();
 
-    OVS_CHECK(pSwitchInfo->dataFlowState == OVS_SWITCH_PAUSED);
-    pSwitchInfo->controlFlowState = OVS_SWITCH_DETACHED;
-
-    KeMemoryBarrier();
-
-    while (pSwitchInfo->pendingOidCount > 0)
-    {
-        NdisMSleep(1000);
-    }
-
-    Switch_DeleteForwardInfo(pSwitchInfo->pForwardInfo);
-
-    RemoveEntryList(&pSwitchInfo->listEntry);
-    OVS_CHECK(IsListEmpty(&g_driver.switchList));
-
-    KFree(pSwitchInfo);
+    Switch_DestroyNow_Unsafe(pSwitchInfo);
 
     DRIVER_UNLOCK();
 }
@@ -117,14 +89,7 @@ VOID Driver_RemoveDatapath()
 {
     DRIVER_LOCK();
 
-    if (!IsListEmpty(&g_driver.datapathList))
-    {
-        OVS_DATAPATH* pDatapath = CONTAINING_RECORD(g_driver.datapathList.Flink, OVS_DATAPATH, listEntry);
-        RemoveEntryList(&pDatapath->listEntry);
-        OVS_CHECK(IsListEmpty(&g_driver.datapathList));
-
-        OVS_REFCOUNT_DESTROY(pDatapath);
-    }
+    _Driver_RemoveDatapath_Unsafe();
 
     DRIVER_UNLOCK();
 }
