@@ -159,11 +159,7 @@ Cleanup:
         DestroyArgument(pArgPortSats);
         DestroyArgument(pArgPortOpts);
 
-        if (pMsg->pArgGroup)
-        {
-            KFree(pMsg->pArgGroup->args);
-            KFree(pMsg->pArgGroup);
-        }
+        FreeGroupWithArgs(pMsg->pArgGroup);
 
         return FALSE;
     }

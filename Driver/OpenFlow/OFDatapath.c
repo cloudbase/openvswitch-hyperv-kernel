@@ -163,11 +163,7 @@ Cleanup:
         DestroyArgument(pNameArg);
         DestroyArgument(pStatsArg);
 
-        if (pArgGroup)
-        {
-            KFree(pArgGroup->args);
-            KFree(pArgGroup);
-        }
+        FreeGroupWithArgs(pArgGroup);
 
         return FALSE;
     }

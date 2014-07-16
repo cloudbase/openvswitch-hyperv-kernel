@@ -1456,8 +1456,7 @@ Cleanup:
     }
     else
     {
-        KFree(pFlowGroup->args);
-        KFree(pFlowGroup);
+        FreeGroupWithArgs(pFlowGroup);
 
         DestroyArgument(pPIArg);
         DestroyArgument(pMasksArg);

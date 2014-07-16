@@ -81,6 +81,15 @@ typedef struct _OVS_ARGUMENT_SLIST_ENTRY
 //allocates an array of count OVS_ARGUMENT-s, and assigns it to pGroup->args
 BOOLEAN AllocateArgumentsToGroup(UINT16 count, _Out_ OVS_ARGUMENT_GROUP* pGroup);
 
+static __inline VOID FreeGroupWithArgs(_Inout_ OVS_ARGUMENT_GROUP* pGroup)
+{
+    if (pGroup)
+    {
+        KFree(pGroup->args);
+        KFree(pGroup);
+    }
+}
+
 /******************************************* CREATION & DESTRUCTION FUNCTIONS **********************************************************************/
 
 //allocates an OVS_ARGUMENT and sets buffer (NOTE: not a copy of it) as pArg->data;
