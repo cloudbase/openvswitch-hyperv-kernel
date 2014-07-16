@@ -813,7 +813,7 @@ VOID DestroyArgumentData(_In_ OVS_ARGUMENT* pArg)
         //free arg data
         if (pArg->data && pArg->freeData)
         {
-            FreeArgumentData(pArg->data);
+            KFree(pArg->data);
         }
     }
 }

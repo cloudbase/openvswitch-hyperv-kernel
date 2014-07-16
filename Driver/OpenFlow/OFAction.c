@@ -433,7 +433,7 @@ static BOOLEAN _CreateActionIpv4Tunnel(const OVS_ARGUMENT_GROUP* pTunnelGroup, O
     ok = GetIpv4TunnelFromArgumentsSimple(pTunnelGroup, pTunnelInfo);
     if (!ok)
     {
-        FreeArgumentData(pTunnelInfo);
+        KFree(pTunnelInfo);
         return FALSE;
     }
 

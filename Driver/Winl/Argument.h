@@ -78,15 +78,6 @@ typedef struct _OVS_ARGUMENT_SLIST_ENTRY
 
 /******************************************* ALLOC & FREE FUNCTIONS **********************************************************************/
 
-//frees the pArg->data of an OVS_ARGUMENT
-static __inline VOID FreeArgumentData(VOID* pData)
-{
-    if (pData)
-    {
-        ExFreePoolWithTag(pData, g_extAllocationTag);
-    }
-}
-
 static __inline VOID FreeArgument(OVS_ARGUMENT* pArg)
 {
     if (pArg)
