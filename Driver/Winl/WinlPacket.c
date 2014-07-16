@@ -308,8 +308,7 @@ static OVS_ERROR _QueueUserspacePacket(_In_ NET_BUFFER* pNb, _In_ const OVS_UPCA
     msg.dpIfIndex = pDatapath->switchIfIndex;
     OVS_REFCOUNT_DEREFERENCE(pDatapath);
 
-    msg.pArgGroup = AllocArgumentGroup();
-
+    msg.pArgGroup = KZAlloc(sizeof(OVS_ARGUMENT_GROUP));
     if (!msg.pArgGroup)
     {
         error = OVS_ERROR_INVAL;

@@ -117,8 +117,7 @@ BOOLEAN CreateMsgFromOFPort(OVS_WINL_PORT* pPort, UINT32 sequence, UINT8 cmd, _I
         }
     }
 
-    pMsg->pArgGroup = AllocArgumentGroup();
-
+    pMsg->pArgGroup = KZAlloc(sizeof(OVS_ARGUMENT_GROUP));
     if (!pMsg->pArgGroup)
     {
         goto Cleanup;

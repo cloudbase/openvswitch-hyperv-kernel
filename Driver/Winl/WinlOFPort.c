@@ -90,8 +90,8 @@ static OVS_ARGUMENT_GROUP* _OFPort_OptionsToGroup(_In_ const OVS_TUNNELING_PORT_
     }
 
     countArgs = (UINT16)_CountBits(pOptions->optionsFlags);
-    pOptionsGroup = AllocArgumentGroup();
 
+    pOptionsGroup = KZAlloc(sizeof(OVS_ARGUMENT_GROUP));
     if (!pOptionsGroup)
     {
         return NULL;

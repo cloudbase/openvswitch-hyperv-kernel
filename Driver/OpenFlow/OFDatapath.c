@@ -109,8 +109,7 @@ BOOLEAN CreateMsgFromDatapath(OVS_DATAPATH* pDatapath, UINT32 sequence, UINT8 cm
 
     DATAPATH_UNLOCK(pDatapath, &lockState);
 
-    pArgGroup = AllocArgumentGroup();
-
+    pArgGroup = KZAlloc(sizeof(OVS_ARGUMENT_GROUP));
     if (!pArgGroup)
     {
         return FALSE;

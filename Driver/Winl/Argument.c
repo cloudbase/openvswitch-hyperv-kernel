@@ -1057,7 +1057,7 @@ OVS_ARGUMENT* CreateGroupArgFromList(OVS_ARGTYPE groupType, _Inout_ OVS_ARGUMENT
     UINT totalSize = 0;
     BOOLEAN ok = TRUE;
 
-    pGroup = AllocArgumentGroup();
+    pGroup = KZAlloc(sizeof(OVS_ARGUMENT_GROUP));
     if (!pGroup)
     {
         ok = FALSE;

@@ -519,7 +519,7 @@ static OVS_ARGUMENT* _CreateIpv4TunnelGroup(const OF_PI_IPV4_TUNNEL* pTunnelInfo
     argArray = ArgumentListToArray(pArgHead, &countArgs, &totalSize);
 
     //OVS_ARGUMENT_GROUP
-    pTunnelGroup = AllocArgumentGroup();
+    pTunnelGroup = KZAlloc(sizeof(OVS_ARGUMENT_GROUP));
     if (!pTunnelGroup)
     {
         return NULL;
@@ -639,8 +639,7 @@ static BOOLEAN _CreateActionsArgsToList(const OVS_ARGUMENT_GROUP* pArgGroup, OVS
                 return FALSE;
             }
 
-            pSetGroup = AllocArgumentGroup();
-
+            pSetGroup = KZAlloc(sizeof(OVS_ARGUMENT_GROUP));
             if (!pSetGroup)
             {
                 return FALSE;
@@ -673,10 +672,11 @@ static BOOLEAN _CreateActionsArgsToList(const OVS_ARGUMENT_GROUP* pArgGroup, OVS
 
         case OVS_ARGTYPE_GROUP_ACTIONS_UPCALL:
         {
-            OVS_ARGUMENT_GROUP* pUpcallGroup = AllocArgumentGroup();
+            OVS_ARGUMENT_GROUP* pUpcallGroup = NULL;
             OVS_ARGUMENT* pUpcallArg = NULL;
             BOOLEAN ok = TRUE;
 
+            pUpcallGroup = KZAlloc(sizeof(OVS_ARGUMENT_GROUP));
             if (NULL == pUpcallGroup)
             {
                 return FALSE;
@@ -761,7 +761,7 @@ static OVS_ARGUMENT* _CreateActionsGroup(const OVS_ARGUMENT_GROUP* pActions)
         }
     }
 
-    pActionsGroup = AllocArgumentGroup();
+    pActionsGroup = KZAlloc(sizeof(OVS_ARGUMENT_GROUP));
     if (!pActionsGroup)
     {
         ok = FALSE;
@@ -831,7 +831,7 @@ static OVS_ARGUMENT* _CreateEncapsulationArg(const OVS_OFPACKET_INFO* pPacketInf
 
     ethType = (pMask ? pMask->ethInfo.type : pPacketInfo->ethInfo.type);
 
-    pEncapsGroup = AllocArgumentGroup();
+    pEncapsGroup = KZAlloc(sizeof(OVS_ARGUMENT_GROUP));
     if (!pEncapsGroup)
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " failed allocating group\n");
@@ -1221,7 +1221,7 @@ OVS_ARGUMENT* CreateArgFromPacketInfo(const OVS_OFPACKET_INFO* pPacketInfo, cons
 
     OVS_CHECK(size <= MAXUINT16);
 
-    pArgGroup = AllocArgumentGroup();
+    pArgGroup = KZAlloc(sizeof(OVS_ARGUMENT_GROUP));
     if (!pArgGroup)
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " failed allocating arg group\n");
@@ -1318,7 +1318,7 @@ BOOLEAN CreateMsgFromFlow(_In_ const OVS_FLOW* pFlow, UINT8 command, _Inout_ OVS
     pMsg->dpIfIndex = dpIfIndex;
 
     //3. OVS_ARGUMENT_GROUP
-    pFlowGroup = AllocArgumentGroup();
+    pFlowGroup = KZAlloc(sizeof(OVS_ARGUMENT_GROUP));
     if (!pFlowGroup)
     {
         return FALSE;

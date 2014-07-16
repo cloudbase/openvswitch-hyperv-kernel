@@ -50,8 +50,9 @@ static BOOLEAN _ParseAttribute(_In_ BYTE** pBuffer, UINT16* pBytesLeft, _Inout_ 
 
     if (IsArgTypeGroup(typeAsArg))
     {
-        OVS_ARGUMENT_GROUP* pGroup = AllocArgumentGroup();
-
+        OVS_ARGUMENT_GROUP* pGroup = NULL;
+        
+        pGroup = KZAlloc(sizeof(OVS_ARGUMENT_GROUP));
         if (!pGroup)
         {
             return FALSE;
@@ -282,8 +283,7 @@ BOOLEAN ParseReceivedMessage(VOID* buffer, UINT16 length, _Out_ OVS_NLMSGHDR** p
         goto Cleanup;
     }
 
-    pMessage->pArgGroup = AllocArgumentGroup();
-
+    pMessage->pArgGroup = KZAlloc(sizeof(OVS_ARGUMENT_GROUP));
     if (!pMessage->pArgGroup)
     {
         goto Cleanup;

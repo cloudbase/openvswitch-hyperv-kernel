@@ -695,7 +695,7 @@ OVS_ACTIONS* Actions_Create()
         return NULL;
     }
 
-    pActions->pActionGroup = AllocArgumentGroup();
+    pActions->pActionGroup = KZAlloc(sizeof(OVS_ARGUMENT_GROUP));
     if (!pActions->pActionGroup)
     {
         KFree(pActions);
