@@ -74,10 +74,7 @@ NDIS_STATUS Port_Create(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH
         FWDINFO_UNLOCK(pForwardInfo, &lockState);
 
         //Cleanup
-        if (ovsPortName)
-        {
-            KFree(ovsPortName);
-        }
+        KFree(ovsPortName);
 
         OVS_REFCOUNT_DEREFERENCE(pPortEntry);
 
@@ -140,10 +137,7 @@ VOID Port_Update(const OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH_
         FWDINFO_UNLOCK(pForwardInfo, &lockState);
 
         //Cleanup
-        if (ovsPortName)
-        {
-            KFree(ovsPortName);
-        }
+        KFree(ovsPortName);
 
         OVS_REFCOUNT_DEREFERENCE(pPortEntry);
     }

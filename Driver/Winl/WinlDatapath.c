@@ -64,7 +64,7 @@ OVS_ERROR Datapath_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
     DATAPATH_LOCK_WRITE(pDatapath, &lockState);
 
-    if (!pDatapath->deleted || pDatapath->name)
+    if (!pDatapath->deleted)
     {
         KFree(pDatapath->name);
     }

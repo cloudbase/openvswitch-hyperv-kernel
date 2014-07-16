@@ -334,14 +334,9 @@ static VOID _DestroyAttribute(OVS_ATTRIBUTE* pAttribute)
             dataLen -= pChildAttr->length;
         }
 
-        if (pAttrArray)
-        {
-            KFree(pAttrArray);
-        }
-        else
-        {
-            OVS_CHECK(dataLen == 0);
-        }
+        OVS_CHECK((pAttrArray && dataLen != 0) || (!pAttrArray && dataLen == 0));
+
+        KFree(pAttrArray);
     }
 }
 

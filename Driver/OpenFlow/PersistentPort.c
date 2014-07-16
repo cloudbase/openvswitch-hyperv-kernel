@@ -1141,10 +1141,7 @@ VOID PersPort_DestroyNow_Unsafe(OVS_PERSISTENT_PORT* pPort)
     ** o) it never happens for a port (hyper-v switch port or ovs port) to be created with the same number as one that had been deleted.
     */
 
-    if (pPort->pOptions)
-    {
-        KFree(pPort->pOptions);
-    }
+    KFree(pPort->pOptions);
 
     if (pPort->pRwLock)
     {

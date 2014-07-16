@@ -109,10 +109,8 @@ NDIS_STATUS Switch_Restart(OVS_SWITCH_INFO* pSwitchInfo)
     }
 
 Cleanup:
-    if (pSwitchParameters)
-    {
-        KFree(pSwitchParameters);
-    }
+    KFree(pSwitchParameters);
+
     return status;
 }
 

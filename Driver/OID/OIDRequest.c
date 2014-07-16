@@ -111,8 +111,7 @@ NDIS_SWITCH_OBJECT_ID* pPropertyId, NDIS_SWITCH_PROPERTY_ENUM_PARAMETERS** ppSwi
     } while (status == NDIS_STATUS_INVALID_LENGTH);
 
 Cleanup:
-    if (status != NDIS_STATUS_SUCCESS &&
-        pOutputBuffer != NULL)
+    if (status != NDIS_STATUS_SUCCESS)
     {
         KFree(pOutputBuffer);
         pOutputBuffer = NULL;
@@ -367,8 +366,7 @@ NDIS_SWITCH_PORT_PROPERTY_ENUM_PARAMETERS** ppPortPropertyEnumParameters)
     } while (status == NDIS_STATUS_INVALID_LENGTH);
 
 Cleanup:
-    if (status != NDIS_STATUS_SUCCESS &&
-        pOutputBuffer != NULL)
+    if (status != NDIS_STATUS_SUCCESS)
     {
         KFree(pOutputBuffer);
         pOutputBuffer = NULL;
@@ -413,7 +411,7 @@ NDIS_STATUS OID_GetPortArrayUnsafe(OVS_SWITCH_INFO* pSwitchInfo, NDIS_SWITCH_POR
 
     *ppOutPortArray = pPortArray;
 Cleanup:
-    if (status != NDIS_STATUS_SUCCESS && pPortArray != NULL)
+    if (status != NDIS_STATUS_SUCCESS)
     {
         KFree(pPortArray);
     }
@@ -724,7 +722,7 @@ NDIS_STATUS OID_GetNicArrayUnsafe(OVS_SWITCH_INFO* pSwitchInfo, NDIS_SWITCH_NIC_
     *ppNicArray = pNicArray;
 
 Cleanup:
-    if (status != NDIS_STATUS_SUCCESS && pNicArray != NULL)
+    if (status != NDIS_STATUS_SUCCESS)
     {
         KFree(pNicArray);
     }

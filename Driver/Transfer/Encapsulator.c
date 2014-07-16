@@ -484,10 +484,7 @@ const OVS_DECAPSULATOR* Encap_FindDecapsulator(NET_BUFFER* pNb, BYTE* pEncapProt
             }
         }
 
-        if (pAllocBuffer)
-        {
-            KFree(pAllocBuffer);
-        }
+        KFree(pAllocBuffer);
     }
     else if (pEthHeader->type == RtlUshortByteSwap(OVS_ETHERTYPE_IPV6))
     {

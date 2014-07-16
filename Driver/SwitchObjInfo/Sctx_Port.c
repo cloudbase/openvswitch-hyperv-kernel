@@ -84,10 +84,7 @@ NDIS_STATUS Sctx_AddPort_Unsafe(_Inout_ OVS_GLOBAL_FORWARD_INFO* pForwardInfo, c
     }
 
 Cleanup:
-    if (ofPortName)
-    {
-        KFree(ofPortName);
-    }
+    KFree(ofPortName);
 
     return status;
 }

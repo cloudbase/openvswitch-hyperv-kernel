@@ -1055,10 +1055,7 @@ NET_BUFFER_LIST* ONB_FragmentBuffer_Ipv4(_Inout_ OVS_NET_BUFFER* pOvsNb, ULONG m
         pCurNb = pCurNb->Next;
     }
 
-    if (pOptionsBuffer)
-    {
-        KFree(pOptionsBuffer);
-    }
+    KFree(pOptionsBuffer);
 
     ONB_Retreat(pOvsNb, sizeof(OVS_ETHERNET_HEADER));
 

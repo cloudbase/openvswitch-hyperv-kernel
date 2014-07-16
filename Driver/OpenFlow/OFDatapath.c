@@ -35,10 +35,7 @@ VOID Datapath_DestroyNow_Unsafe(OVS_DATAPATH* pDatapath)
     OVS_FLOW_TABLE* pFlowTable = NULL;
     LOCK_STATE_EX lockState;
 
-    if (pDatapath->name)
-    {
-        KFree(pDatapath->name);
-    }
+    KFree(pDatapath->name);
 
     DATAPATH_LOCK_WRITE(pDatapath, &lockState);
 
@@ -154,10 +151,7 @@ BOOLEAN CreateMsgFromDatapath(OVS_DATAPATH* pDatapath, UINT32 sequence, UINT8 cm
     pMsg->pArgGroup = pArgGroup;
 
 Cleanup:
-    if (datapathName)
-    {
-        KFree(datapathName);
-    }
+    KFree(datapathName);
 
     if (ok)
     {
