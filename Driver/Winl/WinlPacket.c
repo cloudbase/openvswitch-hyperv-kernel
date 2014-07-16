@@ -215,19 +215,14 @@ VOID Packet_Execute(_In_ OVS_ARGUMENT_GROUP* pArgGroup, const FILE_OBJECT* pFile
     }
 
 Cleanup:
-    OVS_REFCOUNT_DEREFERENCE(pTargetActions);
-
     if (pFlow)
     {
         Flow_DestroyNow_Unsafe(pFlow);
     }
 
+    OVS_REFCOUNT_DEREFERENCE(pTargetActions);
     OVS_REFCOUNT_DEREFERENCE(pDatapath);
-
-    if (pOvsNb->pSourcePort)
-    {
-        OVS_REFCOUNT_DEREFERENCE(pOvsNb->pSourcePort);
-    }
+    OVS_REFCOUNT_DEREFERENCE(pOvsNb->pSourcePort);
 
     if (ok)
     {

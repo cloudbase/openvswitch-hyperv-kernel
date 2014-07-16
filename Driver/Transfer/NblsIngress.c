@@ -712,10 +712,7 @@ BOOLEAN OutputPacketToPort(OVS_NET_BUFFER* pOvsNb)
     }
 
 Cleanup:
-    if (pDatapath)
-    {
-        OVS_REFCOUNT_DEREFERENCE(pDatapath);
-    }
+    OVS_REFCOUNT_DEREFERENCE(pDatapath);
 
     if (ok)
     {
@@ -844,8 +841,6 @@ Cleanup:
         //we don't use the pActions anymore
         //the actions are not modified, once set in a flow, so there's no need to lock the pFlow to dereference pActions
         OVS_REFCOUNT_DEREFERENCE(pOvsNb->pActions);
-        pOvsNb->pActions = NULL;
-
         OVS_REFCOUNT_DEREFERENCE(pFlow);
     }
     else

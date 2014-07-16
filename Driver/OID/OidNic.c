@@ -130,10 +130,7 @@ VOID Nic_Connect(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH_NIC_PA
     FWDINFO_UNLOCK(pForwardInfo, &lockState);
 
     //Cleanup
-    if (pNicEntry)
-    {
-        OVS_REFCOUNT_DEREFERENCE(pNicEntry);
-    }
+    OVS_REFCOUNT_DEREFERENCE(pNicEntry);
 }
 
 _Use_decl_annotations_

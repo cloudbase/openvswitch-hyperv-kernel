@@ -343,11 +343,7 @@ BOOLEAN ExecuteActions(_Inout_ OVS_NET_BUFFER* pOvsNb, _In_ const OutputToPortCa
     }
 
 Cleanup:
-    if (pDestPersPort)
-    {
-        OVS_REFCOUNT_DEREFERENCE(pDestPersPort);
-        pDestPersPort = NULL;
-    }
+    OVS_REFCOUNT_DEREFERENCE(pDestPersPort);
 
     return ok;
 }

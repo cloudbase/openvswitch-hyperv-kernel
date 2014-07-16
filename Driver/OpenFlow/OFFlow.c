@@ -732,11 +732,7 @@ void DbgPrintAllFlows()
     FLOWTABLE_UNLOCK(pFlowTable, &lockState);
 
     OVS_REFCOUNT_DEREFERENCE(pFlowTable);
-
-    if (pDatapath)
-    {
-        OVS_REFCOUNT_DEREFERENCE(pDatapath);
-    }
+    OVS_REFCOUNT_DEREFERENCE(pDatapath);
 }
 
 #endif

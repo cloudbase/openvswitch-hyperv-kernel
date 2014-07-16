@@ -226,10 +226,7 @@ Cleanup:
         KFree(pDatapath);
     }
 
-    if (pSwitchInfo)
-    {
-        OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
-    }
+    OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
 
     return ok;
 }

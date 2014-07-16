@@ -410,7 +410,6 @@ Cleanup:
 
     OVS_REFCOUNT_DEREFERENCE(pFlow);
     OVS_REFCOUNT_DEREFERENCE(pFlowTable);
-
     OVS_REFCOUNT_DEREFERENCE(pDatapath);
 
     if (error != OVS_ERROR_NOERROR)
@@ -508,7 +507,6 @@ Cleanup:
 
     OVS_REFCOUNT_DEREFERENCE(pFlow);
     OVS_REFCOUNT_DEREFERENCE(pFlowTable);
-
     OVS_REFCOUNT_DEREFERENCE(pDatapath);
 
     return error;
@@ -628,7 +626,6 @@ Cleanup:
 
     OVS_REFCOUNT_DEREFERENCE(pFlow);
     OVS_REFCOUNT_DEREFERENCE(pFlowTable);
-
     OVS_REFCOUNT_DEREFERENCE(pDatapath);
 
     return error;
