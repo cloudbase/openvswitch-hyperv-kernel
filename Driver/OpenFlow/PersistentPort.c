@@ -1063,8 +1063,7 @@ BOOLEAN PersPort_Delete(OVS_PERSISTENT_PORT* pPort)
     OVS_CHECK(pPorts->count > 0);
     --(pPorts->count);
 
-    OVS_REFCOUNT_DEREFERENCE_ONLY(pPort);
-    OVS_REFCOUNT_DESTROY(pPort);
+    OVS_REFCOUNT_DEREF_AND_DESTROY(pPort);
 
 Cleanup:
     if (portsLocked)

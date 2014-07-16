@@ -264,3 +264,5 @@ static __inline VOID RefCount_Destroy(VOID* pObj)
 }
 
 #define OVS_REFCOUNT_DESTROY(pObj) { RefCount_Destroy(pObj); pObj = NULL; }
+
+#define OVS_REFCOUNT_DEREF_AND_DESTROY(pObj)    { OVS_REFCOUNT_DEREFERENCE_ONLY(pObj); OVS_REFCOUNT_DESTROY(pObj); }

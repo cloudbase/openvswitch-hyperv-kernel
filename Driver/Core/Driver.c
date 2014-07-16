@@ -41,8 +41,7 @@ VOID Driver_Uninit()
         RemoveEntryList(&pDatapath->listEntry);
         OVS_CHECK(IsListEmpty(&g_driver.datapathList));
 
-        OVS_REFCOUNT_DEREFERENCE_ONLY(pDatapath);
-        OVS_REFCOUNT_DESTROY(pDatapath);
+        OVS_REFCOUNT_DEREF_AND_DESTROY(pDatapath);
     }
 
     if (!IsListEmpty(&g_driver.switchList))

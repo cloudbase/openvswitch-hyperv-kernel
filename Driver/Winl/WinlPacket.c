@@ -241,11 +241,7 @@ Cleanup:
             ONB_Destroy(pSwitchInfo, &pOvsNb);
         }
 
-        if (pTargetActions)
-        {
-            OVS_REFCOUNT_DEREFERENCE_ONLY(pTargetActions);
-            OVS_REFCOUNT_DESTROY(pTargetActions);
-        }
+        OVS_REFCOUNT_DEREF_AND_DESTROY(pTargetActions);
     }
 
     OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);

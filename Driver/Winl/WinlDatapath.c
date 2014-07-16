@@ -169,8 +169,7 @@ OVS_ERROR Datapath_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObjec
     }
 
 Cleanup:
-    OVS_REFCOUNT_DEREFERENCE_ONLY(pDatapath);
-    OVS_REFCOUNT_DESTROY(pDatapath);
+    OVS_REFCOUNT_DEREF_AND_DESTROY(pDatapath);
 
     DestroyArgumentGroup(replyMsg.pArgGroup);
 

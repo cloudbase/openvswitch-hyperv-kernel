@@ -610,8 +610,7 @@ OVS_ERROR Flow_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     //remove the flow from the list of flows
     FlowTable_RemoveFlow_Unsafe(pFlowTable, pFlow);
 
-    OVS_REFCOUNT_DEREFERENCE_ONLY(pFlow);
-    OVS_REFCOUNT_DESTROY(pFlow);
+    OVS_REFCOUNT_DEREF_AND_DESTROY(pFlow);
 
     FLOWTABLE_UNLOCK(pFlowTable, &lockState);
 
