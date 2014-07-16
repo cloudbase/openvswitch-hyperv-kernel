@@ -352,13 +352,13 @@ static BOOLEAN _CreateActionsGroupToList(OVS_ARGTYPE groupType, const OVS_ARGUME
     OVS_ARGUMENT* pGroupArg = NULL;
     BOOLEAN ok = TRUE;
 
-    pCurListArg = pHeadArg = AllocateArgListItem();
-
+    pHeadArg = KZAlloc(sizeof(OVS_ARGUMENT_SLIST_ENTRY));
     if (!pHeadArg)
     {
         return FALSE;
     }
 
+    pCurListArg = pHeadArg;
     ok = _CreateActionsArgsToList(pArgGroup, &pCurListArg);
     if (!ok)
     {
@@ -387,13 +387,13 @@ static BOOLEAN _SampleActionToList(const OVS_ARGUMENT_GROUP* pArgGroup, OVS_ARGU
 
     OVS_ARGUMENT_SLIST_ENTRY* pCurListArg = NULL, *pHeadArg = NULL;
 
-    pCurListArg = pHeadArg = AllocateArgListItem();
-
+    pHeadArg = KZAlloc(sizeof(OVS_ARGUMENT_SLIST_ENTRY));
     if (!pHeadArg)
     {
         return FALSE;
     }
 
+    pCurListArg = pHeadArg;
     OVS_ARGUMENT* pGroupArg = NULL;
 
     for (UINT i = 0; i < pArgGroup->count; ++i)
@@ -443,7 +443,7 @@ static OVS_ARGUMENT* _CreateIpv4TunnelGroup(const OF_PI_IPV4_TUNNEL* pTunnelInfo
     UINT totalSize = 0;
     BOOLEAN ok = TRUE;
 
-    pArgListCur = AllocateArgListItem();
+    pArgListCur = KZAlloc(sizeof(OVS_ARGUMENT_SLIST_ENTRY));
     if (!pArgListCur)
     {
         return FALSE;
@@ -735,7 +735,7 @@ static OVS_ARGUMENT* _CreateActionsGroup(const OVS_ARGUMENT_GROUP* pActions)
     UINT16 countArgs = 0;
     UINT totalSize = 0;
 
-    pArgListCur = AllocateArgListItem();
+    pArgListCur = KZAlloc(sizeof(OVS_ARGUMENT_SLIST_ENTRY));
     if (!pArgListCur)
     {
         return FALSE;
@@ -846,7 +846,7 @@ static OVS_ARGUMENT* _CreateEncapsulationArg(const OVS_OFPACKET_INFO* pPacketInf
         goto Cleanup;
     }
 
-    pArgListCur = AllocateArgListItem();
+    pArgListCur = KZAlloc(sizeof(OVS_ARGUMENT_SLIST_ENTRY));
     if (!pArgListCur)
     {
         ok = FALSE;
@@ -1125,8 +1125,7 @@ static OVS_ARGUMENT_SLIST_ENTRY* _CreateArgListFromPacketInfo(const OVS_OFPACKET
     BOOLEAN encapsulated = FALSE;
     UINT32 packetPriority = 0, packetMark = 0;
 
-    pArgListCur = AllocateArgListItem();
-
+    pArgListCur = KZAlloc(sizeof(OVS_ARGUMENT_SLIST_ENTRY));
     if (!pArgListCur)
     {
         return NULL;

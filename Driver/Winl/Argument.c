@@ -868,7 +868,7 @@ OVS_ARGUMENT_SLIST_ENTRY* CreateArgumentListEntry(OVS_ARGTYPE argType, const VOI
     OVS_ARGUMENT* pArg = NULL;
     OVS_ARGUMENT_SLIST_ENTRY* pArgListItem;
 
-    pArgListItem = AllocateArgListItem();
+    pArgListItem = KZAlloc(sizeof(OVS_ARGUMENT_SLIST_ENTRY));
     if (!pArgListItem)
     {
         return FALSE;
@@ -890,7 +890,7 @@ OVS_ARGUMENT_SLIST_ENTRY* CreateArgumentListEntry_WithSize(OVS_ARGTYPE argType, 
     OVS_ARGUMENT* pArg = NULL;
     OVS_ARGUMENT_SLIST_ENTRY* pArgListItem;
 
-    pArgListItem = AllocateArgListItem();
+    pArgListItem = KZAlloc(sizeof(OVS_ARGUMENT_SLIST_ENTRY));
     if (!pArgListItem)
     {
         return FALSE;
@@ -950,7 +950,9 @@ OVS_ARGUMENT* ArgumentListToArray(_In_ OVS_ARGUMENT_SLIST_ENTRY* pHeadArg, _Inou
 
 BOOLEAN AppendArgumentToList(OVS_ARGUMENT* pArg, _Inout_ OVS_ARGUMENT_SLIST_ENTRY** ppLastEntry)
 {
-    OVS_ARGUMENT_SLIST_ENTRY* pArgListItem = AllocateArgListItem();
+    OVS_ARGUMENT_SLIST_ENTRY* pArgListItem = NULL;
+    
+    pArgListItem = KZAlloc(sizeof(OVS_ARGUMENT_SLIST_ENTRY));
     if (!pArgListItem)
     {
         return FALSE;

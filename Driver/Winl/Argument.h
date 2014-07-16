@@ -165,8 +165,6 @@ BOOLEAN VerifyGroup_PacketActions(OVS_ARGUMENT* pArg, BOOLEAN isRequest);
 
 /******************************************* ARGUMENT LIST FUNCTIONS **********************************************************************/
 
-#define AllocateArgListItem() ExAllocatePoolWithTag(NonPagedPool, sizeof(OVS_ARGUMENT_SLIST_ENTRY), g_extAllocationTag)
-
 static __inline VOID FreeArgListItem(OVS_ARGUMENT_SLIST_ENTRY* pArgHead)
 {
     if (pArgHead)
