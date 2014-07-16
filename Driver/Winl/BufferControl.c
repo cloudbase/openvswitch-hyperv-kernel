@@ -574,7 +574,7 @@ VOID BufferCtl_Uninit()
     OVS_DEVICE_FILE_INFO_ENTRY* pEntry = NULL;
     BOOLEAN okMcast = TRUE, okUcast = TRUE;
 
-    Rwlock_LockWrite(g_pOvsDeviceRWLock, &lockState);
+    NdisAcquireRWLockWrite(g_pOvsDeviceRWLock, &lockState, 0);
 
     LIST_FOR_EACH(OVS_DEVICE_FILE_INFO_ENTRY, pEntry, &g_deviceFileInfoList)
     {
@@ -599,7 +599,7 @@ VOID BufferCtl_Uninit()
     OVS_CHECK(IsListEmpty(&g_unicastBufferList));
     OVS_CHECK(IsListEmpty(&g_multicastFileObjects));
 
-    Rwlock_Unlock(g_pOvsDeviceRWLock, &lockState);
+    NdisReleaseRWLock(g_pOvsDeviceRWLock, &lockState);
 
     NdisFreeRWLock(g_pOvsDeviceRWLock);
 }

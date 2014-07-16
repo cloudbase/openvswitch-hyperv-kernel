@@ -54,23 +54,3 @@ VOID OvsUninit()
 
     PersPort_Uninitialize();
 }
-
-VOID Rwlock_LockRead(_In_ PNDIS_RW_LOCK_EX pRwLock, _In_ LOCK_STATE_EX* pLockState)
-{
-    DEBUGP_LOCK(LOG_INFO, "rw lock: %p; op: read\n", pRwLock);
-
-    NdisAcquireRWLockRead(pRwLock, pLockState, 0);
-}
-
-VOID Rwlock_LockWrite(_In_ PNDIS_RW_LOCK_EX pRwLock, _In_ LOCK_STATE_EX* pLockState)
-{
-    DEBUGP_LOCK(LOG_INFO, "rw lock: %p; op: write\n", pRwLock);
-
-    NdisAcquireRWLockWrite(pRwLock, pLockState, 0);
-}
-
-VOID Rwlock_Unlock(_In_ PNDIS_RW_LOCK_EX pRwLock, _In_ LOCK_STATE_EX* pLockState)
-{
-    DEBUGP_LOCK(LOG_INFO, "rw unlock: %p\n", pRwLock);
-    NdisReleaseRWLock(pRwLock, pLockState);
-}

@@ -108,7 +108,7 @@ VOID Arp_InsertTableEntry(_In_ const BYTE ip[4], _In_ const BYTE mac[OVS_ETHERNE
     LOCK_STATE_EX lockState = { 0 };
     BYTE* pMacAddr = NULL;
 
-    Rwlock_LockWrite(g_pArpRWLock, &lockState);
+    NdisAcquireRWLockWrite(g_pArpRWLock, &lockState, 0);
 
     pMacAddr = _Arp_FindTableEntry_Unsafe(ip);
     if (!pMacAddr)
@@ -130,7 +130,7 @@ VOID Arp_InsertTableEntry(_In_ const BYTE ip[4], _In_ const BYTE mac[OVS_ETHERNE
         RtlCopyMemory(pMacAddr, mac, OVS_ETHERNET_ADDRESS_LENGTH);
     }
 
-    Rwlock_Unlock(g_pArpRWLock, &lockState);
+    NdisReleaseRWLock(g_pArpRWLock, &lockState);
 }
 
 const BYTE* Arp_FindTableEntry(_In_ const BYTE ip[4])
@@ -138,11 +138,11 @@ const BYTE* Arp_FindTableEntry(_In_ const BYTE ip[4])
     LOCK_STATE_EX lockState = { 0 };
     const BYTE* pMac = NULL;
 
-    Rwlock_LockRead(g_pArpRWLock, &lockState);
+    NdisAcquireRWLockRead(g_pArpRWLock, &lockState, 0);
 
     pMac = _Arp_FindTableEntry_Unsafe(ip);
 
-    Rwlock_Unlock(g_pArpRWLock, &lockState);
+    NdisReleaseRWLock(g_pArpRWLock, &lockState);
 
     return pMac;
 }
@@ -153,7 +153,7 @@ VOID Arp_DestroyTable()
     PLIST_ENTRY headList = NULL;
     LOCK_STATE_EX lockState = { 0 };
 
-    Rwlock_LockWrite(g_pArpRWLock, &lockState);
+    NdisAcquireRWLockWrite(g_pArpRWLock, &lockState, 0);
 
     while (!IsListEmpty(&g_arpTable))
     {
@@ -164,5 +164,5 @@ VOID Arp_DestroyTable()
         ExFreePoolWithTag(pArpEntry, g_extAllocationTag);
     }
 
-    Rwlock_Unlock(g_pArpRWLock, &lockState);
+    NdisReleaseRWLock(g_pArpRWLock, &lockState);
 }

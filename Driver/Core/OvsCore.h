@@ -44,10 +44,6 @@ extern ULONG  g_extAllocationTag;
 NDIS_STATUS OvsInit(NDIS_HANDLE ndisHandle);
 VOID OvsUninit();
 
-VOID Rwlock_LockRead(_In_ PNDIS_RW_LOCK_EX pRwLock, _In_ LOCK_STATE_EX* pLockState);
-VOID Rwlock_LockWrite(_In_ PNDIS_RW_LOCK_EX pRwLock, _In_ LOCK_STATE_EX* pLockState);
-VOID Rwlock_Unlock(_In_ PNDIS_RW_LOCK_EX pRwLock, _In_ LOCK_STATE_EX* pLockState);
-
 __inline void WcharArrayToAscii(CHAR* dest, const WCHAR* src, UINT count)
 {
     UINT i = 0;

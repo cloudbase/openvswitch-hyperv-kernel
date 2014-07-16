@@ -43,9 +43,9 @@ static BOOLEAN _AddPersPort_Logical(LIST_ENTRY* pList, _In_ const OVS_PERSISTENT
 
     pPortEntry->pPort = (OVS_PERSISTENT_PORT*)pPort;
 
-    Rwlock_LockWrite(g_pLogicalPortsLock, &lockState);
+    NdisAcquireRWLockWrite(g_pLogicalPortsLock, &lockState, 0);
     InsertTailList(pList, &pPortEntry->listEntry);
-    Rwlock_Unlock(g_pLogicalPortsLock, &lockState);
+    NdisReleaseRWLock(g_pLogicalPortsLock, &lockState);
 
     return TRUE;
 }
@@ -56,7 +56,7 @@ static BOOLEAN _RemovePersPort_Logical(LIST_ENTRY* pList, _In_ const OVS_PERSIST
     BOOLEAN ok = FALSE;
     LOCK_STATE_EX lockState = { 0 };
 
-    Rwlock_LockWrite(g_pLogicalPortsLock, &lockState);
+    NdisAcquireRWLockWrite(g_pLogicalPortsLock, &lockState, 0);
 
     LIST_FOR_EACH(OVS_LOGICAL_PORT_ENTRY, pPortEntry, pList)
     {
@@ -71,7 +71,7 @@ static BOOLEAN _RemovePersPort_Logical(LIST_ENTRY* pList, _In_ const OVS_PERSIST
     }
 
 Cleanup:
-    Rwlock_Unlock(g_pLogicalPortsLock, &lockState);
+    NdisReleaseRWLock(g_pLogicalPortsLock, &lockState);
     return ok;
 }
 
@@ -106,7 +106,7 @@ static OVS_PERSISTENT_PORT* _PersPort_FindTunnel_Ref(_In_ const LIST_ENTRY* pLis
         OVS_CHECK(pTunnelOptions);
     }
 
-    Rwlock_LockRead(g_pLogicalPortsLock, &lockState);
+    NdisAcquireRWLockRead(g_pLogicalPortsLock, &lockState, 0);
 
     LIST_FOR_EACH(OVS_LOGICAL_PORT_ENTRY, pPortEntry, pList)
     {
@@ -136,7 +136,7 @@ static OVS_PERSISTENT_PORT* _PersPort_FindTunnel_Ref(_In_ const LIST_ENTRY* pLis
     }
 
 Cleanup:
-    Rwlock_Unlock(g_pLogicalPortsLock, &lockState);
+    NdisReleaseRWLock(g_pLogicalPortsLock, &lockState);
 
     return pOutPort;
 }
