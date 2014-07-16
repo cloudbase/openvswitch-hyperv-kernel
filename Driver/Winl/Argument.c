@@ -974,7 +974,9 @@ VOID DestroyArgList(_Inout_ OVS_ARGUMENT_SLIST_ENTRY** ppHeadEntry)
     OVS_ARGUMENT_SLIST_ENTRY* pArgListCur = *ppHeadEntry;
     OVS_ARGUMENT_SLIST_ENTRY* pNext = NULL;
 
-    OVS_CHECK(pArgListCur);
+    if (!pArgListCur)
+        return;
+
     //the pArgListFirst points to a head, which has pArg = NULL
     OVS_CHECK(!pArgListCur->pArg);
 
@@ -1005,7 +1007,9 @@ VOID FreeArgList(_Inout_ OVS_ARGUMENT_SLIST_ENTRY** ppHeadEntry)
     OVS_ARGUMENT_SLIST_ENTRY* pArgListCur = *ppHeadEntry;
     OVS_ARGUMENT_SLIST_ENTRY* pNext = NULL;
 
-    OVS_CHECK(pArgListCur);
+    if (!pArgListCur)
+        return;
+
     //the pArgListFirst points to a head, which has pArg = NULL
     OVS_CHECK(!pArgListCur->pArg);
 

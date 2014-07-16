@@ -551,27 +551,10 @@ Cleanup:
     }
     else
     {
-        if (pTunnelArg)
-        {
-            DestroyArgument(pTunnelArg);
-        }
-        else if (pTunnelGroup)
-        {
-            DestroyArgumentGroup(pTunnelGroup);
-        }
-        else if (argArray)
-        {
-            DestroyArguments(argArray, countArgs);
-        }
-        else
-        {
-            DestroyArgList(&pArgHead);
-        }
-
-        if (pArgHead)
-        {
-            FreeArgList(&pArgHead);
-        }
+        DestroyArgList(&pArgHead);
+        KFree(argArray);
+        KFree(pTunnelGroup);
+        KFree(pTunnelArg);
 
         return NULL;
     }
@@ -787,23 +770,10 @@ Cleanup:
     }
     else
     {
-        if (pActionsArg)
-        {
-            DestroyArgument(pActionsArg);
-        }
-        else if (pActionsGroup)
-        {
-            DestroyArgumentGroup(pActionsGroup);
-        }
-        else if (argArray)
-        {
-            DestroyArguments(argArray, countArgs);
-            FreeArgList(&pArgHead);
-        }
-        else if (pArgHead)
-        {
-            DestroyArgList(&pArgHead);
-        }
+        DestroyArgList(&pArgHead);
+        KFree(argArray);
+        KFree(pActionsGroup);
+        KFree(pActionsArg);
 
         return NULL;
     }
@@ -895,46 +865,15 @@ Cleanup:
     if (ok)
     {
         FreeArgList(&pArgHead);
+        return pEncapsArg;
     }
-    else
-    {
-        if (pEncapsArg)
-        {
-            DestroyArgument(pEncapsArg);
+    
+    DestroyArgList(&pArgHead);
+    KFree(argArray);
+    KFree(pEncapsGroup);
+    KFree(pEncapsArg);
 
-            if (pArgHead)
-            {
-                FreeArgList(&pArgHead);
-            }
-        }
-        else if (pEncapsGroup)
-        {
-            DestroyArgumentGroup(pEncapsGroup);
-
-            if (pArgHead)
-            {
-                FreeArgList(&pArgHead);
-            }
-        }
-        else if (argArray)
-        {
-            OVS_CHECK(countArgs > 0);
-            DestroyArguments(argArray, countArgs);
-
-            if (pArgHead)
-            {
-                FreeArgList(&pArgHead);
-            }
-        }
-        else
-        {
-            DestroyArgList(&pArgHead);
-        }
-
-        return NULL;
-    }
-
-    return pEncapsArg;
+    return NULL;
 }
 
 static BOOLEAN _CreateEncapsulationGroupToList(const OVS_OFPACKET_INFO* pPacketInfo, const OVS_OFPACKET_INFO* pMask, OVS_ARGUMENT_SLIST_ENTRY** ppArgList)
