@@ -24,7 +24,7 @@ limitations under the License.
 #define __UNEXPECTED__            0
 
 #define KAlloc(size) ExAllocatePoolWithTag(NonPagedPool, size, g_extAllocationTag)
-#define KFree(p) ExFreePoolWithTag(p, g_extAllocationTag)
+#define KFree(p) KFreeSafe(p)
 
 #define OVS_ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
 
@@ -105,4 +105,12 @@ static __inline VOID* KZAlloc(SIZE_T size)
 
     RtlZeroMemory(p, size);
     return p;
+}
+
+static __inline VOID KFreeSafe(VOID* p)
+{
+    if (p)
+    {
+        ExFreePoolWithTag(p, g_extAllocationTag);
+    }
 }
