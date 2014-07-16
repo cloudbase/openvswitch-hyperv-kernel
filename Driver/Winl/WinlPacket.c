@@ -379,15 +379,8 @@ Out:
         //we free, not destroy: the nb inside was not duplicated
         KFree(pNbArg);
 
-        if (pUserDataArg)
-        {
-            DestroyArgument(pUserDataArg);
-        }
-
-        if (pPacketInfoArg)
-        {
-            DestroyArgument(pPacketInfoArg);
-        }
+        DestroyArgument(pUserDataArg);
+        DestroyArgument(pPacketInfoArg);
     }
 
     return error;

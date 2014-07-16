@@ -152,35 +152,12 @@ Cleanup:
     }
     else
     {
-        if (pArgPortNumber)
-        {
-            DestroyArgument(pArgPortNumber);
-        }
-
-        if (pArgPortType)
-        {
-            DestroyArgument(pArgPortType);
-        }
-
-        if (pArgPortName)
-        {
-            DestroyArgument(pArgPortName);
-        }
-
-        if (pArgUpcallPid)
-        {
-            DestroyArgument(pArgUpcallPid);
-        }
-
-        if (pArgPortSats)
-        {
-            DestroyArgument(pArgPortSats);
-        }
-
-        if (pArgPortOpts)
-        {
-            DestroyArgument(pArgPortOpts);
-        }
+        DestroyArgument(pArgPortNumber);
+        DestroyArgument(pArgPortType);
+        DestroyArgument(pArgPortName);
+        DestroyArgument(pArgUpcallPid);
+        DestroyArgument(pArgPortSats);
+        DestroyArgument(pArgPortOpts);
 
         if (pMsg->pArgGroup)
         {

@@ -1093,10 +1093,7 @@ Cleanup:
     else
     {
         //also destroys pArgs and its children
-        if (pGroupArg)
-        {
-            DestroyArgument(pGroupArg);
-        }
+        DestroyArgument(pGroupArg);
     }
 
     return pGroupArg;

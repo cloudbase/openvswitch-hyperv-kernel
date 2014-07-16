@@ -166,15 +166,8 @@ Cleanup:
     }
     else
     {
-        if (pNameArg)
-        {
-            DestroyArgument(pNameArg);
-        }
-
-        if (pStatsArg)
-        {
-            DestroyArgument(pStatsArg);
-        }
+        DestroyArgument(pNameArg);
+        DestroyArgument(pStatsArg);
 
         if (pArgGroup)
         {

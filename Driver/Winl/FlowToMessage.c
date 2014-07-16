@@ -1459,35 +1459,12 @@ Cleanup:
         KFree(pFlowGroup->args);
         KFree(pFlowGroup);
 
-        if (pPIArg)
-        {
-            DestroyArgument(pPIArg);
-        }
-
-        if (pMasksArg)
-        {
-            DestroyArgument(pMasksArg);
-        }
-
-        if (pTimeUsedArg)
-        {
-            DestroyArgument(pTimeUsedArg);
-        }
-
-        if (pFlowStats)
-        {
-            DestroyArgument(pFlowStats);
-        }
-
-        if (pTcpFlags)
-        {
-            DestroyArgument(pTcpFlags);
-        }
-
-        if (pActionsArg)
-        {
-            DestroyArgument(pActionsArg);
-        }
+        DestroyArgument(pPIArg);
+        DestroyArgument(pMasksArg);
+        DestroyArgument(pTimeUsedArg);
+        DestroyArgument(pFlowStats);
+        DestroyArgument(pTcpFlags);
+        DestroyArgument(pActionsArg);
     }
 
     return ok;
