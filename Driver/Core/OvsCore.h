@@ -97,7 +97,7 @@ static __inline WCHAR* IfCountedStringToWCharArray(_In_ const IF_COUNTED_STRING*
 
 static __inline VOID* KZAlloc(SIZE_T size)
 {
-    VOID* p = ExAllocatePoolWithTag(NonPagedPool, size, g_extAllocationTag);
+    VOID* p = KAlloc(size);
     if (!p)
     {
         return NULL;

@@ -94,7 +94,7 @@ OVS_GRE_HEADER_2890* Gre_BuildHeader(_In_ const OF_PI_IPV4_TUNNEL* pTunnel, _In_
 
     *pHaveChecksum = FALSE;
 
-    pGreHeader = ExAllocatePoolWithTag(NonPagedPool, greHeaderSize, g_extAllocationTag);
+    pGreHeader = KAlloc(greHeaderSize);
     if (!pGreHeader)
     {
         return NULL;

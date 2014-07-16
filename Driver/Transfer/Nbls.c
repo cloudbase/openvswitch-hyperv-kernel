@@ -40,7 +40,7 @@ VOID* ReadNb_Alloc(_In_ NET_BUFFER* net_buffer)
     buffer = NdisGetDataBuffer(net_buffer, bufferSize, NULL, 1, 0);
     if (buffer)
     {
-        allocBuffer = ExAllocatePoolWithTag(NonPagedPool, bufferSize, g_extAllocationTag);
+        allocBuffer = KAlloc(bufferSize);
         if (!allocBuffer)
         {
             return NULL;
@@ -51,7 +51,7 @@ VOID* ReadNb_Alloc(_In_ NET_BUFFER* net_buffer)
     }
     else
     {
-        allocBuffer = ExAllocatePoolWithTag(NonPagedPool, bufferSize, g_extAllocationTag);
+        allocBuffer = KAlloc(bufferSize);
         OVS_CHECK(allocBuffer);
 
         buffer = NdisGetDataBuffer(net_buffer, bufferSize, allocBuffer, 1, 0);
@@ -88,7 +88,7 @@ VOID* GetNbBufferData_OfSize(NET_BUFFER* pNb, ULONG size, void** pAllocBuffer)
         return buffer;
     }
 
-    *pAllocBuffer = ExAllocatePoolWithTag(NonPagedPool, size, g_extAllocationTag);
+    *pAllocBuffer = KAlloc(size);
     OVS_CHECK(*pAllocBuffer);
 
     buffer = NdisGetDataBuffer(pNb, size, *pAllocBuffer, 1, 0);
@@ -252,7 +252,7 @@ NET_BUFFER_LIST* DuplicateNbl(const OVS_SWITCH_INFO* pSwitchInfo, NET_BUFFER_LIS
     {
         nbLen = NET_BUFFER_DATA_LENGTH(pNb);
 
-        pBuffer = ExAllocatePoolWithTag(NonPagedPool, nbLen, g_extAllocationTag);
+        pBuffer = KAlloc(nbLen);
         if (!pBuffer)
         {
             break;
@@ -286,7 +286,7 @@ NET_BUFFER_LIST* DuplicateNbl(const OVS_SWITCH_INFO* pSwitchInfo, NET_BUFFER_LIS
         pSrcNbBuffer = NdisGetDataBuffer(pNb, nbLen, NULL, 1, 0);
         if (!pSrcNbBuffer)
         {
-            pSrcNbBuffer = ExAllocatePoolWithTag(NonPagedPool, nbLen, g_extAllocationTag);
+            pSrcNbBuffer = KAlloc(nbLen);
             OVS_CHECK(pSrcNbBuffer);
 
             if (!pSrcNbBuffer)
@@ -456,7 +456,7 @@ VOID DbgPrintNb(NET_BUFFER* pNb, LPCSTR msg)
     buffer = (BYTE*)NdisGetDataBuffer(pNb, bufPrintLen, NULL, 1, 0);
     if (!buffer)
     {
-        bufferAlloc = (BYTE*)ExAllocatePoolWithTag(NonPagedPool, bufPrintLen, g_extAllocationTag);
+        bufferAlloc = (BYTE*)KAlloc(bufPrintLen);
 
         buffer = (BYTE*)NdisGetDataBuffer(pNb, bufPrintLen, bufferAlloc, 1, 0);
         OVS_CHECK(buffer);

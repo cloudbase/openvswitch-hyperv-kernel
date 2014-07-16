@@ -530,7 +530,7 @@ static OVS_ARGUMENT* _CreateIpv4TunnelGroup(const OF_PI_IPV4_TUNNEL* pTunnelInfo
     pTunnelGroup->groupSize = (UINT16)totalSize;
 
     //parent OVS_ARGUMENT
-    pTunnelArg = ExAllocatePoolWithTag(NonPagedPool, sizeof(OVS_ARGUMENT), g_extAllocationTag);
+    pTunnelArg = KAlloc(sizeof(OVS_ARGUMENT));
     if (!pTunnelArg)
     {
         ok = FALSE;

@@ -163,7 +163,7 @@ OVS_NET_BUFFER* ONB_CreateFromNbAndNbl(const OVS_SWITCH_INFO* pSwitchInfo, NET_B
     //2. Allocate buffer
     //assume there is no mdl size > 1500
     nbLen = NET_BUFFER_DATA_LENGTH(pNb);
-    pDestBuffer = ExAllocatePoolWithTag(NonPagedPool, nbLen + addSize, g_extAllocationTag);
+    pDestBuffer = KAlloc(nbLen + addSize);
     OVS_CHECK(pDestBuffer);
 
     //3. Allocate MDL
@@ -189,7 +189,7 @@ OVS_NET_BUFFER* ONB_CreateFromNbAndNbl(const OVS_SWITCH_INFO* pSwitchInfo, NET_B
     pSrcNbBuffer = NdisGetDataBuffer(pNb, nbLen, NULL, 1, 0);
     if (!pSrcNbBuffer)
     {
-        pSrcNbBuffer = ExAllocatePoolWithTag(NonPagedPool, nbLen, g_extAllocationTag);
+        pSrcNbBuffer = KAlloc(nbLen);
         OVS_CHECK(pSrcNbBuffer);
 
         pResBuffer = NdisGetDataBuffer(pNb, nbLen, pSrcNbBuffer, 1, 0);
@@ -231,8 +231,7 @@ OVS_NET_BUFFER* ONB_CreateFromNbAndNbl(const OVS_SWITCH_INFO* pSwitchInfo, NET_B
     }
 
     //8. Create the OVS_NET_BUFFER
-    pOvsNetBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(OVS_NET_BUFFER), g_extAllocationTag);
-
+    pOvsNetBuffer = KAlloc(sizeof(OVS_NET_BUFFER));
     if (!pOvsNetBuffer)
     {
         OVS_CHECK(pOvsNetBuffer);
@@ -323,7 +322,7 @@ OVS_NET_BUFFER* ONB_CreateFromBuffer(_In_ const OVS_BUFFER* pBuffer, ULONG addSi
     //2. Allocate buffer
     //assume there is no mdl size > 1500
     nbLen = pBuffer->size;
-    pDestBuffer = ExAllocatePoolWithTag(NonPagedPool, nbLen + addSize, g_extAllocationTag);
+    pDestBuffer = KAlloc(nbLen + addSize);
     OVS_CHECK(pDestBuffer);
 
     //3. Allocate MDL
@@ -362,7 +361,7 @@ OVS_NET_BUFFER* ONB_CreateFromBuffer(_In_ const OVS_BUFFER* pBuffer, ULONG addSi
     }
 
     //8. Create the OVS_NET_BUFFER
-    pOvsNetBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(OVS_NET_BUFFER), g_extAllocationTag);
+    pOvsNetBuffer = KAlloc(sizeof(OVS_NET_BUFFER));
     if (!pOvsNetBuffer)
     {
         ok = FALSE;
@@ -428,7 +427,7 @@ OVS_NET_BUFFER* ONB_Create(ULONG bufSize)
 
     //2. Allocate buffer
     //assume there is no mdl size > 1500
-    pDestBuffer = ExAllocatePoolWithTag(NonPagedPool, bufSize, g_extAllocationTag);
+    pDestBuffer = KAlloc(bufSize);
     OVS_CHECK(pDestBuffer);
 
     //3. Allocate MDL
@@ -463,8 +462,7 @@ OVS_NET_BUFFER* ONB_Create(ULONG bufSize)
     }
 
     //7. Create the OVS_NET_BUFFER
-    pOvsNetBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(OVS_NET_BUFFER), g_extAllocationTag);
-
+    pOvsNetBuffer = KAlloc(sizeof(OVS_NET_BUFFER));
     if (!pOvsNetBuffer)
     {
         ok = FALSE;

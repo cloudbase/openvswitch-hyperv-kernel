@@ -76,8 +76,7 @@ static BOOLEAN _ParseAttribute(_In_ BYTE** pBuffer, UINT16* pBytesLeft, _Inout_ 
 
         if (pOutArg->length)
         {
-            pOutArg->data = ExAllocatePoolWithTag(NonPagedPool, pOutArg->length, g_extAllocationTag);
-
+            pOutArg->data = KAlloc(pOutArg->length);
             if (!pOutArg->data)
             {
                 return FALSE;

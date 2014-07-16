@@ -76,7 +76,7 @@ OVS_ERROR Datapath_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
     dpNameLen = (ULONG)strlen(pArgName->data) + 1;
 
-    pDatapath->name = ExAllocatePoolWithTag(NonPagedPool, dpNameLen, g_extAllocationTag);
+    pDatapath->name = KAlloc(dpNameLen);
     if (!pDatapath->name)
     {
         error = OVS_ERROR_INVAL;
@@ -300,8 +300,7 @@ OVS_ERROR Datapath_Dump(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
         replyMsg.flags |= OVS_MESSAGE_FLAG_MULTIPART;
 
-        msgs = ExAllocatePoolWithTag(NonPagedPool, 2 * sizeof(OVS_MESSAGE), g_extAllocationTag);
-
+        msgs = KAlloc(2 * sizeof(OVS_MESSAGE));
         if (!msgs)
         {
             error = OVS_ERROR_INVAL;

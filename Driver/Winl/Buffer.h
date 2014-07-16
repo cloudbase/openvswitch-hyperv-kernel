@@ -38,7 +38,7 @@ static __inline BOOLEAN AllocateBuffer(_Inout_ OVS_BUFFER* pBuf, UINT size)
     OVS_CHECK(!pBuf->p);
     OVS_CHECK(!pBuf->offset);
 
-    pBuf->p = ExAllocatePoolWithTag(NonPagedPool, size, g_extAllocationTag);
+    pBuf->p = KAlloc(size);
     if (!pBuf->p)
     {
         return FALSE;

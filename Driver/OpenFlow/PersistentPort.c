@@ -422,8 +422,7 @@ OVS_PERSISTENT_PORT* PersPort_Create_Ref(_In_opt_ const char* portName, _In_opt_
             goto Cleanup;
         }
 
-        pPort->ovsPortName = ExAllocatePoolWithTag(NonPagedPool, 257, g_extAllocationTag);
-
+        pPort->ovsPortName = KAlloc(257);
         if (!pPort->ovsPortName)
         {
             ok = FALSE;
@@ -437,8 +436,8 @@ OVS_PERSISTENT_PORT* PersPort_Create_Ref(_In_opt_ const char* portName, _In_opt_
     else
     {
         ULONG portNameLen = (ULONG)strlen(portName) + 1;
-        pPort->ovsPortName = ExAllocatePoolWithTag(NonPagedPool, portNameLen, g_extAllocationTag);
 
+        pPort->ovsPortName = KAlloc(portNameLen);
         if (!pPort->ovsPortName)
         {
             ok = FALSE;

@@ -681,8 +681,8 @@ OVS_ERROR OFPort_Dump(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     if (pForwardInfo->persistentPortsInfo.count > 0)
     {
         countMsgs += pForwardInfo->persistentPortsInfo.count;
-        msgs = ExAllocatePoolWithTag(NonPagedPool, countMsgs * sizeof(OVS_MESSAGE), g_extAllocationTag);
 
+        msgs = KAlloc(countMsgs * sizeof(OVS_MESSAGE));
         if (!msgs)
         {
             PERSPORTS_UNLOCK(&pForwardInfo->persistentPortsInfo, &lockState);

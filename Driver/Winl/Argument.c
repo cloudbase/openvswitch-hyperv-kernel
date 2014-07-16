@@ -520,7 +520,7 @@ BOOLEAN AllocateArgumentsToGroup(UINT16 count, _Out_ OVS_ARGUMENT_GROUP* pGroup)
 
     if (count > 0)
     {
-        pGroup->args = ExAllocatePoolWithTag(NonPagedPool, count * sizeof(OVS_ARGUMENT), g_extAllocationTag);
+        pGroup->args = KAlloc(count * sizeof(OVS_ARGUMENT));
         if (!pGroup->args)
         {
             return FALSE;
@@ -1175,8 +1175,7 @@ VOID DbgPrintArg(_In_ OVS_ARGUMENT* pArg, int depth, int index)
     OVS_CHECK(pArg);
     OVS_CHECK(depth >= 0);
 
-    padding = ExAllocatePoolWithTag(NonPagedPool, depth + 1, g_extAllocationTag);
-
+    padding = KAlloc(depth + 1);
     if (!padding)
     {
         return;
@@ -1204,8 +1203,7 @@ VOID DbgPrintArgGroup(_In_ OVS_ARGUMENT_GROUP* pGroup, int depth)
     OVS_CHECK(pGroup);
     OVS_CHECK(depth >= 0);
 
-    padding = ExAllocatePoolWithTag(NonPagedPool, depth + 1, g_extAllocationTag);
-
+    padding = KAlloc(depth + 1);
     if (!padding)
     {
         return;

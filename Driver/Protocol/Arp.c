@@ -113,7 +113,9 @@ VOID Arp_InsertTableEntry(_In_ const BYTE ip[4], _In_ const BYTE mac[OVS_ETHERNE
     pMacAddr = _Arp_FindTableEntry_Unsafe(ip);
     if (!pMacAddr)
     {
-        OVS_ARP_TABLE_ENTRY* pArpEntry = ExAllocatePoolWithTag(NonPagedPool, sizeof(OVS_ARP_TABLE_ENTRY), g_extAllocationTag);
+        OVS_ARP_TABLE_ENTRY* pArpEntry = NULL;
+        
+        pArpEntry = KAlloc(sizeof(OVS_ARP_TABLE_ENTRY));
         if (!pArpEntry)
         {
             DEBUGP(LOG_ERROR, "Failed to allocate arp table entry!\n");

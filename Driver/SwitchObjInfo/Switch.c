@@ -25,8 +25,7 @@ NDIS_STATUS Switch_CreateForwardInfo(NDIS_HANDLE filterHandle, OVS_GLOBAL_FORWAR
     NDIS_STATUS status = NDIS_STATUS_SUCCESS;
     OVS_GLOBAL_FORWARD_INFO* pForwardInfo = NULL;
 
-    pForwardInfo = ExAllocatePoolWithTag(NonPagedPool, sizeof(OVS_GLOBAL_FORWARD_INFO), g_extAllocationTag);
-
+    pForwardInfo = KAlloc(sizeof(OVS_GLOBAL_FORWARD_INFO));
     if (pForwardInfo == NULL)
     {
         status = NDIS_STATUS_RESOURCES;
