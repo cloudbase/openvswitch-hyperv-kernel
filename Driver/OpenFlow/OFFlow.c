@@ -68,10 +68,7 @@ VOID Flow_DestroyNow_Unsafe(OVS_FLOW* pFlow)
 
     FlowMask_DeleteReference(pFlow->pMask);
 
-    if (pFlow->pActions)
-    {
-        OVS_REFCOUNT_DESTROY(pFlow->pActions);
-    }
+    OVS_REFCOUNT_DESTROY(pFlow->pActions);
 
     KFree(pFlow);
 }
