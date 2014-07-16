@@ -165,14 +165,6 @@ BOOLEAN VerifyGroup_PacketActions(OVS_ARGUMENT* pArg, BOOLEAN isRequest);
 
 /******************************************* ARGUMENT LIST FUNCTIONS **********************************************************************/
 
-static __inline VOID FreeArgListItem(OVS_ARGUMENT_SLIST_ENTRY* pArgHead)
-{
-    if (pArgHead)
-    {
-        ExFreePoolWithTag(pArgHead, sizeof(OVS_ARGUMENT_SLIST_ENTRY));
-    }
-}
-
 //creates an OVS_ARGUMENT with a copy of buffer; allocates a list item; sets the arg as the listItem->pArg, and listItem->next = NULL
 OVS_ARGUMENT_SLIST_ENTRY* CreateArgumentListEntry(OVS_ARGTYPE argType, const VOID* buffer);
 OVS_ARGUMENT_SLIST_ENTRY* CreateArgumentListEntry_WithSize(OVS_ARGTYPE argType, const VOID* buffer, UINT16 size);

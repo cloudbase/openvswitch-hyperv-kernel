@@ -368,7 +368,7 @@ static BOOLEAN _CreateActionsGroupToList(OVS_ARGTYPE groupType, const OVS_ARGUME
     pGroupArg = CreateGroupArgFromList(groupType, &pHeadArg);
     if (!pGroupArg)
     {
-        FreeArgListItem(pHeadArg);
+        KFree(pHeadArg);
         return FALSE;
     }
 
@@ -420,7 +420,7 @@ static BOOLEAN _SampleActionToList(const OVS_ARGUMENT_GROUP* pArgGroup, OVS_ARGU
     pGroupArg = CreateGroupArgFromList(OVS_ARGTYPE_GROUP_ACTIONS_SAMPLE, &pHeadArg);
     if (!pGroupArg)
     {
-        FreeArgListItem(pHeadArg);
+        KFree(pHeadArg);
         return FALSE;
     }
 

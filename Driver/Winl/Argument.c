@@ -1005,7 +1005,7 @@ VOID DestroyArgList(_Inout_ OVS_ARGUMENT_SLIST_ENTRY** ppHeadEntry)
     pArgListCur = pArgListCur->pNext;
 
     //free head
-    FreeArgListItem(*ppHeadEntry);
+    KFree(*ppHeadEntry);
 
     while (pArgListCur)
     {
@@ -1015,7 +1015,7 @@ VOID DestroyArgList(_Inout_ OVS_ARGUMENT_SLIST_ENTRY** ppHeadEntry)
         DestroyArgument(pArgListCur->pArg);
 
         //2. free the list entry
-        FreeArgListItem(pArgListCur);
+        KFree(pArgListCur);
 
         pArgListCur = pNext;
     }
