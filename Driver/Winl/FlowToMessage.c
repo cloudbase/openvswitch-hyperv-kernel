@@ -1460,11 +1460,7 @@ Cleanup:
     }
     else
     {
-        if (pFlowGroup->args)
-        {
-            FreeArguments(pFlowGroup);
-        }
-
+        KFree(pFlowGroup->args);
         FreeArgGroup(pFlowGroup);
 
         if (pPIArg)

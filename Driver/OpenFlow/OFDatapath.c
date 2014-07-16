@@ -179,7 +179,7 @@ Cleanup:
 
         if (pArgGroup)
         {
-            FreeArguments(pArgGroup);
+            KFree(pArgGroup->args);
             FreeArgGroup(pArgGroup);
         }
 

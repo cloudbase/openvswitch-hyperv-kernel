@@ -185,7 +185,7 @@ Cleanup:
 
         if (pMsg->pArgGroup)
         {
-            FreeArguments(pMsg->pArgGroup);
+            KFree(pMsg->pArgGroup->args);
             FreeArgGroup(pMsg->pArgGroup);
         }
 

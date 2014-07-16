@@ -81,20 +81,6 @@ typedef struct _OVS_ARGUMENT_SLIST_ENTRY
 //allocates an array of count OVS_ARGUMENT-s, and assigns it to pGroup->args
 BOOLEAN AllocateArgumentsToGroup(UINT16 count, _Out_ OVS_ARGUMENT_GROUP* pGroup);
 
-//frees the array of OVS_ARGUMENT-s of an OVS_ARGUMENT_GROUP struct
-static __inline VOID FreeArguments(_Inout_ OVS_ARGUMENT_GROUP* pGroup)
-{
-    OVS_CHECK(pGroup);
-
-    if (pGroup->args)
-    {
-        ExFreePoolWithTag(pGroup->args, g_extAllocationTag);
-    }
-
-    pGroup->args = NULL;
-    pGroup->count = 0;
-}
-
 #define AllocArgumentGroup() ExAllocatePoolWithTag(NonPagedPool, sizeof(OVS_ARGUMENT_GROUP), g_extAllocationTag)
 
 //frees an OVS_ARGUMENT_GROUP: it does not free pGroup->args
