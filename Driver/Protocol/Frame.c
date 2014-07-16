@@ -95,11 +95,6 @@ VOID DbgPrintOnbFrames(OVS_NET_BUFFER* pOvsNb, const char* msg)
 #endif
 }
 
-void FreeFrameBuffer(_In_ void* buffer)
-{
-    KFree(buffer);
-}
-
 BOOLEAN ReadProtocolFrame(_In_ NET_BUFFER* pNb)
 {
     OVS_ETHERNET_HEADER* pEthHeader = NULL;

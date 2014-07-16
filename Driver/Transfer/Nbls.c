@@ -105,12 +105,6 @@ VOID* GetNbBufferData_OfSize(NET_BUFFER* pNb, ULONG size, void** pAllocBuffer)
     }
 }
 
-VOID FreeNbBufferData(VOID* allocBuffer)
-{
-    DEBUGP(LOG_INFO, "calling FreeNbBufferData... hopefully");
-    KFree(allocBuffer);
-}
-
 ULONG CountNbls(_In_ NET_BUFFER_LIST* pNbl)
 {
     UINT count = 0;
