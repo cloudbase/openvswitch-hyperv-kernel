@@ -107,7 +107,6 @@ NTSTATUS DriverEntry(PDRIVER_OBJECT pDriverObject, PUNICODE_STRING pRegistryPath
     pDriverObject->DriverUnload = DriverUnload;
 
     status = NdisFRegisterFilterDriver(pDriverObject, (NDIS_HANDLE)g_driverObject, &driverChars, &g_driverHandle);
-
     if (status != NDIS_STATUS_SUCCESS)
     {
         DEBUGP(LOG_ERROR, "OVS: failed NdisFRegisterFilterDriver");
@@ -207,7 +206,6 @@ NDIS_STATUS FilterAttach(NDIS_HANDLE ndisFilterHandle, NDIS_HANDLE hDriverContex
     switchHandler.Header.Revision = NDIS_SWITCH_OPTIONAL_HANDLERS_REVISION_1;
 
     status = NdisFGetOptionalSwitchHandlers(ndisFilterHandle, &switchContext, &switchHandler);
-
     if (status != NDIS_STATUS_SUCCESS)
     {
         DEBUGP(LOG_ERROR, "Attach: Extension is running in non-switch environment.\n");
@@ -230,7 +228,6 @@ NDIS_STATUS FilterAttach(NDIS_HANDLE ndisFilterHandle, NDIS_HANDLE hDriverContex
     RtlCopyMemory(&pSwitchInfo->switchHandlers, &switchHandler, sizeof(NDIS_SWITCH_OPTIONAL_HANDLERS));
 
     status = Switch_CreateForwardInfo(pSwitchInfo, &pSwitchInfo->pForwardInfo);
-
     if (status != NDIS_STATUS_SUCCESS)
     {
         goto Cleanup;
@@ -243,8 +240,8 @@ NDIS_STATUS FilterAttach(NDIS_HANDLE ndisFilterHandle, NDIS_HANDLE hDriverContex
     filterAttributes.Flags = 0;
 
     NDIS_DECLARE_FILTER_MODULE_CONTEXT(OVS_SWITCH_INFO);
-    status = NdisFSetAttributes(ndisFilterHandle, pSwitchInfo, &filterAttributes);
 
+    status = NdisFSetAttributes(ndisFilterHandle, pSwitchInfo, &filterAttributes);
     if (status != NDIS_STATUS_SUCCESS)
     {
         DEBUGP(LOG_ERROR, "FilterAttach: Failed to set attributes.\n");
@@ -399,54 +396,53 @@ Cleanup:
 }
 
 _Use_decl_annotations_
-NDIS_STATUS FilterOidRequest(NDIS_HANDLE filterModuleContext, PNDIS_OID_REQUEST oidRequest)
+NDIS_STATUS FilterOidRequest(NDIS_HANDLE filterModuleContext, NDIS_OID_REQUEST* pOidRequest)
 {
     OVS_SWITCH_INFO* pSwitchInfo = (OVS_SWITCH_INFO*)filterModuleContext;
     NDIS_STATUS status = NDIS_STATUS_SUCCESS;
-    PNDIS_OID_REQUEST clonedRequest = NULL;
-    PVOID *cloneRequestContext = NULL;
+    NDIS_OID_REQUEST* pClonedRequest = NULL;
+    VOID** ppCloneRequestContext = NULL;
     BOOLEAN completeOid = FALSE;
     ULONG bytesNeeded = 0;
 
-    DEBUGP_OID(LOG_TRACE, "FilterOidRequest: oid type: %x; oid: %x\n.", oidRequest->RequestType, oidRequest->DATA.QUERY_INFORMATION.Oid);
+    DEBUGP_OID(LOG_TRACE, "FilterOidRequest: oid type: %x; oid: %x\n.", pOidRequest->RequestType, pOidRequest->DATA.QUERY_INFORMATION.Oid);
 
     NdisInterlockedIncrement(&pSwitchInfo->pendingOidCount);
 
-    status = NdisAllocateCloneOidRequest(pSwitchInfo->filterHandle, oidRequest, g_extAllocationTag, &clonedRequest);
+    status = NdisAllocateCloneOidRequest(pSwitchInfo->filterHandle, pOidRequest, g_extAllocationTag, &pClonedRequest);
     if (status != NDIS_STATUS_SUCCESS)
     {
         DEBUGP_OID(LOG_WARN, "FilerOidRequest: Cannot Clone OidRequest\n");
         goto Cleanup;
     }
 
-    cloneRequestContext = (PVOID*)(&clonedRequest->SourceReserved[0]);
-    *cloneRequestContext = oidRequest;
+    ppCloneRequestContext = (VOID**)(&pClonedRequest->SourceReserved[0]);
+    *ppCloneRequestContext = pOidRequest;
 
-    switch (clonedRequest->RequestType)
+    switch (pClonedRequest->RequestType)
     {
     case NdisRequestSetInformation:
-        status = OID_ProcessSetOid(pSwitchInfo->pForwardInfo, clonedRequest, &completeOid);
+        status = OID_ProcessSetOid(pSwitchInfo->pForwardInfo, pClonedRequest, &completeOid);
         break;
 
     case NdisRequestMethod:
-        status = OID_ProcessMethodOid(pSwitchInfo, clonedRequest, &completeOid, &bytesNeeded);
+        status = OID_ProcessMethodOid(pSwitchInfo, pClonedRequest, &completeOid, &bytesNeeded);
         break;
     }
 
     if (completeOid)
     {
-        NdisFreeCloneOidRequest(pSwitchInfo->filterHandle, clonedRequest);
-        oidRequest->DATA.METHOD_INFORMATION.BytesNeeded = bytesNeeded;
+        NdisFreeCloneOidRequest(pSwitchInfo->filterHandle, pClonedRequest);
+        pOidRequest->DATA.METHOD_INFORMATION.BytesNeeded = bytesNeeded;
+
         NdisInterlockedDecrement(&pSwitchInfo->pendingOidCount);
         goto Cleanup;
     }
 
-    status = NdisFOidRequest(pSwitchInfo->filterHandle, clonedRequest);
-
+    status = NdisFOidRequest(pSwitchInfo->filterHandle, pClonedRequest);
     if (status != NDIS_STATUS_PENDING)
     {
-        FilterOidRequestComplete(pSwitchInfo, clonedRequest, status);
-
+        FilterOidRequestComplete(pSwitchInfo, pClonedRequest, status);
         status = NDIS_STATUS_PENDING;
     }
 
@@ -464,62 +460,62 @@ VOID FilterCancelOidRequest(NDIS_HANDLE filterModuleContext, PVOID requestId)
 }
 
 _Use_decl_annotations_
-VOID FilterOidRequestComplete(NDIS_HANDLE filterModuleContext, PNDIS_OID_REQUEST oidRequest, NDIS_STATUS status)
+VOID FilterOidRequestComplete(NDIS_HANDLE filterModuleContext, NDIS_OID_REQUEST* pOidRequest, NDIS_STATUS status)
 {
     OVS_SWITCH_INFO* pSwitchInfo = (OVS_SWITCH_INFO*)filterModuleContext;
-    PNDIS_OID_REQUEST originalRequest = NULL;
-    PVOID *oidRequestContext = NULL;
-    PNDIS_SWITCH_NIC_OID_REQUEST nicOidRequestBuf = NULL;
-    PNDIS_OBJECT_HEADER header = NULL;
+    NDIS_OID_REQUEST* pOriginalRequest = NULL;
+    VOID** ppOidRequestContext = NULL;
+    NDIS_SWITCH_NIC_OID_REQUEST* pNicOidRequestBuf = NULL;
+    NDIS_OBJECT_HEADER* pHeader = NULL;
 
-    DEBUGP_OID(LOG_TRACE, "FilterOidRequestComplete: oid type: %x; oid: %x\n.", oidRequest->RequestType, oidRequest->DATA.QUERY_INFORMATION.Oid);
+    DEBUGP_OID(LOG_TRACE, "FilterOidRequestComplete: oid type: %x; oid: %x\n.", pOidRequest->RequestType, pOidRequest->DATA.QUERY_INFORMATION.Oid);
 
-    oidRequestContext = (PVOID*)(&oidRequest->SourceReserved[0]);
-    originalRequest = (*oidRequestContext);
+    ppOidRequestContext = (PVOID*)(&pOidRequest->SourceReserved[0]);
+    pOriginalRequest = (*ppOidRequestContext);
 
-    if (originalRequest == NULL)
+    if (pOriginalRequest == NULL)
     {
-        OID_CompleteInternalOidRequest(oidRequest, status);
+        OID_CompleteInternalOidRequest(pOidRequest, status);
         goto Cleanup;
     }
 
-    switch (oidRequest->RequestType)
+    switch (pOidRequest->RequestType)
     {
     case NdisRequestMethod:
-        originalRequest->DATA.METHOD_INFORMATION.OutputBufferLength = oidRequest->DATA.METHOD_INFORMATION.OutputBufferLength;
-        originalRequest->DATA.METHOD_INFORMATION.BytesRead = oidRequest->DATA.METHOD_INFORMATION.BytesRead;
-        originalRequest->DATA.METHOD_INFORMATION.BytesNeeded = oidRequest->DATA.METHOD_INFORMATION.BytesNeeded;
-        originalRequest->DATA.METHOD_INFORMATION.BytesWritten = oidRequest->DATA.METHOD_INFORMATION.BytesWritten;
+        pOriginalRequest->DATA.METHOD_INFORMATION.OutputBufferLength = pOidRequest->DATA.METHOD_INFORMATION.OutputBufferLength;
+        pOriginalRequest->DATA.METHOD_INFORMATION.BytesRead = pOidRequest->DATA.METHOD_INFORMATION.BytesRead;
+        pOriginalRequest->DATA.METHOD_INFORMATION.BytesNeeded = pOidRequest->DATA.METHOD_INFORMATION.BytesNeeded;
+        pOriginalRequest->DATA.METHOD_INFORMATION.BytesWritten = pOidRequest->DATA.METHOD_INFORMATION.BytesWritten;
 
-        if (oidRequest->DATA.METHOD_INFORMATION.Oid == OID_SWITCH_NIC_REQUEST && pSwitchInfo->pOldNicRequest != NULL)
+        if (pOidRequest->DATA.METHOD_INFORMATION.Oid == OID_SWITCH_NIC_REQUEST && pSwitchInfo->pOldNicRequest != NULL)
         {
-            nicOidRequestBuf = oidRequest->DATA.METHOD_INFORMATION.InformationBuffer;
+            pNicOidRequestBuf = pOidRequest->DATA.METHOD_INFORMATION.InformationBuffer;
 
-            status = Nic_ProcessRequestComplete(pSwitchInfo->pForwardInfo, nicOidRequestBuf->OidRequest,
-                nicOidRequestBuf->SourcePortId, nicOidRequestBuf->SourceNicIndex,
-                nicOidRequestBuf->DestinationPortId, nicOidRequestBuf->DestinationNicIndex,
+            status = Nic_ProcessRequestComplete(pSwitchInfo->pForwardInfo, pNicOidRequestBuf->OidRequest,
+                pNicOidRequestBuf->SourcePortId, pNicOidRequestBuf->SourceNicIndex,
+                pNicOidRequestBuf->DestinationPortId, pNicOidRequestBuf->DestinationNicIndex,
                 status);
 
-            originalRequest->DATA.METHOD_INFORMATION.InformationBuffer = pSwitchInfo->pOldNicRequest;
+            pOriginalRequest->DATA.METHOD_INFORMATION.InformationBuffer = pSwitchInfo->pOldNicRequest;
             pSwitchInfo->pOldNicRequest = NULL;
-            KFree(nicOidRequestBuf);
+            KFree(pNicOidRequestBuf);
         }
 
         break;
 
     case NdisRequestSetInformation:
-        header = originalRequest->DATA.SET_INFORMATION.InformationBuffer;
+        pHeader = pOriginalRequest->DATA.SET_INFORMATION.InformationBuffer;
 
-        originalRequest->DATA.SET_INFORMATION.BytesRead = oidRequest->DATA.SET_INFORMATION.BytesRead;
-        originalRequest->DATA.SET_INFORMATION.BytesNeeded = oidRequest->DATA.SET_INFORMATION.BytesNeeded;
+        pOriginalRequest->DATA.SET_INFORMATION.BytesRead = pOidRequest->DATA.SET_INFORMATION.BytesRead;
+        pOriginalRequest->DATA.SET_INFORMATION.BytesNeeded = pOidRequest->DATA.SET_INFORMATION.BytesNeeded;
 
-        if (oidRequest->DATA.METHOD_INFORMATION.Oid == OID_SWITCH_PORT_CREATE && status != NDIS_STATUS_SUCCESS)
+        if (pOidRequest->DATA.METHOD_INFORMATION.Oid == OID_SWITCH_PORT_CREATE && status != NDIS_STATUS_SUCCESS)
         {
-            Port_Delete(pSwitchInfo->pForwardInfo, (PNDIS_SWITCH_PORT_PARAMETERS)header);
+            Port_Delete(pSwitchInfo->pForwardInfo, (PNDIS_SWITCH_PORT_PARAMETERS)pHeader);
         }
-        else if (oidRequest->DATA.METHOD_INFORMATION.Oid == OID_SWITCH_PORT_CREATE && status != NDIS_STATUS_SUCCESS)
+        else if (pOidRequest->DATA.METHOD_INFORMATION.Oid == OID_SWITCH_PORT_CREATE && status != NDIS_STATUS_SUCCESS)
         {
-            Nic_Delete(pSwitchInfo->pForwardInfo, (PNDIS_SWITCH_NIC_PARAMETERS)header);
+            Nic_Delete(pSwitchInfo->pForwardInfo, (PNDIS_SWITCH_NIC_PARAMETERS)pHeader);
         }
 
         break;
@@ -527,15 +523,15 @@ VOID FilterOidRequestComplete(NDIS_HANDLE filterModuleContext, PNDIS_OID_REQUEST
     case NdisRequestQueryInformation:
     case NdisRequestQueryStatistics:
     default:
-        originalRequest->DATA.QUERY_INFORMATION.BytesWritten = oidRequest->DATA.QUERY_INFORMATION.BytesWritten;
-        originalRequest->DATA.QUERY_INFORMATION.BytesNeeded = oidRequest->DATA.QUERY_INFORMATION.BytesNeeded;
+        pOriginalRequest->DATA.QUERY_INFORMATION.BytesWritten = pOidRequest->DATA.QUERY_INFORMATION.BytesWritten;
+        pOriginalRequest->DATA.QUERY_INFORMATION.BytesNeeded = pOidRequest->DATA.QUERY_INFORMATION.BytesNeeded;
         break;
     }
 
-    (*oidRequestContext) = NULL;
+    (*ppOidRequestContext) = NULL;
 
-    NdisFreeCloneOidRequest(pSwitchInfo->filterHandle, oidRequest);
-    NdisFOidRequestComplete(pSwitchInfo->filterHandle, originalRequest, status);
+    NdisFreeCloneOidRequest(pSwitchInfo->filterHandle, pOidRequest);
+    NdisFOidRequestComplete(pSwitchInfo->filterHandle, pOriginalRequest, status);
 
     DEBUGP_OID(LOG_TRACE, "OidRequestComplete.\n");
 
@@ -554,7 +550,6 @@ VOID FilterSendNetBufferLists(NDIS_HANDLE filterModuleContext, PNET_BUFFER_LIST 
     DRIVER_UNLOCK();
 
     OVS_CHECK(pSwitchInfo);
-
     Nbls_SendIngress(pSwitchInfo, pSwitchInfo->pForwardInfo, netBufferLists, sendFlags);
 
     OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
@@ -611,42 +606,42 @@ NDIS_STATUS FilterNetPnPEvent(NDIS_HANDLE filterModuleContext, PNET_PNP_EVENT_NO
 }
 
 _Use_decl_annotations_
-VOID FilterStatus(NDIS_HANDLE filterModuleContext, PNDIS_STATUS_INDICATION statusIndication)
+VOID FilterStatus(NDIS_HANDLE filterModuleContext, NDIS_STATUS_INDICATION* pStatusIndication)
 {
     NDIS_STATUS status = NDIS_STATUS_SUCCESS;
     OVS_SWITCH_INFO* pSwitchInfo = (OVS_SWITCH_INFO*)filterModuleContext;
-    PNDIS_SWITCH_NIC_STATUS_INDICATION nicIndication = NULL;
-    PNDIS_STATUS_INDICATION originalIndication = NULL;
+    NDIS_SWITCH_NIC_STATUS_INDICATION* pNicIndication = NULL;
+    NDIS_STATUS_INDICATION* pOriginalIndication = NULL;
 
-    if (statusIndication->Header.Type != NDIS_OBJECT_TYPE_STATUS_INDICATION ||
-        statusIndication->Header.Revision != NDIS_STATUS_INDICATION_REVISION_1 ||
-        statusIndication->Header.Size != NDIS_SIZEOF_STATUS_INDICATION_REVISION_1)
+    if (pStatusIndication->Header.Type != NDIS_OBJECT_TYPE_STATUS_INDICATION ||
+        pStatusIndication->Header.Revision != NDIS_STATUS_INDICATION_REVISION_1 ||
+        pStatusIndication->Header.Size != NDIS_SIZEOF_STATUS_INDICATION_REVISION_1)
     {
         goto Cleanup;
     }
 
-    if (statusIndication->StatusCode != NDIS_STATUS_SWITCH_NIC_STATUS)
+    if (pStatusIndication->StatusCode != NDIS_STATUS_SWITCH_NIC_STATUS)
     {
         goto Cleanup;
     }
 
-    nicIndication = statusIndication->StatusBuffer;
+    pNicIndication = pStatusIndication->StatusBuffer;
 
-    if (nicIndication->Header.Type != NDIS_OBJECT_TYPE_DEFAULT ||
-        nicIndication->Header.Revision != NDIS_SWITCH_NIC_STATUS_INDICATION_REVISION_1 ||
-        nicIndication->Header.Size != NDIS_SIZEOF_SWITCH_NIC_STATUS_REVISION_1)
+    if (pNicIndication->Header.Type != NDIS_OBJECT_TYPE_DEFAULT ||
+        pNicIndication->Header.Revision != NDIS_SWITCH_NIC_STATUS_INDICATION_REVISION_1 ||
+        pNicIndication->Header.Size != NDIS_SIZEOF_SWITCH_NIC_STATUS_REVISION_1)
     {
         goto Cleanup;
     }
 
-    originalIndication = nicIndication->StatusIndication;
+    pOriginalIndication = pNicIndication->StatusIndication;
 
-    status = Nic_ProcessStatus(pSwitchInfo->pForwardInfo, originalIndication, nicIndication->SourcePortId, nicIndication->SourceNicIndex);
+    status = Nic_ProcessStatus(pSwitchInfo->pForwardInfo, pOriginalIndication, pNicIndication->SourcePortId, pNicIndication->SourceNicIndex);
 
 Cleanup:
     if (status == NDIS_STATUS_SUCCESS)
     {
-        NdisFIndicateStatus(pSwitchInfo->filterHandle, statusIndication);
+        NdisFIndicateStatus(pSwitchInfo->filterHandle, pStatusIndication);
     }
 
     return;
