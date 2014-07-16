@@ -420,8 +420,9 @@ static BOOLEAN _CreateActionIpv4Tunnel(const OVS_ARGUMENT_GROUP* pTunnelGroup, O
 {
     BOOLEAN ok = FALSE;
     OVS_ARGUMENT* pIpv4Tunnel = NULL;
-    OF_PI_IPV4_TUNNEL* pTunnelInfo = AllocArgumentData(sizeof(OF_PI_IPV4_TUNNEL));
-
+    OF_PI_IPV4_TUNNEL* pTunnelInfo = NULL;
+    
+    pTunnelInfo = KZAlloc(sizeof(OF_PI_IPV4_TUNNEL));
     if (!pTunnelInfo)
     {
         return FALSE;

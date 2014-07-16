@@ -640,7 +640,7 @@ OVS_ARGUMENT* CreateArgument_Alloc(OVS_ARGTYPE argType, const VOID* buffer)
 
     if (expectedSize)
     {
-        newBuffer = AllocArgumentData(expectedSize);
+        newBuffer = KZAlloc(expectedSize);
         if (!newBuffer)
         {
             return NULL;
@@ -715,7 +715,7 @@ OVS_ARGUMENT* CreateArgumentStringA_Alloc(OVS_ARGTYPE argType, const char* buffe
 
     size = (UINT16)strlen(buffer) + 1;
 
-    newBuffer = AllocArgumentData(size);
+    newBuffer = KZAlloc(size);
     if (!newBuffer)
     {
         return NULL;
@@ -841,7 +841,7 @@ BOOLEAN SetArgument_Alloc(_Inout_ OVS_ARGUMENT* pArg, OVS_ARGTYPE argType, const
 
     if (expectedSize)
     {
-        newBuffer = AllocArgumentData(expectedSize);
+        newBuffer = KZAlloc(expectedSize);
         if (!newBuffer)
         {
             return FALSE;
@@ -1143,7 +1143,7 @@ BOOLEAN CopyArgument(_Out_ OVS_ARGUMENT* pDest, _In_ const OVS_ARGUMENT* pSource
 
     if (pDest->length)
     {
-        pDest->data = AllocArgumentData(pDest->length);
+        pDest->data = KZAlloc(pDest->length);
         if (!pDest->data)
         {
             return FALSE;

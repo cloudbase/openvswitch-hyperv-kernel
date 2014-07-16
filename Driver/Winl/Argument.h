@@ -78,8 +78,6 @@ typedef struct _OVS_ARGUMENT_SLIST_ENTRY
 
 /******************************************* ALLOC & FREE FUNCTIONS **********************************************************************/
 
-#define AllocArgumentData(size) ExAllocatePoolWithTag(NonPagedPool, size, g_extAllocationTag)
-
 //frees the pArg->data of an OVS_ARGUMENT
 static __inline VOID FreeArgumentData(VOID* pData)
 {
