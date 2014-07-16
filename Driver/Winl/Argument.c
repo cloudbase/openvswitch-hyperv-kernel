@@ -800,10 +800,7 @@ VOID DestroyArgumentData(_In_ OVS_ARGUMENT* pArg)
     {
         OVS_ARGUMENT_GROUP* pGroup = pArg->data;
 
-        if (pGroup)
-        {
-            DestroyArgumentGroup(pGroup);
-        }
+        DestroyArgumentGroup(pGroup);
     }
     else
     {
@@ -1152,10 +1149,7 @@ BOOLEAN CopyArgument(_Out_ OVS_ARGUMENT* pDest, _In_ const OVS_ARGUMENT* pSource
     {
         if (!CopyArgumentGroup(pDest->data, pSource->data, /*args more*/0))
         {
-            if (pDest->data)
-            {
-                DestroyArgumentGroup(pDest->data);
-            }
+            DestroyArgumentGroup(pDest->data);
         }
     }
     else

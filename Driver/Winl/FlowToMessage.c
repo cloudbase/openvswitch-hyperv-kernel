@@ -685,10 +685,7 @@ static BOOLEAN _CreateActionsArgsToList(const OVS_ARGUMENT_GROUP* pArgGroup, OVS
             ok = CopyArgumentGroup(pUpcallGroup, pArg->data, /*actionsToAdd*/0);
             if (!ok)
             {
-                if (pUpcallGroup)
-                {
-                    DestroyArgumentGroup(pUpcallGroup);
-                }
+                DestroyArgumentGroup(pUpcallGroup);
                 return FALSE;
             }
 

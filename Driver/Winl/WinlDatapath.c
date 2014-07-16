@@ -92,11 +92,9 @@ OVS_ERROR Datapath_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
     if (!CreateMsgFromDatapath(pDatapath, pMsg->sequence, OVS_MESSAGE_COMMAND_NEW, &replyMsg, pDatapath->switchIfIndex, pMsg->pid))
     {
-        if (replyMsg.pArgGroup)
-        {
-            DestroyArgumentGroup(replyMsg.pArgGroup);
-            replyMsg.pArgGroup = NULL;
-        }
+        DestroyArgumentGroup(replyMsg.pArgGroup);
+        replyMsg.pArgGroup = NULL;
+
         error = OVS_ERROR_INVAL;
         goto Cleanup;
     }
@@ -111,11 +109,7 @@ OVS_ERROR Datapath_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 Cleanup:
     OVS_REFCOUNT_DEREFERENCE(pDatapath);
 
-    if (replyMsg.pArgGroup)
-    {
-        DestroyArgumentGroup(replyMsg.pArgGroup);
-        replyMsg.pArgGroup = NULL;
-    }
+    DestroyArgumentGroup(replyMsg.pArgGroup);
 
     return error;
 }
@@ -178,11 +172,7 @@ Cleanup:
     OVS_REFCOUNT_DEREFERENCE_ONLY(pDatapath);
     OVS_REFCOUNT_DESTROY(pDatapath);
 
-    if (replyMsg.pArgGroup)
-    {
-        DestroyArgumentGroup(replyMsg.pArgGroup);
-        replyMsg.pArgGroup = NULL;
-    }
+    DestroyArgumentGroup(replyMsg.pArgGroup);
 
     return error;
 }
@@ -224,11 +214,7 @@ OVS_ERROR Datapath_Get(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 Cleanup:
     OVS_REFCOUNT_DEREFERENCE(pDatapath);
 
-    if (replyMsg.pArgGroup)
-    {
-        DestroyArgumentGroup(replyMsg.pArgGroup);
-        replyMsg.pArgGroup = NULL;
-    }
+    DestroyArgumentGroup(replyMsg.pArgGroup);
 
     return error;
 }
@@ -265,11 +251,7 @@ OVS_ERROR Datapath_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 Cleanup:
     OVS_REFCOUNT_DEREFERENCE(pDatapath);
 
-    if (replyMsg.pArgGroup)
-    {
-        DestroyArgumentGroup(replyMsg.pArgGroup);
-        replyMsg.pArgGroup = NULL;
-    }
+    DestroyArgumentGroup(replyMsg.pArgGroup);
 
     return error;
 }
@@ -314,11 +296,7 @@ OVS_ERROR Datapath_Dump(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         OVS_CHECK(replyMsg.type == OVS_MESSAGE_TARGET_DATAPATH);
         error = WriteMsgsToDevice((OVS_NLMSGHDR*)msgs, 2, pFileObject, OVS_MULTICAST_GROUP_NONE);
 
-        if (replyMsg.pArgGroup)
-        {
-            DestroyArgumentGroup(replyMsg.pArgGroup);
-            replyMsg.pArgGroup = NULL;
-        }
+        DestroyArgumentGroup(replyMsg.pArgGroup);
 
         KFree(msgs);
     }

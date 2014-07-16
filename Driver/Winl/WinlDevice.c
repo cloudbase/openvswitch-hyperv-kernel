@@ -710,7 +710,7 @@ Cleanup:
 
         if (pMsg)
         {
-            if (pMsg->type != OVS_MESSAGE_TARGET_CONTROL && pMsg->pArgGroup)
+            if (pMsg->type != OVS_MESSAGE_TARGET_CONTROL)
             {
                 DestroyArgumentGroup(pMsg->pArgGroup);
             }

@@ -678,10 +678,7 @@ VOID Actions_DestroyNow_Unsafe(_Inout_ OVS_ACTIONS* pActions)
 {
     OVS_CHECK(pActions);
 
-    if (pActions->pActionGroup)
-    {
-        DestroyArgumentGroup((OVS_ARGUMENT_GROUP*)pActions->pActionGroup);
-    }
+    DestroyArgumentGroup(pActions->pActionGroup);
 
     KFree(pActions);
 }

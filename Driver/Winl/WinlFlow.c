@@ -238,11 +238,7 @@ OVS_ERROR Flow_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
     /*** cleanup ***/
 Cleanup:
-    if (replyMsg.pArgGroup)
-    {
-        DestroyArgumentGroup(replyMsg.pArgGroup);
-        replyMsg.pArgGroup = NULL;
-    }
+    DestroyArgumentGroup(replyMsg.pArgGroup);
 
     if (error != OVS_ERROR_NOERROR)
     {
@@ -410,11 +406,7 @@ OVS_ERROR Flow_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
     /*** cleanup ***/
 Cleanup:
-    if (replyMsg.pArgGroup)
-    {
-        DestroyArgumentGroup(replyMsg.pArgGroup);
-        replyMsg.pArgGroup = NULL;
-    }
+    DestroyArgumentGroup(replyMsg.pArgGroup);
 
     OVS_REFCOUNT_DEREFERENCE(pFlow);
     OVS_REFCOUNT_DEREFERENCE(pFlowTable);
@@ -512,11 +504,7 @@ OVS_ERROR Flow_Get(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     }
 
 Cleanup:
-    if (replyMsg.pArgGroup)
-    {
-        DestroyArgumentGroup(replyMsg.pArgGroup);
-        replyMsg.pArgGroup = NULL;
-    }
+    DestroyArgumentGroup(replyMsg.pArgGroup);
 
     OVS_REFCOUNT_DEREFERENCE(pFlow);
     OVS_REFCOUNT_DEREFERENCE(pFlowTable);
@@ -637,11 +625,7 @@ OVS_ERROR Flow_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     }
 
 Cleanup:
-    if (replyMsg.pArgGroup)
-    {
-        DestroyArgumentGroup(replyMsg.pArgGroup);
-        replyMsg.pArgGroup = NULL;
-    }
+    DestroyArgumentGroup(replyMsg.pArgGroup);
 
     OVS_REFCOUNT_DEREFERENCE(pFlow);
     OVS_REFCOUNT_DEREFERENCE(pFlowTable);
@@ -758,11 +742,7 @@ Cleanup:
         {
             OVS_MESSAGE* pReplyMsg = msgs + i;
 
-            if (pMsg->pArgGroup)
-            {
-                DestroyArgumentGroup(pReplyMsg->pArgGroup);
-                pReplyMsg->pArgGroup = NULL;
-            }
+            DestroyArgumentGroup(pReplyMsg->pArgGroup);
         }
 
         KFree(msgs);

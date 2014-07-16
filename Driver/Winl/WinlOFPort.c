@@ -306,10 +306,7 @@ Cleanup:
 
     OVS_REFCOUNT_DEREFERENCE(pDatapath);
 
-    if (replyMsg.pArgGroup)
-    {
-        DestroyArgumentGroup(replyMsg.pArgGroup);
-    }
+    DestroyArgumentGroup(replyMsg.pArgGroup);
 
     return error;
 }
@@ -442,10 +439,7 @@ Cleanup:
 
     OVS_REFCOUNT_DEREFERENCE(pDatapath);
 
-    if (replyMsg.pArgGroup)
-    {
-        DestroyArgumentGroup(replyMsg.pArgGroup);
-    }
+    DestroyArgumentGroup(replyMsg.pArgGroup);
 
     return error;
 }
@@ -537,10 +531,7 @@ Cleanup:
 
     OVS_REFCOUNT_DEREFERENCE(pDatapath);
 
-    if (replyMsg.pArgGroup)
-    {
-        DestroyArgumentGroup(replyMsg.pArgGroup);
-    }
+    DestroyArgumentGroup(replyMsg.pArgGroup);
 
     return error;
 }
@@ -638,10 +629,7 @@ Cleanup:
 
     OVS_REFCOUNT_DEREFERENCE(pDatapath);
 
-    if (replyMsg.pArgGroup)
-    {
-        DestroyArgumentGroup(replyMsg.pArgGroup);
-    }
+    DestroyArgumentGroup(replyMsg.pArgGroup);
 
     return error;
 }
@@ -746,11 +734,7 @@ Cleanup:
         {
             OVS_MESSAGE* pMsg = msgs + i;
 
-            if (pMsg->pArgGroup)
-            {
-                DestroyArgumentGroup(pMsg->pArgGroup);
-                pMsg->pArgGroup = NULL;
-            }
+            DestroyArgumentGroup(pMsg->pArgGroup);
         }
 
         KFree(msgs);

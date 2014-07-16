@@ -369,7 +369,6 @@ Out:
     if (msg.pArgGroup)
     {
         DestroyArgumentGroup(msg.pArgGroup);
-        msg.pArgGroup = NULL;
 
         KFree(pNbArg);
         KFree(pUserDataArg);
