@@ -163,7 +163,7 @@ static BOOLEAN _WriteEncapsulation(_In_ const OVS_ENCAPSULATOR* pEncapsulator, _
 
     to_write = encapHeaderSize;
     RtlCopyMemory(writeBuffer, pEncHeader, to_write);
-    ExFreePoolWithTag(pEncHeader, g_extAllocationTag);
+    KFree(pEncHeader);
 
     pEncHeader = writeBuffer;
 

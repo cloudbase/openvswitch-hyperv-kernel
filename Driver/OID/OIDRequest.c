@@ -88,7 +88,7 @@ NDIS_SWITCH_OBJECT_ID* pPropertyId, NDIS_SWITCH_PROPERTY_ENUM_PARAMETERS** ppSwi
         //bytesNeeded: at first ener in loop, it is 0 (local var); it is an out var of OID_IssueOidRequest
         if (bytesNeeded != 0)
         {
-            ExFreePoolWithTag(pOutputBuffer, g_extAllocationTag);
+            KFree(pOutputBuffer);
 
             outputBufferLength = (USHORT)bytesNeeded;
             pOutputBuffer = KAlloc(outputBufferLength);
@@ -114,7 +114,7 @@ Cleanup:
     if (status != NDIS_STATUS_SUCCESS &&
         pOutputBuffer != NULL)
     {
-        ExFreePoolWithTag(pOutputBuffer, g_extAllocationTag);
+        KFree(pOutputBuffer);
         pOutputBuffer = NULL;
     }
 
@@ -344,7 +344,7 @@ NDIS_SWITCH_PORT_PROPERTY_ENUM_PARAMETERS** ppPortPropertyEnumParameters)
     {
         if (bytesNeeded != 0)
         {
-            ExFreePoolWithTag(pOutputBuffer, g_extAllocationTag);
+            KFree(pOutputBuffer);
 
             outputBufferLength = (USHORT)bytesNeeded;
 
@@ -370,7 +370,7 @@ Cleanup:
     if (status != NDIS_STATUS_SUCCESS &&
         pOutputBuffer != NULL)
     {
-        ExFreePoolWithTag(pOutputBuffer, g_extAllocationTag);
+        KFree(pOutputBuffer);
         pOutputBuffer = NULL;
     }
 
@@ -389,10 +389,7 @@ NDIS_STATUS OID_GetPortArrayUnsafe(OVS_SWITCH_INFO* pSwitchInfo, NDIS_SWITCH_POR
 
     do
     {
-        if (pPortArray != NULL)
-        {
-            ExFreePoolWithTag(pPortArray, g_extAllocationTag);
-        }
+        KFree(pPortArray);
 
         if (bytesNeeded != 0)
         {
@@ -418,7 +415,7 @@ NDIS_STATUS OID_GetPortArrayUnsafe(OVS_SWITCH_INFO* pSwitchInfo, NDIS_SWITCH_POR
 Cleanup:
     if (status != NDIS_STATUS_SUCCESS && pPortArray != NULL)
     {
-        ExFreePoolWithTag(pPortArray, g_extAllocationTag);
+        KFree(pPortArray);
     }
 
     return status;
@@ -702,10 +699,7 @@ NDIS_STATUS OID_GetNicArrayUnsafe(OVS_SWITCH_INFO* pSwitchInfo, NDIS_SWITCH_NIC_
 
     do
     {
-        if (pNicArray != NULL)
-        {
-            ExFreePoolWithTag(pNicArray, g_extAllocationTag);
-        }
+        KFree(pNicArray);
 
         if (bytesNeeded != 0)
         {
@@ -732,7 +726,7 @@ NDIS_STATUS OID_GetNicArrayUnsafe(OVS_SWITCH_INFO* pSwitchInfo, NDIS_SWITCH_NIC_
 Cleanup:
     if (status != NDIS_STATUS_SUCCESS && pNicArray != NULL)
     {
-        ExFreePoolWithTag(pNicArray, g_extAllocationTag);
+        KFree(pNicArray);
     }
 
     return status;
@@ -908,10 +902,7 @@ Cleanup:
         NdisInterlockedDecrement(&pSwitchInfo->pendingOidCount);
     }
 
-    if (pOidRequest != NULL)
-    {
-        ExFreePoolWithTag(pOidRequest, g_extAllocationTag);
-    }
+    KFree(pOidRequest);
 
     return status;
 }

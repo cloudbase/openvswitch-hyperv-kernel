@@ -753,7 +753,7 @@ Cleanup:
             }
         }
 
-        ExFreePoolWithTag(msgs, g_extAllocationTag);
+        KFree(msgs);
     }
 
     return error;

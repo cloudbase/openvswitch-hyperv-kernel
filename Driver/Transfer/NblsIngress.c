@@ -1098,7 +1098,7 @@ static VOID _ProcessAllNblsIngress(_In_ OVS_SWITCH_INFO* pSwitchInfo, _In_ OVS_G
             {
                 OVS_CHECK(pOvsNb->pNbl != pNbl);
 
-                ExFreePoolWithTag(pOvsNb, g_extAllocationTag);
+                KFree(pOvsNb);
             }
 
             OVS_REFCOUNT_DEREFERENCE(pPersPort);

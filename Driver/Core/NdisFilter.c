@@ -502,7 +502,7 @@ VOID FilterOidRequestComplete(NDIS_HANDLE filterModuleContext, PNDIS_OID_REQUEST
 
             originalRequest->DATA.METHOD_INFORMATION.InformationBuffer = pSwitchInfo->pOldNicRequest;
             pSwitchInfo->pOldNicRequest = NULL;
-            ExFreePoolWithTag(nicOidRequestBuf, g_extAllocationTag);
+            KFree(nicOidRequestBuf);
         }
 
         break;

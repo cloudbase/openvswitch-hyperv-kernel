@@ -55,7 +55,7 @@ VOID FlowMask_DeleteReference(OVS_FLOW_MASK* pFlowMask)
     {
         RemoveEntryList(&pFlowMask->listEntry);
 
-        ExFreePoolWithTag(pFlowMask, g_extAllocationTag);
+        KFree(pFlowMask);
     }
 }
 

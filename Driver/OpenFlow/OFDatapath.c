@@ -239,7 +239,8 @@ Cleanup:
         {
             FlowTable_DestroyNow_Unsafe(pDatapath->pFlowTable);
         }
-        ExFreePoolWithTag(pDatapath, g_extAllocationTag);
+        
+        KFree(pDatapath);
     }
 
     if (pSwitchInfo)

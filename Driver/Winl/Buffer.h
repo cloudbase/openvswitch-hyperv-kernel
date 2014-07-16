@@ -60,7 +60,7 @@ static __inline VOID FreeBufferData(_Inout_ OVS_BUFFER* pBuf)
 {
     if (!IsBufferEmpty(pBuf))
     {
-        ExFreePoolWithTag(pBuf->p, g_extAllocationTag);
+        KFree(pBuf->p);
 
         RtlZeroMemory(pBuf, sizeof(OVS_BUFFER));
     }

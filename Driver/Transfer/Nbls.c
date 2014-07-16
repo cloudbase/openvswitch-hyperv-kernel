@@ -108,7 +108,7 @@ VOID* GetNbBufferData_OfSize(NET_BUFFER* pNb, ULONG size, void** pAllocBuffer)
 VOID FreeNbBufferData(VOID* allocBuffer)
 {
     DEBUGP(LOG_INFO, "calling FreeNbBufferData... hopefully");
-    ExFreePoolWithTag(allocBuffer, g_extAllocationTag);
+    KFree(allocBuffer);
 }
 
 ULONG CountNbls(_In_ NET_BUFFER_LIST* pNbl)
@@ -307,10 +307,7 @@ NET_BUFFER_LIST* DuplicateNbl(const OVS_SWITCH_INFO* pSwitchInfo, NET_BUFFER_LIS
         OVS_CHECK(pBuffer);
         RtlCopyMemory(pBuffer, pSrcNbBuffer, nbLen);
 
-        if (pResBuffer)
-        {
-            ExFreePoolWithTag(pResBuffer, g_extAllocationTag);
-        }
+        KFree(pResBuffer);
 
         pResBuffer = NULL;
     }
@@ -476,10 +473,7 @@ VOID DbgPrintNb(NET_BUFFER* pNb, LPCSTR msg)
         DEBUGP(LOG_INFO, "%02x ", buffer[i]);
     }
 
-    if (bufferAlloc)
-    {
-        ExFreePoolWithTag(bufferAlloc, g_extAllocationTag);
-    }
+    KFree(bufferAlloc);
 
     DEBUGP(LOG_INFO, "\n--end NB--\n");
 }

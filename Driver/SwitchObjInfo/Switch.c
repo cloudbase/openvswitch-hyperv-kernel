@@ -51,10 +51,7 @@ NDIS_STATUS Switch_CreateForwardInfo(NDIS_HANDLE filterHandle, OVS_GLOBAL_FORWAR
 Cleanup:
     if (status != NDIS_STATUS_SUCCESS)
     {
-        if (pForwardInfo != NULL)
-        {
-            ExFreePoolWithTag(pForwardInfo, g_extAllocationTag);
-        }
+        KFree(pForwardInfo);
     }
 
     return status;
@@ -67,7 +64,7 @@ VOID Switch_DeleteForwardInfo(OVS_GLOBAL_FORWARD_INFO* pForwardInfo)
 
     NdisFreeRWLock(pForwardInfo->persistentPortsInfo.pRwLock);
     NdisFreeRWLock(pForwardInfo->pRwLock);
-    ExFreePoolWithTag(pForwardInfo, g_extAllocationTag);
+    KFree(pForwardInfo);
 }
 
 _Use_decl_annotations_

@@ -65,10 +65,7 @@ NDIS_STATUS _PortSupported(_In_ OVS_SWITCH_INFO* pSwitchInfo, _In_ NDIS_SWITCH_P
     OVS_CHECK(status == NDIS_STATUS_SUCCESS);
 
 Cleanup:
-    if (pPortPropertyParameters)
-    {
-        ExFreePoolWithTag(pPortPropertyParameters, g_extAllocationTag);
-    }
+    KFree(pPortPropertyParameters);
 
     return status;
 }
@@ -183,10 +180,7 @@ static NDIS_STATUS _InitializeNicList(_Inout_ OVS_SWITCH_INFO* pSwitchInfo)
     }
 
 Cleanup:
-    if (nicArray != NULL)
-    {
-        ExFreePoolWithTag(nicArray, g_extAllocationTag);
-    }
+    KFree(nicArray);
 
     return status;
 }
@@ -274,10 +268,7 @@ static NDIS_STATUS _InitializePortList(_Inout_ OVS_SWITCH_INFO* pSwitchInfo)
     }
 
 Cleanup:
-    if (portArray != NULL)
-    {
-        ExFreePoolWithTag(portArray, g_extAllocationTag);
-    }
+    KFree(portArray);
 
     return status;
 }
@@ -305,10 +296,7 @@ NDIS_STATUS Sctx_InitSwitch(_Inout_ OVS_SWITCH_INFO* pSwitchInfo)
     pForwardInfo->switchIsActive = TRUE;
 
 Cleanup:
-    if (pSwitchPropertyParameters != NULL)
-    {
-        ExFreePoolWithTag(pSwitchPropertyParameters, g_extAllocationTag);
-    }
+    KFree(pSwitchPropertyParameters);
 
     return status;
 }

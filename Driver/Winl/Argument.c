@@ -1035,13 +1035,13 @@ VOID FreeArgList(_Inout_ OVS_ARGUMENT_SLIST_ENTRY** ppHeadEntry)
 
     pArgListCur = pArgListCur->pNext;
     //free head
-    ExFreePoolWithTag(*ppHeadEntry, g_extAllocationTag);
+    KFree(*ppHeadEntry);
 
     while (pArgListCur)
     {
         pNext = pArgListCur->pNext;
 
-        ExFreePoolWithTag(pArgListCur, g_extAllocationTag);
+        KFree(pArgListCur);
         KFree(pArgListCur->pArg);
 
         pArgListCur = pNext;
@@ -1193,7 +1193,7 @@ VOID DbgPrintArg(_In_ OVS_ARGUMENT* pArg, int depth, int index)
         DbgPrintArgGroup(pArg->data, depth);
     }
 
-    ExFreePoolWithTag(padding, g_extAllocationTag);
+    KFree(padding);
 }
 
 VOID DbgPrintArgGroup(_In_ OVS_ARGUMENT_GROUP* pGroup, int depth)
@@ -1221,7 +1221,7 @@ VOID DbgPrintArgGroup(_In_ OVS_ARGUMENT_GROUP* pGroup, int depth)
 
     DEBUGP_ARG(LOG_INFO, "\n");
 
-    ExFreePoolWithTag(padding, g_extAllocationTag);
+    KFree(padding);
 }
 
 static __inline VOID _DbgPrintArgType_Flow(OVS_ARGTYPE argType)

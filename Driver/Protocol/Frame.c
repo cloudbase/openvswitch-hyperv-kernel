@@ -97,7 +97,7 @@ VOID DbgPrintOnbFrames(OVS_NET_BUFFER* pOvsNb, const char* msg)
 
 void FreeFrameBuffer(_In_ void* buffer)
 {
-    ExFreePoolWithTag(buffer, g_extAllocationTag);
+    KFree(buffer);
 }
 
 BOOLEAN ReadProtocolFrame(_In_ NET_BUFFER* pNb)

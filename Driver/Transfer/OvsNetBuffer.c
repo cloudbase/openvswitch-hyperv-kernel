@@ -83,7 +83,7 @@ VOID ONB_DestroyNbl(OVS_NET_BUFFER* pOvsNb)
 
     buffer = MmGetMdlVirtualAddress(pMdl);
     OVS_CHECK((BYTE*)buffer == (BYTE*)onbBuffer - dataOffset);
-    ExFreePoolWithTag(buffer, g_extAllocationTag);
+    KFree(buffer);
 
     IoFreeMdl(pMdl);
     NdisFreeNetBuffer(pNb);
@@ -113,7 +113,7 @@ void ONB_Destroy(const OVS_SWITCH_INFO* pSwitchInfo, OVS_NET_BUFFER** ppOvsNb)
 
     buffer = MmGetMdlVirtualAddress(pMdl);
     OVS_CHECK((BYTE*)buffer == (BYTE*)onbBuffer - dataOffset);
-    ExFreePoolWithTag(buffer, g_extAllocationTag);
+    KFree(buffer);
 
     IoFreeMdl(pMdl);
     NdisFreeNetBuffer(pNb);
@@ -126,7 +126,7 @@ void ONB_Destroy(const OVS_SWITCH_INFO* pSwitchInfo, OVS_NET_BUFFER** ppOvsNb)
 
     pOvsNb->packetPriority = pOvsNb->packetMark = 0;
 
-    ExFreePoolWithTag(pOvsNb, g_extAllocationTag);
+    KFree(pOvsNb);
 
     *ppOvsNb = NULL;
 }
@@ -208,10 +208,7 @@ OVS_NET_BUFFER* ONB_CreateFromNbAndNbl(const OVS_SWITCH_INFO* pSwitchInfo, NET_B
 
     RtlCopyMemory(pDestBuffer + addSize, pSrcNbBuffer, nbLen);
 
-    if (pResBuffer)
-    {
-        ExFreePoolWithTag(pResBuffer, g_extAllocationTag);
-    }
+    KFree(pResBuffer);
 
     //7. Set the rest of NBL stuff
     pDuplicateNbl->SourceHandle = pSwitchInfo->filterHandle;
@@ -677,7 +674,7 @@ BOOLEAN ONB_OriginateIcmpPacket_Ipv4_Type3Code4(OVS_NET_BUFFER* pOvsNb, ULONG mt
     {
         Nbls_SendIngressBasic(pOvsNb->pSwitchInfo, pIcmpPacket->pNbl, 0, 1);
 
-        ExFreePoolWithTag(pIcmpPacket, g_extAllocationTag);
+        KFree(pIcmpPacket);
     }
     else
     {
@@ -784,7 +781,7 @@ BOOLEAN ONB_OriginateIcmp6Packet_Type2Code0(OVS_NET_BUFFER* pOvsNb, ULONG mtu, _
     {
         Nbls_SendIngressBasic(pSwitchInfo, pIcmp6Packet->pNbl, 0, 1);
 
-        ExFreePoolWithTag(pIcmp6Packet, g_extAllocationTag);
+        KFree(pIcmp6Packet);
     }
     else
     {
@@ -1144,7 +1141,7 @@ Cleanup:
     {
         Nbls_SendIngressBasic(pSwitchInfo, pArpPacket->pNbl, /*sendFlags*/0, 1);
 
-        ExFreePoolWithTag(pArpPacket, g_extAllocationTag);
+        KFree(pArpPacket);
     }
     else
     {

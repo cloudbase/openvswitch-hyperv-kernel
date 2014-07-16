@@ -29,7 +29,7 @@ VOID Sctx_ClearNicListUnsafe(_Inout_ OVS_GLOBAL_FORWARD_INFO* pForwardInfo)
 
         pNicEntry = CONTAINING_RECORD(pHeadList, OVS_NIC_LIST_ENTRY, listEntry);
 
-        ExFreePoolWithTag(pNicEntry, g_extAllocationTag);
+        KFree(pNicEntry);
     }
 
     return;

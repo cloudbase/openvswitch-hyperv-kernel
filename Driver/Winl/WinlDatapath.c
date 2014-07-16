@@ -66,10 +66,7 @@ OVS_ERROR Datapath_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
     if (!pDatapath->deleted || pDatapath->name)
     {
-        if (pDatapath->name)
-        {
-            ExFreePoolWithTag(pDatapath->name, g_extAllocationTag);
-        }
+        KFree(pDatapath->name);
     }
 
     pDatapath->deleted = FALSE;
@@ -323,7 +320,7 @@ OVS_ERROR Datapath_Dump(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
             replyMsg.pArgGroup = NULL;
         }
 
-        ExFreePoolWithTag(msgs, g_extAllocationTag);
+        KFree(msgs);
     }
     else
     {

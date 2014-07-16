@@ -163,7 +163,7 @@ VOID Arp_DestroyTable()
 
         pArpEntry = CONTAINING_RECORD(headList, OVS_ARP_TABLE_ENTRY, listEntry);
 
-        ExFreePoolWithTag(pArpEntry, g_extAllocationTag);
+        KFree(pArpEntry);
     }
 
     NdisReleaseRWLock(g_pArpRWLock, &lockState);
