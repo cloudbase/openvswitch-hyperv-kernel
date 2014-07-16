@@ -738,7 +738,7 @@ VOID DestroyArgumentGroup(_In_ OVS_ARGUMENT_GROUP* pGroup)
 {
     if (pGroup)
     {
-        DestroyArgumentsFromGroup(pGroup);
+        DestroyArguments(pGroup->args, pGroup->count);
         KFree(pGroup);
     }
 }
@@ -759,27 +759,6 @@ VOID DestroyArguments(_In_ OVS_ARGUMENT* argArray, UINT count)
     else
     {
         OVS_CHECK(argArray && count > 0);
-    }
-}
-
-VOID DestroyArgumentsFromGroup(_In_ OVS_ARGUMENT_GROUP* pGroup)
-{
-    OVS_CHECK(pGroup);
-
-    if (pGroup->count && pGroup->args)
-    {
-        for (UINT i = 0; i < pGroup->count; ++i)
-        {
-            OVS_ARGUMENT* pArg = pGroup->args + i;
-
-            DestroyArgumentData(pArg);
-        }
-
-        KFree(pGroup->args);
-    }
-    else
-    {
-        OVS_CHECK(!pGroup->count && !pGroup->args);
     }
 }
 

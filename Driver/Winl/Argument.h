@@ -119,9 +119,6 @@ OVS_ARGUMENT* CreateArgumentStringA_Alloc(OVS_ARGTYPE argType, const char* buffe
 //destroys the OVS_ARGUMENT-s of pGroup (i.e. pGroup->args) and frees pGroup
 VOID DestroyArgumentGroup(_In_ OVS_ARGUMENT_GROUP* pGroup);
 
-//destroys pArg->data of each argument in group, then it frees pGroup->args array
-VOID DestroyArgumentsFromGroup(_In_ OVS_ARGUMENT_GROUP* pGroup);
-
 //count: the number of OVS_ARGUMENT-s in the array
 //destroys pArg->data of count args, then frees the argArray.
 VOID DestroyArguments(_In_ OVS_ARGUMENT* argArray, UINT count);

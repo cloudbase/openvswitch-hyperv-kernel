@@ -117,7 +117,7 @@ static OVS_ARGUMENT_GROUP* _OFPort_OptionsToGroup(_In_ const OVS_TUNNELING_PORT_
 Cleanup:
     if (!ok)
     {
-        DestroyArgumentsFromGroup(pOptionsGroup);
+        DestroyArguments(pOptionsGroup->args, pOptionsGroup->count);
     }
 
     return pOptionsGroup;
