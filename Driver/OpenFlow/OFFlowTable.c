@@ -58,6 +58,15 @@ static OVS_FLOW* _FindFlowMatchingMaskedPI_Unsafe(OVS_FLOW_TABLE* pFlowTable, co
     return NULL;
 }
 
+static __inline VOID _FlowTable_Free(OVS_FLOW_TABLE* pFlowTable)
+{
+    OVS_CHECK(pFlowTable);
+
+    KFree(pFlowTable->pFlowList);
+    KFree(pFlowTable->pMaskList);
+    KFree(pFlowTable);
+}
+
 VOID FlowTable_DestroyNow_Unsafe(OVS_FLOW_TABLE* pFlowTable)
 {
     LIST_ENTRY* pFlowEntry = NULL;
@@ -77,9 +86,7 @@ VOID FlowTable_DestroyNow_Unsafe(OVS_FLOW_TABLE* pFlowTable)
 
     OVS_CHECK(IsListEmpty(pFlowTable->pMaskList));
 
-    KFree(pFlowTable->pFlowList);
-    KFree(pFlowTable->pMaskList);
-    KFree(pFlowTable);
+    _FlowTable_Free(pFlowTable);
 }
 
 OVS_FLOW* FlowTable_FindFlowMatchingMaskedPI_Unsafe(OVS_FLOW_TABLE* pFlowTable, const OVS_OFPACKET_INFO* pPacketInfo)
@@ -215,9 +222,7 @@ Cleanup:
     {
         OVS_CHECK_RET(pFlowTable, NULL);
 
-        KFree(pFlowTable->pFlowList);
-        KFree(pFlowTable->pMaskList);
-        KFree(pFlowTable);
+        _FlowTable_Free(pFlowTable);
 
         return NULL;
     }
