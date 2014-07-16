@@ -1461,7 +1461,7 @@ Cleanup:
     else
     {
         KFree(pFlowGroup->args);
-        FreeArgGroup(pFlowGroup);
+        KFree(pFlowGroup);
 
         if (pPIArg)
         {

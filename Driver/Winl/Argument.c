@@ -739,7 +739,7 @@ VOID DestroyArgumentGroup(_In_ OVS_ARGUMENT_GROUP* pGroup)
     if (pGroup)
     {
         DestroyArgumentsFromGroup(pGroup);
-        FreeArgGroup(pGroup);
+        KFree(pGroup);
     }
 }
 
