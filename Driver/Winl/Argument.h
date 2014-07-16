@@ -83,7 +83,10 @@ typedef struct _OVS_ARGUMENT_SLIST_ENTRY
 //frees the pArg->data of an OVS_ARGUMENT
 static __inline VOID FreeArgumentData(VOID* pData)
 {
-    ExFreePoolWithTag(pData, g_extAllocationTag);
+    if (pData)
+    {
+        ExFreePoolWithTag(pData, g_extAllocationTag);
+    }
 }
 
 //allocates an OVS_ARGUMENT and initializes it
@@ -104,8 +107,10 @@ static __inline OVS_ARGUMENT* AllocArgument()
 
 static __inline VOID FreeArgument(OVS_ARGUMENT* pArg)
 {
-    OVS_CHECK(pArg);
-    ExFreePoolWithTag(pArg, g_extAllocationTag);
+    if (pArg)
+    {
+        ExFreePoolWithTag(pArg, g_extAllocationTag);
+    }
 }
 
 //allocates an array of count OVS_ARGUMENT-s and returns the array.
@@ -119,7 +124,11 @@ static __inline VOID FreeArguments(_Inout_ OVS_ARGUMENT_GROUP* pGroup)
 {
     OVS_CHECK(pGroup);
 
-    ExFreePoolWithTag(pGroup->args, g_extAllocationTag);
+    if (pGroup->args)
+    {
+        ExFreePoolWithTag(pGroup->args, g_extAllocationTag);
+    }
+
     pGroup->args = NULL;
     pGroup->count = 0;
 }
@@ -129,9 +138,10 @@ static __inline VOID FreeArguments(_Inout_ OVS_ARGUMENT_GROUP* pGroup)
 //frees an OVS_ARGUMENT_GROUP: it does not free pGroup->args
 static __inline VOID FreeArgGroup(_Inout_ OVS_ARGUMENT_GROUP* pGroup)
 {
-    OVS_CHECK(pGroup);
-
-    ExFreePoolWithTag(pGroup, g_extAllocationTag);
+    if (pGroup)
+    {
+        ExFreePoolWithTag(pGroup, g_extAllocationTag);
+    }
 }
 
 /******************************************* CREATION & DESTRUCTION FUNCTIONS **********************************************************************/
@@ -222,7 +232,10 @@ BOOLEAN VerifyGroup_PacketActions(OVS_ARGUMENT* pArg, BOOLEAN isRequest);
 
 static __inline VOID FreeArgListItem(OVS_ARGUMENT_SLIST_ENTRY* pArgHead)
 {
-    ExFreePoolWithTag(pArgHead, sizeof(OVS_ARGUMENT_SLIST_ENTRY));
+    if (pArgHead)
+    {
+        ExFreePoolWithTag(pArgHead, sizeof(OVS_ARGUMENT_SLIST_ENTRY));
+    }
 }
 
 //creates an OVS_ARGUMENT with a copy of buffer; allocates a list item; sets the arg as the listItem->pArg, and listItem->next = NULL

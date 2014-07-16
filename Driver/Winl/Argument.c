@@ -743,43 +743,53 @@ OVS_ARGUMENT* CreateArgumentStringA_Alloc(OVS_ARGTYPE argType, const char* buffe
 
 VOID DestroyArgumentGroup(_In_ OVS_ARGUMENT_GROUP* pGroup)
 {
-    OVS_CHECK(pGroup);
-
-    DestroyArgumentsFromGroup(pGroup);
-
-    FreeArgGroup(pGroup);
+    if (pGroup)
+    {
+        DestroyArgumentsFromGroup(pGroup);
+        FreeArgGroup(pGroup);
+    }
 }
 
 VOID DestroyArguments(_In_ OVS_ARGUMENT* argArray, UINT count)
 {
-    OVS_CHECK(argArray);
-
-    for (UINT i = 0; i < count; ++i)
+    if (argArray != NULL && count > 0)
     {
-        OVS_ARGUMENT* pArg = argArray + i;
+        for (UINT i = 0; i < count; ++i)
+        {
+            OVS_ARGUMENT* pArg = argArray + i;
 
-        DestroyArgumentData(pArg);
+            DestroyArgumentData(pArg);
+        }
+
+        FreeArgument(argArray);
     }
-
-    FreeArgument(argArray);
+    else
+    {
+        OVS_CHECK(argArray && count > 0);
+    }
 }
 
 VOID DestroyArgumentsFromGroup(_In_ OVS_ARGUMENT_GROUP* pGroup)
 {
     OVS_CHECK(pGroup);
-    OVS_CHECK(pGroup->count && pGroup->args ||
-        !pGroup->count && !pGroup->args);
 
-    for (UINT i = 0; i < pGroup->count; ++i)
+    if (pGroup->count && pGroup->args)
     {
-        OVS_ARGUMENT* pArg = pGroup->args + i;
+        for (UINT i = 0; i < pGroup->count; ++i)
+        {
+            OVS_ARGUMENT* pArg = pGroup->args + i;
 
-        DestroyArgumentData(pArg);
+            DestroyArgumentData(pArg);
+        }
+
+        if (pGroup->args)
+        {
+            FreeArgument(pGroup->args);
+        }
     }
-
-    if (pGroup->args)
+    else
     {
-        FreeArgument(pGroup->args);
+        OVS_CHECK(!pGroup->count && !pGroup->args);
     }
 }
 
@@ -788,7 +798,6 @@ VOID DestroyArgument(_In_ OVS_ARGUMENT* pArg)
     if (pArg)
     {
         DestroyArgumentData(pArg);
-
         FreeArgument(pArg);
     }
 }
