@@ -62,34 +62,12 @@ static __inline char* IfCountedStringToCharArray(_In_ const IF_COUNTED_STRING* p
     OVS_CHECK(len <= IF_MAX_STRING_SIZE + 1);
 
     result = KAlloc(len + 1);
-
     if (!result)
     {
         return NULL;
     }
 
     WcharArrayToAscii(result, pCountedStr->String, len);
-    result[len] = 0;
-
-    return result;
-}
-
-static __inline WCHAR* IfCountedStringToWCharArray(_In_ const IF_COUNTED_STRING* pCountedStr)
-{
-    WCHAR* result = NULL;
-    ULONG len = pCountedStr->Length / 2;
-
-    OVS_CHECK(pCountedStr);
-    OVS_CHECK(len <= IF_MAX_STRING_SIZE + 1);
-
-    result = KAlloc(len + 1);
-
-    if (!result)
-    {
-        return NULL;
-    }
-
-    wcscpy_s(result, len, pCountedStr->String);
     result[len] = 0;
 
     return result;
