@@ -319,10 +319,7 @@ Cleanup:
 
         NdisReleaseSpinLock(&g_nbPoolLock);
 
-        if (pSwitchInfo != NULL)
-        {
-            ExFreePool(pSwitchInfo);
-        }
+        KFree(pSwitchInfo);
     }
 
     DEBUGP(LOG_TRACE, "Attach: status %x\n", status);
