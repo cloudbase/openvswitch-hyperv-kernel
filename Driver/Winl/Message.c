@@ -337,7 +337,7 @@ static VOID _DestroyAttribute(OVS_ATTRIBUTE* pAttribute)
 
         if (pAttrArray)
         {
-            FreeArgument(pAttrArray);
+            KFree(pAttrArray);
         }
         else
         {
@@ -355,7 +355,7 @@ static VOID _DestroyAttributes(OVS_ATTRIBUTE* pAttributes, UINT count)
         _DestroyAttribute(pAttr);
     }
 
-    FreeArgument(pAttributes);
+    KFree(pAttributes);
 }
 
 static OVS_ARGUMENT* _ArgumentsToAttributes(ULONG target, ULONG cmd, OVS_ARGTYPE parentArgType, _In_ const OVS_ARGUMENT* pArgs, UINT16 count, UINT16* pGroupSize)
@@ -399,10 +399,7 @@ static OVS_ARGUMENT* _ArgumentsToAttributes(ULONG target, ULONG cmd, OVS_ARGTYPE
 
             if (!Reply_SetAttrType(target, cmd, parentArgType, pAttr))
             {
-                if (pSubAttrs)
-                {
-                    FreeArgument(pSubAttrs);
-                }
+                KFree(pSubAttrs);
 
                 ok = FALSE;
                 break;
@@ -428,7 +425,7 @@ static OVS_ARGUMENT* _ArgumentsToAttributes(ULONG target, ULONG cmd, OVS_ARGTYPE
 
     if (!ok)
     {
-        FreeArgument(pAttributes);
+        KFree(pAttributes);
         return NULL;
     }
 

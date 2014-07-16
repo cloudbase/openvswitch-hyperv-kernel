@@ -78,14 +78,6 @@ typedef struct _OVS_ARGUMENT_SLIST_ENTRY
 
 /******************************************* ALLOC & FREE FUNCTIONS **********************************************************************/
 
-static __inline VOID FreeArgument(OVS_ARGUMENT* pArg)
-{
-    if (pArg)
-    {
-        ExFreePoolWithTag(pArg, g_extAllocationTag);
-    }
-}
-
 //allocates an array of count OVS_ARGUMENT-s, and assigns it to pGroup->args
 BOOLEAN AllocateArgumentsToGroup(UINT16 count, _Out_ OVS_ARGUMENT_GROUP* pGroup);
 

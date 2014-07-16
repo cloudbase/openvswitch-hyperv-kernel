@@ -754,7 +754,7 @@ VOID DestroyArguments(_In_ OVS_ARGUMENT* argArray, UINT count)
             DestroyArgumentData(pArg);
         }
 
-        FreeArgument(argArray);
+        KFree(argArray);
     }
     else
     {
@@ -775,10 +775,7 @@ VOID DestroyArgumentsFromGroup(_In_ OVS_ARGUMENT_GROUP* pGroup)
             DestroyArgumentData(pArg);
         }
 
-        if (pGroup->args)
-        {
-            FreeArgument(pGroup->args);
-        }
+        KFree(pGroup->args);
     }
     else
     {
@@ -791,7 +788,7 @@ VOID DestroyArgument(_In_ OVS_ARGUMENT* pArg)
     if (pArg)
     {
         DestroyArgumentData(pArg);
-        FreeArgument(pArg);
+        KFree(pArg);
     }
 }
 
@@ -1042,9 +1039,8 @@ VOID FreeArgList(_Inout_ OVS_ARGUMENT_SLIST_ENTRY** ppHeadEntry)
     {
         pNext = pArgListCur->pNext;
 
-        FreeArgument(pArgListCur->pArg);
-
         ExFreePoolWithTag(pArgListCur, g_extAllocationTag);
+        KFree(pArgListCur->pArg);
 
         pArgListCur = pNext;
     }

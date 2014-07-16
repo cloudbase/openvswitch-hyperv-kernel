@@ -142,35 +142,12 @@ BOOLEAN CreateMsgFromOFPort(OVS_WINL_PORT* pPort, UINT32 sequence, UINT8 cmd, _I
 Cleanup:
     if (ok)
     {
-        if (pArgPortNumber)
-        {
-            FreeArgument(pArgPortNumber);
-        }
-
-        if (pArgPortType)
-        {
-            FreeArgument(pArgPortType);
-        }
-
-        if (pArgPortName)
-        {
-            FreeArgument(pArgPortName);
-        }
-
-        if (pArgUpcallPid)
-        {
-            FreeArgument(pArgUpcallPid);
-        }
-
-        if (pArgPortSats)
-        {
-            FreeArgument(pArgPortSats);
-        }
-
-        if (pArgPortOpts)
-        {
-            FreeArgument(pArgPortOpts);
-        }
+        KFree(pArgPortNumber);
+        KFree(pArgPortType);
+        KFree(pArgPortName);
+        KFree(pArgUpcallPid);
+        KFree(pArgPortSats);
+        KFree(pArgPortOpts);
 
         return TRUE;
     }

@@ -1227,7 +1227,7 @@ OVS_ARGUMENT* CreateArgFromPacketInfo(const OVS_OFPACKET_INFO* pPacketInfo, cons
         DEBUGP(LOG_ERROR, __FUNCTION__ " failed allocating arg group\n");
 
         DestroyArgList(&pList);
-        FreeArgument(args);
+        KFree(args);
         return NULL;
     }
 
@@ -1240,7 +1240,7 @@ OVS_ARGUMENT* CreateArgFromPacketInfo(const OVS_OFPACKET_INFO* pPacketInfo, cons
     {
         DEBUGP(LOG_ERROR, "CreateArgumentFromGroup failed\n");
         DestroyArgList(&pList);
-        FreeArgument(args);
+        KFree(args);
         return NULL;
     }
 
@@ -1451,28 +1451,12 @@ Cleanup:
 
     if (ok)
     {
-        FreeArgument(pPIArg);
-        FreeArgument(pMasksArg);
-
-        if (pTimeUsedArg)
-        {
-            FreeArgument(pTimeUsedArg);
-        }
-
-        if (pFlowStats)
-        {
-            FreeArgument(pFlowStats);
-        }
-
-        if (pTcpFlags)
-        {
-            FreeArgument(pTcpFlags);
-        }
-
-        if (pActionsArg)
-        {
-            FreeArgument(pActionsArg);
-        }
+        KFree(pPIArg);
+        KFree(pMasksArg);
+        KFree(pTimeUsedArg);
+        KFree(pFlowStats);
+        KFree(pTcpFlags);
+        KFree(pActionsArg);
     }
     else
     {

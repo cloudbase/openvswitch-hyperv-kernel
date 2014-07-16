@@ -372,28 +372,14 @@ Out:
         DestroyArgumentGroup(msg.pArgGroup);
         msg.pArgGroup = NULL;
 
-        if (pNbArg)
-        {
-            FreeArgument(pNbArg);
-        }
-
-        if (pUserDataArg)
-        {
-            FreeArgument(pUserDataArg);
-        }
-
-        if (pPacketInfoArg)
-        {
-            FreeArgument(pPacketInfoArg);
-        }
+        KFree(pNbArg);
+        KFree(pUserDataArg);
+        KFree(pPacketInfoArg);
     }
     else
     {
-        if (pNbArg)
-        {
-            //we free, not destroy: the nb inside was not duplicated
-            FreeArgument(pNbArg);
-        }
+        //we free, not destroy: the nb inside was not duplicated
+        KFree(pNbArg);
 
         if (pUserDataArg)
         {

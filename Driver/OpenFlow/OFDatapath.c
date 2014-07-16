@@ -162,8 +162,8 @@ Cleanup:
 
     if (ok)
     {
-        FreeArgument(pNameArg);
-        FreeArgument(pStatsArg);
+        KFree(pNameArg);
+        KFree(pStatsArg);
     }
     else
     {
