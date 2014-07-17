@@ -728,17 +728,7 @@ Cleanup:
     OVS_REFCOUNT_DEREFERENCE(pDatapath);
     OVS_REFCOUNT_DEREFERENCE(pSwitchInfo);
 
-    if (msgs)
-    {
-        for (i = 0; i < countMsgs; ++i)
-        {
-            OVS_MESSAGE* pMsg = msgs + i;
-
-            DestroyArgumentGroup(pMsg->pArgGroup);
-        }
-
-        KFree(msgs);
-    }
+    DestroyMessages(msgs, countMsgs);
 
     return error;
 }

@@ -1460,3 +1460,18 @@ BOOLEAN VerifyMessage(_In_ const OVS_NLMSGHDR* pMsg, UINT isRequest)
 
     //verify: duplicates; required
 }
+
+VOID DestroyMessages(_Inout_ OVS_MESSAGE* msgs, UINT countMsgs)
+{
+    if (msgs)
+    {
+        for (UINT i = 0; i < countMsgs; ++i)
+        {
+            OVS_MESSAGE* pReplyMsg = msgs + i;
+
+            DestroyArgumentGroup(pReplyMsg->pArgGroup);
+        }
+
+        KFree(msgs);
+    }
+}

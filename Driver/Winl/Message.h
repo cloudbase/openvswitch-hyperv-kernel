@@ -246,3 +246,6 @@ static __inline OVS_MESSAGE_COMMAND_TYPE UserspacePacketCmdToKernelCmd(ULONG cmd
 }
 
 static BOOLEAN _ParseArgGroup_FromAttributes(_In_ BYTE** ppBuffer, UINT16* pBytesLeft, UINT16 groupSize, _Inout_ OVS_ARGUMENT_GROUP* pGroup, OVS_ARGTYPE parentArgType, UINT16 targetType, UINT8 cmd);
+
+VOID DestroyMessages(_Inout_ OVS_MESSAGE* msgs, UINT countMsgs);
+

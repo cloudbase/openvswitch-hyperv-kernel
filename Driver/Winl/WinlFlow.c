@@ -732,17 +732,7 @@ Cleanup:
     OVS_REFCOUNT_DEREFERENCE(pFlowTable);
     OVS_REFCOUNT_DEREFERENCE(pDatapath);
 
-    if (msgs)
-    {
-        for (UINT i = 0; i < countMsgs; ++i)
-        {
-            OVS_MESSAGE* pReplyMsg = msgs + i;
-
-            DestroyArgumentGroup(pReplyMsg->pArgGroup);
-        }
-
-        KFree(msgs);
-    }
+    DestroyMessages(msgs, countMsgs);
 
     return error;
 }
