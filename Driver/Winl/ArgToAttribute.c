@@ -541,7 +541,7 @@ static BOOLEAN _Reply_SetAttrType_Port(OVS_MESSAGE_COMMAND_TYPE cmd, OVS_ARGTYPE
     UNREFERENCED_PARAMETER(cmd);
     OVS_CHECK(cmd == OVS_MESSAGE_COMMAND_NEW);
 
-    if (parentArgType == OVS_ARGTYPE_GROUP_OFPORT_OPTIONS)
+    if (parentArgType == OVS_ARGTYPE_OFPORT_OPTIONS_GROUP)
     {
         return _Reply_SetAttrType_Port_Options(pArg);
     }
@@ -570,7 +570,7 @@ static BOOLEAN _Reply_SetAttrType_Port(OVS_MESSAGE_COMMAND_TYPE cmd, OVS_ARGTYPE
         pArg->type = OVS_USPACE_VPORT_ATTRIBUTE_UPCALL_PID;
         break;
 
-    case OVS_ARGTYPE_GROUP_OFPORT_OPTIONS:
+    case OVS_ARGTYPE_OFPORT_OPTIONS_GROUP:
         pArg->type = OVS_USPACE_VPORT_ATTRIBUTE_OPTIONS;
         break;
 

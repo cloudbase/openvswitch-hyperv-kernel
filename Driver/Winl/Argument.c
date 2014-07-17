@@ -337,7 +337,7 @@ OVS_ARGTYPE GetParentGroupType(OVS_ARGTYPE childArgType)
         case OVS_ARGTYPE_ACTION_SAMPLE_PROBABILITY:
             return OVS_ARGTYPE_ACTION_SAMPLE_GROUP;
 
-        case OVS_ARGTYPE_GROUP_OFPORT_OPTIONS:
+        case OVS_ARGTYPE_OFPORT_OPTIONS_GROUP:
             return OVS_ARGTYPE_PSEUDOGROUP_OFPORT;
 
         case OVS_ARGTYPE_PSEUDOGROUP_FLOW:
@@ -388,7 +388,7 @@ OVS_ARGTYPE GetParentGroupType(OVS_ARGTYPE childArgType)
     }
     else if (childArgType >= OVS_ARGTYPE_FIRST_OFPORT_OPTION && childArgType <= OVS_ARGTYPE_LAST_OFPORT_OPTION)
     {
-        return OVS_ARGTYPE_GROUP_OFPORT_OPTIONS;
+        return OVS_ARGTYPE_OFPORT_OPTIONS_GROUP;
     }
 
     OVS_CHECK(__UNEXPECTED__);
@@ -448,7 +448,7 @@ BOOLEAN GetArgumentExpectedSize(OVS_ARGTYPE argumentType, _Inout_ UINT* pSize)
     case OVS_ARGTYPE_PSEUDOGROUP_OFPORT:
         return _GetOFPortArgExpectedSize(argumentType, pSize);
 
-    case OVS_ARGTYPE_GROUP_OFPORT_OPTIONS:
+    case OVS_ARGTYPE_OFPORT_OPTIONS_GROUP:
         return _GetOFPortOptionsArgExpectedSize(argumentType, pSize);
     default:
         return FALSE;
@@ -1533,7 +1533,7 @@ VOID DbgPrintArgType(OVS_ARGTYPE argType, const char* padding, int index)
             DEBUGP_ARG(LOG_INFO, "GROUP: OF PORT\n");
             break;
 
-        case OVS_ARGTYPE_GROUP_OFPORT_OPTIONS:
+        case OVS_ARGTYPE_OFPORT_OPTIONS_GROUP:
             DEBUGP_ARG(LOG_INFO, "GROUP: OF PORT / OPTIONS\n");
             break;
 
@@ -1614,7 +1614,7 @@ VOID DbgPrintArgType(OVS_ARGTYPE argType, const char* padding, int index)
             _DbgPrintArgType_OFPort(argType);
             break;
 
-        case OVS_ARGTYPE_GROUP_OFPORT_OPTIONS:
+        case OVS_ARGTYPE_OFPORT_OPTIONS_GROUP:
             _DbgPrintArgType_OFPortOptions(argType);
             break;
 

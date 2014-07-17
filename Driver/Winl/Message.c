@@ -1342,7 +1342,7 @@ static BOOLEAN _VerifyPortMessageReply(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_ME
         case OVS_ARGTYPE_OFPORT_STATS:
             break;
 
-        case OVS_ARGTYPE_GROUP_OFPORT_OPTIONS:
+        case OVS_ARGTYPE_OFPORT_OPTIONS_GROUP:
         {
             OVS_ARGUMENT_GROUP* pGroup = pMainGroupArg->data;
 

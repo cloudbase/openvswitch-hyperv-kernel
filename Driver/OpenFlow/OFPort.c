@@ -102,7 +102,7 @@ BOOLEAN CreateMsgFromOFPort(OVS_WINL_PORT* pPort, UINT32 sequence, UINT8 cmd, _I
 
     if (pPort->pOptions)
     {
-        pArgPortOpts = CreateArgumentFromGroup(OVS_ARGTYPE_GROUP_OFPORT_OPTIONS, pPort->pOptions);
+        pArgPortOpts = CreateArgumentFromGroup(OVS_ARGTYPE_OFPORT_OPTIONS_GROUP, pPort->pOptions);
         if (!pArgPortOpts)
         {
             pArgPortOpts = NULL;

@@ -61,7 +61,7 @@ static BOOLEAN _AttrType_To_ArgType_Port(OVS_ARGTYPE parentArgType, UINT16 attrT
         {
             //NESTED
         case OVS_USPACE_VPORT_ATTRIBUTE_OPTIONS:
-            *pTypeAsArg = OVS_ARGTYPE_GROUP_OFPORT_OPTIONS;
+            *pTypeAsArg = OVS_ARGTYPE_OFPORT_OPTIONS_GROUP;
             DEBUGP_ARG(LOG_INFO, "rcv arg: OVS_ARGTYPE_OFPORT_OPTIONS_GROUP\n");
             return TRUE;
 
@@ -98,7 +98,7 @@ static BOOLEAN _AttrType_To_ArgType_Port(OVS_ARGTYPE parentArgType, UINT16 attrT
     }
     else
     {
-        if (parentArgType != OVS_ARGTYPE_GROUP_OFPORT_OPTIONS)
+        if (parentArgType != OVS_ARGTYPE_OFPORT_OPTIONS_GROUP)
         {
             DEBUGP(LOG_ERROR, __FUNCTION__ " - unexpected parrent attr type: %u\n", parentArgType);
             return FALSE;

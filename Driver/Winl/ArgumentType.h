@@ -28,9 +28,6 @@ typedef enum _OVS_ARGTYPE
     OVS_ARGTYPE_GROUP_MAIN = 0x000,
     OVS_ARGTYPE_FIRST_GROUP = OVS_ARGTYPE_GROUP_MAIN,
 
-    OVS_ARGTYPE_GROUP_OFPORT_OPTIONS = 0x00D,
-    OVS_ARGTYPE_LAST_REAL_GROUP = OVS_ARGTYPE_GROUP_OFPORT_OPTIONS,
-
     OVS_ARGTYPE_PSEUDOGROUP_FLOW = 0x00E,
     OVS_ARGTYPE_FIRST_PSEUDOGROUP = OVS_ARGTYPE_PSEUDOGROUP_FLOW,
     OVS_ARGTYPE_PSEUDOGROUP_DATAPATH = 0x00F,
@@ -298,13 +295,15 @@ typedef enum _OVS_ARGTYPE
     //data type: null-terminated ASCII string. max size should be 17.
     OVS_ARGTYPE_OFPORT_NAME,                //0x123
 
+    OVS_ARGTYPE_OFPORT_OPTIONS_GROUP,       //0x124
+
     //The Port Id associated with the file HANDLE that handles the upcalls coming from this ovs port.
     //if (portId == 0) => do not queue upcall
     //data type: UINT32
-    OVS_ARGTYPE_OFPORT_UPCALL_PORT_ID,        //0x124
+    OVS_ARGTYPE_OFPORT_UPCALL_PORT_ID,        //0x125
 
     //data type: OVS_OFPORT_STATS
-    OVS_ARGTYPE_OFPORT_STATS,                //0x125
+    OVS_ARGTYPE_OFPORT_STATS,                //0x126
 
     OVS_ARGTYPE_LAST_OFPORT = OVS_ARGTYPE_OFPORT_STATS,
 
