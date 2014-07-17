@@ -647,7 +647,7 @@ void FlowWithActions_ToString(const char* msg, _In_ const OVS_OFPACKET_INFO* pPa
                 _DbgPrintFlow_Set(pArg->data, maxLen, str);
                 break;
 
-            case OVS_ARGTYPE_GROUP_ACTIONS_SAMPLE:
+            case OVS_ARGTYPE_ACTION_SAMPLE_GROUP:
                 RtlStringCchCatA(str, maxLen - 1, "sample; ");
                 break;
 

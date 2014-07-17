@@ -162,7 +162,7 @@ static BOOLEAN _ExecuteAction_Sample(_Inout_ OVS_NET_BUFFER *pOvsNb, _In_ const 
         }
             break;
 
-        case OVS_ARGTYPE_GROUP_ACTIONS_SAMPLE:
+        case OVS_ARGTYPE_ACTION_SAMPLE_ACTIONS_GROUP:
             pActionsArgs = pArg->data;
             break;
         }
@@ -303,7 +303,7 @@ BOOLEAN ExecuteActions(_Inout_ OVS_NET_BUFFER* pOvsNb, _In_ const OutputToPortCa
             ok = _ExecuteAction_Set(pOvsNb, pArg->data);
             break;
 
-        case OVS_ARGTYPE_GROUP_ACTIONS_SAMPLE:
+        case OVS_ARGTYPE_ACTION_SAMPLE_GROUP:
             ok = _ExecuteAction_Sample(pOvsNb, pArg->data, outputToPort);
             break;
 
@@ -617,7 +617,7 @@ BOOLEAN ProcessReceivedActions(_Inout_ OVS_ARGUMENT_GROUP* pActionGroup, const O
             }
             break;
 
-        case OVS_ARGTYPE_GROUP_ACTIONS_SAMPLE:
+        case OVS_ARGTYPE_ACTION_SAMPLE_GROUP:
             OVS_CHECK(__NOT_IMPLEMENTED__);
             return FALSE;
             break;

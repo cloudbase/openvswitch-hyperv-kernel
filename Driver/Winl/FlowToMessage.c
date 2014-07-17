@@ -417,7 +417,7 @@ static BOOLEAN _SampleActionToList(const OVS_ARGUMENT_GROUP* pArgGroup, OVS_ARGU
         }
     }
 
-    pGroupArg = CreateGroupArgFromList(OVS_ARGTYPE_GROUP_ACTIONS_SAMPLE, &pHeadArg);
+    pGroupArg = CreateGroupArgFromList(OVS_ARGTYPE_ACTION_SAMPLE_GROUP, &pHeadArg);
     if (!pGroupArg)
     {
         KFree(pHeadArg);
@@ -644,7 +644,7 @@ static BOOLEAN _CreateActionsArgsToList(const OVS_ARGUMENT_GROUP* pArgGroup, OVS
         }
             break;
 
-        case OVS_ARGTYPE_GROUP_ACTIONS_SAMPLE:
+        case OVS_ARGTYPE_ACTION_SAMPLE_GROUP:
             ok = _SampleActionToList(pArg->data, ppArgList);
             if (!ok)
             {

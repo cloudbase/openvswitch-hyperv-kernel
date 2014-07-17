@@ -329,13 +329,13 @@ OVS_ARGTYPE GetParentGroupType(OVS_ARGTYPE childArgType)
             return OVS_ARGTYPE_PSEUDOGROUP_PACKET;
 
         case OVS_ARGTYPE_ACTION_UPCALL_GROUP:
-        case OVS_ARGTYPE_GROUP_ACTIONS_SAMPLE:
+        case OVS_ARGTYPE_ACTION_SAMPLE_GROUP:
         case OVS_ARGTYPE_GROUP_ACTIONS_SETINFO:
             return OVS_ARGTYPE_FLOW_ACTIONS_GROUP;
 
         case OVS_ARGTYPE_ACTION_SAMPLE_ACTIONS_GROUP:
         case OVS_ARGTYPE_ACTION_SAMPLE_PROBABILITY:
-            return OVS_ARGTYPE_GROUP_ACTIONS_SAMPLE;
+            return OVS_ARGTYPE_ACTION_SAMPLE_GROUP;
 
         case OVS_ARGTYPE_GROUP_OFPORT_OPTIONS:
             return OVS_ARGTYPE_PSEUDOGROUP_OFPORT;
@@ -356,7 +356,7 @@ OVS_ARGTYPE GetParentGroupType(OVS_ARGTYPE childArgType)
     }
     else if (childArgType >= OVS_ARGTYPE_FIRST_ACTIONS_SAMPLE && childArgType <= OVS_ARGTYPE_LAST_ACTIONS_SAMPLE)
     {
-        return OVS_ARGTYPE_GROUP_ACTIONS_SAMPLE;
+        return OVS_ARGTYPE_ACTION_SAMPLE_GROUP;
     }
     else if (childArgType >= OVS_ARGTYPE_FIRST_ACTIONS_UPCALL && childArgType <= OVS_ARGTYPE_LAST_ACTIONS_UPCALL)
     {
@@ -436,7 +436,7 @@ BOOLEAN GetArgumentExpectedSize(OVS_ARGTYPE argumentType, _Inout_ UINT* pSize)
     case OVS_ARGTYPE_ACTION_UPCALL_GROUP:
         return _GetPacketActionUpcallArgExpectedSize(argumentType, pSize);
 
-    case OVS_ARGTYPE_GROUP_ACTIONS_SAMPLE:
+    case OVS_ARGTYPE_ACTION_SAMPLE_GROUP:
         return _GetPacketActionSampleArgExpectedSize(argumentType, pSize);
 
     case OVS_ARGTYPE_GROUP_ACTIONS_SETINFO:
@@ -1516,8 +1516,8 @@ VOID DbgPrintArgType(OVS_ARGTYPE argType, const char* padding, int index)
             DEBUGP_ARG(LOG_INFO, "GROUP: <FLOW/PACKET>/ACTIONS/UPCALL\n");
             break;
 
-        case OVS_ARGTYPE_GROUP_ACTIONS_SAMPLE:
-            DEBUGP_ARG(LOG_INFO, "GROUP: PACKET/ACTIONS/SAMPLE\n");
+        case OVS_ARGTYPE_ACTION_SAMPLE_GROUP:
+            DEBUGP_ARG(LOG_INFO, "GROUP: <FLOW/PACKET>/ACTIONS/SAMPLE\n");
             break;
 
             //contains packet info args to set
@@ -1597,7 +1597,7 @@ VOID DbgPrintArgType(OVS_ARGTYPE argType, const char* padding, int index)
             _DbgPrintArgType_PacketActionsUpcall(argType);
             break;
 
-        case OVS_ARGTYPE_GROUP_ACTIONS_SAMPLE:
+        case OVS_ARGTYPE_ACTION_SAMPLE_GROUP:
             _DbgPrintArgType_PacketActionsSample(argType);
             break;
 
@@ -2932,7 +2932,7 @@ BOOLEAN VerifyGroup_PacketActions(OVS_ARGUMENT* pParentArg, BOOLEAN isRequest)
             }
             break;
 
-        case OVS_ARGTYPE_GROUP_ACTIONS_SAMPLE:
+        case OVS_ARGTYPE_ACTION_SAMPLE_GROUP:
             if (!_VerifyGroup_PacketActionsSample(pArg, isRequest))
             {
                 return FALSE;

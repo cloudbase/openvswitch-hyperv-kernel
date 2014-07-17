@@ -305,8 +305,8 @@ static BOOLEAN _AttrType_To_ArgType_Actions(UINT16 attrType, OVS_ARGTYPE* pTypeA
         return TRUE;
 
     case OVS_USPACE_ACTION_ATTRIBUTE_SAMPLE:
-        *pTypeAsArg = OVS_ARGTYPE_GROUP_ACTIONS_SAMPLE;
-        DEBUGP_ARG(LOG_INFO, "rcv arg: OVS_ARGTYPE_PACKET_ACTIONS_SAMPLE_GROUP\n");
+        *pTypeAsArg = OVS_ARGTYPE_ACTION_SAMPLE_GROUP;
+        DEBUGP_ARG(LOG_INFO, "rcv arg: OVS_ARGTYPE_ACTION_SAMPLE_GROUP\n");
         return TRUE;
 
     case OVS_USPACE_ACTION_ATTRIBUTE_SET:
@@ -431,7 +431,7 @@ static BOOLEAN _AttrType_To_ArgType_Packet(OVS_ARGTYPE parentArgType, UINT16 att
             return _AttrType_To_ArgType_ActionsUserspace(attrType, pTypeAsArg);
         }
         //actions / sample -> actions; the attr is an action
-        else if (parentArgType == OVS_ARGTYPE_GROUP_ACTIONS_SAMPLE)
+        else if (parentArgType == OVS_ARGTYPE_ACTION_SAMPLE_GROUP)
         {
             return _AttrType_To_ArgType_ActionsSample(attrType, pTypeAsArg);
         }
@@ -535,7 +535,7 @@ static BOOLEAN _AttrType_To_ArgType_Flow(OVS_ARGTYPE parentArgType, UINT16 attrT
             return _AttrType_To_ArgType_ActionsUserspace(attrType, pTypeAsArg);
         }
         //actions / sample -> actions; the attr is an action
-        else if (parentArgType == OVS_ARGTYPE_GROUP_ACTIONS_SAMPLE)
+        else if (parentArgType == OVS_ARGTYPE_ACTION_SAMPLE_GROUP)
         {
             return _AttrType_To_ArgType_Actions(attrType, pTypeAsArg);
         }

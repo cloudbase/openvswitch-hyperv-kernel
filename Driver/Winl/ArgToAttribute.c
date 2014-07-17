@@ -315,7 +315,7 @@ static BOOLEAN _Reply_SetAttrType_Flow(OVS_MESSAGE_COMMAND_TYPE cmd, OVS_ARGTYPE
     {
         return _Reply_SetAttrType_PacketActions(pArg);
     }
-    else if (parentArgType == OVS_ARGTYPE_GROUP_ACTIONS_SAMPLE)
+    else if (parentArgType == OVS_ARGTYPE_ACTION_SAMPLE_GROUP)
     {
         return _Reply_SetAttrType_PacketActionsSample(pArg);
     }
@@ -442,7 +442,7 @@ static BOOLEAN _Reply_SetAttrType_PacketActions(_Inout_ OVS_ARGUMENT* pArg)
         pArg->type = OVS_USPACE_ACTION_ATTRIBUTE_POP_VLAN;
         break;
 
-    case OVS_ARGTYPE_GROUP_ACTIONS_SAMPLE:
+    case OVS_ARGTYPE_ACTION_SAMPLE_GROUP:
         pArg->type = OVS_USPACE_ACTION_ATTRIBUTE_SAMPLE;
         break;
 
@@ -484,7 +484,7 @@ static BOOLEAN _Reply_SetAttrType_Packet(OVS_MESSAGE_COMMAND_TYPE cmd, OVS_ARGTY
     {
         return _Reply_SetAttrType_PacketInfo(pArg);
     }
-    else if (parentArgType == OVS_ARGTYPE_GROUP_ACTIONS_SAMPLE)
+    else if (parentArgType == OVS_ARGTYPE_ACTION_SAMPLE_GROUP)
     {
         return _Reply_SetAttrType_PacketActionsSample(pArg);
     }
