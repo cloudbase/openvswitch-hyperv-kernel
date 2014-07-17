@@ -23,6 +23,8 @@ limitations under the License.
 #include "AttrToArgument.h"
 #include "ArgToAttribute.h"
 
+static BOOLEAN _ParseArgGroup_FromAttributes(_In_ BYTE** ppBuffer, UINT16* pBytesLeft, UINT16 groupSize, _Inout_ OVS_ARGUMENT_GROUP* pGroup, OVS_ARGTYPE parentArgType, UINT16 targetType, UINT8 cmd);;
+
 static BOOLEAN _ParseAttribute(_In_ BYTE** pBuffer, UINT16* pBytesLeft, _Inout_ OVS_ARGUMENT* pOutArg, OVS_ARGTYPE parentArgType, UINT16 targetType, UINT8 cmd)
 {
     OVS_ARGUMENT* pAttribute = (OVS_ARGUMENT*)*pBuffer;
@@ -127,7 +129,7 @@ static BOOLEAN _CountAttributes(BYTE* buffer, ULONG totalLength, UINT16* pCount)
 }
 
 //i.e. the buffer starts with the first nlattr in the list
-static BOOLEAN _ParseArgGroup_FromAttributes(_In_ BYTE** ppBuffer, UINT16* pBytesLeft, UINT16 groupSize, _Inout_ OVS_ARGUMENT_GROUP* pGroup, OVS_ARGTYPE parentArgType, UINT16 targetType, UINT8 cmd)
+BOOLEAN _ParseArgGroup_FromAttributes(_In_ BYTE** ppBuffer, UINT16* pBytesLeft, UINT16 groupSize, _Inout_ OVS_ARGUMENT_GROUP* pGroup, OVS_ARGTYPE parentArgType, UINT16 targetType, UINT8 cmd)
 {
     OVS_CHECK(pGroup);
 
