@@ -25,7 +25,7 @@ limitations under the License.
 
 typedef enum _OVS_ARGTYPE
 {
-    OVS_ARGTYPE_GROUP_MAIN = 0x000,
+    OVS_ARGTYPE_GROUP_MAIN = 0x00D,
     OVS_ARGTYPE_FIRST_GROUP = OVS_ARGTYPE_GROUP_MAIN,
 
     OVS_ARGTYPE_PSEUDOGROUP_FLOW = 0x00E,
@@ -37,7 +37,7 @@ typedef enum _OVS_ARGTYPE
 
     OVS_ARGTYPE_LAST_GROUP = OVS_ARGTYPE_PSEUDOGROUP_PACKET,
 
-    OVS_ARGTYPE_INVALID = 0x020,
+    OVS_ARGTYPE_INVALID = 0x000,
 
     /********************************************** TARGET: FLOW; GROUP: MAIN *******************************************/
 
