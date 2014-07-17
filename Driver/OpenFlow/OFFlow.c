@@ -643,7 +643,7 @@ void FlowWithActions_ToString(const char* msg, _In_ const OVS_OFPACKET_INFO* pPa
                 RtlStringCchCatA(str, maxLen - 1, "upcall; ");
                 break;
 
-            case OVS_ARGTYPE_GROUP_ACTIONS_SETINFO:
+            case OVS_ARGTYPE_ACTION_SETINFO_GROUP:
                 _DbgPrintFlow_Set(pArg->data, maxLen, str);
                 break;
 

@@ -611,7 +611,7 @@ static BOOLEAN _CreateActionsArgsToList(const OVS_ARGUMENT_GROUP* pArgGroup, OVS
 
         switch (argType)
         {
-        case OVS_ARGTYPE_GROUP_ACTIONS_SETINFO:
+        case OVS_ARGTYPE_ACTION_SETINFO_GROUP:
         {
             OVS_ARGUMENT_GROUP* pSetGroup = NULL;
             OVS_ARGUMENT* pPacketInfoArg = NULL, *pSetArg = NULL;
@@ -634,7 +634,7 @@ static BOOLEAN _CreateActionsArgsToList(const OVS_ARGUMENT_GROUP* pArgGroup, OVS
 
             pSetArg = KZAlloc(sizeof(OVS_ARGUMENT));
             pSetArg->data = pSetGroup;
-            pSetArg->type = OVS_ARGTYPE_GROUP_ACTIONS_SETINFO;
+            pSetArg->type = OVS_ARGTYPE_ACTION_SETINFO_GROUP;
             pSetArg->length = pSetGroup->groupSize + OVS_ARGUMENT_GROUP_HEADER_SIZE;
 
             if (!AppendArgumentToList(pSetArg, ppArgList))

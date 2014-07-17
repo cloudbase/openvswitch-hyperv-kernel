@@ -310,8 +310,8 @@ static BOOLEAN _AttrType_To_ArgType_Actions(UINT16 attrType, OVS_ARGTYPE* pTypeA
         return TRUE;
 
     case OVS_USPACE_ACTION_ATTRIBUTE_SET:
-        *pTypeAsArg = OVS_ARGTYPE_GROUP_ACTIONS_SETINFO;
-        DEBUGP_ARG(LOG_INFO, "rcv arg: OVS_ARGTYPE_PACKET_ACTIONS_SETINFO_GROUP\n");
+        *pTypeAsArg = OVS_ARGTYPE_ACTION_SETINFO_GROUP;
+        DEBUGP_ARG(LOG_INFO, "rcv arg: OVS_ARGTYPE_ACTION_SETINFO_GROUP\n");
         return TRUE;
 
     default:
@@ -440,7 +440,7 @@ static BOOLEAN _AttrType_To_ArgType_Packet(OVS_ARGTYPE parentArgType, UINT16 att
         {
             return _AttrType_To_ArgType_Actions(attrType, pTypeAsArg);
         }
-        else if (parentArgType == OVS_ARGTYPE_GROUP_ACTIONS_SETINFO)
+        else if (parentArgType == OVS_ARGTYPE_ACTION_SETINFO_GROUP)
         {
             return _AttrType_To_ArgType_PacketInfo(attrType, pTypeAsArg);
         }
@@ -544,7 +544,7 @@ static BOOLEAN _AttrType_To_ArgType_Flow(OVS_ARGTYPE parentArgType, UINT16 attrT
         {
             return _AttrType_To_ArgType_Actions(attrType, pTypeAsArg);
         }
-        else if (parentArgType == OVS_ARGTYPE_GROUP_ACTIONS_SETINFO)
+        else if (parentArgType == OVS_ARGTYPE_ACTION_SETINFO_GROUP)
         {
             return _AttrType_To_ArgType_PacketInfo(attrType, pTypeAsArg);
         }

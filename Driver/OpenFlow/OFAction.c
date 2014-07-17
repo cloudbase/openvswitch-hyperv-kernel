@@ -299,7 +299,7 @@ BOOLEAN ExecuteActions(_Inout_ OVS_NET_BUFFER* pOvsNb, _In_ const OutputToPortCa
             _ExecuteAction_OutToUserspace(ONB_GetNetBuffer(pOvsNb), pOvsNb->pOriginalPacketInfo, pArg->data);
             break;
 
-        case OVS_ARGTYPE_GROUP_ACTIONS_SETINFO:
+        case OVS_ARGTYPE_ACTION_SETINFO_GROUP:
             ok = _ExecuteAction_Set(pOvsNb, pArg->data);
             break;
 
@@ -622,7 +622,7 @@ BOOLEAN ProcessReceivedActions(_Inout_ OVS_ARGUMENT_GROUP* pActionGroup, const O
             return FALSE;
             break;
 
-        case OVS_ARGTYPE_GROUP_ACTIONS_SETINFO:
+        case OVS_ARGTYPE_ACTION_SETINFO_GROUP:
             OVS_CHECK(IsArgTypeGroup(pArg->type));
             ok = _Action_SetInfo(pArg->data, pPacketInfo);
             if (!ok)

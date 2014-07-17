@@ -330,7 +330,7 @@ OVS_ARGTYPE GetParentGroupType(OVS_ARGTYPE childArgType)
 
         case OVS_ARGTYPE_ACTION_UPCALL_GROUP:
         case OVS_ARGTYPE_ACTION_SAMPLE_GROUP:
-        case OVS_ARGTYPE_GROUP_ACTIONS_SETINFO:
+        case OVS_ARGTYPE_ACTION_SETINFO_GROUP:
             return OVS_ARGTYPE_FLOW_ACTIONS_GROUP;
 
         case OVS_ARGTYPE_ACTION_SAMPLE_ACTIONS_GROUP:
@@ -439,7 +439,7 @@ BOOLEAN GetArgumentExpectedSize(OVS_ARGTYPE argumentType, _Inout_ UINT* pSize)
     case OVS_ARGTYPE_ACTION_SAMPLE_GROUP:
         return _GetPacketActionSampleArgExpectedSize(argumentType, pSize);
 
-    case OVS_ARGTYPE_GROUP_ACTIONS_SETINFO:
+    case OVS_ARGTYPE_ACTION_SETINFO_GROUP:
         return _GetPIArgExpectedSize(argumentType, pSize);
 
     case OVS_ARGTYPE_PSEUDOGROUP_DATAPATH:
@@ -1521,8 +1521,8 @@ VOID DbgPrintArgType(OVS_ARGTYPE argType, const char* padding, int index)
             break;
 
             //contains packet info args to set
-        case OVS_ARGTYPE_GROUP_ACTIONS_SETINFO:
-            DEBUGP_ARG(LOG_INFO, "GROUP: PACKET/ACTIONS/SET INFO\n");
+        case OVS_ARGTYPE_ACTION_SETINFO_GROUP:
+            DEBUGP_ARG(LOG_INFO, "GROUP: <FLOW/PACKET>/ACTIONS/SET INFO\n");
             break;
 
         case OVS_ARGTYPE_PSEUDOGROUP_DATAPATH:
@@ -1602,7 +1602,7 @@ VOID DbgPrintArgType(OVS_ARGTYPE argType, const char* padding, int index)
             break;
 
             //contains packet info args to set
-        case OVS_ARGTYPE_GROUP_ACTIONS_SETINFO:
+        case OVS_ARGTYPE_ACTION_SETINFO_GROUP:
             _DbgPrintArgType_PacketInfo(argType);
             break;
 
@@ -2939,7 +2939,7 @@ BOOLEAN VerifyGroup_PacketActions(OVS_ARGUMENT* pParentArg, BOOLEAN isRequest)
             }
             break;
 
-        case OVS_ARGTYPE_GROUP_ACTIONS_SETINFO:
+        case OVS_ARGTYPE_ACTION_SETINFO_GROUP:
         {
             OVS_ARGUMENT_GROUP* pSetGroup = pArg->data;
             if (pSetGroup->count > 1)
@@ -3046,7 +3046,7 @@ BOOLEAN VerifyArgNoDuplicates(OVS_ARGUMENT_GROUP* pGroup, UINT groupType)
                 //we allow multiple 'out to port' and 'set info' actions.
                 //we do not allow other duplicate arguments.
                 if (pArgL->type != OVS_ARGTYPE_ACTION_OUTPUT_TO_PORT ||
-                    pArgL->type == OVS_ARGTYPE_GROUP_ACTIONS_SETINFO)
+                    pArgL->type == OVS_ARGTYPE_ACTION_SETINFO_GROUP)
                 {
                     DEBUGP_ARG(LOG_ERROR, "found duplicate: arg type: 0x%x; group: 0x%x\n", pArgL->type, groupType);
                     return FALSE;
