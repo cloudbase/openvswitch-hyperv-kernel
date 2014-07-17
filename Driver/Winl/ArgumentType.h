@@ -28,8 +28,6 @@ typedef enum _OVS_ARGTYPE
     OVS_ARGTYPE_GROUP_MAIN = 0x000,
     OVS_ARGTYPE_FIRST_GROUP = OVS_ARGTYPE_GROUP_MAIN,
 
-    OVS_ARGTYPE_GROUP_PI = 0x002,
-    OVS_ARGTYPE_FIRST_REAL_GROUP = OVS_ARGTYPE_GROUP_PI,
     OVS_ARGTYPE_GROUP_MASK = 0x003,
     //Encapsulation Group = another set of packet info-s, for the encapsulation. contains: eth type, ip layer PI, transport layer PI
     //might have been an older version of "tunnel info". The encapsulation group does not appear to be used in latest versions of ovs
@@ -58,30 +56,32 @@ typedef enum _OVS_ARGTYPE
 
     /********************************************** TARGET: FLOW; GROUP: MAIN *******************************************/
 
+    OVS_ARGTYPE_FLOW_PI_GROUP = 0x21,
+    OVS_ARGTYPE_FIRST_FLOW = OVS_ARGTYPE_FLOW_PI_GROUP,
+
     //Flow request: ignored
     //Flow reply: only if there have been packets matched by the flow
     //Data Type: OVS_WINL_FLOW_STATS
-    OVS_ARGTYPE_FLOW_STATS = 0x21,
-    OVS_ARGTYPE_FIRST_FLOW = OVS_ARGTYPE_FLOW_STATS,
+    OVS_ARGTYPE_FLOW_STATS,                     //0x22
 
     //All tcp control bits / flags that were on packets matched by this flow
     //Flow request: ignored
     //Flow reply: only if tcpFlags != 0
     //data type: UINT8
-    OVS_ARGTYPE_FLOW_TCP_FLAGS,                //0x022
+    OVS_ARGTYPE_FLOW_TCP_FLAGS,                //0x023
 
     //The time at which the last packet was matched by this flow. The time is given by performance counter
     //(i.e. by windows' system monotonic clock), in miliseconds
     //Flow request: ignored
     //Flow reply: only if there have been packets matched by the flow
     //data type: UINT64
-    OVS_ARGTYPE_FLOW_TIME_USED,                //0x023
+    OVS_ARGTYPE_FLOW_TIME_USED,                //0x024
 
     //Used to clear from the flow: last used time, tcpFlags, and statistics.
     //Flow request: for Flow_Set or Flow_New with override (i.e. when flow already exists)
     //Flow reply: not used
     //data type: no data
-    OVS_ARGTYPE_FLOW_CLEAR,                    //0x024
+    OVS_ARGTYPE_FLOW_CLEAR,                    //0x025
 
     OVS_ARGTYPE_LAST_FLOW = OVS_ARGTYPE_FLOW_CLEAR,
 
@@ -184,14 +184,16 @@ typedef enum _OVS_ARGTYPE
     /************************************* TARGET: PACKET; GROUP: MAIN *****************************************************/
 
     //GROUP NOTE: This group represents OVS_USPACE_PACKET_ATTRIBUTE
+    OVS_ARGTYPE_NETBUFFER_PI_GROUP = 0x81,
+
+    OVS_ARGTYPE_FIRST_NETBUFFER = OVS_ARGTYPE_NETBUFFER_PI_GROUP,
 
     //Packet notifications (queue to userspace). It is the NET_BUFFER data.
     //data type: "void*", i.e. data opaque to the user
-    OVS_ARGTYPE_NETBUFFER = 0x081,
-    OVS_ARGTYPE_FIRST_NETBUFFER = OVS_ARGTYPE_NETBUFFER,
+    OVS_ARGTYPE_NETBUFFER,                      //0x82
 
     //data type: OVS_ARGUMENT; it is set from userspace only.
-    OVS_ARGTYPE_NETBUFFER_USERDATA,            //0x082
+    OVS_ARGTYPE_NETBUFFER_USERDATA,            //0x083
 
     OVS_ARGTYPE_LAST_NETBUFFER = OVS_ARGTYPE_NETBUFFER_USERDATA,
 

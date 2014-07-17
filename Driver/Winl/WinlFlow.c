@@ -50,7 +50,7 @@ OVS_ERROR Flow_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     OVS_ACTIONS* pActions = NULL;
 
     /*** get flow info from message ***/
-    pPacketInfoArgs = FindArgumentGroup(pMsg->pArgGroup, OVS_ARGTYPE_GROUP_PI);
+    pPacketInfoArgs = FindArgumentGroup(pMsg->pArgGroup, OVS_ARGTYPE_FLOW_PI_GROUP);
     if (!pPacketInfoArgs)
     {
         DEBUGP(LOG_ERROR, "flow create fail: no Packet Info arg!\n");
@@ -281,7 +281,7 @@ OVS_ERROR Flow_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     OVS_ERROR error = OVS_ERROR_NOERROR;
 
     /*** get flow info from message ***/
-    pPacketInfoArgs = FindArgumentGroup(pMsg->pArgGroup, OVS_ARGTYPE_GROUP_PI);
+    pPacketInfoArgs = FindArgumentGroup(pMsg->pArgGroup, OVS_ARGTYPE_FLOW_PI_GROUP);
     if (!pPacketInfoArgs)
     {
         DEBUGP(LOG_ERROR, "flow set fail: no Packet Info arg!\n");
@@ -436,7 +436,7 @@ OVS_ERROR Flow_Get(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     LOCK_STATE_EX lockState = { 0 };
     OVS_ERROR error = OVS_ERROR_NOERROR;
 
-    pPacketInfoArgs = FindArgumentGroup(pMsg->pArgGroup, OVS_ARGTYPE_GROUP_PI);
+    pPacketInfoArgs = FindArgumentGroup(pMsg->pArgGroup, OVS_ARGTYPE_FLOW_PI_GROUP);
     if (!pPacketInfoArgs)
     {
         DEBUGP(LOG_ERROR, "flow get fail: no Packet Info arg!\n");
@@ -534,7 +534,7 @@ OVS_ERROR Flow_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 
     if (pMsg->pArgGroup)
     {
-        pPacketInfoArgs = FindArgumentGroup(pMsg->pArgGroup, OVS_ARGTYPE_GROUP_PI);
+        pPacketInfoArgs = FindArgumentGroup(pMsg->pArgGroup, OVS_ARGTYPE_FLOW_PI_GROUP);
         if (!pPacketInfoArgs)
         {
             DEBUGP(LOG_ERROR, "flow delete fail: no Packet Info arg!\n");

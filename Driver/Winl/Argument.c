@@ -316,15 +316,16 @@ OVS_ARGTYPE GetParentGroupType(OVS_ARGTYPE childArgType)
     {
         switch (childArgType)
         {
-        case OVS_ARGTYPE_GROUP_PI:
+        case OVS_ARGTYPE_FLOW_PI_GROUP:
         case OVS_ARGTYPE_GROUP_MASK:
             return OVS_ARGTYPE_PSEUDOGROUP_FLOW;
 
         case OVS_ARGTYPE_GROUP_PI_ENCAPSULATION:
         case OVS_ARGTYPE_GROUP_PI_TUNNEL:
-            return OVS_ARGTYPE_GROUP_PI;
+            return OVS_ARGTYPE_FLOW_PI_GROUP;
 
         case OVS_ARGTYPE_GROUP_ACTIONS:
+        case OVS_ARGTYPE_NETBUFFER_PI_GROUP:
             return OVS_ARGTYPE_PSEUDOGROUP_PACKET;
 
         case OVS_ARGTYPE_GROUP_ACTIONS_UPCALL:
@@ -367,7 +368,7 @@ OVS_ARGTYPE GetParentGroupType(OVS_ARGTYPE childArgType)
     }
     else if (childArgType >= OVS_ARGTYPE_FIRST_KEY && childArgType <= OVS_ARGTYPE_LAST_KEY)
     {
-        return OVS_ARGTYPE_GROUP_PI;
+        return OVS_ARGTYPE_FLOW_PI_GROUP;
     }
     else if (childArgType >= OVS_ARGTYPE_FIRST_KEY_TUNNEL && childArgType <= OVS_ARGTYPE_LAST_KEY_TUNNEL)
     {
@@ -408,7 +409,7 @@ BOOLEAN GetArgumentExpectedSize(OVS_ARGTYPE argumentType, _Inout_ UINT* pSize)
     case OVS_ARGTYPE_PSEUDOGROUP_FLOW:
         return _GetFlowArgExpectedSize(argumentType, pSize);
 
-    case OVS_ARGTYPE_GROUP_PI:
+    case OVS_ARGTYPE_FLOW_PI_GROUP:
         return _GetPIArgExpectedSize(argumentType, pSize);
 
     case OVS_ARGTYPE_GROUP_MASK:
@@ -1469,8 +1470,12 @@ VOID DbgPrintArgType(OVS_ARGTYPE argType, const char* padding, int index)
             DEBUGP_ARG(LOG_INFO, "GROUP: FLOW\n");
             break;
 
-        case OVS_ARGTYPE_GROUP_PI:
+        case OVS_ARGTYPE_FLOW_PI_GROUP:
             DEBUGP_ARG(LOG_INFO, "GROUP: FLOW/KEY\n");
+            break;
+
+        case OVS_ARGTYPE_NETBUFFER_PI_GROUP:
+            DEBUGP_ARG(LOG_INFO, "GROUP: PACKET/KEY\n");
             break;
 
         case OVS_ARGTYPE_GROUP_MASK:
@@ -1544,7 +1549,11 @@ VOID DbgPrintArgType(OVS_ARGTYPE argType, const char* padding, int index)
             _DbgPrintArgType_Flow(argType);
             break;
 
-        case OVS_ARGTYPE_GROUP_PI:
+        case OVS_ARGTYPE_FLOW_PI_GROUP:
+            _DbgPrintArgType_PacketInfo(argType);
+            break;
+
+        case OVS_ARGTYPE_NETBUFFER_PI_GROUP:
             _DbgPrintArgType_PacketInfo(argType);
             break;
 
@@ -2691,7 +2700,7 @@ static __inline BOOLEAN _VerifyGroup_Flow(OVS_ARGUMENT* pArg, BOOLEAN isRequest)
 
     switch (argType)
     {
-    case OVS_ARGTYPE_GROUP_PI:
+    case OVS_ARGTYPE_FLOW_PI_GROUP:
         return VerifyGroup_PacketInfo(FALSE, isRequest, pArg, /*check transport layer*/ TRUE, /*seek ip*/ TRUE);
 
     case OVS_ARGTYPE_GROUP_MASK:

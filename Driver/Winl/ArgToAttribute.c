@@ -299,7 +299,7 @@ static BOOLEAN _Reply_SetAttrType_Flow(OVS_MESSAGE_COMMAND_TYPE cmd, OVS_ARGTYPE
     OVS_CHECK(cmd == OVS_MESSAGE_COMMAND_NEW ||
         cmd == OVS_MESSAGE_COMMAND_DELETE);
 
-    if (parentArgType == OVS_ARGTYPE_GROUP_PI)
+    if (parentArgType == OVS_ARGTYPE_FLOW_PI_GROUP)
     {
         return _Reply_SetAttrType_PacketInfo(pArg);
     }
@@ -352,7 +352,7 @@ static BOOLEAN _Reply_SetAttrType_Flow(OVS_MESSAGE_COMMAND_TYPE cmd, OVS_ARGTYPE
         pArg->type = OVS_USPACE_FLOW_ATTRIBUTE_CLEAR;
         break;
 
-    case OVS_ARGTYPE_GROUP_PI:
+    case OVS_ARGTYPE_FLOW_PI_GROUP:
         pArg->type = OVS_USPACE_FLOW_ATTRIBUTE_KEY;
         break;
 
@@ -460,7 +460,7 @@ static BOOLEAN _Reply_SetAttrType_Packet(OVS_MESSAGE_COMMAND_TYPE cmd, OVS_ARGTY
 
     UNREFERENCED_PARAMETER(cmd);
 
-    if (parentArgType == OVS_ARGTYPE_GROUP_PI)
+    if (parentArgType == OVS_ARGTYPE_NETBUFFER_PI_GROUP)
     {
         return _Reply_SetAttrType_PacketInfo(pArg);
     }
@@ -497,7 +497,7 @@ static BOOLEAN _Reply_SetAttrType_Packet(OVS_MESSAGE_COMMAND_TYPE cmd, OVS_ARGTY
         pArg->type = OVS_USPACE_PACKET_ATTRIBUTE_PACKET;
         break;
 
-    case OVS_ARGTYPE_GROUP_PI:
+    case OVS_ARGTYPE_NETBUFFER_PI_GROUP:
         pArg->type = OVS_USPACE_PACKET_ATTRIBUTE_KEY;
         break;
 

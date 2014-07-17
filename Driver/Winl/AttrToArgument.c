@@ -372,7 +372,7 @@ static BOOLEAN _AttrType_To_ArgType_Packet(OVS_ARGTYPE parentArgType, UINT16 att
         {
             //NESTED
         case OVS_USPACE_PACKET_ATTRIBUTE_KEY:
-            *pTypeAsArg = OVS_ARGTYPE_GROUP_PI;
+            *pTypeAsArg = OVS_ARGTYPE_NETBUFFER_PI_GROUP;
             DEBUGP_ARG(LOG_INFO, "rcv arg: OVS_ARGTYPE_GROUP_PI\n");
             return TRUE;
 
@@ -400,7 +400,7 @@ static BOOLEAN _AttrType_To_ArgType_Packet(OVS_ARGTYPE parentArgType, UINT16 att
     else
     {
         //main -> packet info; the attr is a key of flow group
-        if (parentArgType == OVS_ARGTYPE_GROUP_PI)
+        if (parentArgType == OVS_ARGTYPE_NETBUFFER_PI_GROUP)
         {
             return _AttrType_To_ArgType_PacketInfo(attrType, pTypeAsArg);
         }
@@ -457,7 +457,7 @@ static BOOLEAN _AttrType_To_ArgType_Flow(OVS_ARGTYPE parentArgType, UINT16 attrT
         {
             //NESTED
         case OVS_USPACE_FLOW_ATTRIBUTE_KEY:
-            *pTypeAsArg = OVS_ARGTYPE_GROUP_PI;
+            *pTypeAsArg = OVS_ARGTYPE_FLOW_PI_GROUP;
             DEBUGP_ARG(LOG_INFO, "rcv arg: OVS_ARGTYPE_GROUP_PI\n");
             return TRUE;
 
@@ -500,7 +500,7 @@ static BOOLEAN _AttrType_To_ArgType_Flow(OVS_ARGTYPE parentArgType, UINT16 attrT
     else
     {
         //main -> packet info; the attr is a key of flow group
-        if (parentArgType == OVS_ARGTYPE_GROUP_PI)
+        if (parentArgType == OVS_ARGTYPE_FLOW_PI_GROUP)
         {
             return _AttrType_To_ArgType_PacketInfo(attrType, pTypeAsArg);
         }

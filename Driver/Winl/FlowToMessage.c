@@ -1260,7 +1260,7 @@ BOOLEAN CreateMsgFromFlow(_In_ const OVS_FLOW* pFlow, UINT8 command, _Inout_ OVS
     }
 
     //3.1. Packet Info
-    pPIArg = CreateArgFromPacketInfo(&unmaskedPacketInfo, NULL, OVS_ARGTYPE_GROUP_PI);
+    pPIArg = CreateArgFromPacketInfo(&unmaskedPacketInfo, NULL, OVS_ARGTYPE_FLOW_PI_GROUP);
     if (!pPIArg)
     {
         ok = FALSE;

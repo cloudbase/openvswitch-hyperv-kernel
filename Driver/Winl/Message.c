@@ -624,10 +624,10 @@ static BOOLEAN _VerifyFlowMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_
     case OVS_MESSAGE_COMMAND_NEW:
     case OVS_MESSAGE_COMMAND_SET:
         //request / flow / NEW must have: key & packet actions. keymask is optional.
-        pArg = FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_GROUP_PI);
+        pArg = FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_FLOW_PI_GROUP);
         if (!pArg)
         {
-            DEBUGP_ARG(LOG_ERROR, "Flow cmd NEW does not have main argtype: 0x%x", OVS_ARGTYPE_GROUP_PI);
+            DEBUGP_ARG(LOG_ERROR, "Flow cmd NEW does not have main argtype: 0x%x", OVS_ARGTYPE_FLOW_PI_GROUP);
             OVS_CHECK(0);
             return FALSE;
         }
@@ -659,9 +659,9 @@ static BOOLEAN _VerifyFlowMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_
 
     case OVS_MESSAGE_COMMAND_DELETE:
         //request / flow / DELETE - must have: key
-        if (!FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_GROUP_PI))
+        if (!FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_FLOW_PI_GROUP))
         {
-            DEBUGP_ARG(LOG_ERROR, "Flow cmd NEW does not have main argtype: 0x%x", OVS_ARGTYPE_GROUP_PI);
+            DEBUGP_ARG(LOG_ERROR, "Flow cmd NEW does not have main argtype: 0x%x", OVS_ARGTYPE_FLOW_PI_GROUP);
             OVS_CHECK(0);
             return FALSE;
         }
@@ -670,9 +670,9 @@ static BOOLEAN _VerifyFlowMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_
 
     case OVS_MESSAGE_COMMAND_GET:
         //request / flow / GET - must have: key
-        if (!FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_GROUP_PI))
+        if (!FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_FLOW_PI_GROUP))
         {
-            DEBUGP_ARG(LOG_ERROR, "Flow cmd NEW does not have main argtype: 0x%x", OVS_ARGTYPE_GROUP_PI);
+            DEBUGP_ARG(LOG_ERROR, "Flow cmd NEW does not have main argtype: 0x%x", OVS_ARGTYPE_FLOW_PI_GROUP);
             OVS_CHECK(0);
             return FALSE;
         }
@@ -690,7 +690,7 @@ static BOOLEAN _VerifyFlowMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_
             switch (argType)
             {
                 //TODO: "Flow"??
-            case OVS_ARGTYPE_GROUP_PI:
+            case OVS_ARGTYPE_FLOW_PI_GROUP:
                 if (!VerifyGroup_PacketInfo(/*mask*/ FALSE, /*request*/TRUE, pMainGroupArg, /*check transport layer*/ TRUE, /*seek ip*/ TRUE))
                 {
                     return FALSE;
@@ -732,7 +732,7 @@ static BOOLEAN _VerifyFlowMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_
             switch (argType)
             {
                 //TODO: "Flow"??
-            case OVS_ARGTYPE_GROUP_PI:
+            case OVS_ARGTYPE_FLOW_PI_GROUP:
                 if (!VerifyGroup_PacketInfo(/*mask*/ FALSE, /*request*/ TRUE, pMainGroupArg, /*check transport layer*/ TRUE, /*seek ip*/ TRUE))
                 {
                     return FALSE;
@@ -772,7 +772,7 @@ static BOOLEAN _VerifyFlowMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_
             switch (argType)
             {
                 //TODO: "Flow"??
-            case OVS_ARGTYPE_GROUP_PI:
+            case OVS_ARGTYPE_FLOW_PI_GROUP:
                 if (!VerifyGroup_PacketInfo(/*mask*/ FALSE, /*request*/ TRUE, pMainGroupArg, /*check transport layer*/ TRUE, /*seek ip*/ TRUE))
                 {
                     return FALSE;
@@ -791,7 +791,7 @@ static BOOLEAN _VerifyFlowMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_
             switch (argType)
             {
                 //TODO: "Flow"??
-            case OVS_ARGTYPE_GROUP_PI:
+            case OVS_ARGTYPE_FLOW_PI_GROUP:
                 if (!VerifyGroup_PacketInfo(/*mask*/ FALSE, /*request*/ TRUE, pMainGroupArg, /*check transport layer*/ TRUE, /*seek ip*/ TRUE))
                 {
                     return FALSE;
@@ -891,7 +891,7 @@ static BOOLEAN _VerifyFlowMessageReply(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_ME
             }
             break;
 
-        case OVS_ARGTYPE_GROUP_PI:
+        case OVS_ARGTYPE_FLOW_PI_GROUP:
             if (!VerifyGroup_PacketInfo(/*mask*/ FALSE, /*request*/ FALSE, pMainGroupArg, /*check transport layer*/ TRUE, /*seek ip*/ TRUE))
             {
                 return FALSE;
@@ -951,10 +951,10 @@ static BOOLEAN _VerifyPacketMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OV
         return FALSE;
     }
 
-    pArg = FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_GROUP_PI);
+    pArg = FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_NETBUFFER_PI_GROUP);
     if (!pArg)
     {
-        DEBUGP_ARG(LOG_ERROR, "Flow cmd NEW does not have main argtype: 0x%x", OVS_ARGTYPE_GROUP_PI);
+        DEBUGP_ARG(LOG_ERROR, "Flow cmd NEW does not have main argtype: 0x%x", OVS_ARGTYPE_NETBUFFER_PI_GROUP);
         OVS_CHECK(0);
         return FALSE;
     }
@@ -981,7 +981,7 @@ static BOOLEAN _VerifyPacketMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OV
             }
             break;
 
-        case OVS_ARGTYPE_GROUP_PI:
+        case OVS_ARGTYPE_NETBUFFER_PI_GROUP:
             if (!VerifyGroup_PacketInfo(/*mask*/ FALSE, /*request*/TRUE, pMainGroupArg, /*check transport layer*/ TRUE, /*seek ip*/ TRUE))
             {
                 return FALSE;
@@ -1043,7 +1043,7 @@ static BOOLEAN _VerifyPacketMessageReply(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_
         OVS_ARGUMENT* pMainGroupArg = pMsg->pArgGroup->args + i;
         OVS_ARGTYPE argType = pMainGroupArg->type;
 
-        if (!(argType == OVS_ARGTYPE_GROUP_PI ||
+        if (!(argType == OVS_ARGTYPE_NETBUFFER_PI_GROUP ||
             argType == OVS_ARGTYPE_NETBUFFER_USERDATA ||
             argType == OVS_ARGTYPE_NETBUFFER))
         {
@@ -1054,7 +1054,7 @@ static BOOLEAN _VerifyPacketMessageReply(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_
 
         switch (argType)
         {
-        case OVS_ARGTYPE_GROUP_PI:
+        case OVS_ARGTYPE_NETBUFFER_PI_GROUP:
             if (!VerifyGroup_PacketInfo(/*mask*/ FALSE, /*request*/ FALSE, pMainGroupArg, /*check transport layer*/ TRUE, /*seek ip*/ TRUE))
             {
                 return FALSE;

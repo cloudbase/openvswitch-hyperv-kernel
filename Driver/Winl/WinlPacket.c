@@ -78,7 +78,7 @@ VOID Packet_Execute(_In_ OVS_ARGUMENT_GROUP* pArgGroup, const FILE_OBJECT* pFile
     buffer.p = pArg->data;
 
     //i.e. packet info
-    pPacketInfoArgs = FindArgumentGroup(pArgGroup, OVS_ARGTYPE_GROUP_PI);
+    pPacketInfoArgs = FindArgumentGroup(pArgGroup, OVS_ARGTYPE_NETBUFFER_PI_GROUP);
     if (!pPacketInfoArgs)
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " fail: have no arg key!\n");
@@ -310,7 +310,7 @@ static OVS_ERROR _QueueUserspacePacket(_In_ NET_BUFFER* pNb, _In_ const OVS_UPCA
 
     AllocateArgumentsToGroup(countArgs, msg.pArgGroup);
 
-    pPacketInfoArg = CreateArgFromPacketInfo(pUpcallInfo->pPacketInfo, NULL, OVS_ARGTYPE_GROUP_PI);
+    pPacketInfoArg = CreateArgFromPacketInfo(pUpcallInfo->pPacketInfo, NULL, OVS_ARGTYPE_NETBUFFER_PI_GROUP);
     OVS_CHECK(pPacketInfoArg);
 
     i = 0;
