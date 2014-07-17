@@ -327,7 +327,7 @@ static BOOLEAN _Reply_SetAttrType_Flow(OVS_MESSAGE_COMMAND_TYPE cmd, OVS_ARGTYPE
     {
         return _Reply_SetAttrType_PacketActionsUpcall(pArg);
     }
-    else if (parentArgType == OVS_ARGTYPE_GROUP_MASK)
+    else if (parentArgType == OVS_ARGTYPE_FLOW_MASK_GROUP)
     {
         return _Reply_SetAttrType_PacketInfo(pArg);
     }
@@ -360,7 +360,7 @@ static BOOLEAN _Reply_SetAttrType_Flow(OVS_MESSAGE_COMMAND_TYPE cmd, OVS_ARGTYPE
         pArg->type = OVS_USPACE_FLOW_ATTRIBUTE_ACTIONS;
         break;
 
-    case OVS_ARGTYPE_GROUP_MASK:
+    case OVS_ARGTYPE_FLOW_MASK_GROUP:
         pArg->type = OVS_USPACE_FLOW_ATTRIBUTE_MASK;
         break;
 

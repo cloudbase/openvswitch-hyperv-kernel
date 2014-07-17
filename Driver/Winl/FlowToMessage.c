@@ -1271,7 +1271,7 @@ BOOLEAN CreateMsgFromFlow(_In_ const OVS_FLOW* pFlow, UINT8 command, _Inout_ OVS
     ++curArg;
 
     //3.2. Packet Info Mask
-    pMasksArg = CreateArgFromPacketInfo(&maskedPacketInfo, &packetInfoMask, OVS_ARGTYPE_GROUP_MASK);
+    pMasksArg = CreateArgFromPacketInfo(&maskedPacketInfo, &packetInfoMask, OVS_ARGTYPE_FLOW_MASK_GROUP);
     if (!pMasksArg)
     {
         ok = FALSE;

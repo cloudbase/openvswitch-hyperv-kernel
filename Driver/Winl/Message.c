@@ -697,7 +697,7 @@ static BOOLEAN _VerifyFlowMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_
                 }
                 break;
 
-            case OVS_ARGTYPE_GROUP_MASK:
+            case OVS_ARGTYPE_FLOW_MASK_GROUP:
                 if (!VerifyGroup_PacketInfo(/*mask*/ TRUE, /*request*/ TRUE, pMainGroupArg, /*check transport layer*/ TRUE, /*seek ip*/ TRUE))
                 {
                     return FALSE;
@@ -739,7 +739,7 @@ static BOOLEAN _VerifyFlowMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_
                 }
                 break;
 
-            case OVS_ARGTYPE_GROUP_MASK:
+            case OVS_ARGTYPE_FLOW_MASK_GROUP:
                 if (!VerifyGroup_PacketInfo(/*mask*/ TRUE, /*request*/ TRUE, pMainGroupArg, /*check transport layer*/ TRUE, /*seek ip*/ TRUE))
                 {
                     return FALSE;
@@ -807,7 +807,7 @@ static BOOLEAN _VerifyFlowMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_
             break;
 
         case OVS_MESSAGE_COMMAND_DUMP:
-            if (argType == OVS_ARGTYPE_GROUP_MASK)
+            if (argType == OVS_ARGTYPE_FLOW_MASK_GROUP)
             {
                 if (!VerifyGroup_PacketInfo(/*mask*/ TRUE, /*request*/ TRUE, pMainGroupArg, /*check transport layer*/ TRUE, /*seek ip*/ TRUE))
                 {
@@ -898,7 +898,7 @@ static BOOLEAN _VerifyFlowMessageReply(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_ME
             }
             break;
 
-        case OVS_ARGTYPE_GROUP_MASK:
+        case OVS_ARGTYPE_FLOW_MASK_GROUP:
             if (!VerifyGroup_PacketInfo(/*mask*/ TRUE, /*request*/ FALSE, pMainGroupArg, /*check transport layer*/ TRUE, /*seek ip*/ TRUE))
             {
                 return FALSE;

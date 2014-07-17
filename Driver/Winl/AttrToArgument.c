@@ -406,7 +406,7 @@ static BOOLEAN _AttrType_To_ArgType_Packet(OVS_ARGTYPE parentArgType, UINT16 att
         }
         //main -> packet info mask; the attr is a key of flow group
 
-        if (parentArgType == OVS_ARGTYPE_GROUP_MASK)
+        if (parentArgType == OVS_ARGTYPE_FLOW_MASK_GROUP)
         {
             return _AttrType_To_ArgType_PacketInfo(attrType, pTypeAsArg);
         }
@@ -467,8 +467,8 @@ static BOOLEAN _AttrType_To_ArgType_Flow(OVS_ARGTYPE parentArgType, UINT16 attrT
             return TRUE;
 
         case OVS_USPACE_FLOW_ATTRIBUTE_MASK:
-            *pTypeAsArg = OVS_ARGTYPE_GROUP_MASK;
-            DEBUGP_ARG(LOG_INFO, "rcv arg: OVS_ARGTYPE_GROUP_MASK\n");
+            *pTypeAsArg = OVS_ARGTYPE_FLOW_MASK_GROUP;
+            DEBUGP_ARG(LOG_INFO, "rcv arg: OVS_ARGTYPE_FLOW_MASK_GROUP\n");
             return TRUE;
 
         case OVS_USPACE_FLOW_ATTRIBUTE_ACTIONS:
@@ -510,7 +510,7 @@ static BOOLEAN _AttrType_To_ArgType_Flow(OVS_ARGTYPE parentArgType, UINT16 attrT
             return _AttrType_To_ArgType_PacketInfo(attrType, pTypeAsArg);
         }
         //main -> packet info mask; the attr is a key of flow group
-        else if (parentArgType == OVS_ARGTYPE_GROUP_MASK)
+        else if (parentArgType == OVS_ARGTYPE_FLOW_MASK_GROUP)
         {
             return _AttrType_To_ArgType_PacketInfo(attrType, pTypeAsArg);
         }

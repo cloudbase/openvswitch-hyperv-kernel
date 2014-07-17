@@ -28,7 +28,6 @@ typedef enum _OVS_ARGTYPE
     OVS_ARGTYPE_GROUP_MAIN = 0x000,
     OVS_ARGTYPE_FIRST_GROUP = OVS_ARGTYPE_GROUP_MAIN,
 
-    OVS_ARGTYPE_GROUP_MASK = 0x003,
     OVS_ARGTYPE_GROUP_OFPORT_OPTIONS = 0x00D,
     OVS_ARGTYPE_LAST_REAL_GROUP = OVS_ARGTYPE_GROUP_OFPORT_OPTIONS,
 
@@ -75,7 +74,9 @@ typedef enum _OVS_ARGTYPE
     //data type: no data
     OVS_ARGTYPE_FLOW_CLEAR,                    //0x026
 
-    OVS_ARGTYPE_LAST_FLOW = OVS_ARGTYPE_FLOW_CLEAR,
+    OVS_ARGTYPE_FLOW_MASK_GROUP,               //0x027
+
+    OVS_ARGTYPE_LAST_FLOW = OVS_ARGTYPE_FLOW_MASK_GROUP,
 
     /************************************ TARGET: FLOW / PACKET; group: KEY **********************************************/
     //GROUP NOTE: This group represents attributes: OVS_USPACE_PACKET_ATTRIBUTE_KEY and OVS_USPACE_FLOW_ATTRIBUTE_KEY and

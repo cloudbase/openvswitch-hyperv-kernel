@@ -57,8 +57,8 @@ OVS_ERROR Flow_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         return OVS_ERROR_INVAL;
     }
 
-    //OVS_ARGTYPE_GROUP_MASK is optional
-    pPacketInfoMaskArgs = FindArgumentGroup(pMsg->pArgGroup, OVS_ARGTYPE_GROUP_MASK);
+    //OVS_ARGTYPE_FLOW_MASK_GROUP is optional
+    pPacketInfoMaskArgs = FindArgumentGroup(pMsg->pArgGroup, OVS_ARGTYPE_FLOW_MASK_GROUP);
 
     FlowMatch_Initialize(&flowMatch, &packetInfo, &flowMask);
 
@@ -288,8 +288,8 @@ OVS_ERROR Flow_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         return OVS_ERROR_INVAL;
     }
 
-    //OVS_ARGTYPE_GROUP_MASK is optional
-    pPacketInfoMaskArgs = FindArgumentGroup(pMsg->pArgGroup, OVS_ARGTYPE_GROUP_MASK);
+    //OVS_ARGTYPE_FLOW_MASK_GROUP is optional
+    pPacketInfoMaskArgs = FindArgumentGroup(pMsg->pArgGroup, OVS_ARGTYPE_FLOW_MASK_GROUP);
 
     FlowMatch_Initialize(&flowMatch, &packetInfo, &flowMask);
 

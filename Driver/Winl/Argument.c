@@ -317,7 +317,7 @@ OVS_ARGTYPE GetParentGroupType(OVS_ARGTYPE childArgType)
         switch (childArgType)
         {
         case OVS_ARGTYPE_FLOW_PI_GROUP:
-        case OVS_ARGTYPE_GROUP_MASK:
+        case OVS_ARGTYPE_FLOW_MASK_GROUP:
             return OVS_ARGTYPE_PSEUDOGROUP_FLOW;
 
         case OVS_ARGTYPE_PI_ENCAP_GROUP:
@@ -416,7 +416,7 @@ BOOLEAN GetArgumentExpectedSize(OVS_ARGTYPE argumentType, _Inout_ UINT* pSize)
     case OVS_ARGTYPE_FLOW_PI_GROUP:
         return _GetPIArgExpectedSize(argumentType, pSize);
 
-    case OVS_ARGTYPE_GROUP_MASK:
+    case OVS_ARGTYPE_FLOW_MASK_GROUP:
         return _GetPIArgExpectedSize(argumentType, pSize);
 
     case OVS_ARGTYPE_PI_ENCAP_GROUP:
@@ -1484,7 +1484,7 @@ VOID DbgPrintArgType(OVS_ARGTYPE argType, const char* padding, int index)
             DEBUGP_ARG(LOG_INFO, "GROUP: PACKET/KEY\n");
             break;
 
-        case OVS_ARGTYPE_GROUP_MASK:
+        case OVS_ARGTYPE_FLOW_MASK_GROUP:
             DEBUGP_ARG(LOG_INFO, "GROUP: FLOW/KEY MASKS\n");
 
             break;
@@ -1571,7 +1571,7 @@ VOID DbgPrintArgType(OVS_ARGTYPE argType, const char* padding, int index)
             _DbgPrintArgType_PacketInfo(argType);
             break;
 
-        case OVS_ARGTYPE_GROUP_MASK:
+        case OVS_ARGTYPE_FLOW_MASK_GROUP:
             _DbgPrintArgType_PacketInfo(argType);
 
             break;
@@ -2719,7 +2719,7 @@ static __inline BOOLEAN _VerifyGroup_Flow(OVS_ARGUMENT* pArg, BOOLEAN isRequest)
     case OVS_ARGTYPE_FLOW_PI_GROUP:
         return VerifyGroup_PacketInfo(FALSE, isRequest, pArg, /*check transport layer*/ TRUE, /*seek ip*/ TRUE);
 
-    case OVS_ARGTYPE_GROUP_MASK:
+    case OVS_ARGTYPE_FLOW_MASK_GROUP:
         return VerifyGroup_PacketInfo(TRUE, isRequest, pArg, /*check transport layer*/ TRUE, /*seek ip*/ TRUE);
 
     case OVS_ARGTYPE_FLOW_CLEAR:
