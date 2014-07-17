@@ -84,7 +84,7 @@ typedef enum _OVS_ARGTYPE
     //NOTE: might be QoS priority; might have no meaning for windows.
     //data type: UINT32
     OVS_ARGTYPE_PI_PACKET_PRIORITY = 0x041,
-    OVS_ARGTYPE_FIRST_KEY = OVS_ARGTYPE_PI_PACKET_PRIORITY,
+    OVS_ARGTYPE_FIRST_PI = OVS_ARGTYPE_PI_PACKET_PRIORITY,
 
     //source port / input port, given as the ovs port number (not hyper-v switch port id)
     //data type: UINT32
@@ -145,7 +145,7 @@ typedef enum _OVS_ARGTYPE
 
     //received from userspace
     OVS_ARGTYPE_PI_TUNNEL_GROUP,            //0x53
-    OVS_ARGTYPE_LAST_KEY = OVS_ARGTYPE_PI_TUNNEL_GROUP,
+    OVS_ARGTYPE_LAST_PI = OVS_ARGTYPE_PI_TUNNEL_GROUP,
 
     /******************************************* TARGET: FLOW: group = KEY / TUNNEL (FROM USERSPACE ONLY!) **********************************************/
 
@@ -154,7 +154,7 @@ typedef enum _OVS_ARGTYPE
     //data type: BE64
     OVS_ARGTYPE_PI_TUNNEL_ID = 0x061,
 
-    OVS_ARGTYPE_FIRST_KEY_TUNNEL = OVS_ARGTYPE_PI_TUNNEL_ID,
+    OVS_ARGTYPE_FIRST_PI_TUNNEL = OVS_ARGTYPE_PI_TUNNEL_ID,
 
     //data type: BE32
     OVS_ARGTYPE_PI_TUNNEL_IPV4_SRC,        //0x062
@@ -174,7 +174,7 @@ typedef enum _OVS_ARGTYPE
     //data type: no data (it's a flag)
     OVS_ARGTYPE_PI_TUNNEL_CHECKSUM,        //0x067
 
-    OVS_ARGTYPE_LAST_KEY_TUNNEL = OVS_ARGTYPE_PI_TUNNEL_CHECKSUM,
+    OVS_ARGTYPE_LAST_PI_TUNNEL = OVS_ARGTYPE_PI_TUNNEL_CHECKSUM,
 
     /************************************* TARGET: PACKET; GROUP: MAIN *****************************************************/
 
@@ -235,13 +235,13 @@ typedef enum _OVS_ARGTYPE
     //Port Id associated with the file HANDLE
     //data type: UINT32
     OVS_ARGTYPE_ACTION_UPCALL_PORT_ID = 0x0C1,
-    OVS_ARGTYPE_FIRST_ACTIONS_UPCALL = OVS_ARGTYPE_ACTION_UPCALL_PORT_ID,
+    OVS_ARGTYPE_FIRST_ACTION_UPCALL = OVS_ARGTYPE_ACTION_UPCALL_PORT_ID,
 
     //Sent from userspace (optionally). It comes as Action / Output to Userspace
     //data type: OVS_ARGUMENT
     OVS_ARGTYPE_ACTION_UPCALL_DATA,            //0x0C2
 
-    OVS_ARGTYPE_LAST_ACTIONS_UPCALL = OVS_ARGTYPE_ACTION_UPCALL_DATA,
+    OVS_ARGTYPE_LAST_ACTION_UPCALL = OVS_ARGTYPE_ACTION_UPCALL_DATA,
 
     /************************************ TARGET: FLOW / PACKET; group: ACTIONS / SAMPLE **********************************************/
 
@@ -254,12 +254,12 @@ typedef enum _OVS_ARGTYPE
 
     //data type: UINT32
     OVS_ARGTYPE_ACTION_SAMPLE_PROBABILITY = 0x0E1,
-    OVS_ARGTYPE_FIRST_ACTIONS_SAMPLE = OVS_ARGTYPE_ACTION_SAMPLE_PROBABILITY,
+    OVS_ARGTYPE_FIRST_ACTION_SAMPLE = OVS_ARGTYPE_ACTION_SAMPLE_PROBABILITY,
 
     //actions to apply to packets (being executed / matched by flow) in a sample action
     OVS_ARGTYPE_ACTION_SAMPLE_ACTIONS_GROUP,        //0x0E2
 
-    OVS_ARGTYPE_LAST_ACTIONS_SAMPLE = OVS_ARGTYPE_ACTION_SAMPLE_ACTIONS_GROUP,
+    OVS_ARGTYPE_LAST_ACTION_SAMPLE = OVS_ARGTYPE_ACTION_SAMPLE_ACTIONS_GROUP,
 
     /******************************************** TARGET: DATAPATH; group: MAIN *********************************************/
 

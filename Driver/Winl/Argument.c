@@ -354,11 +354,11 @@ OVS_ARGTYPE GetParentGroupType(OVS_ARGTYPE childArgType)
     {
         return OVS_ARGTYPE_FLOW_ACTIONS_GROUP;
     }
-    else if (childArgType >= OVS_ARGTYPE_FIRST_ACTIONS_SAMPLE && childArgType <= OVS_ARGTYPE_LAST_ACTIONS_SAMPLE)
+    else if (childArgType >= OVS_ARGTYPE_FIRST_ACTION_SAMPLE && childArgType <= OVS_ARGTYPE_LAST_ACTION_SAMPLE)
     {
         return OVS_ARGTYPE_ACTION_SAMPLE_GROUP;
     }
-    else if (childArgType >= OVS_ARGTYPE_FIRST_ACTIONS_UPCALL && childArgType <= OVS_ARGTYPE_LAST_ACTIONS_UPCALL)
+    else if (childArgType >= OVS_ARGTYPE_FIRST_ACTION_UPCALL && childArgType <= OVS_ARGTYPE_LAST_ACTION_UPCALL)
     {
         return OVS_ARGTYPE_ACTION_UPCALL_GROUP;
     }
@@ -370,11 +370,11 @@ OVS_ARGTYPE GetParentGroupType(OVS_ARGTYPE childArgType)
     {
         return OVS_ARGTYPE_PSEUDOGROUP_FLOW;
     }
-    else if (childArgType >= OVS_ARGTYPE_FIRST_KEY && childArgType <= OVS_ARGTYPE_LAST_KEY)
+    else if (childArgType >= OVS_ARGTYPE_FIRST_PI && childArgType <= OVS_ARGTYPE_LAST_PI)
     {
         return OVS_ARGTYPE_FLOW_PI_GROUP;
     }
-    else if (childArgType >= OVS_ARGTYPE_FIRST_KEY_TUNNEL && childArgType <= OVS_ARGTYPE_LAST_KEY_TUNNEL)
+    else if (childArgType >= OVS_ARGTYPE_FIRST_PI_TUNNEL && childArgType <= OVS_ARGTYPE_LAST_PI_TUNNEL)
     {
         return OVS_ARGTYPE_PI_TUNNEL_GROUP;
     }
