@@ -321,7 +321,7 @@ OVS_ARGTYPE GetParentGroupType(OVS_ARGTYPE childArgType)
             return OVS_ARGTYPE_PSEUDOGROUP_FLOW;
 
         case OVS_ARGTYPE_PI_ENCAP_GROUP:
-        case OVS_ARGTYPE_GROUP_PI_TUNNEL:
+        case OVS_ARGTYPE_PI_TUNNEL_GROUP:
             return OVS_ARGTYPE_FLOW_PI_GROUP;
 
         case OVS_ARGTYPE_GROUP_ACTIONS:
@@ -372,7 +372,7 @@ OVS_ARGTYPE GetParentGroupType(OVS_ARGTYPE childArgType)
     }
     else if (childArgType >= OVS_ARGTYPE_FIRST_KEY_TUNNEL && childArgType <= OVS_ARGTYPE_LAST_KEY_TUNNEL)
     {
-        return OVS_ARGTYPE_GROUP_PI_TUNNEL;
+        return OVS_ARGTYPE_PI_TUNNEL_GROUP;
     }
     else if (childArgType >= OVS_ARGTYPE_FIRST_NETBUFFER && childArgType <= OVS_ARGTYPE_LAST_NETBUFFER)
     {
@@ -418,7 +418,7 @@ BOOLEAN GetArgumentExpectedSize(OVS_ARGTYPE argumentType, _Inout_ UINT* pSize)
     case OVS_ARGTYPE_PI_ENCAP_GROUP:
         return _GetPIArgExpectedSize(argumentType, pSize);
 
-    case OVS_ARGTYPE_GROUP_PI_TUNNEL:
+    case OVS_ARGTYPE_PI_TUNNEL_GROUP:
         return _GetFlowKeyTunnelArgExpectedSize(argumentType, pSize);
 
     case OVS_ARGTYPE_PSEUDOGROUP_PACKET:
@@ -1486,7 +1486,7 @@ VOID DbgPrintArgType(OVS_ARGTYPE argType, const char* padding, int index)
             DEBUGP_ARG(LOG_INFO, "GROUP: FLOW/PACKET ENCAPSULATION\n");
             break;
 
-        case OVS_ARGTYPE_GROUP_PI_TUNNEL:
+        case OVS_ARGTYPE_PI_TUNNEL_GROUP:
             DEBUGP_ARG(LOG_INFO, "GROUP: FLOW/KEY/TUNNEL\n");
             break;
 
@@ -1565,7 +1565,7 @@ VOID DbgPrintArgType(OVS_ARGTYPE argType, const char* padding, int index)
             _DbgPrintArgType_PacketInfo(argType);
             break;
 
-        case OVS_ARGTYPE_GROUP_PI_TUNNEL:
+        case OVS_ARGTYPE_PI_TUNNEL_GROUP:
             _DbgPrintArgType_PITunnel(argType);
             break;
 
@@ -2512,7 +2512,7 @@ BOOLEAN VerifyGroup_PacketInfo(BOOLEAN isMask, BOOLEAN isRequest, _In_ OVS_ARGUM
             }
             break;
 
-        case OVS_ARGTYPE_GROUP_PI_TUNNEL:
+        case OVS_ARGTYPE_PI_TUNNEL_GROUP:
             if (!_VerifyGroup_FlowKeyTunnel(pArg, isMask, isRequest))
             {
                 return FALSE;

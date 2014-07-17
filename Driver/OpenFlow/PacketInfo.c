@@ -1071,7 +1071,7 @@ BOOLEAN GetPacketInfoFromArguments(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inou
             PIFromArg_PacketMark(pPacketInfo, pPiRange, pArg);
             break;
 
-        case OVS_ARGTYPE_GROUP_PI_TUNNEL:
+        case OVS_ARGTYPE_PI_TUNNEL_GROUP:
             OVS_CHECK(IsArgTypeGroup(pArg->type));
 
             if (!PIFromArg_Tunnel(pArg->data, pPacketInfo, pPiRange, isMask))

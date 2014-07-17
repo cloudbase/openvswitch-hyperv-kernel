@@ -261,7 +261,7 @@ static BOOLEAN _Reply_SetAttrType_PacketInfo(OVS_ARGUMENT* pArg)
         pArg->type = OVS_USPACE_KEY_ATTRIBUTE_SKB_MARK;
         break;
 
-    case OVS_ARGTYPE_GROUP_PI_TUNNEL:
+    case OVS_ARGTYPE_PI_TUNNEL_GROUP:
         pArg->type = OVS_USPACE_KEY_ATTRIBUTE_TUNNEL;
         break;
 
@@ -303,7 +303,7 @@ static BOOLEAN _Reply_SetAttrType_Flow(OVS_MESSAGE_COMMAND_TYPE cmd, OVS_ARGTYPE
     {
         return _Reply_SetAttrType_PacketInfo(pArg);
     }
-    else if (parentArgType == OVS_ARGTYPE_GROUP_PI_TUNNEL)
+    else if (parentArgType == OVS_ARGTYPE_PI_TUNNEL_GROUP)
     {
         return _Reply_SetAttrType_PITunnel(pArg);
     }
@@ -464,7 +464,7 @@ static BOOLEAN _Reply_SetAttrType_Packet(OVS_MESSAGE_COMMAND_TYPE cmd, OVS_ARGTY
     {
         return _Reply_SetAttrType_PacketInfo(pArg);
     }
-    else if (parentArgType == OVS_ARGTYPE_GROUP_PI_TUNNEL)
+    else if (parentArgType == OVS_ARGTYPE_PI_TUNNEL_GROUP)
     {
         return _Reply_SetAttrType_PITunnel(pArg);
     }

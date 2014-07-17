@@ -473,7 +473,7 @@ static BOOLEAN _Action_SetInfo(_Inout_ OVS_ARGUMENT_GROUP* pActionGroup, const O
         //nothing to do here
         break;
 
-    case OVS_ARGTYPE_GROUP_PI_TUNNEL:
+    case OVS_ARGTYPE_PI_TUNNEL_GROUP:
         ok = _CreateActionIpv4Tunnel(pPacketInfoArg->data, &pTunnelArg);
         DestroyArgument(pPacketInfoArg);
         pActionGroup->args = pTunnelArg;

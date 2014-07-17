@@ -539,7 +539,7 @@ static OVS_ARGUMENT* _CreateIpv4TunnelGroup(const OF_PI_IPV4_TUNNEL* pTunnelInfo
 
     pTunnelArg->data = pTunnelGroup;
     pTunnelArg->length = pTunnelGroup->groupSize + OVS_ARGUMENT_GROUP_HEADER_SIZE;
-    pTunnelArg->type = OVS_ARGTYPE_GROUP_PI_TUNNEL;
+    pTunnelArg->type = OVS_ARGTYPE_PI_TUNNEL_GROUP;
 
     VerifyArgGroupSize(pTunnelArg->data);
 

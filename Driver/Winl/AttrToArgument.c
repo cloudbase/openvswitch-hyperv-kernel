@@ -129,7 +129,7 @@ static BOOLEAN _AttrType_To_ArgType_PacketInfo(UINT16 attrType, OVS_ARGTYPE* pTy
         return TRUE;
 
     case OVS_USPACE_KEY_ATTRIBUTE_TUNNEL:
-        *pTypeAsArg = OVS_ARGTYPE_GROUP_PI_TUNNEL;
+        *pTypeAsArg = OVS_ARGTYPE_PI_TUNNEL_GROUP;
         DEBUGP_ARG(LOG_INFO, "rcv arg: OVS_ARGTYPE_FLOW_KEY_TUNNEL_GROUP\n");
         return TRUE;
 
@@ -416,7 +416,7 @@ static BOOLEAN _AttrType_To_ArgType_Packet(OVS_ARGTYPE parentArgType, UINT16 att
             return _AttrType_To_ArgType_PacketInfo(attrType, pTypeAsArg);
         }
         //flow / key / tunnel -> tunnel keys; the attr is a key in the flow / key / tunnel group
-        else if (parentArgType == OVS_ARGTYPE_GROUP_PI_TUNNEL)
+        else if (parentArgType == OVS_ARGTYPE_PI_TUNNEL_GROUP)
         {
             return _AttrType_To_ArgType_FlowKeyTunnel(attrType, pTypeAsArg);
         }
@@ -515,7 +515,7 @@ static BOOLEAN _AttrType_To_ArgType_Flow(OVS_ARGTYPE parentArgType, UINT16 attrT
             return _AttrType_To_ArgType_PacketInfo(attrType, pTypeAsArg);
         }
         //flow / key / tunnel -> tunnel keys; the attr is a key in the flow / key / tunnel group
-        else if (parentArgType == OVS_ARGTYPE_GROUP_PI_TUNNEL)
+        else if (parentArgType == OVS_ARGTYPE_PI_TUNNEL_GROUP)
         {
             return _AttrType_To_ArgType_FlowKeyTunnel(attrType, pTypeAsArg);
         }

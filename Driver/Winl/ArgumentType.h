@@ -149,8 +149,8 @@ typedef enum _OVS_ARGTYPE
     OVS_ARGTYPE_PI_ENCAP_GROUP,             //0x52
 
     //received from userspace
-    OVS_ARGTYPE_GROUP_PI_TUNNEL,            //0x53
-    OVS_ARGTYPE_LAST_KEY = OVS_ARGTYPE_GROUP_PI_TUNNEL,
+    OVS_ARGTYPE_PI_TUNNEL_GROUP,            //0x53
+    OVS_ARGTYPE_LAST_KEY = OVS_ARGTYPE_PI_TUNNEL_GROUP,
 
     /******************************************* TARGET: FLOW: group = KEY / TUNNEL (FROM USERSPACE ONLY!) **********************************************/
 
