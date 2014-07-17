@@ -372,23 +372,23 @@ static BOOLEAN _AttrType_To_ArgType_Packet(OVS_ARGTYPE parentArgType, UINT16 att
         {
             //NESTED
         case OVS_USPACE_PACKET_ATTRIBUTE_KEY:
-            *pTypeAsArg = OVS_ARGTYPE_NETBUFFER_PI_GROUP;
-            DEBUGP_ARG(LOG_INFO, "rcv arg: OVS_ARGTYPE_GROUP_PI\n");
+            *pTypeAsArg = OVS_ARGTYPE_PACKET_PI_GROUP;
+            DEBUGP_ARG(LOG_INFO, "rcv arg: OVS_ARGTYPE_PACKET_PI_GROUP\n");
             return TRUE;
 
         case OVS_USPACE_PACKET_ATTRIBUTE_ACTIONS:
-            *pTypeAsArg = OVS_ARGTYPE_NETBUFFER_ACTIONS_GROUP;
+            *pTypeAsArg = OVS_ARGTYPE_PACKET_ACTIONS_GROUP;
             DEBUGP_ARG(LOG_INFO, "rcv arg: OVS_ARGTYPE_PACKET_ACTIONS_GROUP\n");
             return TRUE;
 
             //NOT NESTED
         case OVS_USPACE_PACKET_ATTRIBUTE_PACKET:
-            *pTypeAsArg = OVS_ARGTYPE_NETBUFFER;
+            *pTypeAsArg = OVS_ARGTYPE_PACKET_BUFFER;
             DEBUGP_ARG(LOG_INFO, "rcv arg: OVS_ARGTYPE_PACKET_BUFFER\n");
             return TRUE;
 
         case OVS_USPACE_PACKET_ATTRIBUTE_USERDATA:
-            *pTypeAsArg = OVS_ARGTYPE_NETBUFFER_USERDATA;
+            *pTypeAsArg = OVS_ARGTYPE_PACKET_USERDATA;
             DEBUGP_ARG(LOG_INFO, "rcv arg: OVS_ARGTYPE_PACKET_USERDATA\n");
             return TRUE;
 
@@ -400,7 +400,7 @@ static BOOLEAN _AttrType_To_ArgType_Packet(OVS_ARGTYPE parentArgType, UINT16 att
     else
     {
         //main -> packet info; the attr is a key of flow group
-        if (parentArgType == OVS_ARGTYPE_NETBUFFER_PI_GROUP)
+        if (parentArgType == OVS_ARGTYPE_PACKET_PI_GROUP)
         {
             return _AttrType_To_ArgType_PacketInfo(attrType, pTypeAsArg);
         }
@@ -421,7 +421,7 @@ static BOOLEAN _AttrType_To_ArgType_Packet(OVS_ARGTYPE parentArgType, UINT16 att
             return _AttrType_To_ArgType_FlowKeyTunnel(attrType, pTypeAsArg);
         }
         //actions - the attr is an action
-        else if (parentArgType == OVS_ARGTYPE_NETBUFFER_ACTIONS_GROUP)
+        else if (parentArgType == OVS_ARGTYPE_PACKET_ACTIONS_GROUP)
         {
             return _AttrType_To_ArgType_Actions(attrType, pTypeAsArg);
         }

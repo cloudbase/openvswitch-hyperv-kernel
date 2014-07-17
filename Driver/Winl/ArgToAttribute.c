@@ -460,7 +460,7 @@ static BOOLEAN _Reply_SetAttrType_Packet(OVS_MESSAGE_COMMAND_TYPE cmd, OVS_ARGTY
 
     UNREFERENCED_PARAMETER(cmd);
 
-    if (parentArgType == OVS_ARGTYPE_NETBUFFER_PI_GROUP)
+    if (parentArgType == OVS_ARGTYPE_PACKET_PI_GROUP)
     {
         return _Reply_SetAttrType_PacketInfo(pArg);
     }
@@ -472,7 +472,7 @@ static BOOLEAN _Reply_SetAttrType_Packet(OVS_MESSAGE_COMMAND_TYPE cmd, OVS_ARGTY
     {
         return _Reply_SetAttrType_PacketInfo(pArg);
     }
-    else if (parentArgType == OVS_ARGTYPE_NETBUFFER_ACTIONS_GROUP)
+    else if (parentArgType == OVS_ARGTYPE_PACKET_ACTIONS_GROUP)
     {
         return _Reply_SetAttrType_PacketActions(pArg);
     }
@@ -493,19 +493,19 @@ static BOOLEAN _Reply_SetAttrType_Packet(OVS_MESSAGE_COMMAND_TYPE cmd, OVS_ARGTY
 
     switch (argType)
     {
-    case OVS_ARGTYPE_NETBUFFER:
+    case OVS_ARGTYPE_PACKET_BUFFER:
         pArg->type = OVS_USPACE_PACKET_ATTRIBUTE_PACKET;
         break;
 
-    case OVS_ARGTYPE_NETBUFFER_PI_GROUP:
+    case OVS_ARGTYPE_PACKET_PI_GROUP:
         pArg->type = OVS_USPACE_PACKET_ATTRIBUTE_KEY;
         break;
 
-    case OVS_ARGTYPE_NETBUFFER_ACTIONS_GROUP:
+    case OVS_ARGTYPE_PACKET_ACTIONS_GROUP:
         pArg->type = OVS_USPACE_PACKET_ATTRIBUTE_ACTIONS;
         break;
 
-    case OVS_ARGTYPE_NETBUFFER_USERDATA:
+    case OVS_ARGTYPE_PACKET_USERDATA:
         pArg->type = OVS_USPACE_PACKET_ATTRIBUTE_USERDATA;
         break;
 

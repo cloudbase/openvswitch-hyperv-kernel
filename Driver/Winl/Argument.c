@@ -177,12 +177,12 @@ static BOOLEAN _GetPacketArgExpectedSize(OVS_ARGTYPE argumentType, UINT* pSize)
 {
     switch (argumentType)
     {
-    case OVS_ARGTYPE_NETBUFFER:
+    case OVS_ARGTYPE_PACKET_BUFFER:
         //any size can be expected!
         *pSize = MAXUINT;
         return TRUE;
 
-    case OVS_ARGTYPE_NETBUFFER_USERDATA:
+    case OVS_ARGTYPE_PACKET_USERDATA:
         //any size can be expected (userdata should normally be an OVS_ARGUMENT / attribute)
         *pSize = MAXUINT;
         return TRUE;
@@ -324,8 +324,8 @@ OVS_ARGTYPE GetParentGroupType(OVS_ARGTYPE childArgType)
         case OVS_ARGTYPE_PI_TUNNEL_GROUP:
             return OVS_ARGTYPE_FLOW_PI_GROUP;
 
-        case OVS_ARGTYPE_NETBUFFER_ACTIONS_GROUP:
-        case OVS_ARGTYPE_NETBUFFER_PI_GROUP:
+        case OVS_ARGTYPE_PACKET_ACTIONS_GROUP:
+        case OVS_ARGTYPE_PACKET_PI_GROUP:
             return OVS_ARGTYPE_PSEUDOGROUP_PACKET;
 
         case OVS_ARGTYPE_ACTION_UPCALL_GROUP:
@@ -378,7 +378,7 @@ OVS_ARGTYPE GetParentGroupType(OVS_ARGTYPE childArgType)
     {
         return OVS_ARGTYPE_PI_TUNNEL_GROUP;
     }
-    else if (childArgType >= OVS_ARGTYPE_FIRST_NETBUFFER && childArgType <= OVS_ARGTYPE_LAST_NETBUFFER)
+    else if (childArgType >= OVS_ARGTYPE_FIRST_PACKET&& childArgType <= OVS_ARGTYPE_LAST_PACKET)
     {
         return OVS_ARGTYPE_PSEUDOGROUP_PACKET;
     }
@@ -429,7 +429,7 @@ BOOLEAN GetArgumentExpectedSize(OVS_ARGTYPE argumentType, _Inout_ UINT* pSize)
         return _GetPacketArgExpectedSize(argumentType, pSize);
 
     case OVS_ARGTYPE_FLOW_ACTIONS_GROUP:
-    case OVS_ARGTYPE_NETBUFFER_ACTIONS_GROUP:
+    case OVS_ARGTYPE_PACKET_ACTIONS_GROUP:
     case OVS_ARGTYPE_ACTION_SAMPLE_ACTIONS_GROUP:
         return _GetPacketActionsArgExpectedSize(argumentType, pSize);
 
@@ -1326,11 +1326,11 @@ static __inline VOID _DbgPrintArgType_Packet(OVS_ARGTYPE argType)
 {
     switch (argType)
     {
-    case OVS_ARGTYPE_NETBUFFER:
+    case OVS_ARGTYPE_PACKET_BUFFER:
         DEBUGP_ARG(LOG_INFO, "PACKET: BUFFER\n");
         break;
 
-    case OVS_ARGTYPE_NETBUFFER_USERDATA:
+    case OVS_ARGTYPE_PACKET_USERDATA:
         DEBUGP_ARG(LOG_INFO, "PACKET: USER DATA\n");
         break;
 
@@ -1480,8 +1480,8 @@ VOID DbgPrintArgType(OVS_ARGTYPE argType, const char* padding, int index)
             DEBUGP_ARG(LOG_INFO, "GROUP: FLOW/KEY\n");
             break;
 
-        case OVS_ARGTYPE_NETBUFFER_PI_GROUP:
-            DEBUGP_ARG(LOG_INFO, "GROUP: PACKET/KEY\n");
+        case OVS_ARGTYPE_PACKET_PI_GROUP:
+            DEBUGP_ARG(LOG_INFO, "GROUP: PACKET/PI\n");
             break;
 
         case OVS_ARGTYPE_FLOW_MASK_GROUP:
@@ -1504,7 +1504,7 @@ VOID DbgPrintArgType(OVS_ARGTYPE argType, const char* padding, int index)
             DEBUGP_ARG(LOG_INFO, "GROUP: FLOW/ACTIONS\n");
             break;
 
-        case OVS_ARGTYPE_NETBUFFER_ACTIONS_GROUP:
+        case OVS_ARGTYPE_PACKET_ACTIONS_GROUP:
             DEBUGP_ARG(LOG_INFO, "GROUP: PACKET/ACTIONS\n");
             break;
 
@@ -1549,7 +1549,7 @@ VOID DbgPrintArgType(OVS_ARGTYPE argType, const char* padding, int index)
         case OVS_ARGTYPE_GROUP_MAIN:
             switch (argType)
             {
-            case OVS_ARGTYPE_NETBUFFER:
+            case OVS_ARGTYPE_PACKET_BUFFER:
                 DEBUGP_ARG(LOG_INFO, "PACKET: BUFFER\n");
                 break;
 
@@ -1567,7 +1567,7 @@ VOID DbgPrintArgType(OVS_ARGTYPE argType, const char* padding, int index)
             _DbgPrintArgType_PacketInfo(argType);
             break;
 
-        case OVS_ARGTYPE_NETBUFFER_PI_GROUP:
+        case OVS_ARGTYPE_PACKET_PI_GROUP:
             _DbgPrintArgType_PacketInfo(argType);
             break;
 
@@ -1588,7 +1588,7 @@ VOID DbgPrintArgType(OVS_ARGTYPE argType, const char* padding, int index)
             break;
 
         case OVS_ARGTYPE_FLOW_ACTIONS_GROUP:
-        case OVS_ARGTYPE_NETBUFFER_ACTIONS_GROUP:
+        case OVS_ARGTYPE_PACKET_ACTIONS_GROUP:
         case OVS_ARGTYPE_ACTION_SAMPLE_ACTIONS_GROUP:
             _DbgPrintArgType_PacketActions(argType);
             break;

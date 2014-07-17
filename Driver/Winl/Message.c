@@ -943,26 +943,26 @@ static BOOLEAN _VerifyPacketMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OV
     }
 
     //request / packet / exec must have: buffer, packet info, actions - all required
-    pArg = FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_NETBUFFER);
+    pArg = FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_PACKET_BUFFER);
     if (!pArg)
     {
-        DEBUGP_ARG(LOG_ERROR, "Flow cmd NEW does not have main argtype: 0x%x", OVS_ARGTYPE_NETBUFFER);
+        DEBUGP_ARG(LOG_ERROR, "Flow cmd NEW does not have main argtype: 0x%x", OVS_ARGTYPE_PACKET_BUFFER);
         OVS_CHECK(0);
         return FALSE;
     }
 
-    pArg = FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_NETBUFFER_PI_GROUP);
+    pArg = FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_PACKET_PI_GROUP);
     if (!pArg)
     {
-        DEBUGP_ARG(LOG_ERROR, "Flow cmd NEW does not have main argtype: 0x%x", OVS_ARGTYPE_NETBUFFER_PI_GROUP);
+        DEBUGP_ARG(LOG_ERROR, "Flow cmd NEW does not have main argtype: 0x%x", OVS_ARGTYPE_PACKET_PI_GROUP);
         OVS_CHECK(0);
         return FALSE;
     }
 
-    pArg = FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_NETBUFFER_ACTIONS_GROUP);
+    pArg = FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_PACKET_ACTIONS_GROUP);
     if (!pArg)
     {
-        DEBUGP_ARG(LOG_ERROR, "Flow cmd NEW does not have main argtype: 0x%x", OVS_ARGTYPE_NETBUFFER_ACTIONS_GROUP);
+        DEBUGP_ARG(LOG_ERROR, "Flow cmd NEW does not have main argtype: 0x%x", OVS_ARGTYPE_PACKET_ACTIONS_GROUP);
         OVS_CHECK(0);
         return FALSE;
     }
@@ -974,14 +974,14 @@ static BOOLEAN _VerifyPacketMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OV
 
         switch (argType)
         {
-        case OVS_ARGTYPE_NETBUFFER:
+        case OVS_ARGTYPE_PACKET_BUFFER:
             if (!_VerifyArg_PacketBuffer(pMainGroupArg))
             {
                 return FALSE;
             }
             break;
 
-        case OVS_ARGTYPE_NETBUFFER_PI_GROUP:
+        case OVS_ARGTYPE_PACKET_PI_GROUP:
             if (!VerifyGroup_PacketInfo(/*mask*/ FALSE, /*request*/TRUE, pMainGroupArg, /*check transport layer*/ TRUE, /*seek ip*/ TRUE))
             {
                 return FALSE;
@@ -990,7 +990,7 @@ static BOOLEAN _VerifyPacketMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OV
 
             //NOTE: set info cannot check here if the given packet info-s specify eth type / proto acc to set info
             //nor can check the masks.
-        case OVS_ARGTYPE_NETBUFFER_ACTIONS_GROUP:
+        case OVS_ARGTYPE_PACKET_ACTIONS_GROUP:
             if (!VerifyGroup_PacketActions(pMainGroupArg, /*request*/ TRUE))
             {
                 return FALSE;
@@ -1043,9 +1043,9 @@ static BOOLEAN _VerifyPacketMessageReply(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_
         OVS_ARGUMENT* pMainGroupArg = pMsg->pArgGroup->args + i;
         OVS_ARGTYPE argType = pMainGroupArg->type;
 
-        if (!(argType == OVS_ARGTYPE_NETBUFFER_PI_GROUP ||
-            argType == OVS_ARGTYPE_NETBUFFER_USERDATA ||
-            argType == OVS_ARGTYPE_NETBUFFER))
+        if (!(argType == OVS_ARGTYPE_PACKET_PI_GROUP ||
+            argType == OVS_ARGTYPE_PACKET_USERDATA ||
+            argType == OVS_ARGTYPE_PACKET_BUFFER))
         {
             DEBUGP_ARG(LOG_ERROR, "reply should not have main argtype: 0x%x", argType);
             OVS_CHECK(0);
@@ -1054,21 +1054,21 @@ static BOOLEAN _VerifyPacketMessageReply(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_
 
         switch (argType)
         {
-        case OVS_ARGTYPE_NETBUFFER_PI_GROUP:
+        case OVS_ARGTYPE_PACKET_PI_GROUP:
             if (!VerifyGroup_PacketInfo(/*mask*/ FALSE, /*request*/ FALSE, pMainGroupArg, /*check transport layer*/ TRUE, /*seek ip*/ TRUE))
             {
                 return FALSE;
             }
             break;
 
-        case OVS_ARGTYPE_NETBUFFER_USERDATA:
+        case OVS_ARGTYPE_PACKET_USERDATA:
             if (!_VerifyArg_UserData(pMainGroupArg))
             {
                 return FALSE;
             }
             break;
 
-        case OVS_ARGTYPE_NETBUFFER:
+        case OVS_ARGTYPE_PACKET_BUFFER:
             if (!_VerifyArg_PacketBuffer(pMainGroupArg))
             {
                 return FALSE;

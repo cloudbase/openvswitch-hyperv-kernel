@@ -66,7 +66,7 @@ VOID Packet_Execute(_In_ OVS_ARGUMENT_GROUP* pArgGroup, const FILE_OBJECT* pFile
 
     UNREFERENCED_PARAMETER(pFileObject);
 
-    pArg = FindArgument(pArgGroup, OVS_ARGTYPE_NETBUFFER);
+    pArg = FindArgument(pArgGroup, OVS_ARGTYPE_PACKET_BUFFER);
     if (!pArg)
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " fail: have no arg net buffer!\n");
@@ -78,14 +78,14 @@ VOID Packet_Execute(_In_ OVS_ARGUMENT_GROUP* pArgGroup, const FILE_OBJECT* pFile
     buffer.p = pArg->data;
 
     //i.e. packet info
-    pPacketInfoArgs = FindArgumentGroup(pArgGroup, OVS_ARGTYPE_NETBUFFER_PI_GROUP);
+    pPacketInfoArgs = FindArgumentGroup(pArgGroup, OVS_ARGTYPE_PACKET_PI_GROUP);
     if (!pPacketInfoArgs)
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " fail: have no arg key!\n");
         return;
     }
 
-    pActionsArgs = FindArgumentGroup(pArgGroup, OVS_ARGTYPE_NETBUFFER_ACTIONS_GROUP);
+    pActionsArgs = FindArgumentGroup(pArgGroup, OVS_ARGTYPE_PACKET_ACTIONS_GROUP);
     if (!pActionsArgs)
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " fail: have no arg group actions!\n");
@@ -310,7 +310,7 @@ static OVS_ERROR _QueueUserspacePacket(_In_ NET_BUFFER* pNb, _In_ const OVS_UPCA
 
     AllocateArgumentsToGroup(countArgs, msg.pArgGroup);
 
-    pPacketInfoArg = CreateArgFromPacketInfo(pUpcallInfo->pPacketInfo, NULL, OVS_ARGTYPE_NETBUFFER_PI_GROUP);
+    pPacketInfoArg = CreateArgFromPacketInfo(pUpcallInfo->pPacketInfo, NULL, OVS_ARGTYPE_PACKET_PI_GROUP);
     OVS_CHECK(pPacketInfoArg);
 
     i = 0;
@@ -320,7 +320,7 @@ static OVS_ERROR _QueueUserspacePacket(_In_ NET_BUFFER* pNb, _In_ const OVS_UPCA
 
     if (pUpcallInfo->pUserData)
     {
-        pUserDataArg = CreateArgumentWithSize(OVS_ARGTYPE_NETBUFFER_USERDATA, pUpcallInfo->pUserData->data, pUpcallInfo->pUserData->length);
+        pUserDataArg = CreateArgumentWithSize(OVS_ARGTYPE_PACKET_USERDATA, pUpcallInfo->pUserData->data, pUpcallInfo->pUserData->length);
 
         if (pUserDataArg)
         {
@@ -336,7 +336,7 @@ static OVS_ERROR _QueueUserspacePacket(_In_ NET_BUFFER* pNb, _In_ const OVS_UPCA
     }
 
     //we send the net buffer data and only it: starting from eth -> payload.
-    pNbArg = CreateArgumentWithSize(OVS_ARGTYPE_NETBUFFER, nbBuffer, bufLen);
+    pNbArg = CreateArgumentWithSize(OVS_ARGTYPE_PACKET_BUFFER, nbBuffer, bufLen);
     msg.pArgGroup->args[i] = *pNbArg;
     msg.pArgGroup->groupSize += pNbArg->length;
 

@@ -179,21 +179,21 @@ typedef enum _OVS_ARGTYPE
     /************************************* TARGET: PACKET; GROUP: MAIN *****************************************************/
 
     //GROUP NOTE: This group represents OVS_USPACE_PACKET_ATTRIBUTE
-    OVS_ARGTYPE_NETBUFFER_PI_GROUP = 0x81,
+    OVS_ARGTYPE_PACKET_PI_GROUP = 0x81,
 
-    OVS_ARGTYPE_FIRST_NETBUFFER = OVS_ARGTYPE_NETBUFFER_PI_GROUP,
+    OVS_ARGTYPE_FIRST_PACKET = OVS_ARGTYPE_PACKET_PI_GROUP,
 
     //Packet notifications (queue to userspace). It is the NET_BUFFER data.
     //data type: "void*", i.e. data opaque to the user
-    OVS_ARGTYPE_NETBUFFER,                      //0x82
+    OVS_ARGTYPE_PACKET_BUFFER,                      //0x82
 
     //actions to apply to packets being executed
-    OVS_ARGTYPE_NETBUFFER_ACTIONS_GROUP,        //0x83
+    OVS_ARGTYPE_PACKET_ACTIONS_GROUP,        //0x83
 
     //data type: OVS_ARGUMENT; it is set from userspace only.
-    OVS_ARGTYPE_NETBUFFER_USERDATA,            //0x084
+    OVS_ARGTYPE_PACKET_USERDATA,            //0x084
 
-    OVS_ARGTYPE_LAST_NETBUFFER = OVS_ARGTYPE_NETBUFFER_USERDATA,
+    OVS_ARGTYPE_LAST_PACKET = OVS_ARGTYPE_PACKET_USERDATA,
 
     /************************************ TARGET: FLOW / PACKET; group = ACTIONS **********************************************/
 
