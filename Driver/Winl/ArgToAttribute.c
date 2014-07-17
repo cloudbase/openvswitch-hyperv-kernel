@@ -323,7 +323,7 @@ static BOOLEAN _Reply_SetAttrType_Flow(OVS_MESSAGE_COMMAND_TYPE cmd, OVS_ARGTYPE
     {
         return _Reply_SetAttrType_PacketInfo(pArg);
     }
-    else if (parentArgType == OVS_ARGTYPE_GROUP_ACTIONS_UPCALL)
+    else if (parentArgType == OVS_ARGTYPE_ACTION_UPCALL_GROUP)
     {
         return _Reply_SetAttrType_PacketActionsUpcall(pArg);
     }
@@ -426,7 +426,7 @@ static BOOLEAN _Reply_SetAttrType_PacketActions(_Inout_ OVS_ARGUMENT* pArg)
         pArg->type = OVS_USPACE_ACTION_ATTRIBUTE_OUTPUT;
         break;
 
-    case OVS_ARGTYPE_GROUP_ACTIONS_UPCALL:
+    case OVS_ARGTYPE_ACTION_UPCALL_GROUP:
         pArg->type = OVS_USPACE_ACTION_ATTRIBUTE_USERSPACE;
         break;
 
@@ -476,7 +476,7 @@ static BOOLEAN _Reply_SetAttrType_Packet(OVS_MESSAGE_COMMAND_TYPE cmd, OVS_ARGTY
     {
         return _Reply_SetAttrType_PacketActions(pArg);
     }
-    else if (parentArgType == OVS_ARGTYPE_GROUP_ACTIONS_UPCALL)
+    else if (parentArgType == OVS_ARGTYPE_ACTION_UPCALL_GROUP)
     {
         return _Reply_SetAttrType_PacketActionsUpcall(pArg);
     }

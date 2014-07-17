@@ -29,7 +29,6 @@ typedef enum _OVS_ARGTYPE
     OVS_ARGTYPE_FIRST_GROUP = OVS_ARGTYPE_GROUP_MAIN,
 
     OVS_ARGTYPE_GROUP_MASK = 0x003,
-    OVS_ARGTYPE_GROUP_ACTIONS_UPCALL = 0x008,
     OVS_ARGTYPE_GROUP_ACTIONS_SAMPLE = 0x009,
     //contains packet info args to set
     OVS_ARGTYPE_GROUP_ACTIONS_SETINFO = 0x00A,
@@ -210,20 +209,22 @@ typedef enum _OVS_ARGTYPE
     OVS_ARGTYPE_ACTION_OUTPUT_TO_PORT = 0x0A1,
     OVS_ARGTYPE_FIRST_ACTION = OVS_ARGTYPE_ACTION_OUTPUT_TO_PORT,
 
+    OVS_ARGTYPE_ACTION_UPCALL_GROUP,         //0x0A2
+
     //Insert Vlan header into the packet
     //data type: OVS_ACTION_PUSH_VLAN
-    OVS_ARGTYPE_ACTION_PUSH_VLAN,            //0x0A2
+    OVS_ARGTYPE_ACTION_PUSH_VLAN,            //0x0A3
 
     //Remove the Vlan header from the packet.
     //TODO: it might be possible for a packet to be wrapped into multiple Vlan headers
     //data type: no data
-    OVS_ARGTYPE_ACTION_POP_VLAN,            //0x0A3
+    OVS_ARGTYPE_ACTION_POP_VLAN,            //0x0A4
 
     //TODO: NOT IMPLEMENTED!
-    OVS_ARGTYPE_ACTION_PUSH_MPLS,            //0x0A4
+    OVS_ARGTYPE_ACTION_PUSH_MPLS,            //0x0A5
 
     //TODO: NOT IMPLEMENTED!
-    OVS_ARGTYPE_ACTION_POP_MPLS,            //0x0A5
+    OVS_ARGTYPE_ACTION_POP_MPLS,            //0x0A6
 
     OVS_ARGTYPE_LAST_ACTION = OVS_ARGTYPE_ACTION_POP_MPLS,
 

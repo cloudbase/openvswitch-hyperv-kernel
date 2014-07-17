@@ -653,7 +653,7 @@ static BOOLEAN _CreateActionsArgsToList(const OVS_ARGUMENT_GROUP* pArgGroup, OVS
 
             break;
 
-        case OVS_ARGTYPE_GROUP_ACTIONS_UPCALL:
+        case OVS_ARGTYPE_ACTION_UPCALL_GROUP:
         {
             OVS_ARGUMENT_GROUP* pUpcallGroup = NULL;
             OVS_ARGUMENT* pUpcallArg = NULL;

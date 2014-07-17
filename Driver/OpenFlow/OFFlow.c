@@ -639,7 +639,7 @@ void FlowWithActions_ToString(const char* msg, _In_ const OVS_OFPACKET_INFO* pPa
             }
                 break;
 
-            case OVS_ARGTYPE_GROUP_ACTIONS_UPCALL:
+            case OVS_ARGTYPE_ACTION_UPCALL_GROUP:
                 RtlStringCchCatA(str, maxLen - 1, "upcall; ");
                 break;
 

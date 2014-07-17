@@ -300,8 +300,8 @@ static BOOLEAN _AttrType_To_ArgType_Actions(UINT16 attrType, OVS_ARGTYPE* pTypeA
 
         //NESTED
     case OVS_USPACE_ACTION_ATTRIBUTE_USERSPACE:
-        *pTypeAsArg = OVS_ARGTYPE_GROUP_ACTIONS_UPCALL;
-        DEBUGP_ARG(LOG_INFO, "rcv arg: OVS_ARGTYPE_PACKET_ACTIONS_UPCALL_GROUP\n");
+        *pTypeAsArg = OVS_ARGTYPE_ACTION_UPCALL_GROUP;
+        DEBUGP_ARG(LOG_INFO, "rcv arg: OVS_ARGTYPE_ACTION_UPCALL_GROUP\n");
         return TRUE;
 
     case OVS_USPACE_ACTION_ATTRIBUTE_SAMPLE:
@@ -426,7 +426,7 @@ static BOOLEAN _AttrType_To_ArgType_Packet(OVS_ARGTYPE parentArgType, UINT16 att
             return _AttrType_To_ArgType_Actions(attrType, pTypeAsArg);
         }
         //actions / userspace -> userspace actions; the attr is a userspace info in the upcall group
-        else if (parentArgType == OVS_ARGTYPE_GROUP_ACTIONS_UPCALL)
+        else if (parentArgType == OVS_ARGTYPE_ACTION_UPCALL_GROUP)
         {
             return _AttrType_To_ArgType_ActionsUserspace(attrType, pTypeAsArg);
         }
@@ -530,7 +530,7 @@ static BOOLEAN _AttrType_To_ArgType_Flow(OVS_ARGTYPE parentArgType, UINT16 attrT
             return _AttrType_To_ArgType_Actions(attrType, pTypeAsArg);
         }
         //actions / userspace -> userspace actions; the attr is a userspace info in the upcall group
-        else if (parentArgType == OVS_ARGTYPE_GROUP_ACTIONS_UPCALL)
+        else if (parentArgType == OVS_ARGTYPE_ACTION_UPCALL_GROUP)
         {
             return _AttrType_To_ArgType_ActionsUserspace(attrType, pTypeAsArg);
         }
