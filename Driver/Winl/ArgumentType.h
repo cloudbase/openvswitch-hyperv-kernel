@@ -146,7 +146,7 @@ typedef enum _OVS_ARGTYPE
 
     //Encapsulation Group = another set of packet info-s, for the encapsulation. contains: eth type, ip layer PI, transport layer PI
     //might have been an older version of "tunnel info". The encapsulation group does not appear to be used in latest versions of ovs
-    OVS_ARGTYPE_GROUP_PI_ENCAPSULATION,     //0x52
+    OVS_ARGTYPE_PI_ENCAP_GROUP,             //0x52
 
     //received from userspace
     OVS_ARGTYPE_GROUP_PI_TUNNEL,            //0x53

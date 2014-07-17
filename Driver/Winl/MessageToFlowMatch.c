@@ -407,7 +407,7 @@ static BOOLEAN _PIFromArgs_HandleEncap(_In_ const OVS_ARGUMENT_GROUP* pPIGroup, 
 
     pVlanTciArg = FindArgument(pPIGroup, OVS_ARGTYPE_PI_VLAN_TCI);
 
-    pEncapArg = FindArgument(pPIGroup, OVS_ARGTYPE_GROUP_PI_ENCAPSULATION);
+    pEncapArg = FindArgument(pPIGroup, OVS_ARGTYPE_PI_ENCAP_GROUP);
 
     if (!pVlanTciArg || !pEncapArg)
     {
@@ -556,7 +556,7 @@ BOOLEAN GetFlowMatchFromArguments(_Inout_ OVS_FLOW_MATCH* pFlowMatch, _In_ const
     {
         OVS_ARGUMENT* pEncapArg = NULL;
 
-        pEncapArg = FindArgument(pPIMaskGroup, OVS_ARGTYPE_GROUP_PI_ENCAPSULATION);
+        pEncapArg = FindArgument(pPIMaskGroup, OVS_ARGTYPE_PI_ENCAP_GROUP);
 
         if (pEncapArg)
         {

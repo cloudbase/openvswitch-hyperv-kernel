@@ -320,7 +320,7 @@ OVS_ARGTYPE GetParentGroupType(OVS_ARGTYPE childArgType)
         case OVS_ARGTYPE_GROUP_MASK:
             return OVS_ARGTYPE_PSEUDOGROUP_FLOW;
 
-        case OVS_ARGTYPE_GROUP_PI_ENCAPSULATION:
+        case OVS_ARGTYPE_PI_ENCAP_GROUP:
         case OVS_ARGTYPE_GROUP_PI_TUNNEL:
             return OVS_ARGTYPE_FLOW_PI_GROUP;
 
@@ -415,7 +415,7 @@ BOOLEAN GetArgumentExpectedSize(OVS_ARGTYPE argumentType, _Inout_ UINT* pSize)
     case OVS_ARGTYPE_GROUP_MASK:
         return _GetPIArgExpectedSize(argumentType, pSize);
 
-    case OVS_ARGTYPE_GROUP_PI_ENCAPSULATION:
+    case OVS_ARGTYPE_PI_ENCAP_GROUP:
         return _GetPIArgExpectedSize(argumentType, pSize);
 
     case OVS_ARGTYPE_GROUP_PI_TUNNEL:
@@ -1482,7 +1482,7 @@ VOID DbgPrintArgType(OVS_ARGTYPE argType, const char* padding, int index)
             DEBUGP_ARG(LOG_INFO, "GROUP: FLOW/KEY MASKS\n");
 
             break;
-        case OVS_ARGTYPE_GROUP_PI_ENCAPSULATION:
+        case OVS_ARGTYPE_PI_ENCAP_GROUP:
             DEBUGP_ARG(LOG_INFO, "GROUP: FLOW/PACKET ENCAPSULATION\n");
             break;
 
@@ -1561,7 +1561,7 @@ VOID DbgPrintArgType(OVS_ARGTYPE argType, const char* padding, int index)
             _DbgPrintArgType_PacketInfo(argType);
 
             break;
-        case OVS_ARGTYPE_GROUP_PI_ENCAPSULATION:
+        case OVS_ARGTYPE_PI_ENCAP_GROUP:
             _DbgPrintArgType_PacketInfo(argType);
             break;
 
@@ -1958,7 +1958,7 @@ static __inline BOOLEAN _VerifyArg_PacketInfo_EthType(OVS_ARGUMENT* pArg, BOOLEA
                 return FALSE;
             }
 
-            if (!FindArgument(pParentArg->data, OVS_ARGTYPE_GROUP_PI_ENCAPSULATION))
+            if (!FindArgument(pParentArg->data, OVS_ARGTYPE_PI_ENCAP_GROUP))
             {
                 return FALSE;
             }
@@ -2505,7 +2505,7 @@ BOOLEAN VerifyGroup_PacketInfo(BOOLEAN isMask, BOOLEAN isRequest, _In_ OVS_ARGUM
 
         switch (argType)
         {
-        case OVS_ARGTYPE_GROUP_PI_ENCAPSULATION:
+        case OVS_ARGTYPE_PI_ENCAP_GROUP:
             if (!_VerifyArg_PacketInfo_Encap(pArg, isMask, isRequest, checkTransportLayer, seekIp))
             {
                 return FALSE;

@@ -275,7 +275,7 @@ static BOOLEAN _Reply_SetAttrType_PacketInfo(OVS_ARGUMENT* pArg)
         OVS_CHECK(__NOT_IMPLEMENTED__);
         break;
 
-    case OVS_ARGTYPE_GROUP_PI_ENCAPSULATION:
+    case OVS_ARGTYPE_PI_ENCAP_GROUP:
         pArg->type = OVS_USPACE_KEY_ATTRIBUTE_ENCAP;
         break;
 
@@ -307,7 +307,7 @@ static BOOLEAN _Reply_SetAttrType_Flow(OVS_MESSAGE_COMMAND_TYPE cmd, OVS_ARGTYPE
     {
         return _Reply_SetAttrType_PITunnel(pArg);
     }
-    else if (parentArgType == OVS_ARGTYPE_GROUP_PI_ENCAPSULATION)
+    else if (parentArgType == OVS_ARGTYPE_PI_ENCAP_GROUP)
     {
         return _Reply_SetAttrType_PacketInfo(pArg);
     }
@@ -468,7 +468,7 @@ static BOOLEAN _Reply_SetAttrType_Packet(OVS_MESSAGE_COMMAND_TYPE cmd, OVS_ARGTY
     {
         return _Reply_SetAttrType_PITunnel(pArg);
     }
-    else if (parentArgType == OVS_ARGTYPE_GROUP_PI_ENCAPSULATION)
+    else if (parentArgType == OVS_ARGTYPE_PI_ENCAP_GROUP)
     {
         return _Reply_SetAttrType_PacketInfo(pArg);
     }

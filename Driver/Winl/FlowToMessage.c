@@ -856,7 +856,7 @@ static OVS_ARGUMENT* _CreateEncapsulationArg(const OVS_OFPACKET_INFO* pPacketInf
 
     pEncapsArg->data = pEncapsGroup;
     pEncapsArg->length = (UINT16)totalSize + OVS_ARGUMENT_GROUP_HEADER_SIZE;
-    pEncapsArg->type = OVS_ARGTYPE_GROUP_PI_ENCAPSULATION;
+    pEncapsArg->type = OVS_ARGTYPE_PI_ENCAP_GROUP;
 
     VerifyArgGroupSize(pEncapsArg->data);
 
