@@ -29,11 +29,6 @@ typedef enum _OVS_ARGTYPE
     OVS_ARGTYPE_FIRST_GROUP = OVS_ARGTYPE_GROUP_MAIN,
 
     OVS_ARGTYPE_GROUP_MASK = 0x003,
-    //Encapsulation Group = another set of packet info-s, for the encapsulation. contains: eth type, ip layer PI, transport layer PI
-    //might have been an older version of "tunnel info". The encapsulation group does not appear to be used in latest versions of ovs
-    OVS_ARGTYPE_GROUP_PI_ENCAPSULATION = 0x004,
-    //received from userspace
-    OVS_ARGTYPE_GROUP_PI_TUNNEL = 0x005,
     //actions for packet
     OVS_ARGTYPE_GROUP_ACTIONS = 0x007,
     OVS_ARGTYPE_GROUP_ACTIONS_UPCALL = 0x008,
@@ -94,7 +89,6 @@ typedef enum _OVS_ARGTYPE
     //NOTE: might be QoS priority; might have no meaning for windows.
     //data type: UINT32
     OVS_ARGTYPE_PI_PACKET_PRIORITY = 0x041,
-
     OVS_ARGTYPE_FIRST_KEY = OVS_ARGTYPE_PI_PACKET_PRIORITY,
 
     //source port / input port, given as the ovs port number (not hyper-v switch port id)
@@ -150,7 +144,13 @@ typedef enum _OVS_ARGTYPE
     //data type: OVS_PI_MPLS, see FlowKey.h
     OVS_ARGTYPE_PI_MPLS,                    //0x051
 
-    OVS_ARGTYPE_LAST_KEY = OVS_ARGTYPE_PI_MPLS,
+    //Encapsulation Group = another set of packet info-s, for the encapsulation. contains: eth type, ip layer PI, transport layer PI
+    //might have been an older version of "tunnel info". The encapsulation group does not appear to be used in latest versions of ovs
+    OVS_ARGTYPE_GROUP_PI_ENCAPSULATION,     //0x52
+
+    //received from userspace
+    OVS_ARGTYPE_GROUP_PI_TUNNEL,            //0x53
+    OVS_ARGTYPE_LAST_KEY = OVS_ARGTYPE_GROUP_PI_TUNNEL,
 
     /******************************************* TARGET: FLOW: group = KEY / TUNNEL (FROM USERSPACE ONLY!) **********************************************/
 
