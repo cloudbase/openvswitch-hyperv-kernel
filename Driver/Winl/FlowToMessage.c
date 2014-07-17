@@ -411,8 +411,8 @@ static BOOLEAN _SampleActionToList(const OVS_ARGUMENT_GROUP* pArgGroup, OVS_ARGU
 
             break;
 
-        case OVS_ARGTYPE_GROUP_ACTIONS:
-            _CreateActionsGroupToList(OVS_ARGTYPE_GROUP_ACTIONS, pArg->data, &pCurListArg);
+        case OVS_ARGTYPE_ACTION_SAMPLE_ACTIONS_GROUP:
+            _CreateActionsGroupToList(OVS_ARGTYPE_ACTION_SAMPLE_ACTIONS_GROUP, pArg->data, &pCurListArg);
             break;
         }
     }
@@ -703,7 +703,7 @@ static BOOLEAN _CreateActionsArgsToList(const OVS_ARGUMENT_GROUP* pArgGroup, OVS
     return TRUE;
 }
 
-static OVS_ARGUMENT* _CreateActionsGroup(const OVS_ARGUMENT_GROUP* pActions)
+static OVS_ARGUMENT* _CreateFlowActionsGroup(const OVS_ARGUMENT_GROUP* pActions)
 {
     OVS_ARGUMENT_GROUP* pActionsGroup = NULL;
     OVS_ARGUMENT* argArray = NULL, *pActionsArg = NULL;
@@ -761,7 +761,7 @@ static OVS_ARGUMENT* _CreateActionsGroup(const OVS_ARGUMENT_GROUP* pActions)
 
     pActionsArg->data = pActionsGroup;
     pActionsArg->length = pActionsGroup->groupSize + OVS_ARGUMENT_GROUP_HEADER_SIZE;
-    pActionsArg->type = OVS_ARGTYPE_GROUP_ACTIONS;
+    pActionsArg->type = OVS_ARGTYPE_FLOW_ACTIONS_GROUP;
 
 Cleanup:
     if (ok)
@@ -1332,7 +1332,7 @@ BOOLEAN CreateMsgFromFlow(_In_ const OVS_FLOW* pFlow, UINT8 command, _Inout_ OVS
     //NOTE: we don't need to use OVS_REFERENCE for pFlow->pActions here
     //because the actions cannot be deleted while under the lock of pFlow
     //pFlow is here referenced, so it and its Actions cannot be deleted
-    pActionsArg = _CreateActionsGroup(pFlow->pActions->pActionGroup);
+    pActionsArg = _CreateFlowActionsGroup(pFlow->pActions->pActionGroup);
     FLOW_UNLOCK(pFlow, &lockState);
 
     if (!pActionsArg)

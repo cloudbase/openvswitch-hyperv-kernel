@@ -346,7 +346,7 @@ static BOOLEAN _AttrType_To_ArgType_ActionsSample(UINT16 attrType, OVS_ARGTYPE* 
     {
         //NESTED
     case OVS_USPACE_SAMPLE_ATTRIBUTE_ACTIONS:
-        *pTypeAsArg = OVS_ARGTYPE_GROUP_ACTIONS;
+        *pTypeAsArg = OVS_ARGTYPE_ACTION_SAMPLE_ACTIONS_GROUP;
         DEBUGP_ARG(LOG_INFO, "rcv arg: OVS_ARGTYPE_PACKET_ACTIONS_GROUP\n");
         return TRUE;
 
@@ -377,7 +377,7 @@ static BOOLEAN _AttrType_To_ArgType_Packet(OVS_ARGTYPE parentArgType, UINT16 att
             return TRUE;
 
         case OVS_USPACE_PACKET_ATTRIBUTE_ACTIONS:
-            *pTypeAsArg = OVS_ARGTYPE_GROUP_ACTIONS;
+            *pTypeAsArg = OVS_ARGTYPE_NETBUFFER_ACTIONS_GROUP;
             DEBUGP_ARG(LOG_INFO, "rcv arg: OVS_ARGTYPE_PACKET_ACTIONS_GROUP\n");
             return TRUE;
 
@@ -421,7 +421,7 @@ static BOOLEAN _AttrType_To_ArgType_Packet(OVS_ARGTYPE parentArgType, UINT16 att
             return _AttrType_To_ArgType_FlowKeyTunnel(attrType, pTypeAsArg);
         }
         //actions - the attr is an action
-        else if (parentArgType == OVS_ARGTYPE_GROUP_ACTIONS)
+        else if (parentArgType == OVS_ARGTYPE_NETBUFFER_ACTIONS_GROUP)
         {
             return _AttrType_To_ArgType_Actions(attrType, pTypeAsArg);
         }
@@ -434,6 +434,11 @@ static BOOLEAN _AttrType_To_ArgType_Packet(OVS_ARGTYPE parentArgType, UINT16 att
         else if (parentArgType == OVS_ARGTYPE_GROUP_ACTIONS_SAMPLE)
         {
             return _AttrType_To_ArgType_ActionsSample(attrType, pTypeAsArg);
+        }
+        //actions - the attr is an action
+        else if (parentArgType == OVS_ARGTYPE_ACTION_SAMPLE_ACTIONS_GROUP)
+        {
+            return _AttrType_To_ArgType_Actions(attrType, pTypeAsArg);
         }
         else if (parentArgType == OVS_ARGTYPE_GROUP_ACTIONS_SETINFO)
         {
@@ -467,7 +472,7 @@ static BOOLEAN _AttrType_To_ArgType_Flow(OVS_ARGTYPE parentArgType, UINT16 attrT
             return TRUE;
 
         case OVS_USPACE_FLOW_ATTRIBUTE_ACTIONS:
-            *pTypeAsArg = OVS_ARGTYPE_GROUP_ACTIONS;
+            *pTypeAsArg = OVS_ARGTYPE_FLOW_ACTIONS_GROUP;
             DEBUGP_ARG(LOG_INFO, "rcv arg: OVS_ARGTYPE_PACKET_ACTIONS_GROUP\n");
             return TRUE;
 
@@ -520,7 +525,7 @@ static BOOLEAN _AttrType_To_ArgType_Flow(OVS_ARGTYPE parentArgType, UINT16 attrT
             return _AttrType_To_ArgType_FlowKeyTunnel(attrType, pTypeAsArg);
         }
         //actions - the attr is an action
-        else if (parentArgType == OVS_ARGTYPE_GROUP_ACTIONS)
+        else if (parentArgType == OVS_ARGTYPE_FLOW_ACTIONS_GROUP)
         {
             return _AttrType_To_ArgType_Actions(attrType, pTypeAsArg);
         }
@@ -531,6 +536,11 @@ static BOOLEAN _AttrType_To_ArgType_Flow(OVS_ARGTYPE parentArgType, UINT16 attrT
         }
         //actions / sample -> actions; the attr is an action
         else if (parentArgType == OVS_ARGTYPE_GROUP_ACTIONS_SAMPLE)
+        {
+            return _AttrType_To_ArgType_Actions(attrType, pTypeAsArg);
+        }
+        //actions - the attr is an action
+        else if (parentArgType == OVS_ARGTYPE_ACTION_SAMPLE_ACTIONS_GROUP)
         {
             return _AttrType_To_ArgType_Actions(attrType, pTypeAsArg);
         }

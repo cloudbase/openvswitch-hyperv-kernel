@@ -324,14 +324,18 @@ OVS_ARGTYPE GetParentGroupType(OVS_ARGTYPE childArgType)
         case OVS_ARGTYPE_PI_TUNNEL_GROUP:
             return OVS_ARGTYPE_FLOW_PI_GROUP;
 
-        case OVS_ARGTYPE_GROUP_ACTIONS:
+        case OVS_ARGTYPE_NETBUFFER_ACTIONS_GROUP:
         case OVS_ARGTYPE_NETBUFFER_PI_GROUP:
             return OVS_ARGTYPE_PSEUDOGROUP_PACKET;
 
         case OVS_ARGTYPE_GROUP_ACTIONS_UPCALL:
         case OVS_ARGTYPE_GROUP_ACTIONS_SAMPLE:
         case OVS_ARGTYPE_GROUP_ACTIONS_SETINFO:
-            return OVS_ARGTYPE_GROUP_ACTIONS;
+            return OVS_ARGTYPE_FLOW_ACTIONS_GROUP;
+
+        case OVS_ARGTYPE_ACTION_SAMPLE_ACTIONS_GROUP:
+        case OVS_ARGTYPE_ACTION_SAMPLE_PROBABILITY:
+            return OVS_ARGTYPE_GROUP_ACTIONS_SAMPLE;
 
         case OVS_ARGTYPE_GROUP_OFPORT_OPTIONS:
             return OVS_ARGTYPE_PSEUDOGROUP_OFPORT;
@@ -348,7 +352,7 @@ OVS_ARGTYPE GetParentGroupType(OVS_ARGTYPE childArgType)
     }
     else if (childArgType >= OVS_ARGTYPE_FIRST_ACTION && childArgType <= OVS_ARGTYPE_LAST_ACTION)
     {
-        return OVS_ARGTYPE_GROUP_ACTIONS;
+        return OVS_ARGTYPE_FLOW_ACTIONS_GROUP;
     }
     else if (childArgType >= OVS_ARGTYPE_FIRST_ACTIONS_SAMPLE && childArgType <= OVS_ARGTYPE_LAST_ACTIONS_SAMPLE)
     {
@@ -424,7 +428,9 @@ BOOLEAN GetArgumentExpectedSize(OVS_ARGTYPE argumentType, _Inout_ UINT* pSize)
     case OVS_ARGTYPE_PSEUDOGROUP_PACKET:
         return _GetPacketArgExpectedSize(argumentType, pSize);
 
-    case OVS_ARGTYPE_GROUP_ACTIONS:
+    case OVS_ARGTYPE_FLOW_ACTIONS_GROUP:
+    case OVS_ARGTYPE_NETBUFFER_ACTIONS_GROUP:
+    case OVS_ARGTYPE_ACTION_SAMPLE_ACTIONS_GROUP:
         return _GetPacketActionsArgExpectedSize(argumentType, pSize);
 
     case OVS_ARGTYPE_GROUP_ACTIONS_UPCALL:
@@ -1494,8 +1500,16 @@ VOID DbgPrintArgType(OVS_ARGTYPE argType, const char* padding, int index)
             DEBUGP_ARG(LOG_INFO, "GROUP: PACKET\n");
             break;
 
-        case OVS_ARGTYPE_GROUP_ACTIONS:
+        case OVS_ARGTYPE_FLOW_ACTIONS_GROUP:
+            DEBUGP_ARG(LOG_INFO, "GROUP: FLOW/ACTIONS\n");
+            break;
+
+        case OVS_ARGTYPE_NETBUFFER_ACTIONS_GROUP:
             DEBUGP_ARG(LOG_INFO, "GROUP: PACKET/ACTIONS\n");
+            break;
+
+        case OVS_ARGTYPE_ACTION_SAMPLE_ACTIONS_GROUP:
+            DEBUGP_ARG(LOG_INFO, "GROUP: ACTIONS/SAMPLE/ACTIONS\n");
             break;
 
         case OVS_ARGTYPE_GROUP_ACTIONS_UPCALL:
@@ -1573,7 +1587,9 @@ VOID DbgPrintArgType(OVS_ARGTYPE argType, const char* padding, int index)
             _DbgPrintArgType_Packet(argType);
             break;
 
-        case OVS_ARGTYPE_GROUP_ACTIONS:
+        case OVS_ARGTYPE_FLOW_ACTIONS_GROUP:
+        case OVS_ARGTYPE_NETBUFFER_ACTIONS_GROUP:
+        case OVS_ARGTYPE_ACTION_SAMPLE_ACTIONS_GROUP:
             _DbgPrintArgType_PacketActions(argType);
             break;
 
@@ -2805,7 +2821,7 @@ static __inline BOOLEAN _VerifyGroup_PacketActionsSample(OVS_ARGUMENT* pParentAr
 
         switch (argType)
         {
-        case OVS_ARGTYPE_GROUP_ACTIONS:
+        case OVS_ARGTYPE_ACTION_SAMPLE_ACTIONS_GROUP:
             if (!VerifyGroup_PacketActions(pArg->data, isRequest))
             {
                 return FALSE;

@@ -648,9 +648,9 @@ static BOOLEAN _VerifyFlowMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_
             return FALSE;
         }
 
-        if (!FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_GROUP_ACTIONS))
+        if (!FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_FLOW_ACTIONS_GROUP))
         {
-            DEBUGP_ARG(LOG_ERROR, "Flow cmd NEW does not have main argtype: 0x%x", OVS_ARGTYPE_GROUP_ACTIONS);
+            DEBUGP_ARG(LOG_ERROR, "Flow cmd NEW does not have main argtype: 0x%x", OVS_ARGTYPE_FLOW_ACTIONS_GROUP);
             OVS_CHECK(0);
             return FALSE;
         }
@@ -706,7 +706,7 @@ static BOOLEAN _VerifyFlowMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_
 
                 //NOTE: set info cannot check here if the given packet info specify eth type / proto acc to set info
                 //nor can check the masks.
-            case OVS_ARGTYPE_GROUP_ACTIONS:
+            case OVS_ARGTYPE_FLOW_ACTIONS_GROUP:
                 if (!VerifyGroup_PacketActions(pMainGroupArg, /*request*/ TRUE))
                 {
                     return FALSE;
@@ -746,7 +746,7 @@ static BOOLEAN _VerifyFlowMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_
                 }
                 break;
 
-            case OVS_ARGTYPE_GROUP_ACTIONS:
+            case OVS_ARGTYPE_FLOW_ACTIONS_GROUP:
                 if (!VerifyGroup_PacketActions(pMainGroupArg, /*request*/ TRUE))
                 {
                     return FALSE;
@@ -863,7 +863,7 @@ static BOOLEAN _VerifyFlowMessageReply(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_ME
 
         switch (argType)
         {
-        case OVS_ARGTYPE_GROUP_ACTIONS:
+        case OVS_ARGTYPE_FLOW_ACTIONS_GROUP:
             if (!VerifyGroup_PacketActions(pMainGroupArg, /*request*/ FALSE))
             {
                 return FALSE;
@@ -959,10 +959,10 @@ static BOOLEAN _VerifyPacketMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OV
         return FALSE;
     }
 
-    pArg = FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_GROUP_ACTIONS);
+    pArg = FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_NETBUFFER_ACTIONS_GROUP);
     if (!pArg)
     {
-        DEBUGP_ARG(LOG_ERROR, "Flow cmd NEW does not have main argtype: 0x%x", OVS_ARGTYPE_GROUP_ACTIONS);
+        DEBUGP_ARG(LOG_ERROR, "Flow cmd NEW does not have main argtype: 0x%x", OVS_ARGTYPE_NETBUFFER_ACTIONS_GROUP);
         OVS_CHECK(0);
         return FALSE;
     }
@@ -990,7 +990,7 @@ static BOOLEAN _VerifyPacketMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OV
 
             //NOTE: set info cannot check here if the given packet info-s specify eth type / proto acc to set info
             //nor can check the masks.
-        case OVS_ARGTYPE_GROUP_ACTIONS:
+        case OVS_ARGTYPE_NETBUFFER_ACTIONS_GROUP:
             if (!VerifyGroup_PacketActions(pMainGroupArg, /*request*/ TRUE))
             {
                 return FALSE;

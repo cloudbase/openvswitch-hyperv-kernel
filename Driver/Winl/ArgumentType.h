@@ -29,8 +29,6 @@ typedef enum _OVS_ARGTYPE
     OVS_ARGTYPE_FIRST_GROUP = OVS_ARGTYPE_GROUP_MAIN,
 
     OVS_ARGTYPE_GROUP_MASK = 0x003,
-    //actions for packet
-    OVS_ARGTYPE_GROUP_ACTIONS = 0x007,
     OVS_ARGTYPE_GROUP_ACTIONS_UPCALL = 0x008,
     OVS_ARGTYPE_GROUP_ACTIONS_SAMPLE = 0x009,
     //contains packet info args to set
@@ -54,29 +52,32 @@ typedef enum _OVS_ARGTYPE
     OVS_ARGTYPE_FLOW_PI_GROUP = 0x21,
     OVS_ARGTYPE_FIRST_FLOW = OVS_ARGTYPE_FLOW_PI_GROUP,
 
+    //actions to apply to packets matching the flow
+    OVS_ARGTYPE_FLOW_ACTIONS_GROUP,             //0x22
+
     //Flow request: ignored
     //Flow reply: only if there have been packets matched by the flow
     //Data Type: OVS_WINL_FLOW_STATS
-    OVS_ARGTYPE_FLOW_STATS,                     //0x22
+    OVS_ARGTYPE_FLOW_STATS,                     //0x23
 
     //All tcp control bits / flags that were on packets matched by this flow
     //Flow request: ignored
     //Flow reply: only if tcpFlags != 0
     //data type: UINT8
-    OVS_ARGTYPE_FLOW_TCP_FLAGS,                //0x023
+    OVS_ARGTYPE_FLOW_TCP_FLAGS,                //0x024
 
     //The time at which the last packet was matched by this flow. The time is given by performance counter
     //(i.e. by windows' system monotonic clock), in miliseconds
     //Flow request: ignored
     //Flow reply: only if there have been packets matched by the flow
     //data type: UINT64
-    OVS_ARGTYPE_FLOW_TIME_USED,                //0x024
+    OVS_ARGTYPE_FLOW_TIME_USED,                //0x025
 
     //Used to clear from the flow: last used time, tcpFlags, and statistics.
     //Flow request: for Flow_Set or Flow_New with override (i.e. when flow already exists)
     //Flow reply: not used
     //data type: no data
-    OVS_ARGTYPE_FLOW_CLEAR,                    //0x025
+    OVS_ARGTYPE_FLOW_CLEAR,                    //0x026
 
     OVS_ARGTYPE_LAST_FLOW = OVS_ARGTYPE_FLOW_CLEAR,
 
@@ -192,8 +193,11 @@ typedef enum _OVS_ARGTYPE
     //data type: "void*", i.e. data opaque to the user
     OVS_ARGTYPE_NETBUFFER,                      //0x82
 
+    //actions to apply to packets being executed
+    OVS_ARGTYPE_NETBUFFER_ACTIONS_GROUP,        //0x83
+
     //data type: OVS_ARGUMENT; it is set from userspace only.
-    OVS_ARGTYPE_NETBUFFER_USERDATA,            //0x083
+    OVS_ARGTYPE_NETBUFFER_USERDATA,            //0x084
 
     OVS_ARGTYPE_LAST_NETBUFFER = OVS_ARGTYPE_NETBUFFER_USERDATA,
 
@@ -251,7 +255,10 @@ typedef enum _OVS_ARGTYPE
     OVS_ARGTYPE_ACTION_SAMPLE_PROBABILITY = 0x0E1,
     OVS_ARGTYPE_FIRST_ACTIONS_SAMPLE = OVS_ARGTYPE_ACTION_SAMPLE_PROBABILITY,
 
-    OVS_ARGTYPE_LAST_ACTIONS_SAMPLE = OVS_ARGTYPE_ACTION_SAMPLE_PROBABILITY,
+    //actions to apply to packets (being executed / matched by flow) in a sample action
+    OVS_ARGTYPE_ACTION_SAMPLE_ACTIONS_GROUP,        //0x0E2
+
+    OVS_ARGTYPE_LAST_ACTIONS_SAMPLE = OVS_ARGTYPE_ACTION_SAMPLE_ACTIONS_GROUP,
 
     /******************************************** TARGET: DATAPATH; group: MAIN *********************************************/
 

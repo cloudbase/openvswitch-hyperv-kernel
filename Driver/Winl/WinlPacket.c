@@ -85,7 +85,7 @@ VOID Packet_Execute(_In_ OVS_ARGUMENT_GROUP* pArgGroup, const FILE_OBJECT* pFile
         return;
     }
 
-    pActionsArgs = FindArgumentGroup(pArgGroup, OVS_ARGTYPE_GROUP_ACTIONS);
+    pActionsArgs = FindArgumentGroup(pArgGroup, OVS_ARGTYPE_NETBUFFER_ACTIONS_GROUP);
     if (!pActionsArgs)
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " fail: have no arg group actions!\n");

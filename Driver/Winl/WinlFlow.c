@@ -68,7 +68,7 @@ OVS_ERROR Flow_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         return OVS_ERROR_INVAL;
     }
 
-    pFlowActionGroupArg = FindArgumentGroupAsArg(pMsg->pArgGroup, OVS_ARGTYPE_GROUP_ACTIONS);
+    pFlowActionGroupArg = FindArgumentGroupAsArg(pMsg->pArgGroup, OVS_ARGTYPE_FLOW_ACTIONS_GROUP);
     if (pFlowActionGroupArg)
     {
         OVS_ARGUMENT_GROUP* pOriginalGroup = pFlowActionGroupArg->data;
@@ -299,7 +299,7 @@ OVS_ERROR Flow_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         return OVS_ERROR_INVAL;
     }
 
-    pFlowActionGroupArg = FindArgumentGroupAsArg(pMsg->pArgGroup, OVS_ARGTYPE_GROUP_ACTIONS);
+    pFlowActionGroupArg = FindArgumentGroupAsArg(pMsg->pArgGroup, OVS_ARGTYPE_FLOW_ACTIONS_GROUP);
     if (pFlowActionGroupArg)
     {
         OVS_ARGUMENT_GROUP* pOriginalGroup = pFlowActionGroupArg->data;
