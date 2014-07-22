@@ -20,9 +20,9 @@ limitations under the License.
 
 static BOOLEAN _AttrType_To_ArgType_Datapath(OVS_ARGTYPE parentArgType, UINT16 attrType, OVS_ARGTYPE* pTypeAsArg)
 {
-    *pTypeAsArg = OVS_ARGTYPE_GROUP_MAIN;
+    *pTypeAsArg = OVS_ARGTYPE_INVALID;
 
-    if (parentArgType != OVS_ARGTYPE_GROUP_MAIN)
+    if (parentArgType != OVS_ARGTYPE_PSEUDOGROUP_DATAPATH)
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " - unexpected parrent attr type: %u\n", parentArgType);
         return FALSE;
@@ -53,9 +53,9 @@ static BOOLEAN _AttrType_To_ArgType_Datapath(OVS_ARGTYPE parentArgType, UINT16 a
 
 static BOOLEAN _AttrType_To_ArgType_Port(OVS_ARGTYPE parentArgType, UINT16 attrType, OVS_ARGTYPE* pTypeAsArg)
 {
-    *pTypeAsArg = OVS_ARGTYPE_GROUP_MAIN;
+    *pTypeAsArg = OVS_ARGTYPE_INVALID;
 
-    if (parentArgType == OVS_ARGTYPE_GROUP_MAIN)
+    if (parentArgType == OVS_ARGTYPE_PSEUDOGROUP_OFPORT)
     {
         switch (attrType)
         {
@@ -364,9 +364,9 @@ static BOOLEAN _AttrType_To_ArgType_ActionsSample(UINT16 attrType, OVS_ARGTYPE* 
 
 static BOOLEAN _AttrType_To_ArgType_Packet(OVS_ARGTYPE parentArgType, UINT16 attrType, OVS_ARGTYPE* pTypeAsArg)
 {
-    *pTypeAsArg = OVS_ARGTYPE_GROUP_MAIN;
+    *pTypeAsArg = OVS_ARGTYPE_INVALID;
 
-    if (parentArgType == OVS_ARGTYPE_GROUP_MAIN)
+    if (parentArgType == OVS_ARGTYPE_PSEUDOGROUP_PACKET)
     {
         switch (attrType)
         {
@@ -454,9 +454,9 @@ static BOOLEAN _AttrType_To_ArgType_Packet(OVS_ARGTYPE parentArgType, UINT16 att
 
 static BOOLEAN _AttrType_To_ArgType_Flow(OVS_ARGTYPE parentArgType, UINT16 attrType, OVS_ARGTYPE* pTypeAsArg)
 {
-    *pTypeAsArg = OVS_ARGTYPE_GROUP_MAIN;
+    *pTypeAsArg = OVS_ARGTYPE_INVALID;
 
-    if (parentArgType == OVS_ARGTYPE_GROUP_MAIN)
+    if (parentArgType == OVS_ARGTYPE_PSEUDOGROUP_FLOW)
     {
         switch (attrType)
         {

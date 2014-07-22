@@ -28,7 +28,7 @@ static BOOLEAN _ParseArgGroup_FromAttributes(_In_ BYTE** ppBuffer, UINT16* pByte
 static BOOLEAN _ParseAttribute(_In_ BYTE** pBuffer, UINT16* pBytesLeft, _Inout_ OVS_ARGUMENT* pOutArg, OVS_ARGTYPE parentArgType, UINT16 targetType, UINT8 cmd)
 {
     OVS_ARGUMENT* pAttribute = (OVS_ARGUMENT*)*pBuffer;
-    OVS_ARGTYPE typeAsArg = OVS_ARGTYPE_GROUP_MAIN;
+    OVS_ARGTYPE typeAsArg = OVS_ARGTYPE_INVALID;
 
     if (*pBytesLeft < OVS_ARGUMENT_HEADER_SIZE)
     {
@@ -136,9 +136,16 @@ BOOLEAN _ParseArgGroup_FromAttributes(_In_ BYTE** ppBuffer, UINT16* pBytesLeft, 
     if (groupSize == 0)
     {
         //the main group must have count args > 0
-        if (parentArgType == OVS_ARGTYPE_GROUP_MAIN)
+        switch (parentArgType)
         {
+        case OVS_ARGTYPE_PSEUDOGROUP_DATAPATH:
+        case OVS_ARGTYPE_PSEUDOGROUP_FLOW:
+        case OVS_ARGTYPE_PSEUDOGROUP_OFPORT:
+        case OVS_ARGTYPE_PSEUDOGROUP_PACKET:
             return FALSE;
+        default:
+            //nothing special for default
+            break;
         }
 
         RtlZeroMemory(pGroup, sizeof(OVS_ARGUMENT_GROUP));
@@ -179,6 +186,7 @@ BOOLEAN ParseReceivedMessage(VOID* buffer, UINT16 length, _Out_ OVS_NLMSGHDR** p
     OVS_MESSAGE* pBufferedMsg = buffer, *pMessage = NULL;
     OVS_NLMSGHDR* pNlMessage = NULL;
     BOOLEAN ok = TRUE;
+    OVS_ARGTYPE mainArgType = OVS_ARGTYPE_INVALID;
 
     OVS_CHECK(ppNlMessage);
     *ppNlMessage = NULL;
@@ -294,7 +302,9 @@ BOOLEAN ParseReceivedMessage(VOID* buffer, UINT16 length, _Out_ OVS_NLMSGHDR** p
 
     DEBUGP_ARG(LOG_INFO, "arg hdr size: 0x%x; group hdr size: 0x%x\n", OVS_ARGUMENT_HEADER_SIZE, OVS_ARGUMENT_GROUP_HEADER_SIZE);
 
-    if (!_ParseArgGroup_FromAttributes((BYTE**)&buffer, &bytesLeft, bytesLeft, /*out*/pMessage->pArgGroup, OVS_ARGTYPE_GROUP_MAIN, pMessage->type, pMessage->command))
+    mainArgType = MessageTargetTypeToArgType(pMessage->type);
+
+    if (!_ParseArgGroup_FromAttributes((BYTE**)&buffer, &bytesLeft, bytesLeft, /*out*/pMessage->pArgGroup, mainArgType, pMessage->type, pMessage->command))
     {
         OVS_CHECK(__UNEXPECTED__);
 
@@ -393,7 +403,7 @@ static OVS_ARGUMENT* _ArgumentsToAttributes(ULONG target, ULONG cmd, OVS_ARGTYPE
 
             groupSize += pAttr->length;
 
-            if (!Reply_SetAttrType(target, parentArgType, pAttr))
+            if (!Reply_SetAttrType(parentArgType, pAttr))
             {
                 KFree(pSubAttrs);
 
@@ -411,7 +421,7 @@ static OVS_ARGUMENT* _ArgumentsToAttributes(ULONG target, ULONG cmd, OVS_ARGTYPE
 
             groupSize += pAttr->length;
 
-            if (!Reply_SetAttrType(target, parentArgType, pAttr))
+            if (!Reply_SetAttrType(parentArgType, pAttr))
             {
                 ok = FALSE;
                 break;
@@ -588,8 +598,10 @@ BOOLEAN WriteMsgsToBuffer(_In_ OVS_NLMSGHDR* pMsgs, int countMsgs, OVS_BUFFER* p
         {
             OVS_MESSAGE* pMsg = (OVS_MESSAGE*)pNlMsg;
             UINT16 groupSize = 0;
+            OVS_ARGTYPE mainArgType = OVS_ARGTYPE_INVALID;
 
-            pAttributes = _ArgumentsToAttributes(pMsg->type, pMsg->command, OVS_ARGTYPE_GROUP_MAIN, pGroup->args, pGroup->count, &groupSize);
+            mainArgType = MessageTargetTypeToArgType(pMsg->type);
+            pAttributes = _ArgumentsToAttributes(pMsg->type, pMsg->command, mainArgType, pGroup->args, pGroup->count, &groupSize);
 
             if (!pAttributes)
             {
@@ -599,7 +611,7 @@ BOOLEAN WriteMsgsToBuffer(_In_ OVS_NLMSGHDR* pMsgs, int countMsgs, OVS_BUFFER* p
 
             for (UINT i = 0; i < pGroup->count; ++i)
             {
-                _WriteArgToBuffer_AsAttribute(pMsg->type, &pos, OVS_ARGTYPE_GROUP_MAIN, pAttributes + i, &offset);
+                _WriteArgToBuffer_AsAttribute(pMsg->type, &pos, mainArgType, pAttributes + i, &offset);
             }
 
             _DestroyAttributes(pAttributes, pMsg->pArgGroup->count);
@@ -618,6 +630,7 @@ BOOLEAN WriteMsgsToBuffer(_In_ OVS_NLMSGHDR* pMsgs, int countMsgs, OVS_BUFFER* p
 static BOOLEAN _VerifyFlowMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_MESSAGE* pMsg)
 {
     OVS_ARGUMENT* pArg = NULL;
+    OVS_ARGTYPE mainArgType = OVS_ARGTYPE_INVALID;
 
     switch (cmd)
     {
@@ -837,7 +850,8 @@ static BOOLEAN _VerifyFlowMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_
         }
     }
 
-    if (!VerifyArgumentGroup(pMsg->pArgGroup, OVS_ARGTYPE_GROUP_MAIN))
+    mainArgType = MessageTargetTypeToArgType(pMsg->type);
+    if (!VerifyArgumentGroup(pMsg->pArgGroup, mainArgType))
     {
         return FALSE;
     }
@@ -848,6 +862,7 @@ static BOOLEAN _VerifyFlowMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_
 static BOOLEAN _VerifyFlowMessageReply(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_MESSAGE* pMsg)
 {
     UNREFERENCED_PARAMETER(cmd);
+    OVS_ARGTYPE mainArgType = OVS_ARGTYPE_INVALID;
 
     for (UINT i = 0; i < pMsg->pArgGroup->count; ++i)
     {
@@ -912,7 +927,8 @@ static BOOLEAN _VerifyFlowMessageReply(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_ME
         }
     }
 
-    if (!VerifyArgumentGroup(pMsg->pArgGroup, OVS_ARGTYPE_GROUP_MAIN))
+    mainArgType = MessageTargetTypeToArgType(pMsg->type);
+    if (!VerifyArgumentGroup(pMsg->pArgGroup, mainArgType))
     {
         return FALSE;
     }
@@ -934,6 +950,7 @@ static BOOLEAN _VerifyArg_PacketBuffer(OVS_ARGUMENT* pPacketBufferArg)
 static BOOLEAN _VerifyPacketMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_MESSAGE* pMsg)
 {
     OVS_ARGUMENT* pArg = NULL;
+    OVS_ARGTYPE mainArgType = OVS_ARGTYPE_INVALID;
 
     if (cmd != OVS_MESSAGE_COMMAND_PACKET_UPCALL_EXECUTE)
     {
@@ -1004,7 +1021,8 @@ static BOOLEAN _VerifyPacketMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OV
         }
     }
 
-    if (!VerifyArgumentGroup(pMsg->pArgGroup, OVS_ARGTYPE_GROUP_MAIN))
+    mainArgType = MessageTargetTypeToArgType(pMsg->type);
+    if (!VerifyArgumentGroup(pMsg->pArgGroup, mainArgType))
     {
         return FALSE;
     }
@@ -1023,6 +1041,8 @@ static BOOLEAN _VerifyArg_UserData(OVS_ARGUMENT* pUserDataArg)
 
 static BOOLEAN _VerifyPacketMessageReply(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_MESSAGE* pMsg)
 {
+    OVS_ARGTYPE mainArgType = OVS_ARGTYPE_INVALID;
+
     //req: OVS_ARGTYPE_GROUP_PI
     //opt: OVS_ARGTYPE_PACKET_USERDATA
     //req: OVS_ARGTYPE_PACKET_BUFFER
@@ -1080,7 +1100,8 @@ static BOOLEAN _VerifyPacketMessageReply(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_
         }
     }
 
-    if (!VerifyArgumentGroup(pMsg->pArgGroup, OVS_ARGTYPE_GROUP_MAIN))
+    mainArgType = MessageTargetTypeToArgType(pMsg->type);
+    if (!VerifyArgumentGroup(pMsg->pArgGroup, mainArgType))
     {
         return FALSE;
     }
@@ -1090,6 +1111,8 @@ static BOOLEAN _VerifyPacketMessageReply(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_
 
 static BOOLEAN _VerifyDatapathMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_MESSAGE* pMsg)
 {
+    OVS_ARGTYPE mainArgType = OVS_ARGTYPE_INVALID;
+
     switch (cmd)
     {
     case OVS_MESSAGE_COMMAND_NEW:
@@ -1123,7 +1146,8 @@ static BOOLEAN _VerifyDatapathMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ 
         return FALSE;
     }
 
-    if (!VerifyArgumentGroup(pMsg->pArgGroup, OVS_ARGTYPE_GROUP_MAIN))
+    mainArgType = MessageTargetTypeToArgType(pMsg->type);
+    if (!VerifyArgumentGroup(pMsg->pArgGroup, mainArgType))
     {
         return FALSE;
     }
@@ -1153,6 +1177,8 @@ static BOOLEAN _IsStringPrintableA(const char* str, UINT16 len)
 
 static BOOLEAN _VerifyDatapathMessageReply(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_MESSAGE* pMsg)
 {
+    OVS_ARGTYPE mainArgType = OVS_ARGTYPE_INVALID;
+
     switch (cmd)
     {
     case OVS_MESSAGE_COMMAND_NEW:
@@ -1216,7 +1242,8 @@ static BOOLEAN _VerifyDatapathMessageReply(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OV
         }
     }
 
-    if (!VerifyArgumentGroup(pMsg->pArgGroup, OVS_ARGTYPE_GROUP_MAIN))
+    mainArgType = MessageTargetTypeToArgType(pMsg->type);
+    if (!VerifyArgumentGroup(pMsg->pArgGroup, mainArgType))
     {
         return FALSE;
     }
@@ -1226,6 +1253,8 @@ static BOOLEAN _VerifyDatapathMessageReply(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OV
 
 static BOOLEAN _VerifyPortMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_MESSAGE* pMsg)
 {
+    OVS_ARGTYPE mainArgType = OVS_ARGTYPE_INVALID;
+
     switch (cmd)
     {
     case OVS_MESSAGE_COMMAND_NEW:
@@ -1260,7 +1289,8 @@ static BOOLEAN _VerifyPortMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_
         return FALSE;
     }
 
-    if (!VerifyArgumentGroup(pMsg->pArgGroup, OVS_ARGTYPE_GROUP_MAIN))
+    mainArgType = MessageTargetTypeToArgType(pMsg->type);
+    if (!VerifyArgumentGroup(pMsg->pArgGroup, mainArgType))
     {
         return FALSE;
     }
@@ -1270,6 +1300,8 @@ static BOOLEAN _VerifyPortMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_
 
 static BOOLEAN _VerifyPortMessageReply(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_MESSAGE* pMsg)
 {
+    OVS_ARGTYPE mainArgType = OVS_ARGTYPE_INVALID;
+
     switch (cmd)
     {
     case OVS_MESSAGE_COMMAND_DELETE:
@@ -1367,7 +1399,8 @@ static BOOLEAN _VerifyPortMessageReply(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_ME
         }
     }
 
-    if (!VerifyArgumentGroup(pMsg->pArgGroup, OVS_ARGTYPE_GROUP_MAIN))
+    mainArgType = MessageTargetTypeToArgType(pMsg->type);
+    if (!VerifyArgumentGroup(pMsg->pArgGroup, mainArgType))
     {
         return FALSE;
     }

@@ -344,7 +344,7 @@ OVS_ARGTYPE GetParentGroupType(OVS_ARGTYPE childArgType)
         case OVS_ARGTYPE_PSEUDOGROUP_DATAPATH:
         case OVS_ARGTYPE_PSEUDOGROUP_OFPORT:
         case OVS_ARGTYPE_PSEUDOGROUP_PACKET:
-            return OVS_ARGTYPE_GROUP_MAIN;
+            return OVS_ARGTYPE_INVALID;
 
         default:
             OVS_CHECK(__UNEXPECTED__);
@@ -1546,19 +1546,6 @@ VOID DbgPrintArgType(OVS_ARGTYPE argType, const char* padding, int index)
 
         switch (groupType)
         {
-        case OVS_ARGTYPE_GROUP_MAIN:
-            switch (argType)
-            {
-            case OVS_ARGTYPE_PACKET_BUFFER:
-                DEBUGP_ARG(LOG_INFO, "PACKET: BUFFER\n");
-                break;
-
-            default:
-                OVS_CHECK(0);
-            }
-
-            break;
-
         case OVS_ARGTYPE_PSEUDOGROUP_FLOW:
             _DbgPrintArgType_Flow(argType);
             break;

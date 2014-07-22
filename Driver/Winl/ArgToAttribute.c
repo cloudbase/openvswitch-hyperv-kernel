@@ -142,36 +142,29 @@ static const int s_argsToAttribs[][3] =
     { OVS_ARGTYPE_PSEUDOGROUP_PACKET, OVS_ARGTYPE_FIRST_PACKET, OVS_ARGTYPE_LAST_PACKET }
 };
 
-static const int* _FindGroup(OVS_MESSAGE_TARGET_TYPE targetType, OVS_ARGTYPE parentArgType, _Out_ OVS_ARGTYPE* pMin, _Out_ OVS_ARGTYPE* pMax)
+static const int* _FindGroup(OVS_ARGTYPE parentArgType, _Out_ OVS_ARGTYPE* pMin, _Out_ OVS_ARGTYPE* pMax)
 {
     switch (parentArgType)
     {
-    case OVS_ARGTYPE_GROUP_MAIN:
-        switch (targetType)
-        {
-        case OVS_MESSAGE_TARGET_DATAPATH:
-            *pMin = OVS_ARGTYPE_FIRST_DATAPATH;
-            *pMax = OVS_ARGTYPE_LAST_DATAPATH;
-            return s_argsToAttribsDatapath;
+    case OVS_ARGTYPE_PSEUDOGROUP_DATAPATH:
+        *pMin = OVS_ARGTYPE_FIRST_DATAPATH;
+        *pMax = OVS_ARGTYPE_LAST_DATAPATH;
+        return s_argsToAttribsDatapath;
 
-        case OVS_MESSAGE_TARGET_FLOW:
-            *pMin = OVS_ARGTYPE_FIRST_FLOW;
-            *pMax = OVS_ARGTYPE_LAST_FLOW;
-            return s_argsToAttribsFlow;
+    case OVS_ARGTYPE_PSEUDOGROUP_FLOW:
+        *pMin = OVS_ARGTYPE_FIRST_FLOW;
+        *pMax = OVS_ARGTYPE_LAST_FLOW;
+        return s_argsToAttribsFlow;
 
-        case OVS_MESSAGE_TARGET_PACKET:
-            *pMin = OVS_ARGTYPE_FIRST_PACKET;
-            *pMax = OVS_ARGTYPE_LAST_PACKET;
-            return s_argsToAttribsPacket;
+    case OVS_ARGTYPE_PSEUDOGROUP_PACKET:
+        *pMin = OVS_ARGTYPE_FIRST_PACKET;
+        *pMax = OVS_ARGTYPE_LAST_PACKET;
+        return s_argsToAttribsPacket;
 
-        case OVS_MESSAGE_TARGET_PORT:
-            *pMin = OVS_ARGTYPE_FIRST_OFPORT;
-            *pMax = OVS_ARGTYPE_LAST_OFPORT;
-            return s_argsToAttribsPort;
-
-        default:
-            OVS_CHECK_RET(__UNEXPECTED__, NULL);
-        }
+    case OVS_ARGTYPE_PSEUDOGROUP_OFPORT:
+        *pMin = OVS_ARGTYPE_FIRST_OFPORT;
+        *pMax = OVS_ARGTYPE_LAST_OFPORT;
+        return s_argsToAttribsPort;
 
     case OVS_ARGTYPE_PI_TUNNEL_GROUP:
         *pMin = OVS_ARGTYPE_FIRST_PI_TUNNEL;
@@ -211,13 +204,13 @@ static const int* _FindGroup(OVS_MESSAGE_TARGET_TYPE targetType, OVS_ARGTYPE par
     }
 }
 
-BOOLEAN Reply_SetAttrType(OVS_MESSAGE_TARGET_TYPE targetType, OVS_ARGTYPE parentArgType, _Inout_ OVS_ARGUMENT* pArg)
+BOOLEAN Reply_SetAttrType(OVS_ARGTYPE parentArgType, _Inout_ OVS_ARGUMENT* pArg)
 {
     const int* pGroup = NULL;
     OVS_ARGTYPE minArg = OVS_ARGTYPE_INVALID, maxArg = OVS_ARGTYPE_INVALID;
     ULONG attrType = 0;
 
-    pGroup = _FindGroup(targetType, parentArgType, &minArg, &maxArg);
+    pGroup = _FindGroup(parentArgType, &minArg, &maxArg);
 
     OVS_CHECK_RET(pGroup, FALSE);
     OVS_CHECK_RET(pArg->type >= minArg && pArg->type <= maxArg, FALSE);

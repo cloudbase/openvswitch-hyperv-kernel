@@ -247,3 +247,23 @@ static __inline OVS_MESSAGE_COMMAND_TYPE UserspacePacketCmdToKernelCmd(ULONG cmd
 
 VOID DestroyMessages(_Inout_ OVS_MESSAGE* msgs, UINT countMsgs);
 
+static __inline OVS_ARGTYPE MessageTargetTypeToArgType(OVS_MESSAGE_TARGET_TYPE targetType)
+{
+    switch (targetType)
+    {
+    case OVS_MESSAGE_TARGET_DATAPATH:
+        return OVS_ARGTYPE_PSEUDOGROUP_DATAPATH;
+
+    case OVS_MESSAGE_TARGET_FLOW:
+        return OVS_ARGTYPE_PSEUDOGROUP_FLOW;
+
+    case OVS_MESSAGE_TARGET_PORT:
+        return OVS_ARGTYPE_PSEUDOGROUP_OFPORT;
+
+    case OVS_MESSAGE_TARGET_PACKET:
+        return OVS_ARGTYPE_PSEUDOGROUP_PACKET;
+
+    default:
+        OVS_CHECK_RET(__UNEXPECTED__, OVS_ARGTYPE_INVALID);
+    }
+}
