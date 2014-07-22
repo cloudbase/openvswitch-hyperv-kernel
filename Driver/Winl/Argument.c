@@ -32,279 +32,83 @@ limitations under the License.
 
 /******************************************* ARG SIZE FUNCTIONS **********************************************************************/
 
-static BOOLEAN _GetFlowArgExpectedSize(OVS_ARGTYPE argumentType, UINT* pSize)
+#define __SIZE_CASE_ARGTYPE(argType, size)      \
+case argType:                                   \
+    *pSize = size;                              \
+    return TRUE;                                \
+
+#define __SIZE_CASE_ARGTYPE_TYPE(argType, type) \
+case argType:                                   \
+    *pSize = sizeof(type);                      \
+    return TRUE;                                \
+
+BOOLEAN GetArgumentExpectedSize(OVS_ARGTYPE argumentType, _Inout_ UINT* pSize)
 {
-    switch (argumentType)
+    if (IsArgTypeGroup(argumentType))
     {
-    case OVS_ARGTYPE_FLOW_STATS:
-        *pSize = sizeof(OVS_WINL_FLOW_STATS);
-        break;
-
-    case OVS_ARGTYPE_FLOW_TCP_FLAGS:
-        *pSize = sizeof(UINT8);
-        break;
-
-    case OVS_ARGTYPE_FLOW_TIME_USED:
-        *pSize = sizeof(UINT64);
-        break;
-
-    case OVS_ARGTYPE_FLOW_CLEAR:
-        *pSize = 0;
-        break;
-
-    default:
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
-static BOOLEAN _GetPIArgExpectedSize(OVS_ARGTYPE argumentType, UINT* pSize)
-{
-    switch (argumentType)
-    {
-    case OVS_ARGTYPE_PI_PACKET_PRIORITY:
-        *pSize = sizeof(UINT32);
-        return TRUE;
-
-    case OVS_ARGTYPE_PI_DP_INPUT_PORT:
-        *pSize = sizeof(UINT32);
-        return TRUE;
-
-    case OVS_ARGTYPE_PI_ETH_ADDRESS:
-        *pSize = sizeof(OVS_PI_ETH_ADDRESS);
-        return TRUE;
-
-    case OVS_ARGTYPE_PI_ETH_TYPE:
-        *pSize = sizeof(UINT16);
-        return TRUE;
-
-    case OVS_ARGTYPE_PI_VLAN_TCI:
-        *pSize = sizeof(BE16);
-        return TRUE;
-
-    case OVS_ARGTYPE_PI_IPV4:
-        *pSize = sizeof(OVS_PI_IPV4);
-        return TRUE;
-
-    case OVS_ARGTYPE_PI_IPV6:
-        *pSize = sizeof(OVS_PI_IPV6);
-        return TRUE;
-
-    case OVS_ARGTYPE_PI_TCP:
-        *pSize = sizeof(OVS_PI_TCP);
-        return TRUE;
-
-    case OVS_ARGTYPE_PI_UDP:
-        *pSize = sizeof(OVS_PI_UDP);
-        return TRUE;
-
-    case OVS_ARGTYPE_PI_SCTP:
-        *pSize = sizeof(OVS_ARGTYPE_PI_SCTP);
-        return TRUE;
-
-    case OVS_ARGTYPE_PI_ICMP:
-        *pSize = sizeof(OVS_PI_ICMP);
-        return TRUE;
-
-    case OVS_ARGTYPE_PI_ICMP6:
-        *pSize = sizeof(OVS_PI_ICMP6);
-        return TRUE;
-
-    case OVS_ARGTYPE_PI_ARP:
-        *pSize = sizeof(OVS_PI_ARP);
-        return TRUE;
-
-    case OVS_ARGTYPE_PI_NEIGHBOR_DISCOVERY:
-        *pSize = sizeof(OVS_PI_NEIGHBOR_DISCOVERY);
-        return TRUE;
-
-    case OVS_ARGTYPE_PI_PACKET_MARK:
-        *pSize = sizeof(UINT32);
-        return TRUE;
-
-    case OVS_ARGTYPE_PI_IPV4_TUNNEL:
-        *pSize = sizeof(OF_PI_IPV4_TUNNEL);
-        return TRUE;
-
-    case OVS_ARGTYPE_PI_MPLS:
-        *pSize = sizeof(OVS_PI_MPLS);
-        return TRUE;
-
-    default:
-        return FALSE;
-    }
-}
-
-static BOOLEAN _GetFlowKeyTunnelArgExpectedSize(OVS_ARGTYPE argumentType, UINT* pSize)
-{
-    switch (argumentType)
-    {
-    case OVS_ARGTYPE_PI_TUNNEL_ID:
-        *pSize = sizeof(BE64);
-        return TRUE;
-
-    case OVS_ARGTYPE_PI_TUNNEL_IPV4_SRC:
-        *pSize = sizeof(BE32);
-        return TRUE;
-
-    case OVS_ARGTYPE_PI_TUNNEL_IPV4_DST:
-        *pSize = sizeof(BE32);
-        return TRUE;
-
-    case OVS_ARGTYPE_PI_TUNNEL_TOS:
-        *pSize = sizeof(UINT8);
-        return TRUE;
-
-    case OVS_ARGTYPE_PI_TUNNEL_TTL:
-        *pSize = sizeof(UINT8);
-        return TRUE;
-
-    case OVS_ARGTYPE_PI_TUNNEL_DONT_FRAGMENT:
-        *pSize = 0;
-        return TRUE;
-
-    case OVS_ARGTYPE_PI_TUNNEL_CHECKSUM:
-        *pSize = 0;
-        return TRUE;
-
-    default:
-        return FALSE;
-    }
-}
-
-static BOOLEAN _GetPacketArgExpectedSize(OVS_ARGTYPE argumentType, UINT* pSize)
-{
-    switch (argumentType)
-    {
-    case OVS_ARGTYPE_PACKET_BUFFER:
-        //any size can be expected!
         *pSize = MAXUINT;
         return TRUE;
-
-    case OVS_ARGTYPE_PACKET_USERDATA:
-        //any size can be expected (userdata should normally be an OVS_ARGUMENT / attribute)
-        *pSize = MAXUINT;
-        return TRUE;
-
-    default:
-        return FALSE;
     }
-}
-
-static BOOLEAN _GetPacketActionsArgExpectedSize(OVS_ARGTYPE argumentType, UINT* pSize)
-{
-    switch (argumentType)
-    {
-    case OVS_ARGTYPE_ACTION_OUTPUT_TO_PORT:
-        *pSize = sizeof(UINT32);
-        return TRUE;
-
-    case OVS_ARGTYPE_ACTION_PUSH_VLAN:
-        *pSize = sizeof(OVS_ACTION_PUSH_VLAN);
-        return TRUE;
-
-    case OVS_ARGTYPE_ACTION_POP_VLAN:
-        *pSize = 0;
-        return TRUE;
-
-    default:
-        return FALSE;
-    }
-}
-
-static BOOLEAN _GetPacketActionUpcallArgExpectedSize(OVS_ARGTYPE argumentType, UINT* pSize)
-{
-    switch (argumentType)
-    {
-    case OVS_ARGTYPE_ACTION_UPCALL_PORT_ID:
-        *pSize = sizeof(UINT32);
-        return TRUE;
-
-    case OVS_ARGTYPE_ACTION_UPCALL_DATA:
-        *pSize = MAXUINT;
-        return TRUE;
-
-    default:
-        return FALSE;
-    }
-}
-
-static BOOLEAN _GetPacketActionSampleArgExpectedSize(OVS_ARGTYPE argumentType, UINT* pSize)
-{
-    switch (argumentType)
-    {
-    case OVS_ARGTYPE_ACTION_SAMPLE_PROBABILITY:
-        *pSize = sizeof(UINT32);
-        return TRUE;
-
-    default:
-        return FALSE;
-    }
-}
-
-static BOOLEAN _GetDatapathArgExpectedSize(OVS_ARGTYPE argumentType, UINT* pSize)
-{
-    switch (argumentType)
-    {
-    case OVS_ARGTYPE_DATAPATH_NAME:
-        *pSize = MAXUINT;
-        return TRUE;
-
-    case OVS_ARGTYPE_DATAPATH_UPCALL_PORT_ID:
-        *pSize = sizeof(UINT32);
-        return TRUE;
-
-    case OVS_ARGTYPE_DATAPATH_STATS:
-        *pSize = sizeof(OVS_DATAPATH_STATS);
-        return TRUE;
-
-    default:
-        return FALSE;
-    }
-}
-
-static BOOLEAN _GetOFPortArgExpectedSize(OVS_ARGTYPE argumentType, UINT* pSize)
-{
-    switch (argumentType)
-    {
-    case OVS_ARGTYPE_OFPORT_NUMBER:
-        *pSize = sizeof(UINT32);
-        return TRUE;
-
-    case OVS_ARGTYPE_OFPORT_TYPE:
-        *pSize = sizeof(UINT32);
-        return TRUE;
-
-    case OVS_ARGTYPE_OFPORT_NAME:
-        *pSize = MAXUINT;
-        return TRUE;
-
-    case OVS_ARGTYPE_OFPORT_UPCALL_PORT_ID:
-        *pSize = sizeof(UINT32);
-        return TRUE;
-
-    case OVS_ARGTYPE_OFPORT_STATS:
-        *pSize = sizeof(OVS_OFPORT_STATS);
-        return TRUE;
-
-    default:
-        return FALSE;
-    }
-}
-
-static BOOLEAN _GetOFPortOptionsArgExpectedSize(OVS_ARGTYPE argumentType, UINT* pSize)
-{
-    UNREFERENCED_PARAMETER(argumentType);
-    UNREFERENCED_PARAMETER(pSize);
 
     switch (argumentType)
     {
-    case OVS_ARGTYPE_OFPORT_OPTION_DESTINATION_PORT:
-        *pSize = sizeof(UINT16);
-        return TRUE;
+        __SIZE_CASE_ARGTYPE_TYPE(OVS_ARGTYPE_FLOW_STATS, OVS_WINL_FLOW_STATS);
+        __SIZE_CASE_ARGTYPE_TYPE(OVS_ARGTYPE_FLOW_TCP_FLAGS, UINT8);
+        __SIZE_CASE_ARGTYPE_TYPE(OVS_ARGTYPE_FLOW_TIME_USED, UINT64);
+        __SIZE_CASE_ARGTYPE(OVS_ARGTYPE_FLOW_CLEAR, 0);
+
+        __SIZE_CASE_ARGTYPE_TYPE(OVS_ARGTYPE_PI_PACKET_PRIORITY, UINT32);
+        __SIZE_CASE_ARGTYPE_TYPE(OVS_ARGTYPE_PI_DP_INPUT_PORT, UINT32);
+        __SIZE_CASE_ARGTYPE_TYPE(OVS_ARGTYPE_PI_ETH_ADDRESS, OVS_PI_ETH_ADDRESS);
+        __SIZE_CASE_ARGTYPE_TYPE(OVS_ARGTYPE_PI_ETH_TYPE, UINT16);
+        __SIZE_CASE_ARGTYPE_TYPE(OVS_ARGTYPE_PI_VLAN_TCI, BE16);
+        __SIZE_CASE_ARGTYPE_TYPE(OVS_ARGTYPE_PI_IPV4, OVS_PI_IPV4);
+        __SIZE_CASE_ARGTYPE_TYPE(OVS_ARGTYPE_PI_IPV6, OVS_PI_IPV6);
+        __SIZE_CASE_ARGTYPE_TYPE(OVS_ARGTYPE_PI_TCP, OVS_PI_TCP);
+        __SIZE_CASE_ARGTYPE_TYPE(OVS_ARGTYPE_PI_UDP, OVS_PI_UDP);
+        __SIZE_CASE_ARGTYPE_TYPE(OVS_ARGTYPE_PI_SCTP, OVS_PI_SCTP);
+        __SIZE_CASE_ARGTYPE_TYPE(OVS_ARGTYPE_PI_ICMP, OVS_PI_ICMP);
+        __SIZE_CASE_ARGTYPE_TYPE(OVS_ARGTYPE_PI_ICMP6, OVS_PI_ICMP6);
+        __SIZE_CASE_ARGTYPE_TYPE(OVS_ARGTYPE_PI_ARP, OVS_PI_ARP);
+        __SIZE_CASE_ARGTYPE_TYPE(OVS_ARGTYPE_PI_NEIGHBOR_DISCOVERY, OVS_PI_NEIGHBOR_DISCOVERY);
+        __SIZE_CASE_ARGTYPE_TYPE(OVS_ARGTYPE_PI_PACKET_MARK, UINT32);
+        __SIZE_CASE_ARGTYPE_TYPE(OVS_ARGTYPE_PI_IPV4_TUNNEL, OF_PI_IPV4_TUNNEL);
+        __SIZE_CASE_ARGTYPE_TYPE(OVS_ARGTYPE_PI_MPLS, OVS_PI_MPLS);
+
+        __SIZE_CASE_ARGTYPE_TYPE(OVS_ARGTYPE_PI_TUNNEL_ID, BE64);
+        __SIZE_CASE_ARGTYPE_TYPE(OVS_ARGTYPE_PI_TUNNEL_IPV4_SRC, BE32);
+        __SIZE_CASE_ARGTYPE_TYPE(OVS_ARGTYPE_PI_TUNNEL_IPV4_DST, BE32);
+        __SIZE_CASE_ARGTYPE_TYPE(OVS_ARGTYPE_PI_TUNNEL_TOS, UINT8);
+        __SIZE_CASE_ARGTYPE_TYPE(OVS_ARGTYPE_PI_TUNNEL_TTL, UINT8);
+        __SIZE_CASE_ARGTYPE(OVS_ARGTYPE_PI_TUNNEL_DONT_FRAGMENT, 0);
+        __SIZE_CASE_ARGTYPE(OVS_ARGTYPE_PI_TUNNEL_CHECKSUM, 0);
+
+        __SIZE_CASE_ARGTYPE(OVS_ARGTYPE_PACKET_BUFFER, MAXUINT);
+        __SIZE_CASE_ARGTYPE(OVS_ARGTYPE_PACKET_USERDATA, MAXUINT);
+
+        __SIZE_CASE_ARGTYPE_TYPE(OVS_ARGTYPE_ACTION_OUTPUT_TO_PORT, UINT32);
+        __SIZE_CASE_ARGTYPE_TYPE(OVS_ARGTYPE_ACTION_PUSH_VLAN, OVS_ACTION_PUSH_VLAN);
+        __SIZE_CASE_ARGTYPE(OVS_ARGTYPE_ACTION_POP_VLAN, 0);
+
+        __SIZE_CASE_ARGTYPE_TYPE(OVS_ARGTYPE_ACTION_UPCALL_PORT_ID, UINT32);
+        __SIZE_CASE_ARGTYPE(OVS_ARGTYPE_ACTION_UPCALL_DATA, MAXUINT);
+
+        __SIZE_CASE_ARGTYPE_TYPE(OVS_ARGTYPE_ACTION_SAMPLE_PROBABILITY, UINT32);
+
+        __SIZE_CASE_ARGTYPE(OVS_ARGTYPE_DATAPATH_NAME, MAXUINT);
+        __SIZE_CASE_ARGTYPE_TYPE(OVS_ARGTYPE_DATAPATH_UPCALL_PORT_ID, UINT32);
+        __SIZE_CASE_ARGTYPE_TYPE(OVS_ARGTYPE_DATAPATH_STATS, OVS_DATAPATH_STATS);
+
+        __SIZE_CASE_ARGTYPE_TYPE(OVS_ARGTYPE_OFPORT_NUMBER, UINT32);
+        __SIZE_CASE_ARGTYPE_TYPE(OVS_ARGTYPE_OFPORT_TYPE, UINT32);
+        __SIZE_CASE_ARGTYPE(OVS_ARGTYPE_OFPORT_NAME, MAXUINT);
+        __SIZE_CASE_ARGTYPE_TYPE(OVS_ARGTYPE_OFPORT_UPCALL_PORT_ID, UINT32);
+        __SIZE_CASE_ARGTYPE_TYPE(OVS_ARGTYPE_OFPORT_STATS, OVS_OFPORT_STATS);
+
+        __SIZE_CASE_ARGTYPE_TYPE(OVS_ARGTYPE_OFPORT_OPTION_DESTINATION_PORT, UINT16);
 
     default:
+        OVS_CHECK(__UNEXPECTED__);
         return FALSE;
     }
 }
@@ -394,65 +198,6 @@ OVS_ARGTYPE GetParentGroupType(OVS_ARGTYPE childArgType)
     OVS_CHECK(__UNEXPECTED__);
 
     return OVS_ARGTYPE_INVALID;
-}
-
-BOOLEAN GetArgumentExpectedSize(OVS_ARGTYPE argumentType, _Inout_ UINT* pSize)
-{
-    OVS_ARGTYPE groupType = OVS_ARGTYPE_INVALID;
-
-    if (IsArgTypeGroup(argumentType))
-    {
-        *pSize = MAXUINT;
-        return TRUE;
-    }
-
-    groupType = GetParentGroupType(argumentType);
-
-    switch (groupType)
-    {
-    case OVS_ARGTYPE_PSEUDOGROUP_FLOW:
-        return _GetFlowArgExpectedSize(argumentType, pSize);
-
-    case OVS_ARGTYPE_FLOW_PI_GROUP:
-        return _GetPIArgExpectedSize(argumentType, pSize);
-
-    case OVS_ARGTYPE_FLOW_MASK_GROUP:
-        return _GetPIArgExpectedSize(argumentType, pSize);
-
-    case OVS_ARGTYPE_PI_ENCAP_GROUP:
-        return _GetPIArgExpectedSize(argumentType, pSize);
-
-    case OVS_ARGTYPE_PI_TUNNEL_GROUP:
-        return _GetFlowKeyTunnelArgExpectedSize(argumentType, pSize);
-
-    case OVS_ARGTYPE_PSEUDOGROUP_PACKET:
-        return _GetPacketArgExpectedSize(argumentType, pSize);
-
-    case OVS_ARGTYPE_FLOW_ACTIONS_GROUP:
-    case OVS_ARGTYPE_PACKET_ACTIONS_GROUP:
-    case OVS_ARGTYPE_ACTION_SAMPLE_ACTIONS_GROUP:
-        return _GetPacketActionsArgExpectedSize(argumentType, pSize);
-
-    case OVS_ARGTYPE_ACTION_UPCALL_GROUP:
-        return _GetPacketActionUpcallArgExpectedSize(argumentType, pSize);
-
-    case OVS_ARGTYPE_ACTION_SAMPLE_GROUP:
-        return _GetPacketActionSampleArgExpectedSize(argumentType, pSize);
-
-    case OVS_ARGTYPE_ACTION_SETINFO_GROUP:
-        return _GetPIArgExpectedSize(argumentType, pSize);
-
-    case OVS_ARGTYPE_PSEUDOGROUP_DATAPATH:
-        return _GetDatapathArgExpectedSize(argumentType, pSize);
-
-    case OVS_ARGTYPE_PSEUDOGROUP_OFPORT:
-        return _GetOFPortArgExpectedSize(argumentType, pSize);
-
-    case OVS_ARGTYPE_OFPORT_OPTIONS_GROUP:
-        return _GetOFPortOptionsArgExpectedSize(argumentType, pSize);
-    default:
-        return FALSE;
-    }
 }
 
 /******************************************* FIND FUNCTIONS **********************************************************************/
