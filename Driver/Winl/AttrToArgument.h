@@ -19,4 +19,4 @@ limitations under the License.
 #include "precomp.h"
 #include "ArgumentType.h"
 
-BOOLEAN AttrType_To_ArgType(UINT16 targetType, UINT16 attrType, OVS_ARGTYPE parentType, OVS_ARGTYPE* pTypeAsArg);
+BOOLEAN AttrType_To_ArgType(UINT16 attrType, OVS_ARGTYPE parentType, OVS_ARGTYPE* pTypeAsArg);

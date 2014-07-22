@@ -42,7 +42,7 @@ static BOOLEAN _ParseAttribute(_In_ BYTE** pBuffer, UINT16* pBytesLeft, _Inout_ 
     *pBuffer += OVS_ARGUMENT_HEADER_SIZE;
     *pBytesLeft -= OVS_ARGUMENT_HEADER_SIZE;
 
-    if (!AttrType_To_ArgType(targetType, pAttribute->type, parentArgType, &typeAsArg))
+    if (!AttrType_To_ArgType(pAttribute->type, parentArgType, &typeAsArg))
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " failed: attr to argument failed for attr: %u\n", pAttribute->type);
         return FALSE;
@@ -455,7 +455,7 @@ static __inline VOID _WriteArgToBuffer_AsAttribute(UINT16 targetType, BYTE** pBu
     *pBuffer += sizeof(pAttr->type);
     *pOffset += sizeof(pAttr->type);
 
-    if (!AttrType_To_ArgType(targetType, pAttr->type, parentArgType, &typeAsArg))
+    if (!AttrType_To_ArgType(pAttr->type, parentArgType, &typeAsArg))
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " failed: attr to argument failed for attr: %u\n", pAttr->type);
         OVS_CHECK(0);
