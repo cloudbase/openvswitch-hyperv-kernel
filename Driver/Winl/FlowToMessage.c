@@ -29,6 +29,7 @@ limitations under the License.
 #include "PersistentPort.h"
 
 #include "ArgVerification.h"
+#include "ArgumentList.h"
 
 static BOOLEAN _CreateIpv4Args(const OVS_OFPACKET_INFO* pPacketInfo, OVS_ARGUMENT_SLIST_ENTRY** ppArgList)
 {
