@@ -393,7 +393,7 @@ static OVS_ARGUMENT* _ArgumentsToAttributes(ULONG target, ULONG cmd, OVS_ARGTYPE
 
             groupSize += pAttr->length;
 
-            if (!Reply_SetAttrType(target, cmd, parentArgType, pAttr))
+            if (!Reply_SetAttrType(target, parentArgType, pAttr))
             {
                 KFree(pSubAttrs);
 
@@ -411,7 +411,7 @@ static OVS_ARGUMENT* _ArgumentsToAttributes(ULONG target, ULONG cmd, OVS_ARGTYPE
 
             groupSize += pAttr->length;
 
-            if (!Reply_SetAttrType(target, cmd, parentArgType, pAttr))
+            if (!Reply_SetAttrType(target, parentArgType, pAttr))
             {
                 ok = FALSE;
                 break;

@@ -321,3 +321,6 @@ static __inline BOOLEAN IsArgTypeGroup(OVS_ARGTYPE argType)
     //invalid is 0x20; all non-group args are > 0x21; all groups are < 0x20
     return (argType < OVS_ARGTYPE_INVALID);
 }
+
+//given an arg type, returns the index of the arg within its group, starting from 1
+#define OVS_ARG_TOINDEX(argType, group) (argType - OVS_ARGTYPE_FIRST_##group + 1)
