@@ -40,6 +40,7 @@ limitations under the License.
 #include "ArgToAttribute.h"
 #include "Nbls.h"
 #include "Vlan.h"
+#include "ArgVerification.h"
 
 #define OVS_ACTION_SAMPLE_MAX_DEPTH        3
 
