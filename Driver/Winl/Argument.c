@@ -30,6 +30,8 @@ limitations under the License.
 #include "Ipv6.h"
 #include "PersistentPort.h"
 
+#include <Ntstrsafe.h>
+
 /******************************************* ARG SIZE FUNCTIONS **********************************************************************/
 
 #define __SIZE_CASE_ARGTYPE(argType, size)      \
@@ -111,93 +113,6 @@ BOOLEAN GetArgumentExpectedSize(OVS_ARGTYPE argumentType, _Inout_ UINT* pSize)
         OVS_CHECK(__UNEXPECTED__);
         return FALSE;
     }
-}
-
-OVS_ARGTYPE GetParentGroupType(OVS_ARGTYPE childArgType)
-{
-    //if child is group
-    if (IsArgTypeGroup(childArgType))
-    {
-        switch (childArgType)
-        {
-        case OVS_ARGTYPE_FLOW_PI_GROUP:
-        case OVS_ARGTYPE_FLOW_MASK_GROUP:
-            return OVS_ARGTYPE_PSEUDOGROUP_FLOW;
-
-        case OVS_ARGTYPE_PI_ENCAP_GROUP:
-        case OVS_ARGTYPE_PI_TUNNEL_GROUP:
-            return OVS_ARGTYPE_FLOW_PI_GROUP;
-
-        case OVS_ARGTYPE_PACKET_ACTIONS_GROUP:
-        case OVS_ARGTYPE_PACKET_PI_GROUP:
-            return OVS_ARGTYPE_PSEUDOGROUP_PACKET;
-
-        case OVS_ARGTYPE_ACTION_UPCALL_GROUP:
-        case OVS_ARGTYPE_ACTION_SAMPLE_GROUP:
-        case OVS_ARGTYPE_ACTION_SETINFO_GROUP:
-            return OVS_ARGTYPE_FLOW_ACTIONS_GROUP;
-
-        case OVS_ARGTYPE_ACTION_SAMPLE_ACTIONS_GROUP:
-        case OVS_ARGTYPE_ACTION_SAMPLE_PROBABILITY:
-            return OVS_ARGTYPE_ACTION_SAMPLE_GROUP;
-
-        case OVS_ARGTYPE_OFPORT_OPTIONS_GROUP:
-            return OVS_ARGTYPE_PSEUDOGROUP_OFPORT;
-
-        case OVS_ARGTYPE_PSEUDOGROUP_FLOW:
-        case OVS_ARGTYPE_PSEUDOGROUP_DATAPATH:
-        case OVS_ARGTYPE_PSEUDOGROUP_OFPORT:
-        case OVS_ARGTYPE_PSEUDOGROUP_PACKET:
-            return OVS_ARGTYPE_INVALID;
-
-        default:
-            OVS_CHECK(__UNEXPECTED__);
-        }
-    }
-    else if (childArgType >= OVS_ARGTYPE_FIRST_ACTION && childArgType <= OVS_ARGTYPE_LAST_ACTION)
-    {
-        return OVS_ARGTYPE_FLOW_ACTIONS_GROUP;
-    }
-    else if (childArgType >= OVS_ARGTYPE_FIRST_ACTION_SAMPLE && childArgType <= OVS_ARGTYPE_LAST_ACTION_SAMPLE)
-    {
-        return OVS_ARGTYPE_ACTION_SAMPLE_GROUP;
-    }
-    else if (childArgType >= OVS_ARGTYPE_FIRST_ACTION_UPCALL && childArgType <= OVS_ARGTYPE_LAST_ACTION_UPCALL)
-    {
-        return OVS_ARGTYPE_ACTION_UPCALL_GROUP;
-    }
-    else if (childArgType >= OVS_ARGTYPE_FIRST_DATAPATH && childArgType <= OVS_ARGTYPE_LAST_DATAPATH)
-    {
-        return OVS_ARGTYPE_PSEUDOGROUP_DATAPATH;
-    }
-    else if (childArgType >= OVS_ARGTYPE_FIRST_FLOW && childArgType <= OVS_ARGTYPE_LAST_FLOW)
-    {
-        return OVS_ARGTYPE_PSEUDOGROUP_FLOW;
-    }
-    else if (childArgType >= OVS_ARGTYPE_FIRST_PI && childArgType <= OVS_ARGTYPE_LAST_PI)
-    {
-        return OVS_ARGTYPE_FLOW_PI_GROUP;
-    }
-    else if (childArgType >= OVS_ARGTYPE_FIRST_PI_TUNNEL && childArgType <= OVS_ARGTYPE_LAST_PI_TUNNEL)
-    {
-        return OVS_ARGTYPE_PI_TUNNEL_GROUP;
-    }
-    else if (childArgType >= OVS_ARGTYPE_FIRST_PACKET&& childArgType <= OVS_ARGTYPE_LAST_PACKET)
-    {
-        return OVS_ARGTYPE_PSEUDOGROUP_PACKET;
-    }
-    else if (childArgType >= OVS_ARGTYPE_FIRST_OFPORT && childArgType <= OVS_ARGTYPE_LAST_OFPORT)
-    {
-        return OVS_ARGTYPE_PSEUDOGROUP_OFPORT;
-    }
-    else if (childArgType >= OVS_ARGTYPE_FIRST_OFPORT_OPTION && childArgType <= OVS_ARGTYPE_LAST_OFPORT_OPTION)
-    {
-        return OVS_ARGTYPE_OFPORT_OPTIONS_GROUP;
-    }
-
-    OVS_CHECK(__UNEXPECTED__);
-
-    return OVS_ARGTYPE_INVALID;
 }
 
 /******************************************* FIND FUNCTIONS **********************************************************************/
@@ -705,429 +620,99 @@ VOID DbgPrintArgGroup(_In_ OVS_ARGUMENT_GROUP* pGroup, int depth)
     KFree(padding);
 }
 
-static __inline VOID _DbgPrintArgType_Flow(OVS_ARGTYPE argType)
-{
-    switch (argType)
-    {
-    case OVS_ARGTYPE_FLOW_STATS:
-        DEBUGP_ARG(LOG_INFO, "FLOW: STATS\n");
-        break;
-
-    case OVS_ARGTYPE_FLOW_TCP_FLAGS:
-        DEBUGP_ARG(LOG_INFO, "FLOW: TCP FLAGS\n");
-        break;
-
-    case OVS_ARGTYPE_FLOW_TIME_USED:
-        DEBUGP_ARG(LOG_INFO, "FLOW: TIME USED\n");
-        break;
-
-    case OVS_ARGTYPE_FLOW_CLEAR:
-        DEBUGP_ARG(LOG_INFO, "FLOW: CLEAR\n");
-        break;
-
-    default:
-        OVS_CHECK(0);
-    }
-}
-
-static __inline VOID _DbgPrintArgType_PacketInfo(OVS_ARGTYPE argType)
-{
-    switch (argType)
-    {
-    case OVS_ARGTYPE_PI_PACKET_PRIORITY:
-        DEBUGP_ARG(LOG_INFO, "FLOW/KEY: PACKET PRIORITY\n");
-        break;
-
-    case OVS_ARGTYPE_PI_DP_INPUT_PORT:
-        DEBUGP_ARG(LOG_INFO, "FLOW/KEY: IN PORT\n");
-        break;
-
-    case OVS_ARGTYPE_PI_ETH_ADDRESS:
-        DEBUGP_ARG(LOG_INFO, "FLOW/KEY: ETH ADDR\n");
-        break;
-
-    case OVS_ARGTYPE_PI_ETH_TYPE:
-        DEBUGP_ARG(LOG_INFO, "FLOW/KEY: ETH TYPE\n");
-        break;
-
-    case OVS_ARGTYPE_PI_VLAN_TCI:
-        DEBUGP_ARG(LOG_INFO, "FLOW/KEY: VLAN TCI\n");
-        break;
-
-    case OVS_ARGTYPE_PI_IPV4:
-        DEBUGP_ARG(LOG_INFO, "FLOW/KEY: IPV4\n");
-        break;
-
-    case OVS_ARGTYPE_PI_IPV6:
-        DEBUGP_ARG(LOG_INFO, "FLOW/KEY: IPV6\n");
-        break;
-
-    case OVS_ARGTYPE_PI_TCP:
-        DEBUGP_ARG(LOG_INFO, "FLOW/KEY: TCP\n");
-        break;
-
-    case OVS_ARGTYPE_PI_UDP:
-        DEBUGP_ARG(LOG_INFO, "FLOW/KEY: UDP\n");
-        break;
-
-    case OVS_ARGTYPE_PI_SCTP:
-        DEBUGP_ARG(LOG_INFO, "FLOW/KEY: SCTP\n");
-        break;
-
-    case OVS_ARGTYPE_PI_ICMP:
-        DEBUGP_ARG(LOG_INFO, "FLOW/KEY: ICMP\n");
-        break;
-
-    case OVS_ARGTYPE_PI_ICMP6:
-        DEBUGP_ARG(LOG_INFO, "FLOW/KEY: ICMP6\n");
-        break;
-
-    case OVS_ARGTYPE_PI_ARP:
-        DEBUGP_ARG(LOG_INFO, "FLOW/KEY: ARP\n");
-        break;
-
-    case OVS_ARGTYPE_PI_NEIGHBOR_DISCOVERY:
-        DEBUGP_ARG(LOG_INFO, "FLOW/KEY: ND\n");
-        break;
-
-    case OVS_ARGTYPE_PI_PACKET_MARK:
-        DEBUGP_ARG(LOG_INFO, "FLOW/KEY: PACKET MARK\n");
-        break;
-
-    case OVS_ARGTYPE_PI_IPV4_TUNNEL:
-        DEBUGP_ARG(LOG_INFO, "FLOW/KEY: IPV4 TUNNEL\n");
-        break;
-
-    case OVS_ARGTYPE_PI_MPLS:
-        DEBUGP_ARG(LOG_INFO, "FLOW/KEY: MPLS\n");
-        break;
-
-    default:
-        OVS_CHECK(0);
-    }
-}
-
-static __inline VOID _DbgPrintArgType_PITunnel(OVS_ARGTYPE argType)
-{
-    switch (argType)
-    {
-    case OVS_ARGTYPE_PI_TUNNEL_ID:
-        DEBUGP_ARG(LOG_INFO, "FLOW/KEY/TUNNEL: ID\n");
-        break;
-
-    case OVS_ARGTYPE_PI_TUNNEL_IPV4_SRC:
-        DEBUGP_ARG(LOG_INFO, "FLOW/KEY/TUNNEL:IPV4 SRC\n");
-        break;
-
-    case OVS_ARGTYPE_PI_TUNNEL_IPV4_DST:
-        DEBUGP_ARG(LOG_INFO, "FLOW/KEY/TUNNEL:IPV4 DST\n");
-        break;
-
-    case OVS_ARGTYPE_PI_TUNNEL_TOS:
-        DEBUGP_ARG(LOG_INFO, "FLOW/KEY/TUNNEL:TOS\n");
-        break;
-
-    case OVS_ARGTYPE_PI_TUNNEL_TTL:
-        DEBUGP_ARG(LOG_INFO, "FLOW/KEY/TUNNEL:TTL\n");
-        break;
-
-    case OVS_ARGTYPE_PI_TUNNEL_DONT_FRAGMENT:
-        DEBUGP_ARG(LOG_INFO, "FLOW/KEY/TUNNEL:DON'T FRAGMENT\n");
-        break;
-
-    case OVS_ARGTYPE_PI_TUNNEL_CHECKSUM:
-        DEBUGP_ARG(LOG_INFO, "FLOW/KEY/TUNNEL:CHECKSUM\n");
-        break;
-
-    default:
-        OVS_CHECK(0);
-    }
-}
-
-static __inline VOID _DbgPrintArgType_Packet(OVS_ARGTYPE argType)
-{
-    switch (argType)
-    {
-    case OVS_ARGTYPE_PACKET_BUFFER:
-        DEBUGP_ARG(LOG_INFO, "PACKET: BUFFER\n");
-        break;
-
-    case OVS_ARGTYPE_PACKET_USERDATA:
-        DEBUGP_ARG(LOG_INFO, "PACKET: USER DATA\n");
-        break;
-
-    default:
-        OVS_CHECK(0);
-    }
-}
-
-static __inline VOID _DbgPrintArgType_PacketActions(OVS_ARGTYPE argType)
-{
-    switch (argType)
-    {
-    case OVS_ARGTYPE_ACTION_OUTPUT_TO_PORT:
-        DEBUGP_ARG(LOG_INFO, "PACKET/ACTIONS: OUT TO PORT\n");
-        break;
-
-    case OVS_ARGTYPE_ACTION_PUSH_VLAN:
-        DEBUGP_ARG(LOG_INFO, "PACKET/ACTIONS: PUSH VLAN\n");
-        break;
-
-    case OVS_ARGTYPE_ACTION_POP_VLAN:
-        DEBUGP_ARG(LOG_INFO, "PACKET/ACTIONS: POP VLAN\n");
-        break;
-
-    case OVS_ARGTYPE_ACTION_PUSH_MPLS:
-        DEBUGP_ARG(LOG_INFO, "PACKET/ACTIONS: PUSH MPLS\n");
-        break;
-
-    case OVS_ARGTYPE_ACTION_POP_MPLS:
-        DEBUGP_ARG(LOG_INFO, "PACKET/ACTIONS: POP MPLS\n");
-        break;
-
-    default:
-        OVS_CHECK(0);
-    }
-}
-
-static __inline VOID _DbgPrintArgType_PacketActionsUpcall(OVS_ARGTYPE argType)
-{
-    switch (argType)
-    {
-    case OVS_ARGTYPE_ACTION_UPCALL_PORT_ID:
-        DEBUGP_ARG(LOG_INFO, "PACKET/ACTIONS/UPCALL: PORT ID\n");
-        break;
-
-    case OVS_ARGTYPE_ACTION_UPCALL_DATA:
-        DEBUGP_ARG(LOG_INFO, "PACKET/ACTIONS/UPCALL: DATA\n");
-        break;
-
-    default:
-        OVS_CHECK(0);
-    }
-}
-
-static __inline VOID _DbgPrintArgType_PacketActionsSample(OVS_ARGTYPE argType)
-{
-    switch (argType)
-    {
-    case OVS_ARGTYPE_ACTION_SAMPLE_PROBABILITY:
-        DEBUGP_ARG(LOG_INFO, "PACKET/ACTIONS/SAMPLE: PROBABILITY\n");
-        break;
-
-    default:
-        OVS_CHECK(0);
-    }
-}
-
-static __inline VOID _DbgPrintArgType_Datapath(OVS_ARGTYPE argType)
-{
-    switch (argType)
-    {
-    case OVS_ARGTYPE_DATAPATH_NAME:
-        DEBUGP_ARG(LOG_INFO, "DATAPATH: NAME\n");
-        break;
-
-    case OVS_ARGTYPE_DATAPATH_UPCALL_PORT_ID:
-        DEBUGP_ARG(LOG_INFO, "DATAPATH: UPCALL PORT ID\n");
-        break;
-
-    case OVS_ARGTYPE_DATAPATH_STATS:
-        DEBUGP_ARG(LOG_INFO, "DATAPATH: STATS\n");
-        break;
-
-    default:
-        OVS_CHECK(0);
-    }
-}
-
-static __inline VOID _DbgPrintArgType_OFPort(OVS_ARGTYPE argType)
-{
-    switch (argType)
-    {
-    case OVS_ARGTYPE_OFPORT_NUMBER:
-        DEBUGP_ARG(LOG_INFO, "OFPORT: NUMBER\n");
-        break;
-
-    case OVS_ARGTYPE_OFPORT_TYPE:
-        DEBUGP_ARG(LOG_INFO, "OFPORT: TYPE\n");
-        break;
-
-    case OVS_ARGTYPE_OFPORT_NAME:
-        DEBUGP_ARG(LOG_INFO, "OFPORT: NAME\n");
-        break;
-
-    case OVS_ARGTYPE_OFPORT_UPCALL_PORT_ID:
-        DEBUGP_ARG(LOG_INFO, "OFPORT: UPCALL PORT ID\n");
-        break;
-
-    case OVS_ARGTYPE_OFPORT_STATS:
-        DEBUGP_ARG(LOG_INFO, "OFPORT: STATS\n");
-        break;
-
-    default:
-        OVS_CHECK(0);
-    }
-}
-
-static __inline VOID _DbgPrintArgType_OFPortOptions(OVS_ARGTYPE argType)
-{
-    switch (argType)
-    {
-    case OVS_ARGTYPE_OFPORT_OPTION_DESTINATION_PORT:
-        DEBUGP_ARG(LOG_INFO, "PORT OPT: DESTINATION\n");
-        break;
-
-    default:
-        OVS_CHECK(0);
-    }
-}
+#define __STR_CASE_ARGTYPE(argType, text)                  \
+case argType:                                               \
+    if (IsArgTypeGroup(argType))                            \
+    {                                                       \
+        RtlStringCchCatA(msg, 256, "GROUP: " text "\n");    \
+    }                                                       \
+    else                                                    \
+    {                                                       \
+        RtlStringCchCatA(msg, 256, text "\n");              \
+    }                                                       \
+    break;
 
 VOID DbgPrintArgType(OVS_ARGTYPE argType, const char* padding, int index)
 {
-    UNREFERENCED_PARAMETER(index);
-    UNREFERENCED_PARAMETER(padding);
+    char msg[256];
 
-    DEBUGP_ARG(LOG_INFO, "%s%d. ", padding, index);
+    RtlStringCchPrintfA(msg, 256, "%s%d. ", padding, index);
 
-    if (IsArgTypeGroup(argType))
+    switch (argType)
     {
-        switch (argType)
-        {
-        case OVS_ARGTYPE_PSEUDOGROUP_FLOW:
-            DEBUGP_ARG(LOG_INFO, "GROUP: FLOW\n");
-            break;
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_PSEUDOGROUP_FLOW,   "FLOW");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_FLOW_PI_GROUP,      "FLOW/PI");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_FLOW_MASK_GROUP,    "FLOW/PI_MASKS");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_PI_ENCAP_GROUP,     "FLOW/PACKET_ENCAP");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_PI_TUNNEL_GROUP,    "FLOW/PI/TUNNEL");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_FLOW_ACTIONS_GROUP, "FLOW/ACTIONS");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_FLOW_STATS,         "FLOW: STATS");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_FLOW_TCP_FLAGS,     "FLOW: TCP_FLAGS");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_FLOW_TIME_USED,     "FLOW: TIME_USED");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_FLOW_CLEAR,         "FLOW: CLEAR");
 
-        case OVS_ARGTYPE_FLOW_PI_GROUP:
-            DEBUGP_ARG(LOG_INFO, "GROUP: FLOW/KEY\n");
-            break;
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_PI_PACKET_PRIORITY,     "..PI: PACKET_PRIORITY\n");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_PI_DP_INPUT_PORT,       "..PI: IN_PORT\n");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_PI_ETH_ADDRESS,         "..PI: ETH_ADDR\n");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_PI_ETH_TYPE,            "..PI: ETH_TYPE\n");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_PI_VLAN_TCI,            "..PI: VLAN_TCI\n");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_PI_IPV4,                "..PI: IPV4\n");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_PI_IPV6,                "..PI: IPV6\n");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_PI_TCP,                 "..PI: TCP\n");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_PI_UDP,                 "..PI: UDP\n");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_PI_SCTP,                "..PI: SCTP\n");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_PI_ICMP,                "..PI: ICMP\n");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_PI_ICMP6,               "..PI: ICMP6\n");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_PI_ARP,                 "..PI: ARP\n");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_PI_NEIGHBOR_DISCOVERY,  "..PI: ND\n");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_PI_PACKET_MARK,         "..PI: PACKET MARK\n");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_PI_IPV4_TUNNEL,         "..PI: IPV4 TUNNEL\n");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_PI_MPLS,                "..PI: MPLS\n");
 
-        case OVS_ARGTYPE_PACKET_PI_GROUP:
-            DEBUGP_ARG(LOG_INFO, "GROUP: PACKET/PI\n");
-            break;
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_PI_TUNNEL_ID,           "..PI/TUNNEL: ID\n");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_PI_TUNNEL_IPV4_SRC,     "..PI/TUNNEL: IPV4 SRC\n");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_PI_TUNNEL_IPV4_DST,     "..PI/TUNNEL: IPV4 DST\n");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_PI_TUNNEL_TOS,          "..PI/TUNNEL: TOS\n");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_PI_TUNNEL_TTL,          "..PI/TUNNEL: TTL\n");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_PI_TUNNEL_DONT_FRAGMENT,"..PI/TUNNEL: DONT_FRAGMENT\n");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_PI_TUNNEL_CHECKSUM,     "..PI/TUNNEL: CHECKSUM\n");
 
-        case OVS_ARGTYPE_FLOW_MASK_GROUP:
-            DEBUGP_ARG(LOG_INFO, "GROUP: FLOW/KEY MASKS\n");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_PSEUDOGROUP_PACKET,     "PACKET");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_PACKET_PI_GROUP,        "PACKET/PI");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_PACKET_ACTIONS_GROUP,   "PACKET/ACTIONS");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_PACKET_BUFFER,          "PACKET: BUFFER\n");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_PACKET_USERDATA,        "PACKET: USER_DATA\n");
+        
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_ACTION_SAMPLE_ACTIONS_GROUP,    "..ACTIONS/SAMPLE/ACTIONS");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_ACTION_UPCALL_GROUP,            "..ACTIONS/UPCALL");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_ACTION_UPCALL_PORT_ID,          "..ACTIONS/UPCALL: PORT ID\n");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_ACTION_UPCALL_DATA,             "..ACTIONS/UPCALL: DATA\n");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_ACTION_SAMPLE_GROUP,            "..ACTIONS/SAMPLE");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_ACTION_SAMPLE_PROBABILITY,      "..ACTIONS/SAMPLE: PROBABILITY\n");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_ACTION_SETINFO_GROUP,           "..ACTIONS/SET INFO");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_ACTION_OUTPUT_TO_PORT,          "..ACTIONS: OUT TO PORT\n");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_ACTION_PUSH_VLAN,               "..ACTIONS: PUSH VLAN\n");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_ACTION_POP_VLAN,                "..ACTIONS: POP VLAN\n");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_ACTION_PUSH_MPLS,               "..ACTIONS: PUSH MPLS\n");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_ACTION_POP_MPLS,                "..ACTIONS: POP MPLS\n");
+        
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_PSEUDOGROUP_DATAPATH,       "DATAPATH");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_DATAPATH_NAME,              "DATAPATH: NAME\n");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_DATAPATH_UPCALL_PORT_ID,    "DATAPATH: UPCALL_PORT_ID\n");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_DATAPATH_STATS,             "DATAPATH: STATS\n");
 
-            break;
-        case OVS_ARGTYPE_PI_ENCAP_GROUP:
-            DEBUGP_ARG(LOG_INFO, "GROUP: FLOW/PACKET ENCAPSULATION\n");
-            break;
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_PSEUDOGROUP_OFPORT,             "OFPORT");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_OFPORT_OPTIONS_GROUP,           "OFPORT/OPTIONS");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_OFPORT_OPTION_DESTINATION_PORT, "OFPORT/OPTIONS: DESTINATION\n");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_OFPORT_NUMBER,                  "OFPORT: NUMBER\n");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_OFPORT_TYPE,                    "OFPORT: TYPE\n");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_OFPORT_NAME,                    "OFPORT: NAME\n");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_OFPORT_UPCALL_PORT_ID,          "OFPORT: UPCALL_PORT_ID\n");
+        __STR_CASE_ARGTYPE(OVS_ARGTYPE_OFPORT_STATS,                   "OFPORT: STATS\n");
 
-        case OVS_ARGTYPE_PI_TUNNEL_GROUP:
-            DEBUGP_ARG(LOG_INFO, "GROUP: FLOW/KEY/TUNNEL\n");
-            break;
-
-        case OVS_ARGTYPE_PSEUDOGROUP_PACKET:
-            DEBUGP_ARG(LOG_INFO, "GROUP: PACKET\n");
-            break;
-
-        case OVS_ARGTYPE_FLOW_ACTIONS_GROUP:
-            DEBUGP_ARG(LOG_INFO, "GROUP: FLOW/ACTIONS\n");
-            break;
-
-        case OVS_ARGTYPE_PACKET_ACTIONS_GROUP:
-            DEBUGP_ARG(LOG_INFO, "GROUP: PACKET/ACTIONS\n");
-            break;
-
-        case OVS_ARGTYPE_ACTION_SAMPLE_ACTIONS_GROUP:
-            DEBUGP_ARG(LOG_INFO, "GROUP: ACTIONS/SAMPLE/ACTIONS\n");
-            break;
-
-        case OVS_ARGTYPE_ACTION_UPCALL_GROUP:
-            DEBUGP_ARG(LOG_INFO, "GROUP: <FLOW/PACKET>/ACTIONS/UPCALL\n");
-            break;
-
-        case OVS_ARGTYPE_ACTION_SAMPLE_GROUP:
-            DEBUGP_ARG(LOG_INFO, "GROUP: <FLOW/PACKET>/ACTIONS/SAMPLE\n");
-            break;
-
-            //contains packet info args to set
-        case OVS_ARGTYPE_ACTION_SETINFO_GROUP:
-            DEBUGP_ARG(LOG_INFO, "GROUP: <FLOW/PACKET>/ACTIONS/SET INFO\n");
-            break;
-
-        case OVS_ARGTYPE_PSEUDOGROUP_DATAPATH:
-            DEBUGP_ARG(LOG_INFO, "GROUP: DATAPATH\n");
-            break;
-
-        case OVS_ARGTYPE_PSEUDOGROUP_OFPORT:
-            DEBUGP_ARG(LOG_INFO, "GROUP: OF PORT\n");
-            break;
-
-        case OVS_ARGTYPE_OFPORT_OPTIONS_GROUP:
-            DEBUGP_ARG(LOG_INFO, "GROUP: OF PORT / OPTIONS\n");
-            break;
-
-        default: OVS_CHECK(0);
-        }
+    default:
+        OVS_CHECK(__UNEXPECTED__);
     }
-    else
-    {
-        OVS_ARGTYPE groupType = GetParentGroupType(argType);
 
-        switch (groupType)
-        {
-        case OVS_ARGTYPE_PSEUDOGROUP_FLOW:
-            _DbgPrintArgType_Flow(argType);
-            break;
-
-        case OVS_ARGTYPE_FLOW_PI_GROUP:
-            _DbgPrintArgType_PacketInfo(argType);
-            break;
-
-        case OVS_ARGTYPE_PACKET_PI_GROUP:
-            _DbgPrintArgType_PacketInfo(argType);
-            break;
-
-        case OVS_ARGTYPE_FLOW_MASK_GROUP:
-            _DbgPrintArgType_PacketInfo(argType);
-
-            break;
-        case OVS_ARGTYPE_PI_ENCAP_GROUP:
-            _DbgPrintArgType_PacketInfo(argType);
-            break;
-
-        case OVS_ARGTYPE_PI_TUNNEL_GROUP:
-            _DbgPrintArgType_PITunnel(argType);
-            break;
-
-        case OVS_ARGTYPE_PSEUDOGROUP_PACKET:
-            _DbgPrintArgType_Packet(argType);
-            break;
-
-        case OVS_ARGTYPE_FLOW_ACTIONS_GROUP:
-        case OVS_ARGTYPE_PACKET_ACTIONS_GROUP:
-        case OVS_ARGTYPE_ACTION_SAMPLE_ACTIONS_GROUP:
-            _DbgPrintArgType_PacketActions(argType);
-            break;
-
-        case OVS_ARGTYPE_ACTION_UPCALL_GROUP:
-            _DbgPrintArgType_PacketActionsUpcall(argType);
-            break;
-
-        case OVS_ARGTYPE_ACTION_SAMPLE_GROUP:
-            _DbgPrintArgType_PacketActionsSample(argType);
-            break;
-
-            //contains packet info args to set
-        case OVS_ARGTYPE_ACTION_SETINFO_GROUP:
-            _DbgPrintArgType_PacketInfo(argType);
-            break;
-
-        case OVS_ARGTYPE_PSEUDOGROUP_DATAPATH:
-            _DbgPrintArgType_Datapath(argType);
-            break;
-
-        case OVS_ARGTYPE_PSEUDOGROUP_OFPORT:
-            _DbgPrintArgType_OFPort(argType);
-            break;
-
-        case OVS_ARGTYPE_OFPORT_OPTIONS_GROUP:
-            _DbgPrintArgType_OFPortOptions(argType);
-            break;
-
-        default: OVS_CHECK(0);
-        }
-    }
+    DEBUGP_ARG(LOG_INFO, msg, padding, index);
 }
