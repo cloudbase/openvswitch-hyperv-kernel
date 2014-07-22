@@ -313,6 +313,8 @@ typedef enum _OVS_ARGTYPE
     OVS_ARGTYPE_LAST_OFPORT_OPTION = OVS_ARGTYPE_OFPORT_OPTION_DESTINATION_PORT,
 } OVS_ARGTYPE;
 
+#define OVS_ARG_GROUP_COUNT 16
+
 static __inline BOOLEAN IsArgTypeGroup(OVS_ARGTYPE argType)
 {
     switch (argType)
