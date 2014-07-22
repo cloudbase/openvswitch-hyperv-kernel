@@ -318,8 +318,28 @@ typedef enum _OVS_ARGTYPE
 
 static __inline BOOLEAN IsArgTypeGroup(OVS_ARGTYPE argType)
 {
-    //invalid is 0x20; all non-group args are > 0x21; all groups are < 0x20
-    return (argType < OVS_ARGTYPE_INVALID);
+    switch (argType)
+    {
+    case OVS_ARGTYPE_PSEUDOGROUP_DATAPATH:
+    case OVS_ARGTYPE_PSEUDOGROUP_FLOW:
+    case OVS_ARGTYPE_PSEUDOGROUP_PACKET:
+    case OVS_ARGTYPE_PSEUDOGROUP_OFPORT:
+    case OVS_ARGTYPE_FLOW_PI_GROUP:
+    case OVS_ARGTYPE_FLOW_ACTIONS_GROUP:
+    case OVS_ARGTYPE_FLOW_MASK_GROUP:
+    case OVS_ARGTYPE_PI_ENCAP_GROUP:
+    case OVS_ARGTYPE_PI_TUNNEL_GROUP:
+    case OVS_ARGTYPE_PACKET_PI_GROUP:
+    case OVS_ARGTYPE_PACKET_ACTIONS_GROUP:
+    case OVS_ARGTYPE_ACTION_UPCALL_GROUP:
+    case OVS_ARGTYPE_ACTION_SETINFO_GROUP:
+    case OVS_ARGTYPE_ACTION_SAMPLE_GROUP:
+    case OVS_ARGTYPE_ACTION_SAMPLE_ACTIONS_GROUP:
+    case OVS_ARGTYPE_OFPORT_OPTIONS_GROUP:
+        return TRUE;
+    default:
+        return FALSE;
+    }
 }
 
 //given an arg type, returns the index of the arg within its group, starting from 1

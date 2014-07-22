@@ -312,7 +312,7 @@ static BOOLEAN _GetOFPortOptionsArgExpectedSize(OVS_ARGTYPE argumentType, UINT* 
 OVS_ARGTYPE GetParentGroupType(OVS_ARGTYPE childArgType)
 {
     //if child is group
-    if (childArgType >= OVS_ARGTYPE_FIRST_GROUP && childArgType <= OVS_ARGTYPE_LAST_GROUP)
+    if (IsArgTypeGroup(childArgType))
     {
         switch (childArgType)
         {
