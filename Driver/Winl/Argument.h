@@ -150,9 +150,20 @@ BOOLEAN CopyArgument(_Out_ OVS_ARGUMENT* pDest, _In_ const OVS_ARGUMENT* pSource
 
 /******************************************* DbgPrint for args **********************************************************************/
 
-VOID DbgPrintArgType(OVS_ARGTYPE argType, const char* padding, int index);
-VOID DbgPrintArg(_In_ OVS_ARGUMENT* pArg, int depth, int index);
-VOID DbgPrintArgGroup(_In_ OVS_ARGUMENT_GROUP* pGroup, int depth);
+#if OVS_DBGPRINT_ARG
+VOID DbgPrintArgType(ULONG logLevel, OVS_ARGTYPE argType, const char* padding, int index);
+VOID DbgPrintArg(ULONG logLevel, _In_ OVS_ARGUMENT* pArg, int depth, int index);
+VOID DbgPrintArgGroup(ULONG logLevel, _In_ OVS_ARGUMENT_GROUP* pGroup, int depth);
+
+#define DBGPRINT_ARG(logLevel, pArg, depth, index)          DbgPrintArg(logLevel, pArg, depth, index)
+#define DBGPRINT_ARGTYPE(logLevel, argType, padding, index) DbgPrintArgType(logLevel, argType, padding, index)
+#define DBGPRINT_ARGGROUP(logLevel, pGroup, depth)          DbgPrintArgGroup(logLevel, pGroup, depth)
+#else
+#define DBGPRINT_ARG(logLevel, pArg, depth, index)
+#define DBGPRINT_ARGTYPE(logLevel, argType, padding, index)
+#define DBGPRINT_ARGGROUP(logLevel, pGroup, depth)
+
+#endif
 
 /******************************************* ARG SIZE FUNCTIONS **********************************************************************/
 

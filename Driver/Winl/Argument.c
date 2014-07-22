@@ -225,7 +225,7 @@ OVS_ARGUMENT* CreateArgument(OVS_ARGTYPE argType, const VOID* buffer)
     }
 
     DEBUGP_ARG(LOG_INFO, "Created argument: %p; type=%u\n", pArg, argType);
-    DbgPrintArgType(argType, "", 0);
+    DBGPRINT_ARGTYPE(LOG_INFO, argType, "", 0);
 
     pArg->type = argType;
     pArg->isDisabled = FALSE;
@@ -265,7 +265,7 @@ OVS_ARGUMENT* CreateArgumentWithSize(OVS_ARGTYPE argType, const VOID* buffer, UL
     }
 
     DEBUGP_ARG(LOG_INFO, "Created argument: %p; type=%u\n", pArg, argType);
-    DbgPrintArgType(argType, "", 0);
+    DBGPRINT_ARGTYPE(LOG_INFO, argType, "", 0);
 
     pArg->type = argType;
     pArg->isDisabled = FALSE;
@@ -491,7 +491,7 @@ BOOLEAN SetArgument_Alloc(_Inout_ OVS_ARGUMENT* pArg, OVS_ARGTYPE argType, const
     }
 
     DEBUGP_ARG(LOG_INFO, "Set argument: %p; type=%u\n", pArg, argType);
-    DbgPrintArgType(argType, "", 0);
+    DBGPRINT_ARGTYPE(LOG_INFO, argType, "", 0);
 
     pArg->type = argType;
     pArg->isDisabled = FALSE;
@@ -564,7 +564,9 @@ BOOLEAN CopyArgument(_Out_ OVS_ARGUMENT* pDest, _In_ const OVS_ARGUMENT* pSource
 
 /*********************************** DbgPrint FUNCTIONS ***********************************/
 
-VOID DbgPrintArg(_In_ OVS_ARGUMENT* pArg, int depth, int index)
+#if OVS_DBGPRINT_ARG
+
+VOID DbgPrintArg(ULONG logLevel, _In_ OVS_ARGUMENT* pArg, int depth, int index)
 {
     char* padding = NULL;
 
@@ -580,19 +582,19 @@ VOID DbgPrintArg(_In_ OVS_ARGUMENT* pArg, int depth, int index)
     memset(padding, '\t', depth);
     padding[depth] = 0;
 
-    DbgPrintArgType(pArg->type, padding, index);
-    DEBUGP_ARG(LOG_INFO, "%ssize: 0x%x\n", padding, pArg->length);
+    DbgPrintArgType(logLevel, pArg->type, padding, index);
+    DEBUGP_ARG(logLevel, "%ssize: 0x%x\n", padding, pArg->length);
 
     if (IsArgTypeGroup(pArg->type))
     {
         ++depth;
-        DbgPrintArgGroup(pArg->data, depth);
+        DbgPrintArgGroup(logLevel, pArg->data, depth);
     }
 
     KFree(padding);
 }
 
-VOID DbgPrintArgGroup(_In_ OVS_ARGUMENT_GROUP* pGroup, int depth)
+VOID DbgPrintArgGroup(ULONG logLevel, _In_ OVS_ARGUMENT_GROUP* pGroup, int depth)
 {
     char* padding = NULL;
 
@@ -608,14 +610,14 @@ VOID DbgPrintArgGroup(_In_ OVS_ARGUMENT_GROUP* pGroup, int depth)
     memset(padding, '\t', depth);
     padding[depth] = 0;
 
-    DEBUGP_ARG(LOG_INFO, "%sgroup: count=0x%x; size=0x%x\n", padding, pGroup->count, pGroup->groupSize);
+    DEBUGP_ARG(logLevel, "%sgroup: count=0x%x; size=0x%x\n", padding, pGroup->count, pGroup->groupSize);
 
     for (UINT i = 0; i < pGroup->count; ++i)
     {
-        DbgPrintArg(pGroup->args + i, depth + 1, i);
+        DbgPrintArg(logLevel, pGroup->args + i, depth + 1, i);
     }
 
-    DEBUGP_ARG(LOG_INFO, "\n");
+    DEBUGP_ARG(logLevel, "\n");
 
     KFree(padding);
 }
@@ -632,7 +634,7 @@ case argType:                                               \
     }                                                       \
     break;
 
-VOID DbgPrintArgType(OVS_ARGTYPE argType, const char* padding, int index)
+VOID DbgPrintArgType(ULONG logLevel, OVS_ARGTYPE argType, const char* padding, int index)
 {
     char msg[256];
 
@@ -714,5 +716,7 @@ VOID DbgPrintArgType(OVS_ARGTYPE argType, const char* padding, int index)
         OVS_CHECK(__UNEXPECTED__);
     }
 
-    DEBUGP_ARG(LOG_INFO, msg, padding, index);
+    DEBUGP_ARG(logLevel, msg, padding, index);
 }
+
+#endif

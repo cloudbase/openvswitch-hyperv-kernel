@@ -27,7 +27,7 @@ UINT VerifyArgGroupSize(OVS_ARGUMENT_GROUP* pGroup)
             UINT groupSize;
 
             DEBUGP_ARG(LOG_INFO, "checking subgroup: ");
-            DbgPrintArgType(pArg->type, "", i);
+            DBGPRINT_ARGTYPE(LOG_INFO, pArg->type, "", i);
 
             groupSize = VerifyArgGroupSize(pArg->data);
             OVS_CHECK(pArg->length == groupSize + OVS_ARGUMENT_GROUP_HEADER_SIZE);

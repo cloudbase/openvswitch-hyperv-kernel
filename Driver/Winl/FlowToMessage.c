@@ -1045,7 +1045,7 @@ static BOOLEAN _CreateTunnelArgInList(const OVS_OFPACKET_INFO* pPacketInfo, cons
             return FALSE;
         }
 
-        DbgPrintArg(pArg, 0, 0);
+        DBGPRINT_ARG(LOG_INFO, pArg, 0, 0);
 
         if (!AppendArgumentToList(pArg, ppArgList))
         {
@@ -1182,7 +1182,7 @@ OVS_ARGUMENT* CreateArgFromPacketInfo(const OVS_OFPACKET_INFO* pPacketInfo, cons
         return NULL;
     }
 
-    DbgPrintArg(pResult, 0, 0);
+    DBGPRINT_ARG(LOG_INFO, pResult, 0, 0);
 
     DestroyOrFreeArgList(&pList, /*destroy*/ FALSE);
 
@@ -1343,7 +1343,7 @@ BOOLEAN CreateMsgFromFlow(_In_ const OVS_FLOW* pFlow, UINT8 command, _Inout_ OVS
         return FALSE;
     }
 
-    DbgPrintArg(pActionsArg, 0, 0);
+    DBGPRINT_ARG(LOG_INFO, pActionsArg, 0, 0);
 
     argsDataSize += pActionsArg->length;
     ++curArg;
