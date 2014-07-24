@@ -126,6 +126,46 @@ OVS_FLOW* FlowTable_FindFlowMatchingMaskedPI_Ref(OVS_FLOW_TABLE* pFlowTable, con
     return pFlow;
 }
 
+OVS_FLOW* _FlowTable_FindExactFlow_Unsafe(OVS_FLOW_TABLE* pFlowTable, OVS_FLOW_MATCH* pFlowMatch)
+{
+    OVS_FLOW* pFlow = NULL;
+    OVS_FLOW_MASK* pFlowMask = NULL;
+
+    pFlowMask = CONTAINING_RECORD(pFlowTable->pMaskList->Flink, OVS_FLOW_MASK, listEntry);
+
+    while (&pFlowMask->listEntry != pFlowTable->pMaskList)
+    {
+        pFlow = _FindFlowMatchingMaskedPI_Unsafe(pFlowTable, pFlowMatch->pPacketInfo, pFlowMask);
+        if (pFlow)
+        {
+            if (PacketInfo_Equal(&pFlow->unmaskedPacketInfo, pFlowMatch->pPacketInfo, pFlowMatch->piRange.endRange))
+            {
+                break;
+            }
+        }
+
+        //advance flow mask to next in list
+        pFlowMask = CONTAINING_RECORD(pFlowMask->listEntry.Flink, OVS_FLOW_MASK, listEntry);
+    }
+
+    return pFlow;
+}
+
+OVS_FLOW* FlowTable_FindExactFlow_Ref(OVS_FLOW_TABLE* pFlowTable, OVS_FLOW_MATCH* pFlowMatch)
+{
+    OVS_FLOW* pFlow = NULL;
+    LOCK_STATE_EX lockState;
+
+    FLOWTABLE_LOCK_READ(pFlowTable, &lockState);
+
+    pFlow = _FlowTable_FindExactFlow_Unsafe(pFlowTable, pFlowMatch);
+    pFlow = OVS_REFCOUNT_REFERENCE(pFlow);
+
+    FLOWTABLE_UNLOCK(pFlowTable, &lockState);
+
+    return pFlow;
+}
+
 UINT32 FlowTable_CountMasks(const OVS_FLOW_TABLE* pFlowTable)
 {
     LIST_ENTRY* pListEntry = NULL;
