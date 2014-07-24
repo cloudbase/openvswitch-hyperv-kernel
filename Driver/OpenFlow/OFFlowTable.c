@@ -126,6 +126,30 @@ OVS_FLOW* FlowTable_FindFlowMatchingMaskedPI_Ref(OVS_FLOW_TABLE* pFlowTable, con
     return pFlow;
 }
 
+UINT32 FlowTable_CountMasks(const OVS_FLOW_TABLE* pFlowTable)
+{
+    LIST_ENTRY* pListEntry = NULL;
+    LIST_ENTRY* pHeadEntry = NULL;
+    LOCK_STATE_EX lockState = { 0 };
+    UINT32 count = 0;
+
+    FLOWTABLE_LOCK_READ(pFlowTable, &lockState);
+
+    pHeadEntry = pFlowTable->pMaskList;
+    pListEntry = pHeadEntry->Flink;
+
+    while (pListEntry != pHeadEntry)
+    {
+        ++count;
+
+        pListEntry = pListEntry->Flink;
+    }
+
+    FLOWTABLE_UNLOCK(pFlowTable, &lockState);
+
+    return count;
+}
+
 OVS_FLOW_MASK* FlowTable_FindFlowMask(const OVS_FLOW_TABLE* pFlowTable, const OVS_FLOW_MASK* pFlowMask)
 {
     LIST_ENTRY* pListEntry = NULL;
