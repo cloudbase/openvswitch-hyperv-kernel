@@ -78,6 +78,12 @@ extern ULONG g_debugLevel;
 #define OVS_CHECK_RET(x, value) { if (!(x)) return value; }
 #endif //OVS_USE_ASSERTS
 
+#define EXPECT(expr)                        \
+if (!(expr))                                \
+{                                           \
+    OVS_CHECK_RET(__UNEXPECTED__, FALSE);   \
+}
+
 #pragma warning( disable: 4127)
 
 #if OVS_DBGPRINT_OID
