@@ -166,6 +166,9 @@ typedef struct _OVS_OFPACKET_INFO
     OVS_NET_LAYER_INFO ipInfo;                //8 bytes
     OVS_TRANSPORT_LAYER_INFO tpInfo;
 
+    UINT32 flowHash;
+    UINT32 recirculationId;
+
     union
     {
         OVS_IP4_INFO ipv4Info;
@@ -173,7 +176,7 @@ typedef struct _OVS_OFPACKET_INFO
         OVS_IPV6_INFO ipv6Info;                //72 bytes
     } netProto;
 }OVS_OFPACKET_INFO, *POVS_OFPACKET_INFO;
-C_ASSERT(sizeof(OVS_OFPACKET_INFO) == 136);
+C_ASSERT(sizeof(OVS_OFPACKET_INFO) == 144);
 
 /*******************************/
 
@@ -267,6 +270,8 @@ BOOLEAN GetIpv4TunnelFromArgumentsSimple(const OVS_ARGUMENT_GROUP* pArgs, _Inout
 VOID ApplyMaskToPacketInfo(_Inout_ OVS_OFPACKET_INFO* pDestinationPI, _In_ const OVS_OFPACKET_INFO* pSourcePI, _In_ const OVS_FLOW_MASK* pMask);
 
 VOID PIFromArg_PacketPriority(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout_ OVS_PI_RANGE* pPiRange, _In_ const OVS_ARGUMENT* pArg);
+VOID PIFromArg_DatapathHash(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout_ OVS_PI_RANGE* pPiRange, _In_ const OVS_ARGUMENT* pArg);
+VOID PIFromArg_DatapathRecirculationId(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout_ OVS_PI_RANGE* pPiRange, _In_ const OVS_ARGUMENT* pArg);
 BOOLEAN PIFromArg_DatapathInPort(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout_ OVS_PI_RANGE* pPiRange, _In_ const OVS_ARGUMENT* pArg, BOOLEAN isMask);
 VOID PIFromArg_PacketMark(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout_ OVS_PI_RANGE* pPiRange, _In_ const OVS_ARGUMENT* pArg);
 BOOLEAN PIFromArg_Tunnel(const OVS_ARGUMENT_GROUP* pArgs, _Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout_ OVS_PI_RANGE* pPiRange, BOOLEAN isMask);

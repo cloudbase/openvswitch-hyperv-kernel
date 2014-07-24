@@ -100,6 +100,9 @@ static BOOLEAN _ExecuteAction_Set(OVS_NET_BUFFER* pONb, const OVS_ARGUMENT_GROUP
 
     switch (argType)
     {
+        //NOTE FOR OVS 2.3: 
+        //OVS_ARGTYPE_PI_TCP_FLAGS and OVS_ARGTYPE_PI_DATAPATH_HASH and OVS_ARGTYPE_PI_DATAPATH_RECIRCULATION_ID
+        //are not settable
     case OVS_ARGTYPE_PI_PACKET_MARK:
         pONb->packetMark = GET_ARG_DATA(pArg, UINT32);
         break;
@@ -176,6 +179,26 @@ static BOOLEAN _ExecuteAction_Sample(_Inout_ OVS_NET_BUFFER *pOvsNb, _In_ const 
     }
 
     return ExecuteActions(pOvsNb, outputToPort);
+}
+
+static BOOLEAN _ExecuteAction_Hash(_Inout_ OVS_NET_BUFFER *pOvsNb, _In_ const OVS_ARGUMENT_GROUP* pArguments)
+{
+    UNREFERENCED_PARAMETER(pOvsNb);
+    UNREFERENCED_PARAMETER(pArguments);
+
+    OVS_CHECK(__NOT_IMPLEMENTED__);
+
+    return FALSE;
+}
+
+static BOOLEAN _ExecuteAction_Recirculation(_Inout_ OVS_NET_BUFFER *pOvsNb, _In_ const OVS_ARGUMENT_GROUP* pArguments)
+{
+    UNREFERENCED_PARAMETER(pOvsNb);
+    UNREFERENCED_PARAMETER(pArguments);
+
+    OVS_CHECK(__NOT_IMPLEMENTED__);
+
+    return FALSE;
 }
 
 static OVS_PERSISTENT_PORT* _FindDestPort_Ref(_In_ const OVS_PERSISTENT_PORT* pSourcePort, UINT32 persPortNumber)
@@ -333,6 +356,22 @@ BOOLEAN ExecuteActions(_Inout_ OVS_NET_BUFFER* pOvsNb, _In_ const OutputToPortCa
         case OVS_ARGTYPE_ACTION_POP_MPLS:
             OVS_CHECK(__NOT_IMPLEMENTED__);
             break;
+
+        case OVS_ARGTYPE_ACTION_HASH:
+            ok = _ExecuteAction_Hash(pOvsNb, pArg->data);
+#if !OVS_ACTION_HASH_IMPLEMENTED
+            ok = TRUE;
+#endif
+            break;
+
+        case OVS_ARGTYPE_ACTION_RECIRCULATION:
+            //TODO: use copy-on-write for OVS_NET_BUFFER, OR
+            //copy the ONB only if there are more arguments in pArg->data
+            ok = _ExecuteAction_Recirculation(pOvsNb, pArg->data);
+#if !OVS_ACTION_RECIRCULATION_IMPLEMENTED
+            ok = TRUE;
+#endif
+            break;
         }
 
         if (!ok)
@@ -474,6 +513,8 @@ static BOOLEAN _Action_SetInfo(_Inout_ OVS_ARGUMENT_GROUP* pActionGroup, const O
     case OVS_ARGTYPE_PI_PACKET_PRIORITY:
     case OVS_ARGTYPE_PI_PACKET_MARK:
     case OVS_ARGTYPE_PI_ETH_ADDRESS:
+    case OVS_ARGTYPE_PI_DATAPATH_HASH:
+    case OVS_ARGTYPE_PI_DATAPATH_RECIRCULATION_ID:
         //nothing to do here
         break;
 
@@ -631,8 +672,18 @@ BOOLEAN ProcessReceivedActions(_Inout_ OVS_ARGUMENT_GROUP* pActionGroup, const O
             break;
 
         case OVS_ARGTYPE_ACTION_SAMPLE_GROUP:
-            OVS_CHECK(__NOT_IMPLEMENTED__);
-            return FALSE;
+            OVS_CHECK_RET(__NOT_IMPLEMENTED__, FALSE);
+            break;
+
+        case OVS_ARGTYPE_ACTION_RECIRCULATION:
+            break;
+
+        case OVS_ARGTYPE_ACTION_HASH:
+        {
+            OVS_ACTION_FLOW_HASH* pHashAction = pArg->data;
+            if (pHashAction->hashAlgorithm != OVS_HASH_ALGORITHM_TRANSPORT)
+                return FALSE;
+        }
             break;
 
         case OVS_ARGTYPE_ACTION_SETINFO_GROUP:

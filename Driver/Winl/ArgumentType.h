@@ -142,7 +142,15 @@ typedef enum _OVS_ARGTYPE
 
     //received from userspace
     OVS_ARGTYPE_PI_TUNNEL_GROUP,            //0x53
-    OVS_ARGTYPE_LAST_PI = OVS_ARGTYPE_PI_TUNNEL_GROUP,
+
+    //hash value: 0 = not computed
+    //type: UINT32
+    OVS_ARGTYPE_PI_DATAPATH_HASH,			//0x054
+
+    //type: UINT32
+    OVS_ARGTYPE_PI_DATAPATH_RECIRCULATION_ID,		//0x055
+
+    OVS_ARGTYPE_LAST_PI = OVS_ARGTYPE_PI_DATAPATH_RECIRCULATION_ID,
 
     /******************************************* TARGET: FLOW: group = KEY / TUNNEL (FROM USERSPACE ONLY!) **********************************************/
 
@@ -222,7 +230,13 @@ typedef enum _OVS_ARGTYPE
     //value: eth type
     OVS_ARGTYPE_ACTION_POP_MPLS,            //0x0A8
 
-    OVS_ARGTYPE_LAST_ACTION = OVS_ARGTYPE_ACTION_POP_MPLS,
+    //data type: OVS_ACTION_FLOW_HASH
+    OVS_ARGTYPE_ACTION_HASH,				//0x0A9
+
+    //data type: UINT32
+    OVS_ARGTYPE_ACTION_RECIRCULATION,		//0x0AA
+
+    OVS_ARGTYPE_LAST_ACTION = OVS_ARGTYPE_ACTION_RECIRCULATION,
 
     /************************************ TARGET: FLOW / PACKET; group = ACTIONS / UPCALL **********************************************/
 

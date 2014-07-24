@@ -550,6 +550,22 @@ static void _DbgPrintFlow_Set(_In_ const OVS_ARGUMENT_GROUP* pArgs, _In_ ULONG m
 
     switch (argType)
     {
+    case OVS_ARGTYPE_PI_DATAPATH_HASH:
+    {
+        UINT32 hash = GET_ARG_DATA(pArg, UINT32);
+        RtlStringCchPrintfA(tempStr, 100, "dp hash=%u; ", hash);
+        RtlStringCchCatA(str, maxLen, tempStr);
+    }
+        break;
+
+    case OVS_ARGTYPE_PI_DATAPATH_RECIRCULATION_ID:
+    {
+        UINT32 id = GET_ARG_DATA(pArg, UINT32);
+        RtlStringCchPrintfA(tempStr, 100, "dp recirc id=%u; ", id);
+        RtlStringCchCatA(str, maxLen, tempStr);
+    }
+        break;
+
     case OVS_ARGTYPE_PI_PACKET_PRIORITY:
     {
         UINT32 priority = GET_ARG_DATA(pArg, UINT32);
@@ -716,6 +732,14 @@ void FlowWithActions_ToString(const char* msg, _In_ const OVS_OFPACKET_INFO* pPa
 
             case OVS_ARGTYPE_ACTION_POP_MPLS:
                 RtlStringCchCatA(str, maxLen - 1, "pop mpls; ");
+                break;
+
+            case OVS_ARGTYPE_ACTION_RECIRCULATION:
+                RtlStringCchCatA(str, maxLen - 1, "recirc; ");
+                break;
+
+            case OVS_ARGTYPE_ACTION_HASH:
+                RtlStringCchCatA(str, maxLen - 1, "hash; ");
                 break;
             }
         }

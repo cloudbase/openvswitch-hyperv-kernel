@@ -575,6 +575,8 @@ static const Func s_verifyArgPI[] =
     [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_ICMP6, PI)] = _VerifyArg_PI_Icmp6,
     [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_ARP, PI)] = _VerifyArg_PI_Arp,
     [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_NEIGHBOR_DISCOVERY, PI)] = _VerifyArg_PI_NeighborDiscovery,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_DATAPATH_HASH, PI)] = _VerifyArg_NotImplemented,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_DATAPATH_RECIRCULATION_ID, PI)] = _VerifyArg_NotImplemented,
 
     [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_PACKET_MARK, PI)] = NULL,
     [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_TUNNEL_GROUP, PI)] = _VerifyGroup_PI_Tunnel,
@@ -621,7 +623,9 @@ static const Func s_argsToAttribsActions[] =
     [OVS_ARG_TOINDEX(OVS_ARGTYPE_ACTION_POP_VLAN, ACTION)] = _VerifyArg_Action_PopVlan,
     [OVS_ARG_TOINDEX(OVS_ARGTYPE_ACTION_SAMPLE_GROUP, ACTION)] = _VerifyGroup_Default,
     [OVS_ARG_TOINDEX(OVS_ARGTYPE_ACTION_PUSH_MPLS, ACTION)] = _VerifyArg_NotImplemented,
-    [OVS_ARG_TOINDEX(OVS_ARGTYPE_ACTION_POP_MPLS, ACTION)] = _VerifyArg_NotImplemented
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_ACTION_POP_MPLS, ACTION)] = _VerifyArg_NotImplemented,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_ACTION_RECIRCULATION, ACTION)] = _VerifyArg_NotImplemented,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_ACTION_HASH, ACTION)] = _VerifyArg_NotImplemented
 };
 
 static const Func s_argsToAttribsPacket[] =

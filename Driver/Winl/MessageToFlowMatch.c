@@ -54,6 +54,14 @@ BOOLEAN GetPacketContextFromPIArgs(_In_ const OVS_ARGUMENT_GROUP* pArgGroup, _In
 
         switch (argType)
         {
+        case OVS_ARGTYPE_PI_DATAPATH_HASH:
+            PIFromArg_DatapathHash(pPacketInfo, pPiRange, pArg);
+            break;
+
+        case OVS_ARGTYPE_PI_DATAPATH_RECIRCULATION_ID:
+            PIFromArg_DatapathRecirculationId(pPacketInfo, pPiRange, pArg);
+            break;
+
         case OVS_ARGTYPE_PI_PACKET_PRIORITY:
             PIFromArg_PacketPriority(pPacketInfo, pPiRange, pArg);
             break;

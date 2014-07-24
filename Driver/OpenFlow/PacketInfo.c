@@ -560,6 +560,28 @@ VOID PIFromArg_PacketPriority(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout_ OV
     pPacketInfo->physical.packetPriority = GET_ARG_DATA(pArg, UINT32);
 }
 
+VOID PIFromArg_DatapathHash(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout_ OVS_PI_RANGE* pPiRange, _In_ const OVS_ARGUMENT* pArg)
+{
+    SIZE_T offset = 0, size = 0;
+
+    offset = OFFSET_OF(OVS_OFPACKET_INFO, flowHash);
+    size = sizeof(pPacketInfo->flowHash);
+
+    _UpdateRange(pPiRange, offset, size);
+    pPacketInfo->flowHash = GET_ARG_DATA(pArg, UINT32);
+}
+
+VOID PIFromArg_DatapathRecirculationId(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout_ OVS_PI_RANGE* pPiRange, _In_ const OVS_ARGUMENT* pArg)
+{
+    SIZE_T offset = 0, size = 0;
+
+    offset = OFFSET_OF(OVS_OFPACKET_INFO, recirculationId);
+    size = sizeof(pPacketInfo->recirculationId);
+
+    _UpdateRange(pPiRange, offset, size);
+    pPacketInfo->recirculationId = GET_ARG_DATA(pArg, UINT32);
+}
+
 BOOLEAN PIFromArg_DatapathInPort(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout_ OVS_PI_RANGE* pPiRange, _In_ const OVS_ARGUMENT* pArg, BOOLEAN isMask)
 {
     SIZE_T offset = 0, size = 0;
@@ -1068,6 +1090,14 @@ BOOLEAN GetPacketInfoFromArguments(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inou
 
         switch (argType)
         {
+        case OVS_ARGTYPE_PI_DATAPATH_HASH:
+            PIFromArg_DatapathHash(pPacketInfo, pPiRange, pArg);
+            break;
+
+        case OVS_ARGTYPE_PI_DATAPATH_RECIRCULATION_ID:
+            PIFromArg_DatapathRecirculationId(pPacketInfo, pPiRange, pArg);
+            break;
+
         case OVS_ARGTYPE_PI_PACKET_PRIORITY:
             PIFromArg_PacketPriority(pPacketInfo, pPiRange, pArg);
             break;

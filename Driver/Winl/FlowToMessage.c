@@ -1070,7 +1070,7 @@ static OVS_ARGUMENT_SLIST_ENTRY* _CreateArgListFromPacketInfo(const OVS_OFPACKET
     OVS_ARGUMENT_SLIST_ENTRY* pArgHead = NULL;
     BOOLEAN ok = TRUE;
     BOOLEAN encapsulated = FALSE;
-    UINT32 packetPriority = 0, packetMark = 0;
+    UINT32 packetPriority = 0, packetMark = 0, datapathHash = 0, recircId = 0;
 
     pArgListCur = KZAlloc(sizeof(OVS_ARGUMENT_SLIST_ENTRY));
     if (!pArgListCur)
@@ -1083,6 +1083,20 @@ static OVS_ARGUMENT_SLIST_ENTRY* _CreateArgListFromPacketInfo(const OVS_OFPACKET
 
     packetPriority = (pMask ? pMask->physical.packetPriority : pPacketInfo->physical.packetPriority);
     packetMark = (pMask ? pMask->physical.packetMark : pPacketInfo->physical.packetMark);
+    datapathHash = (pMask ? pMask->flowHash : pPacketInfo->flowHash);
+    recircId = (pMask ? pMask->recirculationId : pPacketInfo->recirculationId);
+
+    if (!CreateArgInList(OVS_ARGTYPE_PI_DATAPATH_HASH, &datapathHash, &pArgListCur))
+    {
+        DEBUGP(LOG_ERROR, __FUNCTION__ " failed appending datapath hash\n");
+        return NULL;
+    }
+
+    if (!CreateArgInList(OVS_ARGTYPE_PI_DATAPATH_RECIRCULATION_ID, &recircId, &pArgListCur))
+    {
+        DEBUGP(LOG_ERROR, __FUNCTION__ " failed appending datapath recirculation id\n");
+        return NULL;
+    }
 
     if (!CreateArgInList(OVS_ARGTYPE_PI_PACKET_PRIORITY, &packetPriority, &pArgListCur))
     {
