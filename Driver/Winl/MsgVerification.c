@@ -5,7 +5,7 @@
 #include "ArgVerification.h"
 #include "Nbls.h"
 
-UINT VerifyArgGroupSize(OVS_ARGUMENT_GROUP* pGroup)
+UINT VerifyGroup_Size_Recursive(OVS_ARGUMENT_GROUP* pGroup)
 {
     UINT expectedSize = 0;
 
@@ -27,7 +27,7 @@ UINT VerifyArgGroupSize(OVS_ARGUMENT_GROUP* pGroup)
             DEBUGP_ARG(LOG_INFO, "checking subgroup: ");
             DBGPRINT_ARGTYPE(LOG_INFO, pArg->type, "", i);
 
-            groupSize = VerifyArgGroupSize(pArg->data);
+            groupSize = VerifyGroup_Size_Recursive(pArg->data);
             OVS_CHECK(pArg->length == groupSize + OVS_ARGUMENT_GROUP_HEADER_SIZE);
         }
 
@@ -39,33 +39,7 @@ UINT VerifyArgGroupSize(OVS_ARGUMENT_GROUP* pGroup)
     return pGroup->groupSize;
 }
 
-BOOLEAN VerifyArgumentGroup(_In_ OVS_ARGUMENT_GROUP* pGroup, UINT groupType)
-{
-    OVS_CHECK(pGroup);
-
-    VerifyArgGroupSize(pGroup);
-    if (!VerifyArgNoDuplicates(pGroup, groupType))
-    {
-        return FALSE;
-    }
-
-    for (UINT i = 0; i < pGroup->count; ++i)
-    {
-        OVS_ARGUMENT* pArg = pGroup->args + i;
-
-        if (IsArgTypeGroup(pArg->type))
-        {
-            if (!VerifyArgumentGroup(pArg->data, pArg->type))
-            {
-                return FALSE;
-            }
-        }
-    }
-
-    return TRUE;
-}
-
-BOOLEAN VerifyArgNoDuplicates(OVS_ARGUMENT_GROUP* pGroup, UINT groupType)
+BOOLEAN _VerifyGroup_Duplicates(OVS_ARGUMENT_GROUP* pGroup, UINT groupType)
 {
     UNREFERENCED_PARAMETER(groupType);
 
@@ -92,6 +66,32 @@ BOOLEAN VerifyArgNoDuplicates(OVS_ARGUMENT_GROUP* pGroup, UINT groupType)
                     DEBUGP_ARG(LOG_ERROR, "found duplicate: arg type: 0x%x; group: 0x%x\n", pArgL->type, groupType);
                     return FALSE;
                 }
+            }
+        }
+    }
+
+    return TRUE;
+}
+
+BOOLEAN _VerifyGroup_SizeAndDuplicates_Recursive(_In_ OVS_ARGUMENT_GROUP* pGroup, UINT groupType)
+{
+    OVS_CHECK(pGroup);
+
+    VerifyGroup_Size_Recursive(pGroup);
+    if (!_VerifyGroup_Duplicates(pGroup, groupType))
+    {
+        return FALSE;
+    }
+
+    for (UINT i = 0; i < pGroup->count; ++i)
+    {
+        OVS_ARGUMENT* pArg = pGroup->args + i;
+
+        if (IsArgTypeGroup(pArg->type))
+        {
+            if (!_VerifyGroup_SizeAndDuplicates_Recursive(pArg->data, pArg->type))
+            {
+                return FALSE;
             }
         }
     }
@@ -323,7 +323,7 @@ static BOOLEAN _VerifyFlowMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_
     }
 
     mainArgType = MessageTargetTypeToArgType(pMsg->type);
-    if (!VerifyArgumentGroup(pMsg->pArgGroup, mainArgType))
+    if (!_VerifyGroup_SizeAndDuplicates_Recursive(pMsg->pArgGroup, mainArgType))
     {
         return FALSE;
     }
@@ -400,7 +400,7 @@ static BOOLEAN _VerifyFlowMessageReply(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_ME
     }
 
     mainArgType = MessageTargetTypeToArgType(pMsg->type);
-    if (!VerifyArgumentGroup(pMsg->pArgGroup, mainArgType))
+    if (!_VerifyGroup_SizeAndDuplicates_Recursive(pMsg->pArgGroup, mainArgType))
     {
         return FALSE;
     }
@@ -494,7 +494,7 @@ static BOOLEAN _VerifyPacketMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OV
     }
 
     mainArgType = MessageTargetTypeToArgType(pMsg->type);
-    if (!VerifyArgumentGroup(pMsg->pArgGroup, mainArgType))
+    if (!_VerifyGroup_SizeAndDuplicates_Recursive(pMsg->pArgGroup, mainArgType))
     {
         return FALSE;
     }
@@ -573,7 +573,7 @@ static BOOLEAN _VerifyPacketMessageReply(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_
     }
 
     mainArgType = MessageTargetTypeToArgType(pMsg->type);
-    if (!VerifyArgumentGroup(pMsg->pArgGroup, mainArgType))
+    if (!_VerifyGroup_SizeAndDuplicates_Recursive(pMsg->pArgGroup, mainArgType))
     {
         return FALSE;
     }
@@ -619,7 +619,7 @@ static BOOLEAN _VerifyDatapathMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ 
     }
 
     mainArgType = MessageTargetTypeToArgType(pMsg->type);
-    if (!VerifyArgumentGroup(pMsg->pArgGroup, mainArgType))
+    if (!_VerifyGroup_SizeAndDuplicates_Recursive(pMsg->pArgGroup, mainArgType))
     {
         return FALSE;
     }
@@ -715,7 +715,7 @@ static BOOLEAN _VerifyDatapathMessageReply(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OV
     }
 
     mainArgType = MessageTargetTypeToArgType(pMsg->type);
-    if (!VerifyArgumentGroup(pMsg->pArgGroup, mainArgType))
+    if (!_VerifyGroup_SizeAndDuplicates_Recursive(pMsg->pArgGroup, mainArgType))
     {
         return FALSE;
     }
@@ -762,7 +762,7 @@ static BOOLEAN _VerifyPortMessageRequest(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_
     }
 
     mainArgType = MessageTargetTypeToArgType(pMsg->type);
-    if (!VerifyArgumentGroup(pMsg->pArgGroup, mainArgType))
+    if (!_VerifyGroup_SizeAndDuplicates_Recursive(pMsg->pArgGroup, mainArgType))
     {
         return FALSE;
     }
@@ -872,7 +872,7 @@ static BOOLEAN _VerifyPortMessageReply(OVS_MESSAGE_COMMAND_TYPE cmd, _In_ OVS_ME
     }
 
     mainArgType = MessageTargetTypeToArgType(pMsg->type);
-    if (!VerifyArgumentGroup(pMsg->pArgGroup, mainArgType))
+    if (!_VerifyGroup_SizeAndDuplicates_Recursive(pMsg->pArgGroup, mainArgType))
     {
         return FALSE;
     }

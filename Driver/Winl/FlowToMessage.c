@@ -545,7 +545,7 @@ static OVS_ARGUMENT* _CreateIpv4TunnelGroup(const OF_PI_IPV4_TUNNEL* pTunnelInfo
     pTunnelArg->length = pTunnelGroup->groupSize + OVS_ARGUMENT_GROUP_HEADER_SIZE;
     pTunnelArg->type = OVS_ARGTYPE_PI_TUNNEL_GROUP;
 
-    VerifyArgGroupSize(pTunnelArg->data);
+    VerifyGroup_Size_Recursive(pTunnelArg->data);
 
 Cleanup:
 
@@ -862,7 +862,7 @@ static OVS_ARGUMENT* _CreateEncapsulationArg(const OVS_OFPACKET_INFO* pPacketInf
     pEncapsArg->length = (UINT16)totalSize + OVS_ARGUMENT_GROUP_HEADER_SIZE;
     pEncapsArg->type = OVS_ARGTYPE_PI_ENCAP_GROUP;
 
-    VerifyArgGroupSize(pEncapsArg->data);
+    VerifyGroup_Size_Recursive(pEncapsArg->data);
 
 Cleanup:
 
@@ -1187,7 +1187,7 @@ OVS_ARGUMENT* CreateArgFromPacketInfo(const OVS_OFPACKET_INFO* pPacketInfo, cons
 
     DestroyOrFreeArgList(&pList, /*destroy*/ FALSE);
 
-    VerifyArgGroupSize(pArgGroup);
+    VerifyGroup_Size_Recursive(pArgGroup);
 
     return pResult;
 }
@@ -1386,7 +1386,7 @@ BOOLEAN CreateMsgFromFlow(_In_ const OVS_FLOW* pFlow, UINT8 command, _Inout_ OVS
     pMsg->pArgGroup = pFlowGroup;
 
 Cleanup:
-    VerifyArgGroupSize(pMsg->pArgGroup);
+    VerifyGroup_Size_Recursive(pMsg->pArgGroup);
 
     if (ok)
     {
