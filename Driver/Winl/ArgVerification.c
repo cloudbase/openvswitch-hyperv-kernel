@@ -181,6 +181,13 @@ static __inline BOOLEAN _VerifyArg_PI_EthType(OVS_ARGUMENT* pArg, OVS_ARGUMENT* 
 
         if (ethType < OVS_ETHERTYPE_802_3_MIN)
         {
+            if (ethType == OVS_ETHERTYPE_802_2)
+            {
+                //TODO
+                OVS_CHECK(__NOT_IMPLEMENTED__);
+                return TRUE;
+            }
+
             OVS_CHECK_RET(__UNEXPECTED__, FALSE);
         }
         

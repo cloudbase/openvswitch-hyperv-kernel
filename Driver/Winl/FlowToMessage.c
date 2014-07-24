@@ -798,10 +798,21 @@ static OVS_ARGUMENT* _CreateEncapsulationArg(const OVS_OFPACKET_INFO* pPacketInf
     pArgHead = pArgListCur;
     pArgHead->pArg = NULL;
 
-    OVS_CHECK(pPacketInfo->ethInfo.type != RtlUshortByteSwap(OVS_ETHERTYPE_802_2));
+    //NOTE: 802.2 frames are represented in ovs messages as:
+    //packet info eth type = missing (=> filled by us)
+    //mask eth info = exact match 
+    if (pPacketInfo->ethInfo.type == RtlUshortByteSwap(OVS_ETHERTYPE_802_2) &&
+        pMask && pMask->ethInfo.type)
+    {
+        if (pMask->ethInfo.type != OVS_PI_MASK_MATCH_EXACT(BE16))
+        {
+            DEBUGP(LOG_ERROR, __FUNCTION__ " expected 802.2 mask to be exact!\n");
+            ok = FALSE;
+            goto Cleanup;
+        }
+    }
 
     if (!CreateArgInList(OVS_ARGTYPE_PI_ETH_TYPE, &ethType, &pArgListCur)) //UINT16
-
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " failed appending enc eth type\n");
 

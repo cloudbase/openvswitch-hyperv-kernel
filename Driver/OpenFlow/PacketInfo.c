@@ -1189,9 +1189,14 @@ BOOLEAN GetPacketInfoFromArguments(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inou
         }
         else
         {
-            //TODO: in the future, we might need to support OVS_ETHERTYPE_802_2. i.e. here, to set ethInfo.type == OVS_ETHERTYPE_802_2
+            /*//TODO: in the future, we might need to support OVS_ETHERTYPE_802_2. i.e. here, to set ethInfo.type == OVS_ETHERTYPE_802_2
             DEBUGP(LOG_ERROR, "WE ONLY DEAL WITH 802.3 ETHERNET FRAMES!\n");
-            return FALSE;
+            return FALSE;*/
+            SIZE_T offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, ethInfo, OVS_ETH_INFO, type);
+            SIZE_T size = sizeof(pPacketInfo->ethInfo.type);
+
+            _UpdateRange(pPiRange, offset, size);
+            pPacketInfo->ethInfo.type = RtlUshortByteSwap(OVS_ETHERTYPE_802_2);
         }
     }
 

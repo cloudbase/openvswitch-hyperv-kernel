@@ -497,6 +497,46 @@ static void _DbgPrintFlow_Ipv6(_In_ const OVS_OFPACKET_INFO* pPacketInfo, _In_ c
     //DEBUGP(LOG_WARN, __FUNCTION__ " have no dbgprint for flow/ipv6!\n");
 }
 
+static void _DbgPrintFlow_Encap(_In_ const OVS_OFPACKET_INFO* pPacketInfo, _In_ const OVS_OFPACKET_INFO* pMask, _In_ ULONG maxLen, _Inout_ CHAR* str, _Inout_ size_t* pLen)
+{
+    size_t len = *pLen;
+
+    enum { maxTempLen = 100 };
+    CHAR tempDest[maxTempLen + 1];
+
+    RtlStringCchCopyA(tempDest, maxTempLen, "encap: {");
+    RtlStringCchCopyA(str + len, maxLen - len, tempDest);
+
+    len += strlen(tempDest);
+
+    if (!pMask || pMask->ethInfo.type != OVS_PI_MASK_MATCH_WILDCARD(UINT32))
+    {
+        BE16 ethType = pPacketInfo->ethInfo.type;
+
+        RtlStringCchPrintfA(tempDest, maxTempLen, "ethType=%u; ", RtlUshortByteSwap(ethType));
+        RtlStringCchCopyA(str + len, maxLen - len, tempDest);
+
+        len += strlen(tempDest);
+    }
+
+    if (!pMask || pMask->ethInfo.tci != OVS_PI_MASK_MATCH_WILDCARD(UINT32))
+    {
+        BE16 tci = pPacketInfo->ethInfo.tci;
+
+        RtlStringCchPrintfA(tempDest, maxTempLen, "tci=%u; ", RtlUshortByteSwap(tci));
+        RtlStringCchCopyA(str + len, maxLen - len, tempDest);
+
+        len += strlen(tempDest);
+    }
+
+    RtlStringCchCopyA(tempDest, maxTempLen, "}");
+    RtlStringCchCopyA(str + len, maxLen - len, tempDest);
+
+    len += strlen(tempDest);
+
+    *pLen = len;
+}
+
 static void _DbgPrintFlow_Set(_In_ const OVS_ARGUMENT_GROUP* pArgs, _In_ ULONG maxLen, _Inout_ CHAR* str)
 {
     OVS_ARGUMENT* pArg;
@@ -608,6 +648,10 @@ void FlowWithActions_ToString(const char* msg, _In_ const OVS_OFPACKET_INFO* pPa
 
     case OVS_ETHERTYPE_IPV6:
         _DbgPrintFlow_Ipv6(pPacketInfo, pMask, maxLen, str, &len);
+        break;
+
+    case OVS_ETHERTYPE_802_2:
+        _DbgPrintFlow_Encap(pPacketInfo, pMask, maxLen, str, &len);
         break;
 
     default:
