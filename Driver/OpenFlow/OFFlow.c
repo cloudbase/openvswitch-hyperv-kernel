@@ -601,6 +601,13 @@ static void _DbgPrintFlow_Set(_In_ const OVS_ARGUMENT_GROUP* pArgs, _In_ ULONG m
     case OVS_ARGTYPE_PI_SCTP:
         RtlStringCchCatA(str, maxLen, "sctp; ");
         break;
+
+    case OVS_ARGTYPE_PI_MPLS:
+        RtlStringCchCatA(str, maxLen, "mpls; ");
+        break;
+
+    default:
+        OVS_CHECK(__UNEXPECTED__);
     }
 }
 
@@ -701,6 +708,14 @@ void FlowWithActions_ToString(const char* msg, _In_ const OVS_OFPACKET_INFO* pPa
 
             case OVS_ARGTYPE_ACTION_POP_VLAN:
                 RtlStringCchCatA(str, maxLen - 1, "pop vlan; ");
+                break;
+
+            case OVS_ARGTYPE_ACTION_PUSH_MPLS:
+                RtlStringCchCatA(str, maxLen - 1, "push mpls; ");
+                break;
+
+            case OVS_ARGTYPE_ACTION_POP_MPLS:
+                RtlStringCchCatA(str, maxLen - 1, "pop mpls; ");
                 break;
             }
         }

@@ -67,12 +67,20 @@ typedef enum
 __declspec(align(8))
 typedef struct _OVS_NET_LAYER_INFO
 {
-    //eth type = ipv4/ipv6: IP protocol; ARP: lower 8 bits of operation code.
-    UINT8 protocol;
-    UINT8 typeOfService;
-    UINT8 timeToLive;
-    //OVS_FRAGMENT_TYPE: 0 = not fragmented; 1 = first fragment; 2 = fragment with offset != 0
-    UINT8 fragment;
+    union
+    {
+        struct
+        {
+            //eth type = ipv4/ipv6: IP protocol; ARP: lower 8 bits of operation code.
+            UINT8 protocol;
+            UINT8 typeOfService;
+            UINT8 timeToLive;
+            //OVS_FRAGMENT_TYPE: 0 = not fragmented; 1 = first fragment; 2 = fragment with offset != 0
+            UINT8 fragment;
+        };
+
+        BE32 mplsTopLabelStackEntry;
+    };
 }OVS_NET_LAYER_INFO, *POVS_NET_LAYER_INFO;
 C_ASSERT(sizeof(OVS_NET_LAYER_INFO) == 8);
 
@@ -172,7 +180,7 @@ C_ASSERT(sizeof(OVS_OFPACKET_INFO) == 136);
 //multiprotocol label switching
 typedef struct _OVS_PI_MPLS
 {
-    BE32 mpls_TopLse;
+    BE32 mplsLse;
 }OVS_PI_MPLS, *POVS_PI_MPLS;
 
 typedef struct _OVS_PI_ETH_ADDRESS

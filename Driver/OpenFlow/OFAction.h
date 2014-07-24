@@ -43,6 +43,13 @@ typedef struct _OVS_ACTION_PUSH_VLAN
     BE16 vlanTci;
 } OVS_ACTION_PUSH_VLAN;
 
+typedef struct _OVS_ACTION_PUSH_MPLS
+{
+    BE32 labelStackEntry;
+    //OVS_ETHERTYPE_MPLS_UNICAST or OVS_ETHERTYPE_MPLS_MULTICAST
+    BE16 etherType;
+}OVS_ACTION_PUSH_MPLS, *POVS_ACTION_PUSH_MPLS;
+
 /**********************************************/
 
 typedef BOOLEAN(*OutputToPortCallback)(_Inout_ OVS_NET_BUFFER* pOvsNb);

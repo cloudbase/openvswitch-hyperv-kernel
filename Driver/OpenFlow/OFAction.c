@@ -135,6 +135,12 @@ static BOOLEAN _ExecuteAction_Set(OVS_NET_BUFFER* pONb, const OVS_ARGUMENT_GROUP
     case OVS_ARGTYPE_PI_SCTP:
         ok = ONB_SetSctp(pONb, pArg->data);
         break;
+
+    case OVS_ARGTYPE_PI_MPLS:
+        OVS_CHECK(__NOT_IMPLEMENTED__);
+        //TODO:
+        //ok = ONB_SetMpls(pOvsNb, pArg->data);
+        break;
     }
 
     return ok;
@@ -318,6 +324,14 @@ BOOLEAN ExecuteActions(_Inout_ OVS_NET_BUFFER* pOvsNb, _In_ const OutputToPortCa
 
         case OVS_ARGTYPE_ACTION_POP_VLAN:
             ok = Vlan_Pop(pOvsNb);
+            break;
+
+        case OVS_ARGTYPE_ACTION_PUSH_MPLS:
+            OVS_CHECK(__NOT_IMPLEMENTED__);
+            break;
+
+        case OVS_ARGTYPE_ACTION_POP_MPLS:
+            OVS_CHECK(__NOT_IMPLEMENTED__);
             break;
         }
 
@@ -572,6 +586,15 @@ static BOOLEAN _Action_SetInfo(_Inout_ OVS_ARGUMENT_GROUP* pActionGroup, const O
 
         return _ValidateTransportPort(pPacketInfo);
 
+    case OVS_ARGTYPE_PI_MPLS:
+        if (RtlUshortByteSwap(pPacketInfo->ethInfo.type) != OVS_ETHERTYPE_MPLS_UNICAST ||
+            RtlUshortByteSwap(pPacketInfo->ethInfo.type) != OVS_ETHERTYPE_MPLS_MULTICAST)
+        {
+            return FALSE;
+        }
+
+        return TRUE;
+
     default:
         DEBUGP(LOG_ERROR, __FUNCTION__ " invalid PI type to set: 0x%x\n", argType);
         return FALSE;
@@ -650,6 +673,14 @@ BOOLEAN ProcessReceivedActions(_Inout_ OVS_ARGUMENT_GROUP* pActionGroup, const O
             break;
 
         case OVS_ARGTYPE_ACTION_POP_VLAN:
+            break;
+
+        case OVS_ARGTYPE_ACTION_PUSH_MPLS:
+            OVS_CHECK_RET(__NOT_IMPLEMENTED__, FALSE);
+            break;
+
+        case OVS_ARGTYPE_ACTION_POP_MPLS:
+            OVS_CHECK_RET(__NOT_IMPLEMENTED__, FALSE);
             break;
 
         default:

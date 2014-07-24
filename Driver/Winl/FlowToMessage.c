@@ -94,6 +94,21 @@ static BOOLEAN _CreateArpArgs(const OVS_OFPACKET_INFO* pPacketInfo, OVS_ARGUMENT
     return TRUE;
 }
 
+static BOOLEAN _CreateMplsArgs(const OVS_OFPACKET_INFO* pPacketInfo, OVS_ARGUMENT_SLIST_ENTRY** ppArgList)
+{
+    OVS_PI_MPLS mplsPI = { 0 };
+
+    mplsPI.mplsLse = pPacketInfo->ipInfo.mplsTopLabelStackEntry;
+
+    if (!CreateArgInList(OVS_ARGTYPE_PI_MPLS, &mplsPI, ppArgList))
+    {
+        DEBUGP(LOG_ERROR, __FUNCTION__ " failed appending mpls packet info\n");
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
 static BOOLEAN _CreateTcpArgs(const OVS_OFPACKET_INFO* pPacketInfo, const OVS_OFPACKET_INFO* pMask, OVS_ARGUMENT_SLIST_ENTRY** ppArgList)
 {
     OVS_PI_TCP tcpPI = { 0 };
@@ -231,6 +246,17 @@ static BOOLEAN _CreateArgsFromLayer3And4InList(const OVS_OFPACKET_INFO* pPacketI
         if (!_CreateArpArgs(pInfoToWrite, ppArgList))
         {
             DEBUGP(LOG_ERROR, __FUNCTION__ " create arp args failed\n");
+            ok = FALSE;
+            return FALSE;
+        }
+    }
+
+    else if (pPacketInfo->ethInfo.type == RtlUshortByteSwap(OVS_ETHERTYPE_MPLS_UNICAST) ||
+        pPacketInfo->ethInfo.type == RtlUshortByteSwap(OVS_ETHERTYPE_MPLS_MULTICAST))
+    {
+        if (!_CreateMplsArgs(pInfoToWrite, ppArgList))
+        {
+            DEBUGP(LOG_ERROR, __FUNCTION__ " create mpls args failed\n");
             ok = FALSE;
             return FALSE;
         }

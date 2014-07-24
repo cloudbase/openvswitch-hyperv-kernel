@@ -856,6 +856,20 @@ static BOOLEAN _GetPIFromArg_Arp(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout_
     return TRUE;
 }
 
+static BOOLEAN _GetPIFromArg_Mpls(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout_ OVS_PI_RANGE* pPiRange, _In_ const OVS_ARGUMENT* pArg)
+{
+    const OVS_PI_MPLS* pMplsPI = pArg->data;
+    SIZE_T size = 0, offset = 0;
+
+    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, ipInfo, OVS_NET_LAYER_INFO, mplsTopLabelStackEntry);
+    size = sizeof(pPacketInfo->ipInfo.mplsTopLabelStackEntry);
+
+    _UpdateRange(pPiRange, offset, size);
+    pPacketInfo->ipInfo.mplsTopLabelStackEntry = pMplsPI->mplsLse;
+
+    return TRUE;
+}
+
 static VOID _GetPIFromArg_Tcp(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout_ OVS_PI_RANGE* pPiRange, _In_ const OVS_ARGUMENT* pTcpArg, BOOLEAN haveIpv4)
 {
     const OVS_PI_TCP* pTcpPI = pTcpArg->data;
@@ -1126,6 +1140,10 @@ BOOLEAN GetPacketInfoFromArguments(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inou
                 return FALSE;
             }
 
+            break;
+
+        case OVS_ARGTYPE_PI_MPLS:
+            _GetPIFromArg_Mpls(pPacketInfo, pPiRange, pArg);
             break;
 
         case OVS_ARGTYPE_PI_TCP:
