@@ -28,6 +28,11 @@ limitations under the License.
 
 #define OVS_ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
 
+#define OVS_VERSION_1_11		111
+#define OVS_VERSION_2_3			203
+
+#define OVS_VERSION OVS_VERSION_2_3
+
 typedef struct _OVS_FLOW                     OVS_FLOW;
 typedef struct _OVS_OFPACKET_INFO            OVS_OFPACKET_INFO;
 typedef struct _OF_PI_IPV4_TUNNEL            OF_PI_IPV4_TUNNEL;
@@ -92,3 +97,18 @@ static __inline VOID KFreeSafe(VOID* p)
         ExFreePoolWithTag(p, g_extAllocationTag);
     }
 }
+
+//NOTE: experimental
+static __inline VOID* ConstCast(const VOID* value)
+{
+    return (VOID*)value;
+}
+
+#define CONST_CAST_TYPE(Type)	                                \
+static __inline Type* ConstCast##Type(const Type* value)	    \
+{														        \
+	return (Type*)value;									    \
+}
+
+//use e.g.: CONST_CAST_TYPE(OVS_FLOW_STATS)
+#define CONST_CAST(Type, value) ConstCast##Type(value)
