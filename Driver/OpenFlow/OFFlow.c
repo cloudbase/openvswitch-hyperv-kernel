@@ -462,9 +462,9 @@ static void _DbgPrintFlow_Ipv4(_In_ const OVS_OFPACKET_INFO* pPacketInfo, _In_ c
         len += strlen(tempDest);
     }
 
-    if (!pMask || pMask->netProto.ipv4Info.destinationPort != OVS_PI_MASK_MATCH_WILDCARD(UINT16))
+    if (!pMask || pMask->tpInfo.destinationPort != OVS_PI_MASK_MATCH_WILDCARD(UINT16))
     {
-        ULONG dstPort = pPacketInfo->netProto.ipv4Info.destinationPort;
+        ULONG dstPort = pPacketInfo->tpInfo.destinationPort;
 
         RtlStringCchPrintfA(tempDest, maxTempLen, "ipv4_dst_port: %u; ", dstPort);
         RtlStringCchCopyA(str + len, maxLen - len, tempDest);
@@ -472,9 +472,9 @@ static void _DbgPrintFlow_Ipv4(_In_ const OVS_OFPACKET_INFO* pPacketInfo, _In_ c
         len += strlen(tempDest);
     }
 
-    if (!pMask || pMask->netProto.ipv4Info.sourcePort != OVS_PI_MASK_MATCH_WILDCARD(UINT16))
+    if (!pMask || pMask->tpInfo.sourcePort != OVS_PI_MASK_MATCH_WILDCARD(UINT16))
     {
-        ULONG srcPort = pPacketInfo->netProto.ipv4Info.sourcePort;
+        ULONG srcPort = pPacketInfo->tpInfo.sourcePort;
 
         RtlStringCchPrintfA(tempDest, maxTempLen, "ipv4_src_port: %u; ", srcPort);
         RtlStringCchCopyA(str + len, maxLen - len, tempDest);

@@ -76,22 +76,29 @@ typedef struct _OVS_NET_LAYER_INFO
 }OVS_NET_LAYER_INFO, *POVS_NET_LAYER_INFO;
 C_ASSERT(sizeof(OVS_NET_LAYER_INFO) == 8);
 
-__declspec(align(8))
-typedef struct _OVS_IP4_INFO
-{
-    IN_ADDR source;
-    IN_ADDR destination;
-
+__declspec(align(4))
+typedef struct _OVS_TRANSPORT_LAYER_INFO {
     //source port for TCP & UDP. For ICMP it is Type; BE
     BE16 sourcePort;
     //destination port for TCP & UDP. For ICMP it is Code; BE
     BE16 destinationPort;
+}OVS_TRANSPORT_LAYER_INFO, *POVS_TRANSPORT_LAYER_INFO;
+
+C_ASSERT(sizeof(OVS_TRANSPORT_LAYER_INFO) == 4);
+
+__declspec(align(8))
+typedef struct _OVS_IP4_INFO
+{
+    //TODO: consider using BE32 instead of IN_ADDR
+    IN_ADDR source;
+    IN_ADDR destination;
 }OVS_IP4_INFO, *POVS_IP4_INFO;
-C_ASSERT(sizeof(OVS_IP4_INFO) == 16);
+C_ASSERT(sizeof(OVS_IP4_INFO) == 8);
 
 __declspec(align(8))
 typedef struct _OVS_ARP_INFO
 {
+    //TODO: consider using BE32 instead of IN_ADDR
     IN_ADDR source;
     IN_ADDR destination;
 
@@ -103,24 +110,24 @@ C_ASSERT(sizeof(OVS_ARP_INFO) == 24);
 __declspec(align(8))
 typedef struct _OVS_IPV6_INFO
 {
+    // 16 bytes
     IN6_ADDR source;
+    // 16 bytes
     IN6_ADDR destination;
 
     UINT32 flowLabel;
-
-    UINT16 sourcePort;
-    UINT16 destinationPort;
 
     //ND refers to Neighbor Discovery
     //see RFC4861 + its updates
     struct
     {
+        // 16 bytes
         IN6_ADDR ndTargetIp;
         UINT8 ndSourceMac[OVS_ETHERNET_ADDRESS_LENGTH];
         UINT8 ndTargetMac[OVS_ETHERNET_ADDRESS_LENGTH];
     }neighborDiscovery;
 }OVS_IPV6_INFO, *POVS_IPV6_INFO;
-C_ASSERT(sizeof(OVS_IPV6_INFO) == 72);
+C_ASSERT(sizeof(OVS_IPV6_INFO) == 64);
 
 //PI = PacketInfo
 __declspec(align(8))
@@ -149,6 +156,7 @@ typedef struct _OVS_OFPACKET_INFO
     OVS_PHYSICAL physical;                    //16 bytes
     OVS_ETH_INFO ethInfo;                    //16 bytes
     OVS_NET_LAYER_INFO ipInfo;                //8 bytes
+    OVS_TRANSPORT_LAYER_INFO tpInfo;
 
     union
     {

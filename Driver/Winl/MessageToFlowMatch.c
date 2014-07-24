@@ -358,7 +358,7 @@ static BOOLEAN _VerifyMasks(_In_ const OVS_FLOW_MATCH* pFlowMatch, _In_ const OV
     }
 
     //IPV6 / ICMP6 / ND
-    isWildcard = (pMask ? (pMask->netProto.ipv6Info.sourcePort == OVS_PI_MASK_MATCH_WILDCARD(UINT8)) : FALSE);
+    isWildcard = (pMask ? (pMask->tpInfo.sourcePort == OVS_PI_MASK_MATCH_WILDCARD(UINT8)) : FALSE);
 
     pPacketInfoArg = FindArgument(pPIGroup, OVS_ARGTYPE_PI_NEIGHBOR_DISCOVERY);
 
