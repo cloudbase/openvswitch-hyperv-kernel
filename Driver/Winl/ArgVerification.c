@@ -7,40 +7,6 @@
 #include "OFFlow.h"
 #include "OFAction.h"
 
-UINT VerifyArgGroupSize(OVS_ARGUMENT_GROUP* pGroup)
-{
-    UINT expectedSize = 0;
-
-    OVS_CHECK(pGroup);
-    //group count can be zero, but in this case, group size must also be zero
-
-    expectedSize = pGroup->count * OVS_ARGUMENT_HEADER_SIZE;
-
-    for (UINT i = 0; i != pGroup->count; ++i)
-    {
-        OVS_ARGUMENT* pArg = pGroup->args + i;
-        OVS_ARGTYPE argType = pArg->type;
-        OVS_CHECK(pArg->data && pArg->length || !pArg->data && !pArg->length);
-
-        if (IsArgTypeGroup(argType))
-        {
-            UINT groupSize;
-
-            DEBUGP_ARG(LOG_INFO, "checking subgroup: ");
-            DBGPRINT_ARGTYPE(LOG_INFO, pArg->type, "", i);
-
-            groupSize = VerifyArgGroupSize(pArg->data);
-            OVS_CHECK(pArg->length == groupSize + OVS_ARGUMENT_GROUP_HEADER_SIZE);
-        }
-
-        expectedSize += pArg->length;
-    }
-
-    OVS_CHECK(expectedSize == pGroup->groupSize);
-
-    return pGroup->groupSize;
-}
-
 /********************************* FLOW / KEY / TUNNEL *********************************/
 
 static __inline BOOLEAN _VerifyArg_PacketInfoTunnelChecksum(OVS_ARGUMENT* pArg, BOOLEAN isMask)
@@ -1374,66 +1340,6 @@ BOOLEAN VerifyGroup_PacketActions(OVS_ARGUMENT* pParentArg, BOOLEAN isRequest)
 
         default:
             return FALSE;
-        }
-    }
-
-    return TRUE;
-}
-
-BOOLEAN VerifyArgumentGroup(_In_ OVS_ARGUMENT_GROUP* pGroup, UINT groupType)
-{
-    OVS_CHECK(pGroup);
-
-    VerifyArgGroupSize(pGroup);
-    if (!VerifyArgNoDuplicates(pGroup, groupType))
-    {
-        return FALSE;
-    }
-
-    for (UINT i = 0; i < pGroup->count; ++i)
-    {
-        OVS_ARGUMENT* pArg = pGroup->args + i;
-
-        if (IsArgTypeGroup(pArg->type))
-        {
-            if (!VerifyArgumentGroup(pArg->data, pArg->type))
-            {
-                return FALSE;
-            }
-        }
-    }
-
-    return TRUE;
-}
-
-BOOLEAN VerifyArgNoDuplicates(OVS_ARGUMENT_GROUP* pGroup, UINT groupType)
-{
-    UNREFERENCED_PARAMETER(groupType);
-
-    if (0 == pGroup->count)
-    {
-        return TRUE;
-    }
-
-    for (UINT16 i = 0; i < pGroup->count - 1; ++i)
-    {
-        OVS_ARGUMENT* pArgL = pGroup->args + i;
-
-        for (UINT16 j = i + 1; j < pGroup->count; ++j)
-        {
-            OVS_ARGUMENT* pArgR = pGroup->args + j;
-
-            if (pArgL->type == pArgR->type)
-            {
-                //we allow multiple 'out to port' and 'set info' actions.
-                //we do not allow other duplicate arguments.
-                if (pArgL->type != OVS_ARGTYPE_ACTION_OUTPUT_TO_PORT ||
-                    pArgL->type == OVS_ARGTYPE_ACTION_SETINFO_GROUP)
-                {
-                    DEBUGP_ARG(LOG_ERROR, "found duplicate: arg type: 0x%x; group: 0x%x\n", pArgL->type, groupType);
-                    return FALSE;
-                }
-            }
         }
     }
 
