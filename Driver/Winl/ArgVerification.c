@@ -619,8 +619,9 @@ static const Func s_argsToAttribsActions[] =
     [OVS_ARG_TOINDEX(OVS_ARGTYPE_ACTION_SETINFO_GROUP, ACTION)] = _VerifyArg_NotImplemented,
     [OVS_ARG_TOINDEX(OVS_ARGTYPE_ACTION_PUSH_VLAN, ACTION)] = _VerifyArg_Action_PushVlan,
     [OVS_ARG_TOINDEX(OVS_ARGTYPE_ACTION_POP_VLAN, ACTION)] = _VerifyArg_Action_PopVlan,
-    [OVS_ARG_TOINDEX(OVS_ARGTYPE_ACTION_SAMPLE_GROUP, ACTION)] = _VerifyGroup_Default
-
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_ACTION_SAMPLE_GROUP, ACTION)] = _VerifyGroup_Default,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_ACTION_PUSH_MPLS, ACTION)] = _VerifyArg_NotImplemented,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_ACTION_POP_MPLS, ACTION)] = _VerifyArg_NotImplemented
 };
 
 static const Func s_argsToAttribsPacket[] =
