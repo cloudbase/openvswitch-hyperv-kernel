@@ -7,1341 +7,690 @@
 #include "OFFlow.h"
 #include "OFAction.h"
 
-/********************************* FLOW / KEY / TUNNEL *********************************/
+#include "Message.h"
+#include "Nbls.h"
 
-static __inline BOOLEAN _VerifyArg_PacketInfoTunnelChecksum(OVS_ARGUMENT* pArg, BOOLEAN isMask)
-{
-    UNREFERENCED_PARAMETER(pArg);
-    UNREFERENCED_PARAMETER(isMask);
-
-    //data type: no data
-    return TRUE;
+#define OVS_MUST_HAVE_ARG_IN_ARRAY(argArray, argType)    \
+    if (!OVS_ARG_HAVE_IN_ARRAY(argArray, argType))        \
+{                                                                \
+    DEBUGP_ARG(LOG_ERROR, __FUNCTION__ " does not have arg: 0x%x\n", argType);    \
+    OVS_CHECK_RET(__UNEXPECTED__, FALSE);                                                        \
 }
 
-static __inline BOOLEAN _VerifyArg_PacketInfoTunnelDontFragment(OVS_ARGUMENT* pArg, BOOLEAN isMask)
-{
-    UNREFERENCED_PARAMETER(pArg);
-    UNREFERENCED_PARAMETER(isMask);
+#define OVS_MUST_HAVE_ARG_IN_ARRAY_2(argArray, argType1, argType2)    \
+    OVS_MUST_HAVE_ARG_IN_ARRAY(argArray, argType1);        \
+    OVS_MUST_HAVE_ARG_IN_ARRAY(argArray, argType2);
 
-    //data type: no data
-    return TRUE;
+#define OVS_PARSE_ARGS_QUICK(group, pGroup, args)                                    \
+    OVS_ARGUMENT* args[OVS_ARGTYPE_COUNT(group)];                    \
+    \
+    OVS_FOR_EACH_ARG((pGroup),                                        \
+    \
+    OVS_ARGUMENT** ppCurArg = args + OVS_ARG_TOINDEX(argType, group);    \
+    OVS_CHECK(!*ppCurArg);                                            \
+    *ppCurArg = pArg                                                \
+    );
+
+#define OVS_VERIFY_STRUCT_WILDCARD_DEFAULT(Type, pObj)                                      \
+{                                                                                           \
+    Type wildcard = { OVS_PI_MASK_MATCH_WILDCARD(UINT) };                                   \
+    \
+    if (0 == memcmp(pObj, &wildcard, sizeof(Type)))                                             \
+{                                                                                           \
+    DEBUGP_ARG(LOG_LOUD, __FUNCTION__ " mask wildcard is default. no need to be set\n");   \
+    OVS_CHECK_RET(__UNEXPECTED__, FALSE);                                                   \
+}                                                                                           \
 }
 
-static __inline BOOLEAN _VerifyArg_PacketInfoTunnelFlags(OVS_ARGUMENT* pArg, BOOLEAN isMask, BOOLEAN isRequest)
-{
-    UINT16 flags = GET_ARG_DATA(pArg, UINT16);
+#define OVS_VERIFY_BUILTIN_WILDCARD_DEFAULT(Type, var)          \
+    if (var == OVS_PI_MASK_MATCH_WILDCARD(Type))                \
+{                                                                                       \
+    DEBUGP_ARG(LOG_LOUD, "mask should not be set as wildcard. it's the default\n");     \
+    OVS_CHECK_RET(__UNEXPECTED__, FALSE);                                               \
+}
 
-    if (!isMask)
+#define _VERIFY_ARG_PI_TP(Type, pParentArg, argData, options)           \
+{                                                                       \
+    Type* pTpInfo = (argData);                                          \
+                                                                        \
+    if (!(options & OVS_VERIFY_OPTION_ISMASK) &&                        \
+    options & OVS_VERIFY_OPTION_SEEK_IP)                                \
+{                                                                       \
+    EXPECT(FindArgument((pParentArg)->data, OVS_ARGTYPE_PI_IPV4) ||     \
+    FindArgument((pParentArg)->data, OVS_ARGTYPE_PI_IPV6));             \
+}                                                                       \
+else if (options & OVS_VERIFY_OPTION_ISREQUEST)                         \
+{                                                                       \
+    OVS_VERIFY_STRUCT_WILDCARD_DEFAULT(Type, pTpInfo);                  \
+}                                                                       \
+}
+
+/**************************************************/
+
+static BOOLEAN _IsStringPrintableA(const char* str, UINT16 len)
+{
+    for (UINT16 i = 0; i < len; ++i)
     {
-    }
-    //is mask
-    else if (isRequest)
-    {
-        if (flags == OVS_PI_MASK_MATCH_WILDCARD(UINT16))
+        if (str[i] == 0)
         {
-            DEBUGP_ARG(LOG_LOUD, "mask wildcard for tunnel flag is default\n");
+            break;
+        }
+
+        //verify that all chars are printable chars
+        if (!(str[i] >= 0x20 && str[i] <= 0x7e))
+        {
+            DEBUGP_ARG(LOG_ERROR, "name not printable: %s", str);
+            OVS_CHECK_RET(__UNEXPECTED__, FALSE);
         }
     }
 
     return TRUE;
 }
 
-static __inline BOOLEAN _VerifyArg_PacketInfoTunnelId(OVS_ARGUMENT* pArg, BOOLEAN isMask, BOOLEAN isRequest)
+/********************************* PI / TUNNEL *********************************/
+
+static __inline BOOLEAN _VerifyGroup_PI_Tunnel(OVS_ARGUMENT* pTunArg, OVS_ARGUMENT* pParentArg, OVS_VERIFY_OPTIONS options)
 {
-    BE64 tunnelId = GET_ARG_DATA(pArg, BE64);
-
-    //data type: BE64
-    if (!isMask)
-    {
-    }
-    //is mask
-    else if (isRequest)
-    {
-        if (tunnelId == OVS_PI_MASK_MATCH_WILDCARD(UINT64))
-        {
-            DEBUGP_ARG(LOG_LOUD, "mask wildcard for tunnel id is default. no need to be set\n");
-        }
-    }
-
-    DEBUGP_ARG(LOG_LOUD, __FUNCTION__ " verification not yet implemented\n");
-    return TRUE;
-}
-
-static __inline BOOLEAN _VerifyArg_PacketInfoTunnelIpv4Dst(OVS_ARGUMENT* pArg, BOOLEAN isMask, BOOLEAN isRequest)
-{
-    UINT32 destAddr = GET_ARG_DATA(pArg, UINT32);
-
-    if (!isMask)
-    {
-        if (destAddr == 0)
-        {
-            return FALSE;
-        }
-    }
-    //is mask
-    else if (isRequest)
-    {
-        if (destAddr == OVS_PI_MASK_MATCH_WILDCARD(UINT32))
-        {
-            DEBUGP_ARG(LOG_LOUD, "mask wildcard for tunnel ipv4 dest is default. no need to be set\n");
-        }
-    }
-
-    return TRUE;
-}
-
-static __inline BOOLEAN _VerifyArg_PacketInfoTunnelIpv4Src(OVS_ARGUMENT* pArg, BOOLEAN isMask, BOOLEAN isRequest)
-{
-    BE32 ipv4Src = GET_ARG_DATA(pArg, BE32);
-
-    //data type: BE64
-    if (!isMask)
-    {
-    }
-    //is mask
-    else if (isRequest)
-    {
-        if (ipv4Src == OVS_PI_MASK_MATCH_WILDCARD(UINT32))
-        {
-            DEBUGP_ARG(LOG_LOUD, "mask wildcard for tunnel ipv4 src is default. no need to be set\n");
-        }
-    }
-
-    return TRUE;
-}
-
-static __inline BOOLEAN _VerifyArg_PacketInfoTunnelTos(OVS_ARGUMENT* pArg, BOOLEAN isMask, BOOLEAN isRequest)
-{
-    UINT8 tos = GET_ARG_DATA(pArg, UINT8);
-
-    //data type: UINT8
-    if (!isMask)
-    {
-    }
-    //is mask
-    else if (isRequest)
-    {
-        if (tos == OVS_PI_MASK_MATCH_WILDCARD(UINT8))
-        {
-            DEBUGP_ARG(LOG_LOUD, "mask wildcard for tunnel tos is default. no need to be set\n");
-        }
-    }
-
-    return TRUE;
-}
-
-static __inline BOOLEAN _VerifyArg_PacketInfoTunnelTtl(OVS_ARGUMENT* pArg, BOOLEAN isMask, BOOLEAN isRequest)
-{
-    UINT8 ttl = GET_ARG_DATA(pArg, UINT8);
-
-    if (!isMask)
-    {
-        if (ttl == 0)
-        {
-            return FALSE;
-        }
-    }
-    else if (isRequest)
-    {
-        if (ttl == OVS_PI_MASK_MATCH_WILDCARD(UINT8))
-        {
-            DEBUGP_ARG(LOG_LOUD, "mask wildcard for tunnel ttl is default. no need to be set\n");
-        }
-    }
-
-    return TRUE;
-}
-
-static __inline BOOLEAN _VerifyGroup_FlowKeyTunnel(OVS_ARGUMENT* pParentArg, BOOLEAN isMask, BOOLEAN isRequest)
-{
-    OVS_ARGUMENT_GROUP* pGroup = pParentArg->data;
+    OVS_ARGUMENT_GROUP* pGroup = pTunArg->data;
+    const OVS_ARG_VERIFY_INFO* pVerify = FindArgVerificationGroup(pTunArg->type);
     BOOLEAN haveDest = FALSE, haveTtl = FALSE;
 
-    for (UINT i = 0; i < pGroup->count; ++i)
+    OVS_CHECK(pVerify);
+
+    OVS_FOR_EACH_ARG(pGroup,
     {
-        OVS_ARGUMENT* pArg = pGroup->args + i;
-        OVS_ARGTYPE argType = pArg->type;
+        OVS_ARGTYPE first = pVerify->firstChildArgType;
+        Func f = pVerify->f[OVS_ARG_TOINDEX_FIRST(argType, first)];
 
-        switch (argType)
+        if (argType == OVS_ARGTYPE_PI_TUNNEL_IPV4_DST)
         {
-        case OVS_ARGTYPE_PI_TUNNEL_CHECKSUM:
-            if (!_VerifyArg_PacketInfoTunnelChecksum(pArg, isMask))
-            {
-                return FALSE;
-            }
-            break;
-
-        case OVS_ARGTYPE_PI_TUNNEL_DONT_FRAGMENT:
-            if (!_VerifyArg_PacketInfoTunnelDontFragment(pArg, isMask))
-            {
-                return FALSE;
-            }
-            break;
-
-        case OVS_ARGTYPE_PI_TUNNEL_ID:
-            if (!_VerifyArg_PacketInfoTunnelId(pArg, isMask, isRequest))
-            {
-                return FALSE;
-            }
-            break;
-
-        case OVS_ARGTYPE_PI_TUNNEL_IPV4_DST:
-            if (!_VerifyArg_PacketInfoTunnelIpv4Dst(pArg, isMask, isRequest))
-            {
-                return FALSE;
-            }
-
             haveDest = TRUE;
-            break;
-
-        case OVS_ARGTYPE_PI_TUNNEL_IPV4_SRC:
-            if (!_VerifyArg_PacketInfoTunnelIpv4Src(pArg, isMask, isRequest))
-            {
-                return FALSE;
-            }
-            break;
-
-        case OVS_ARGTYPE_PI_TUNNEL_TOS:
-            if (!_VerifyArg_PacketInfoTunnelTos(pArg, isMask, isRequest))
-            {
-                return FALSE;
-            }
-            break;
-
-        case OVS_ARGTYPE_PI_TUNNEL_TTL:
-            if (!_VerifyArg_PacketInfoTunnelTtl(pArg, isMask, isRequest))
-            {
-                return FALSE;
-            }
-
-            haveTtl = TRUE;
-            break;
-
-        default:
-            return FALSE;
         }
-    }
 
-    if (!isMask)
+        if (argType == OVS_ARGTYPE_PI_TUNNEL_TTL)
+        {
+            haveTtl = TRUE;
+        }
+
+        if (f && !f(pArg, pParentArg, options))
+        {
+            OVS_CHECK_RET(__UNEXPECTED__, FALSE);
+        }
+    });
+
+    if (!(options & OVS_VERIFY_OPTION_ISMASK))
     {
         if (!haveDest || !haveTtl)
         {
-            return FALSE;
+            OVS_CHECK_RET(__UNEXPECTED__, FALSE);
         }
     }
 
     return TRUE;
 }
 
-/********************************* FLOW / KEY  *********************************/
+/********************************* Packet Info  *********************************/
 
-static __inline BOOLEAN _VerifyArg_PacketInfo_DpInputPort(OVS_ARGUMENT* pArg, BOOLEAN isMask, BOOLEAN isRequest)
+static __inline BOOLEAN _VerifyArg_PI_InputPort(OVS_ARGUMENT* pArg, OVS_ARGUMENT* pParentArg, OVS_VERIFY_OPTIONS options)
 {
     UINT32 inPort = GET_ARG_DATA(pArg, UINT32);
 
-    if (!isMask)
+    UNREFERENCED_PARAMETER(pParentArg);
+
+    if (!(options & OVS_VERIFY_OPTION_ISMASK))
     {
         if (inPort > OVS_MAX_PORTS)
         {
             DEBUGP_ARG(LOG_ERROR, "the in port id is too big. max is: 0x%x; given is: 0x%x\n", OVS_MAX_PORTS, inPort);
+            OVS_CHECK_RET(__UNEXPECTED__, FALSE);
         }
     }
-    else if (isRequest)
+    else if (options & OVS_VERIFY_OPTION_ISREQUEST)
     {
         DEBUGP_ARG(LOG_INFO, "the mask shouldn't be set for dp in port: it is always set as exact match (~0)\n");
+        OVS_CHECK_RET(__UNEXPECTED__, FALSE);
     }
 
     return TRUE;
 }
 
-static __inline BOOLEAN _VerifyArg_PacketInfo_EthAddress(OVS_ARGUMENT* pArg, BOOLEAN isMask, BOOLEAN isRequest)
+static __inline BOOLEAN _VerifyArg_PI_EthAddress(OVS_ARGUMENT* pArg, OVS_ARGUMENT* pParentArg, OVS_VERIFY_OPTIONS options)
 {
     OVS_PI_ETH_ADDRESS* pEthAddrInfo = pArg->data;
 
-    if (!isMask)
-    {
-    }
-    //mask
-    else if (isRequest)
-    {
-        OVS_PI_ETH_ADDRESS wildcard = { OVS_PI_MASK_MATCH_WILDCARD(UINT) };
+    UNREFERENCED_PARAMETER(pParentArg);
 
-        if (0 == memcmp(pEthAddrInfo, &wildcard, sizeof(OVS_PI_ETH_ADDRESS)))
-        {
-            DEBUGP_ARG(LOG_LOUD, "mask wildcard for eth addr is default. no need to be set\n");
-        }
+    if (options & OVS_VERIFY_OPTION_ISMASK &&
+        options & OVS_VERIFY_OPTION_ISREQUEST)
+    {
+        OVS_VERIFY_STRUCT_WILDCARD_DEFAULT(OVS_PI_ETH_ADDRESS, pEthAddrInfo);
     }
 
     return TRUE;
 }
 
-static __inline BOOLEAN _VerifyArg_PacketInfo_EthType(OVS_ARGUMENT* pArg, BOOLEAN isMask, BOOLEAN isRequest, OVS_ARGUMENT* pParentArg)
+static __inline BOOLEAN _VerifyArg_PI_EthType(OVS_ARGUMENT* pArg, OVS_ARGUMENT* pParentArg, OVS_VERIFY_OPTIONS options)
 {
     UINT16 ethType = RtlUshortByteSwap(GET_ARG_DATA(pArg, UINT16));
 
-    UNREFERENCED_PARAMETER(isRequest);
-
-    if (!isMask)
+    if (!(options && OVS_VERIFY_OPTION_ISMASK))
     {
+        OVS_ARGUMENT_GROUP* pPIGroup = pParentArg->data;
+
+        OVS_PARSE_ARGS_QUICK(PI, pPIGroup, args);
+
         if (ethType < OVS_ETHERTYPE_802_3_MIN)
         {
-            return FALSE;
+            OVS_CHECK_RET(__UNEXPECTED__, FALSE);
         }
-
+        
         switch (ethType)
         {
         case OVS_ETHERTYPE_ARP:
-        case OVS_ETHERTYPE_RARP:
-            if (!FindArgument(pParentArg->data, OVS_ARGTYPE_PI_ARP))
-            {
-                DEBUGP_ARG(LOG_ERROR, "eth key specified as (r)arp, but no arp key found!\n");
-                return FALSE;
-            }
+            OVS_MUST_HAVE_ARG_IN_ARRAY(args, OVS_ETHERTYPE_ARP);
             break;
 
         case OVS_ETHERTYPE_IPV4:
-            if (!FindArgument(pParentArg->data, OVS_ARGTYPE_PI_IPV4))
-            {
-                DEBUGP_ARG(LOG_ERROR, "eth key specified as ipv4, but no ipv4 key found!\n");
-                return FALSE;
-            }
+            OVS_MUST_HAVE_ARG_IN_ARRAY(args, OVS_ARGTYPE_PI_IPV4);
             break;
 
         case OVS_ETHERTYPE_IPV6:
-            if (!FindArgument(pParentArg->data, OVS_ARGTYPE_PI_IPV6))
-            {
-                DEBUGP_ARG(LOG_ERROR, "eth key specified as ipv6, but no ipv6 key found!\n");
-                return FALSE;
-            }
+            OVS_MUST_HAVE_ARG_IN_ARRAY(args, OVS_ARGTYPE_PI_IPV6);
             break;
 
         case OVS_ETHERTYPE_QTAG:
-            //must have vlan tci & encapsulation
-            if (!FindArgument(pParentArg->data, OVS_ARGTYPE_PI_VLAN_TCI))
-            {
-                return FALSE;
-            }
-
-            if (!FindArgument(pParentArg->data, OVS_ARGTYPE_PI_ENCAP_GROUP))
-            {
-                return FALSE;
-            }
+            OVS_MUST_HAVE_ARG_IN_ARRAY_2(args, 
+                OVS_ARGTYPE_PI_VLAN_TCI, OVS_ARGTYPE_PI_ENCAP_GROUP);
             break;
 
         default:
             DEBUGP_ARG(LOG_ERROR, "we don't handle ether type: 0x%x\n", ethType);
-            return FALSE;
+            OVS_CHECK_RET(__UNEXPECTED__, FALSE);
         }
     }
-
-    //is mask & !request
+    //is mask, request or reply
     else
     {
-        if (ethType != OVS_PI_MASK_MATCH_EXACT(UINT16))
-        {
-            DEBUGP_ARG(LOG_ERROR, "the mask for eth type should be exact match.\n");
-            return FALSE;
-        }
+        EXPECT(ethType == OVS_PI_MASK_MATCH_EXACT(BE16));
     }
 
     return TRUE;
 }
 
-static __inline BOOLEAN _VerifyArg_PacketInfo_Icmp(OVS_ARGUMENT* pArg, BOOLEAN isMask, BOOLEAN isRequest, OVS_ARGUMENT* pParentArg)
+static __inline BOOLEAN _VerifyArg_PI_Icmp(OVS_ARGUMENT* pArg, OVS_ARGUMENT* pParentArg, OVS_VERIFY_OPTIONS options)
 {
     OVS_PI_ICMP* pIcmpInfo = pArg->data;
 
-    if (!isMask)
+    if (!(options & OVS_VERIFY_OPTION_ISMASK))
     {
-        if (!FindArgument(pParentArg->data, OVS_ARGTYPE_PI_IPV4))
-        {
-            return FALSE;
-        }
+        EXPECT(FindArgument(pParentArg->data, OVS_ARGTYPE_PI_IPV4));
     }
-
     //mask
-    else if (isRequest)
+    else if (options & OVS_VERIFY_OPTION_ISREQUEST)
     {
-        OVS_PI_ICMP wildcard = { OVS_PI_MASK_MATCH_WILDCARD(UINT) };
-
-        if (0 == memcmp(pIcmpInfo, &wildcard, sizeof(OVS_PI_ICMP)))
-        {
-            DEBUGP_ARG(LOG_LOUD, "mask wildcard for icmp is default. no need to be set\n");
-        }
+        OVS_VERIFY_STRUCT_WILDCARD_DEFAULT(OVS_PI_ICMP, pIcmpInfo);
     }
 
     return TRUE;
 }
 
-static __inline BOOLEAN _VerifyArg_PacketInfo_Icmp6(OVS_ARGUMENT* pArg, BOOLEAN isMask, BOOLEAN isRequest, OVS_ARGUMENT* pParentArg)
+static __inline BOOLEAN _VerifyArg_PI_Icmp6(OVS_ARGUMENT* pArg, OVS_ARGUMENT* pParentArg, OVS_VERIFY_OPTIONS options)
 {
     OVS_PI_ICMP6* pIcmp6Info = pArg->data;
 
-    if (!isMask)
+    if (!(options & OVS_VERIFY_OPTION_ISMASK))
     {
-        if (!FindArgument(pParentArg->data, OVS_ARGTYPE_PI_IPV6))
-        {
-            return FALSE;
-        }
+        EXPECT(FindArgument(pParentArg->data, OVS_ARGTYPE_PI_IPV6));
 
         if (pIcmp6Info->type == OVS_NDISC_NEIGHBOUR_SOLICITATION ||
             pIcmp6Info->code == OVS_NDISC_NEIGHBOUR_ADVERTISEMENT)
         {
-            if (!FindArgument(pParentArg->data, OVS_ARGTYPE_PI_NEIGHBOR_DISCOVERY))
-            {
-                return FALSE;
-            }
+            EXPECT(FindArgument(pParentArg->data, OVS_ARGTYPE_PI_NEIGHBOR_DISCOVERY));
         }
     }
-
     //mask
-    else if (isRequest)
+    else if (options & OVS_VERIFY_OPTION_ISREQUEST)
     {
-        OVS_PI_ICMP6 wildcard = { OVS_PI_MASK_MATCH_WILDCARD(UINT) };
-
-        if (0 == memcmp(pIcmp6Info, &wildcard, sizeof(OVS_PI_ICMP6)))
-        {
-            DEBUGP_ARG(LOG_LOUD, "mask wildcard for icmp6 is default. no need to be set\n");
-        }
+        OVS_VERIFY_STRUCT_WILDCARD_DEFAULT(OVS_PI_ICMP6, pIcmp6Info);
     }
 
     return TRUE;
 }
 
-static __inline BOOLEAN _VerifyArg_PacketInfo_Ipv4(OVS_ARGUMENT* pArg, BOOLEAN isMask, BOOLEAN isRequest, OVS_ARGUMENT* pParentArg, BOOLEAN checkTransportLayer)
+static __inline BOOLEAN _VerifyArg_PI_Net_NotMask(UINT8 fragmentType, UINT8 protocol, OVS_ARGUMENT_GROUP* pPIGroup, OVS_VERIFY_OPTIONS options)
+{
+    if (options & OVS_VERIFY_OPTION_CHECK_TP_LAYER &&
+        fragmentType != OVS_FRAGMENT_TYPE_FRAG_N)
+    {
+        switch (protocol)
+        {
+        case OVS_IPPROTO_TCP:
+            EXPECT(FindArgument(pPIGroup, OVS_ARGTYPE_PI_TCP));
+            break;
+
+        case OVS_IPPROTO_UDP:
+            EXPECT(FindArgument(pPIGroup, OVS_ARGTYPE_PI_UDP));
+            break;
+
+        case OVS_IPPROTO_SCTP:
+            EXPECT(FindArgument(pPIGroup, OVS_ARGTYPE_PI_SCTP));
+            break;
+
+        case OVS_IPPROTO_ICMP:
+            EXPECT(FindArgument(pPIGroup, OVS_ARGTYPE_PI_ICMP));
+            break;
+
+        case OVS_IPV6_EXTH_ICMP6:
+            EXPECT(FindArgument(pPIGroup, OVS_ARGTYPE_PI_ICMP6));
+            break;
+        }
+    }
+
+    switch (fragmentType)
+    {
+    case OVS_FRAGMENT_TYPE_NOT_FRAG:
+    case OVS_FRAGMENT_TYPE_FIRST_FRAG:
+    case OVS_FRAGMENT_TYPE_FRAG_N:
+        break;
+
+    default:
+        DEBUGP_ARG(LOG_ERROR, "fragment type is not an enum constant!\n");
+        OVS_CHECK_RET(__UNEXPECTED__, FALSE);
+    }
+
+    return TRUE;
+}
+
+static __inline BOOLEAN _VerifyArg_PI_Ipv4(OVS_ARGUMENT* pArg, OVS_ARGUMENT* pParentArg, OVS_VERIFY_OPTIONS options)
 {
     OVS_PI_IPV4* pIpv4Info = pArg->data;
 
-    if (!isMask)
+    if (!(options & OVS_VERIFY_OPTION_ISMASK))
     {
-        if (checkTransportLayer)
+        if (!_VerifyArg_PI_Net_NotMask(pIpv4Info->fragmentType, pIpv4Info->protocol, pParentArg->data, options))
         {
-            if (pIpv4Info->fragmentType != OVS_FRAGMENT_TYPE_FRAG_N)
-            {
-                switch (pIpv4Info->protocol)
-                {
-                case OVS_IPPROTO_TCP:
-                    if (!FindArgument(pParentArg->data, OVS_ARGTYPE_PI_TCP))
-                    {
-                        return FALSE;
-                    }
-                    break;
-
-                case OVS_IPPROTO_UDP:
-                    if (!FindArgument(pParentArg->data, OVS_ARGTYPE_PI_UDP))
-                    {
-                        return FALSE;
-                    }
-                    break;
-
-                case OVS_IPPROTO_SCTP:
-                    if (!FindArgument(pParentArg->data, OVS_ARGTYPE_PI_SCTP))
-                    {
-                        return FALSE;
-                    }
-                    break;
-
-                case OVS_IPPROTO_ICMP:
-                    if (!FindArgument(pParentArg->data, OVS_ARGTYPE_PI_ICMP))
-                    {
-                        return FALSE;
-                    }
-                    break;
-                }
-            }
-        }
-
-        switch (pIpv4Info->fragmentType)
-        {
-        case OVS_FRAGMENT_TYPE_NOT_FRAG:
-        case OVS_FRAGMENT_TYPE_FIRST_FRAG:
-        case OVS_FRAGMENT_TYPE_FRAG_N:
-            break;
-
-        default:
-            DEBUGP_ARG(LOG_ERROR, "fragment type is not an enum constant!\n");
-            return FALSE;
+            OVS_CHECK_RET(__UNEXPECTED__, FALSE);
         }
     }
-    else if (isRequest)
+    else if (options & OVS_VERIFY_OPTION_ISREQUEST)
     {
-        OVS_PI_IPV4 wildcard = { OVS_PI_MASK_MATCH_WILDCARD(UINT) };
-        int res = memcmp(pIpv4Info, &wildcard, sizeof(OVS_PI_IPV4));
-
-        if (0 == res)
-        {
-            return FALSE;
-        }
+        OVS_VERIFY_STRUCT_WILDCARD_DEFAULT(OVS_PI_IPV4, pIpv4Info);
     }
 
     return TRUE;
 }
 
-static __inline BOOLEAN _VerifyArg_PacketInfo_Ipv4Tunnel(OVS_ARGUMENT* pArg, BOOLEAN isMask, BOOLEAN isRequest)
-{
-    OF_PI_IPV4_TUNNEL* pTunnelInfo = pArg->data;
-
-    if (!isMask)
-    {
-    }
-
-    //mask
-    else if (isRequest)
-    {
-        OF_PI_IPV4_TUNNEL wildcard = { OVS_PI_MASK_MATCH_WILDCARD(UINT) };
-
-        if (0 == memcmp(pTunnelInfo, &wildcard, sizeof(OF_PI_IPV4_TUNNEL)))
-        {
-            DEBUGP_ARG(LOG_LOUD, "mask wildcard for ipv4 tunnel is default. no need to be set\n");
-        }
-    }
-
-    return TRUE;
-}
-
-static __inline BOOLEAN _VerifyArg_PacketInfo_Ipv6(OVS_ARGUMENT* pArg, BOOLEAN isMask, BOOLEAN isRequest, OVS_ARGUMENT* pParentArg, BOOLEAN checkTransportLayer)
+static __inline BOOLEAN _VerifyArg_PI_Ipv6(OVS_ARGUMENT* pArg, OVS_ARGUMENT* pParentArg, OVS_VERIFY_OPTIONS options)
 {
     OVS_PI_IPV6* pIpv6Info = pArg->data;
 
-    if (!isMask)
+    if (!(options & OVS_VERIFY_OPTION_ISMASK))
     {
-        if (checkTransportLayer)
+        if (!_VerifyArg_PI_Net_NotMask(pIpv6Info->fragmentType, pIpv6Info->protocol, pParentArg->data, options))
         {
-            if (pIpv6Info->fragmentType != OVS_FRAGMENT_TYPE_FRAG_N)
-            {
-                switch (pIpv6Info->protocol)
-                {
-                case OVS_IPPROTO_TCP:
-                    if (!FindArgument(pParentArg->data, OVS_ARGTYPE_PI_TCP))
-                    {
-                        return FALSE;
-                    }
-                    break;
-
-                case OVS_IPPROTO_UDP:
-                    if (!FindArgument(pParentArg->data, OVS_ARGTYPE_PI_UDP))
-                    {
-                        return FALSE;
-                    }
-                    break;
-
-                case OVS_IPPROTO_SCTP:
-                    if (!FindArgument(pParentArg->data, OVS_ARGTYPE_PI_SCTP))
-                    {
-                        return FALSE;
-                    }
-                    break;
-
-                case OVS_IPV6_EXTH_ICMP6:
-                    if (!FindArgument(pParentArg->data, OVS_ARGTYPE_PI_ICMP6))
-                    {
-                        return FALSE;
-                    }
-                    break;
-                }
-            }
-        }
-
-        switch (pIpv6Info->fragmentType)
-        {
-        case OVS_FRAGMENT_TYPE_NOT_FRAG:
-        case OVS_FRAGMENT_TYPE_FIRST_FRAG:
-        case OVS_FRAGMENT_TYPE_FRAG_N:
-            break;
-
-        default:
-            DEBUGP_ARG(LOG_ERROR, "fragment type is not an enum constant!\n");
-            return FALSE;
+            OVS_CHECK_RET(__UNEXPECTED__, FALSE);
         }
     }
-    else if (isRequest)
+    else if (options & OVS_VERIFY_OPTION_ISREQUEST)
     {
-        OVS_PI_IPV6 wildcard = { OVS_PI_MASK_MATCH_WILDCARD(UINT) };
-
-        if (0 == memcmp(pIpv6Info, &wildcard, sizeof(OVS_PI_IPV6)))
-        {
-            DEBUGP_ARG(LOG_LOUD, "mask wildcard for ipv6 is default. no need to be set\n");
-        }
+        OVS_VERIFY_STRUCT_WILDCARD_DEFAULT(OVS_PI_IPV6, pIpv6Info);
     }
 
     return TRUE;
 }
 
-static __inline BOOLEAN _VerifyArg_PacketInfo_Mpls(OVS_ARGUMENT* pArg, BOOLEAN isMask)
-{
-    UNREFERENCED_PARAMETER(pArg);
-    UNREFERENCED_PARAMETER(isMask);
-
-    DEBUGP_ARG(LOG_ERROR, __FUNCTION__ " verification not yet implemented -- mpls not (yet) supported\n");
-    return FALSE;
-}
-
-static __inline BOOLEAN _VerifyArg_PacketInfo_NeighborDiscovery(OVS_ARGUMENT* pArg, BOOLEAN isMask, BOOLEAN isRequest, OVS_ARGUMENT* pParentArg)
+static __inline BOOLEAN _VerifyArg_PI_NeighborDiscovery(OVS_ARGUMENT* pArg, OVS_ARGUMENT* pParentArg, OVS_VERIFY_OPTIONS options)
 {
     OVS_PI_NEIGHBOR_DISCOVERY* pNd = pArg->data;
 
-    if (!isMask)
+    if (!(options & OVS_VERIFY_OPTION_ISMASK))
     {
-        if (!FindArgument(pParentArg->data, OVS_ARGTYPE_PI_IPV6))
-        {
-            return FALSE;
-        }
+        EXPECT(FindArgument(pParentArg->data, OVS_ARGTYPE_PI_IPV6));
     }
-    else if (isRequest)
+    else if (options & OVS_VERIFY_OPTION_ISREQUEST)
     {
-        OVS_PI_NEIGHBOR_DISCOVERY wildcard = { OVS_PI_MASK_MATCH_WILDCARD(UINT) };
-
-        if (0 == memcmp(pNd, &wildcard, sizeof(OVS_PI_IPV6)))
-        {
-            DEBUGP_ARG(LOG_LOUD, "mask wildcard for ip6 net discovery is default. no need to be set\n");
-        }
+        OVS_VERIFY_STRUCT_WILDCARD_DEFAULT(OVS_PI_NEIGHBOR_DISCOVERY, pNd);
     }
 
     return TRUE;
 }
 
-static __inline BOOLEAN _VerifyArg_PacketInfo_PacketMark(OVS_ARGUMENT* pArg, BOOLEAN isMask, BOOLEAN isRequest)
+static __inline BOOLEAN _VerifyArg_PI_Sctp(OVS_ARGUMENT* pArg, OVS_ARGUMENT* pParentArg, OVS_VERIFY_OPTIONS options)
 {
-    UINT32 packetMark = GET_ARG_DATA(pArg, UINT32);
-
-    if (!isMask)
-    {
-    }
-    else
-    {
-        if (isRequest && packetMark == OVS_PI_MASK_MATCH_WILDCARD(UINT))
-        {
-            DEBUGP_ARG(LOG_LOUD, "default value is 0 / wildcard match; setting default value manually is useless overhead\n");
-        }
-    }
+    _VERIFY_ARG_PI_TP(OVS_PI_SCTP, pParentArg, pArg->data, options);
 
     return TRUE;
 }
 
-static __inline BOOLEAN _VerifyArg_PacketInfo_PacketPriority(OVS_ARGUMENT* pArg, BOOLEAN isMask, BOOLEAN isRequest)
+static __inline BOOLEAN _VerifyArg_PI_Tcp(OVS_ARGUMENT* pArg, OVS_ARGUMENT* pParentArg, OVS_VERIFY_OPTIONS options)
 {
-    UINT32 packetPriority = GET_ARG_DATA(pArg, UINT32);
-
-    if (!isMask)
-    {
-    }
-    else
-    {
-        if (isRequest && packetPriority == OVS_PI_MASK_MATCH_WILDCARD(UINT))
-        {
-            DEBUGP_ARG(LOG_LOUD, "default value is 0 / wildcard match; setting default value manually would be useless overhead\n");
-        }
-    }
+    _VERIFY_ARG_PI_TP(OVS_PI_TCP, pParentArg, pArg->data, options);
 
     return TRUE;
 }
 
-static __inline BOOLEAN _VerifyArg_PacketInfo_Sctp(OVS_ARGUMENT* pArg, BOOLEAN isMask, BOOLEAN isRequest, OVS_ARGUMENT* pParentArg, BOOLEAN seekIp)
+static __inline BOOLEAN _VerifyArg_PI_Udp(OVS_ARGUMENT* pArg, OVS_ARGUMENT* pParentArg, OVS_VERIFY_OPTIONS options)
 {
-    OVS_PI_SCTP* pSctpInfo = pArg->data;
-
-    if (!isMask)
-    {
-        if (seekIp)
-        {
-            if (!FindArgument(pParentArg->data, OVS_ARGTYPE_PI_IPV4) &&
-
-                !FindArgument(pParentArg->data, OVS_ARGTYPE_PI_IPV6))
-
-                return FALSE;
-        }
-    }
-    else if (isRequest)
-    {
-        OVS_PI_SCTP wildcard = { OVS_PI_MASK_MATCH_WILDCARD(UINT) };
-
-        if (0 == memcmp(pSctpInfo, &wildcard, sizeof(OVS_PI_SCTP)))
-        {
-            DEBUGP_ARG(LOG_LOUD, "mask wildcard for sctp is default. no need to be set\n");
-        }
-    }
+    _VERIFY_ARG_PI_TP(OVS_PI_UDP, pParentArg, pArg->data, options);
 
     return TRUE;
 }
 
-static __inline BOOLEAN _VerifyArg_PacketInfo_Tcp(OVS_ARGUMENT* pArg, BOOLEAN isMask, BOOLEAN isRequest, OVS_ARGUMENT* pParentArg, BOOLEAN seekIp)
-{
-    OVS_PI_TCP* pTcpInfo = pArg->data;
-
-    if (!isMask)
-    {
-        if (seekIp)
-        {
-            if (!FindArgument(pParentArg->data, OVS_ARGTYPE_PI_IPV4) &&
-
-                !FindArgument(pParentArg->data, OVS_ARGTYPE_PI_IPV6))
-
-                return FALSE;
-        }
-    }
-    else if (isRequest)
-    {
-        OVS_PI_TCP wildcard = { OVS_PI_MASK_MATCH_WILDCARD(UINT) };
-
-        if (0 == memcmp(pTcpInfo, &wildcard, sizeof(OVS_PI_TCP)))
-        {
-            DEBUGP_ARG(LOG_LOUD, "mask wildcard for tcp is default. no need to be set\n");
-        }
-    }
-
-    return TRUE;
-}
-
-static __inline BOOLEAN _VerifyArg_PacketInfo_Udp(OVS_ARGUMENT* pArg, BOOLEAN isMask, BOOLEAN isRequest, OVS_ARGUMENT* pParentArg, BOOLEAN seekIp)
-{
-    OVS_PI_UDP* pUdpInfo = pArg->data;
-
-    if (!isMask)
-    {
-        if (seekIp)
-        {
-            if (!FindArgument(pParentArg->data, OVS_ARGTYPE_PI_IPV4) &&
-
-                !FindArgument(pParentArg->data, OVS_ARGTYPE_PI_IPV6))
-
-                return FALSE;
-        }
-    }
-    else if (isRequest)
-    {
-        OVS_PI_UDP wildcard = { OVS_PI_MASK_MATCH_WILDCARD(UINT) };
-
-        if (0 == memcmp(pUdpInfo, &wildcard, sizeof(OVS_PI_UDP)))
-        {
-            DEBUGP_ARG(LOG_LOUD, "mask wildcard for udp is default. no need to be set\n");
-        }
-    }
-
-    return TRUE;
-}
-
-static __inline BOOLEAN _VerifyArg_PacketInfo_Arp(OVS_ARGUMENT* pArg, BOOLEAN isMask, BOOLEAN isRequest, OVS_ARGUMENT* pParentArg)
+static __inline BOOLEAN _VerifyArg_PI_Arp(OVS_ARGUMENT* pArg, OVS_ARGUMENT* pParentArg, OVS_VERIFY_OPTIONS options)
 {
     OVS_PI_ARP* pArpInfo = pArg->data;
 
     UNREFERENCED_PARAMETER(pParentArg);
 
-    if (!isMask)
+    if (!(options & OVS_VERIFY_OPTION_ISMASK))
     {
         UINT16 op = RtlUshortByteSwap(pArpInfo->operation);
 
         if (op != 1 && op != 2)
         {
             DEBUGP_ARG(LOG_ERROR, "packet info / arp: unknown op code %d\n", op);
-            return FALSE;
+            OVS_CHECK_RET(__UNEXPECTED__, FALSE);
         }
     }
-    else if (isRequest)
+    else if (options & OVS_VERIFY_OPTION_ISREQUEST)
     {
-        OVS_PI_ARP wildcard = { OVS_PI_MASK_MATCH_WILDCARD(UINT) };
-
-        if (0 == memcmp(pArpInfo, &wildcard, sizeof(OVS_PI_ARP)))
-        {
-            DEBUGP_ARG(LOG_LOUD, "mask wildcard for arp is default. no need to be set\n");
-        }
+        OVS_VERIFY_STRUCT_WILDCARD_DEFAULT(OVS_PI_ARP, pArpInfo);
     }
 
     return TRUE;
 }
 
-static __inline BOOLEAN _VerifyArg_PacketInfo_VlanTci(OVS_ARGUMENT* pArg, BOOLEAN isMask, BOOLEAN isRequest)
+static __inline BOOLEAN _VerifyArg_PI_VlanTci(OVS_ARGUMENT* pArg, OVS_ARGUMENT* pParentArg, OVS_VERIFY_OPTIONS options)
 {
     BE16 tci = GET_ARG_DATA(pArg, BE16);
 
-    //it is possible we shouldn't allow to specify tci = 0 as key
+    UNREFERENCED_PARAMETER(pParentArg);
 
-    if (!isMask)
+    //it is possible we shouldn't allow to specify tci = 0 as key
+    if (options & OVS_VERIFY_OPTION_ISMASK &&
+        options & OVS_VERIFY_OPTION_ISREQUEST)
     {
-    }
-    else if (isRequest)
-    {
-        if (tci == OVS_PI_MASK_MATCH_WILDCARD(UINT16))
-        {
-            DEBUGP_ARG(LOG_LOUD, "tci mask should not be set as wildcard. it's the default\n");
-        }
+        OVS_VERIFY_BUILTIN_WILDCARD_DEFAULT(UINT16, tci);
     }
 
     if (!(tci & RtlUshortByteSwap(OVS_VLAN_TAG_PRESENT)))
     {
         DEBUGP_ARG(LOG_ERROR, "if you set vlan tci, you must set 'tag present' = 1!\n");
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
-static __inline BOOLEAN _VerifyArg_PacketInfo_Encap(OVS_ARGUMENT* pEncArg, BOOLEAN isMask, BOOLEAN isRequest, BOOLEAN checkTransportLayer, BOOLEAN seekIp)
-{
-    OVS_ARGUMENT_GROUP* pGroup = pEncArg->data;
-
-    for (UINT i = 0; i < pGroup->count; ++i)
-    {
-        OVS_ARGUMENT* pArg = pGroup->args + i;
-        OVS_ARGTYPE argType = pArg->type;
-
-        switch (argType)
-        {
-        case OVS_ARGTYPE_PI_ETH_TYPE:
-            if (!_VerifyArg_PacketInfo_EthType(pArg, isMask, isRequest, pEncArg))
-            {
-                return FALSE;
-            }
-            break;
-
-        case OVS_ARGTYPE_PI_ICMP:
-            if (!_VerifyArg_PacketInfo_Icmp(pArg, isMask, isRequest, pEncArg))
-            {
-                return FALSE;
-            }
-            break;
-
-        case OVS_ARGTYPE_PI_ICMP6:
-            if (!_VerifyArg_PacketInfo_Icmp6(pArg, isMask, isRequest, pEncArg))
-            {
-                return FALSE;
-            }
-            break;
-
-        case OVS_ARGTYPE_PI_IPV4:
-            if (!_VerifyArg_PacketInfo_Ipv4(pArg, isMask, isRequest, pEncArg, checkTransportLayer))
-            {
-                return FALSE;
-            }
-            break;
-
-        case OVS_ARGTYPE_PI_IPV6:
-            if (!_VerifyArg_PacketInfo_Ipv6(pArg, isMask, isRequest, pEncArg, checkTransportLayer))
-            {
-                return FALSE;
-            }
-            break;
-
-        case OVS_ARGTYPE_PI_NEIGHBOR_DISCOVERY:
-            if (!_VerifyArg_PacketInfo_NeighborDiscovery(pArg, isMask, isRequest, pEncArg))
-            {
-                return FALSE;
-            }
-            break;
-
-        case OVS_ARGTYPE_PI_SCTP:
-            if (!_VerifyArg_PacketInfo_Sctp(pArg, isMask, isRequest, pEncArg, seekIp))
-            {
-                return FALSE;
-            }
-            break;
-
-        case OVS_ARGTYPE_PI_TCP:
-            if (!_VerifyArg_PacketInfo_Tcp(pArg, isMask, isRequest, pEncArg, seekIp))
-            {
-                return FALSE;
-            }
-            break;
-
-        case OVS_ARGTYPE_PI_UDP:
-            if (!_VerifyArg_PacketInfo_Udp(pArg, isMask, isRequest, pEncArg, seekIp))
-            {
-                return FALSE;
-            }
-            break;
-
-        default:
-            return FALSE;
-        }
-    }
-
-    return TRUE;
-}
-
-//pArg = FLOW/KEY
-BOOLEAN VerifyGroup_PacketInfo(BOOLEAN isMask, BOOLEAN isRequest, _In_ OVS_ARGUMENT* pParentArg, BOOLEAN checkTransportLayer, BOOLEAN seekIp)
-{
-    OVS_ARGUMENT_GROUP* pGroup = pParentArg->data;
-
-    for (UINT i = 0; i < pGroup->count; ++i)
-    {
-        OVS_ARGUMENT* pArg = pGroup->args + i;
-        OVS_ARGTYPE argType = pArg->type;
-
-        switch (argType)
-        {
-        case OVS_ARGTYPE_PI_ENCAP_GROUP:
-            if (!_VerifyArg_PacketInfo_Encap(pArg, isMask, isRequest, checkTransportLayer, seekIp))
-            {
-                return FALSE;
-            }
-            break;
-
-        case OVS_ARGTYPE_PI_TUNNEL_GROUP:
-            if (!_VerifyGroup_FlowKeyTunnel(pArg, isMask, isRequest))
-            {
-                return FALSE;
-            }
-            break;
-
-        case OVS_ARGTYPE_PI_DP_INPUT_PORT:
-            if (!_VerifyArg_PacketInfo_DpInputPort(pArg, isMask, isRequest))
-            {
-                return FALSE;
-            }
-            break;
-
-        case OVS_ARGTYPE_PI_ETH_ADDRESS:
-            if (!_VerifyArg_PacketInfo_EthAddress(pArg, isMask, isRequest))
-            {
-                return FALSE;
-            }
-            break;
-
-        case OVS_ARGTYPE_PI_ETH_TYPE:
-            if (!_VerifyArg_PacketInfo_EthType(pArg, isMask, isRequest, pParentArg))
-            {
-                return FALSE;
-            }
-            break;
-
-        case OVS_ARGTYPE_PI_ICMP:
-            if (!_VerifyArg_PacketInfo_Icmp(pArg, isMask, isRequest, pParentArg))
-            {
-                return FALSE;
-            }
-            break;
-
-        case OVS_ARGTYPE_PI_ICMP6:
-            if (!_VerifyArg_PacketInfo_Icmp6(pArg, isMask, isRequest, pParentArg))
-            {
-                return FALSE;
-            }
-            break;
-
-        case OVS_ARGTYPE_PI_IPV4:
-            if (!_VerifyArg_PacketInfo_Ipv4(pArg, isMask, isRequest, pParentArg, checkTransportLayer))
-            {
-                return FALSE;
-            }
-            break;
-
-        case OVS_ARGTYPE_PI_IPV4_TUNNEL:
-            if (!_VerifyArg_PacketInfo_Ipv4Tunnel(pArg, isMask, isRequest))
-            {
-                return FALSE;
-            }
-            break;
-
-        case OVS_ARGTYPE_PI_IPV6:
-            if (!_VerifyArg_PacketInfo_Ipv6(pArg, isMask, isRequest, pParentArg, checkTransportLayer))
-            {
-                return FALSE;
-            }
-            break;
-
-        case OVS_ARGTYPE_PI_MPLS:
-            if (!_VerifyArg_PacketInfo_Mpls(pArg, isMask))
-            {
-                return FALSE;
-            }
-            break;
-
-        case OVS_ARGTYPE_PI_NEIGHBOR_DISCOVERY:
-            if (!_VerifyArg_PacketInfo_NeighborDiscovery(pArg, isMask, isRequest, pParentArg))
-            {
-                return FALSE;
-            }
-            break;
-
-        case OVS_ARGTYPE_PI_PACKET_MARK:
-            if (!_VerifyArg_PacketInfo_PacketMark(pArg, isMask, isRequest))
-            {
-                return FALSE;
-            }
-            break;
-
-        case OVS_ARGTYPE_PI_PACKET_PRIORITY:
-            if (!_VerifyArg_PacketInfo_PacketPriority(pArg, isMask, isRequest))
-            {
-                return FALSE;
-            }
-            break;
-
-        case OVS_ARGTYPE_PI_SCTP:
-            if (!_VerifyArg_PacketInfo_Sctp(pArg, isMask, isRequest, pParentArg, seekIp))
-            {
-                return FALSE;
-            }
-            break;
-
-        case OVS_ARGTYPE_PI_TCP:
-            if (!_VerifyArg_PacketInfo_Tcp(pArg, isMask, isRequest, pParentArg, seekIp))
-            {
-                return FALSE;
-            }
-            break;
-
-        case OVS_ARGTYPE_PI_UDP:
-            if (!_VerifyArg_PacketInfo_Udp(pArg, isMask, isRequest, pParentArg, seekIp))
-            {
-                return FALSE;
-            }
-            break;
-
-        case OVS_ARGTYPE_PI_ARP:
-            if (!_VerifyArg_PacketInfo_Arp(pArg, isMask, isRequest, pParentArg))
-            {
-                return FALSE;
-            }
-            break;
-
-        case OVS_ARGTYPE_PI_VLAN_TCI:
-            if (!_VerifyArg_PacketInfo_VlanTci(pArg, isMask, isRequest))
-            {
-                return FALSE;
-            }
-            break;
-
-        default:
-            return FALSE;
-        }
+        OVS_CHECK_RET(__UNEXPECTED__, FALSE);
     }
 
     return TRUE;
 }
 
 /********************************* FLOW  *********************************/
-BOOLEAN VerifyArg_Flow_Clear(OVS_ARGUMENT* pArg)
-{
-    UNREFERENCED_PARAMETER(pArg);
 
-    //data type: no data
-
-    return TRUE;
-}
-
-BOOLEAN VerifyArg_Flow_Stats(OVS_ARGUMENT* pArg)
-{
-    OVS_WINL_FLOW_STATS* pStats = pArg->data;
-
-    UNREFERENCED_PARAMETER(pStats);
-
-    DEBUGP_ARG(LOG_LOUD, __FUNCTION__ " verification not yet implemented\n");
-    return TRUE;
-}
-
-BOOLEAN VerifyArg_Flow_TcpFlags(OVS_ARGUMENT* pArg)
+BOOLEAN VerifyArg_Flow_TcpFlags(OVS_ARGUMENT* pArg, OVS_ARGUMENT* pParentArg, OVS_VERIFY_OPTIONS options)
 {
     UINT8 flags = GET_ARG_DATA(pArg, UINT8);
 
-    //data type: UINT8
-
-    UNREFERENCED_PARAMETER(flags);
+    UNREFERENCED_PARAMETER(pParentArg);
+    UNREFERENCED_PARAMETER(options);
 
     //tcp flags / ctrl bits, without the ECN bits (because we have data type of 1 byte = 8 bits)
     //0x3f = (binary) 0011 1111, i.e. 6 bits that can be set for flags
     if (flags > 0x3F)
     {
         DEBUGP_ARG(LOG_ERROR, __FUNCTION__ " tcp flags: only bits [0, 5] can be set\n");
-        return FALSE;
+        OVS_CHECK_RET(__UNEXPECTED__, FALSE);
     }
 
     return TRUE;
 }
 
-BOOLEAN VerifyArg_Flow_TimeUsed(OVS_ARGUMENT* pArg)
-{
-    UINT64 timeUsed = GET_ARG_DATA(pArg, UINT64);
+/********************************* ACTIONS / UPCALL  *********************************/
 
-    UNREFERENCED_PARAMETER(timeUsed);
-
-    return TRUE;
-}
-
-static __inline BOOLEAN _VerifyGroup_Flow(OVS_ARGUMENT* pArg, BOOLEAN isRequest)
-{
-    OVS_ARGTYPE argType = pArg->type;
-
-    switch (argType)
-    {
-    case OVS_ARGTYPE_FLOW_PI_GROUP:
-        return VerifyGroup_PacketInfo(FALSE, isRequest, pArg, /*check transport layer*/ TRUE, /*seek ip*/ TRUE);
-
-    case OVS_ARGTYPE_FLOW_MASK_GROUP:
-        return VerifyGroup_PacketInfo(TRUE, isRequest, pArg, /*check transport layer*/ TRUE, /*seek ip*/ TRUE);
-
-    case OVS_ARGTYPE_FLOW_CLEAR:
-        return VerifyArg_Flow_Clear(pArg->data);
-
-    case OVS_ARGTYPE_FLOW_STATS:
-        return VerifyArg_Flow_Stats(pArg->data);
-
-    case OVS_ARGTYPE_FLOW_TCP_FLAGS:
-        return VerifyArg_Flow_TcpFlags(pArg->data);
-
-    case OVS_ARGTYPE_FLOW_TIME_USED:
-        return VerifyArg_Flow_TimeUsed(pArg->data);
-
-    default:
-        return FALSE;
-    }
-}
-
-/********************************* PACKET / ACTIONS / UPCALL  *********************************/
-
-static __inline BOOLEAN _VerifyArg_PacketActionUpcall_PortId(OVS_ARGUMENT* pArg)
+static __inline BOOLEAN _VerifyArg_ActionUpcall_PortId(OVS_ARGUMENT* pArg, OVS_ARGUMENT* pParentArg, OVS_VERIFY_OPTIONS options)
 {
     UINT32 pid = GET_ARG_DATA(pArg, UINT32);
+
+    UNREFERENCED_PARAMETER(pParentArg);
+    UNREFERENCED_PARAMETER(options);
+
     if (pid == 0)
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " port id 0 is invalid!\n");
-        return FALSE;
+        OVS_CHECK_RET(__UNEXPECTED__, FALSE);
     }
 
     return TRUE;
 }
 
-static __inline BOOLEAN _VerifyArg_PacketActionUpcall_Data(OVS_ARGUMENT* pArg)
-{
-    typedef VOID* PCOOKIE;
+/*********************************  ACTIONS  *********************************/
 
-    PCOOKIE pCookie = pArg->data;
-    UNREFERENCED_PARAMETER(pCookie);
-
-    //NOTE: THERE IS NO WAY TO CHECK THE COOKIE!
-    return TRUE;
-}
-
-static __inline BOOLEAN _VerifyGroup_PacketActionsUpcall(OVS_ARGUMENT* pParentArg)
-{
-    OVS_ARGUMENT_GROUP* pGroup = NULL;
-    pGroup = pParentArg->data;
-
-    for (UINT i = 0; i < pGroup->count; ++i)
-    {
-        OVS_ARGUMENT* pArg = pGroup->args + i;
-        OVS_ARGTYPE argType = pArg->type;
-
-        switch (argType)
-        {
-        case OVS_ARGTYPE_ACTION_UPCALL_PORT_ID:
-            if (!_VerifyArg_PacketActionUpcall_PortId(pArg))
-            {
-                return FALSE;
-            }
-            break;
-
-        case OVS_ARGTYPE_ACTION_UPCALL_DATA:
-            if (!_VerifyArg_PacketActionUpcall_Data(pArg))
-            {
-                return FALSE;
-            }
-            break;
-
-        default:
-            DEBUGP_ARG(LOG_ERROR, "PACKET/ACTIONS/SAMPLE should not have argtype = 0x%x\n", pArg->type);
-            return FALSE;
-        }
-    }
-
-    return TRUE;
-}
-
-/********************************* PACKET / ACTIONS / SAMPLE  *********************************/
-
-static __inline BOOLEAN _VerifyArg_PacketAction_Sample_Probability(OVS_ARGUMENT* pArg)
-{
-    UNREFERENCED_PARAMETER(pArg);
-
-    DEBUGP_ARG(LOG_ERROR, __FUNCTION__ " verification not yet implemented\n");
-    return FALSE;
-}
-
-static __inline BOOLEAN _VerifyGroup_PacketActionsSample(OVS_ARGUMENT* pParentArg, BOOLEAN isRequest)
-{
-    OVS_ARGUMENT_GROUP* pGroup = NULL;
-    pGroup = pParentArg->data;
-
-    for (UINT i = 0; i < pGroup->count; ++i)
-    {
-        OVS_ARGUMENT* pArg = pGroup->args + i;
-        OVS_ARGTYPE argType = pArg->type;
-
-        switch (argType)
-        {
-        case OVS_ARGTYPE_ACTION_SAMPLE_ACTIONS_GROUP:
-            if (!VerifyGroup_PacketActions(pArg->data, isRequest))
-            {
-                return FALSE;
-            }
-            break;
-
-        case OVS_ARGTYPE_ACTION_SAMPLE_PROBABILITY:
-            if (!_VerifyArg_PacketAction_Sample_Probability(pArg->data))
-            {
-                return FALSE;
-            }
-            break;
-
-        default:
-            DEBUGP_ARG(LOG_ERROR, "PACKET/ACTIONS/SAMPLE should not have argtype = 0x%x\n", pArg->type);
-            return FALSE;
-        }
-    }
-
-    return TRUE;
-}
-
-/********************************* PACKET / ACTIONS  *********************************/
-
-static __inline BOOLEAN _VerifyArg_PacketActions_OutToPort(OVS_ARGUMENT* pArg)
+static __inline BOOLEAN _VerifyArg_Action_OutToPort(OVS_ARGUMENT* pArg, OVS_ARGUMENT* pParentArg, OVS_VERIFY_OPTIONS options)
 {
     UINT32 portNumber = GET_ARG_DATA(pArg, UINT32);
+
+    UNREFERENCED_PARAMETER(pParentArg);
+    UNREFERENCED_PARAMETER(options);
 
     if (portNumber >= OVS_MAX_PORTS)
     {
         DEBUGP_ARG(LOG_ERROR, __FUNCTION__ " invalid port number!\n");
-        return FALSE;
+        OVS_CHECK_RET(__UNEXPECTED__, FALSE);
     }
 
     return TRUE;
 }
 
-static __inline BOOLEAN _VerifyArg_PacketActions_PopMpls(OVS_ARGUMENT* pArg)
+static __inline BOOLEAN _VerifyArg_Action_PushVlan(OVS_ARGUMENT* pArg, OVS_ARGUMENT* pParentArg, OVS_VERIFY_OPTIONS options)
 {
-    UNREFERENCED_PARAMETER(pArg);
-
-    DEBUGP_ARG(LOG_ERROR, __FUNCTION__ " verification not yet implemented\n");
-    return FALSE;
-}
-
-static __inline BOOLEAN _VerifyArg_PacketActions_PushMpls(OVS_ARGUMENT* pArg)
-{
-    UNREFERENCED_PARAMETER(pArg);
-
-    DEBUGP_ARG(LOG_ERROR, __FUNCTION__ " verification not yet implemented\n");
-    return FALSE;
-}
-
-static __inline BOOLEAN _VerifyArg_PacketActions_PushVlan(OVS_ARGUMENT* pArg)
-{
-    UNREFERENCED_PARAMETER(pArg);
-
     const OVS_ACTION_PUSH_VLAN* pPushVlanAction = pArg->data;
+
+    UNREFERENCED_PARAMETER(pParentArg);
+    UNREFERENCED_PARAMETER(options);
+
     if (pPushVlanAction->protocol != RtlUshortByteSwap(OVS_ETHERTYPE_QTAG))
     {
-        return FALSE;
+        OVS_CHECK_RET(__UNEXPECTED__, FALSE);
     }
 
     if (!(pPushVlanAction->vlanTci & RtlUshortByteSwap(OVS_VLAN_TAG_PRESENT)))
     {
-        return FALSE;
+        OVS_CHECK_RET(__UNEXPECTED__, FALSE);
     }
 
-    DEBUGP_ARG(LOG_LOUD, __FUNCTION__ " verification not yet implemented\n");
     return TRUE;
 }
 
-static __inline BOOLEAN _VerifyArg_PacketActions_PopVlan(OVS_ARGUMENT* pArg)
+static __inline BOOLEAN _VerifyArg_Action_PopVlan(OVS_ARGUMENT* pArg, OVS_ARGUMENT* pParentArg, OVS_VERIFY_OPTIONS options)
 {
-    UNREFERENCED_PARAMETER(pArg);
+    UNREFERENCED_PARAMETER(pParentArg);
+    UNREFERENCED_PARAMETER(options);
 
     if (pArg->length > 0)
     {
         DEBUGP_ARG(LOG_ERROR, __FUNCTION__ " arg len > 0\n");
-        return FALSE;
+        OVS_CHECK_RET(__UNEXPECTED__, FALSE);
     }
 
     if (pArg->data)
     {
         DEBUGP_ARG(LOG_ERROR, __FUNCTION__ " arg data != null\n");
-        return FALSE;
+        OVS_CHECK_RET(__UNEXPECTED__, FALSE);
     }
 
     return TRUE;
 }
 
-BOOLEAN VerifyGroup_PacketActions(OVS_ARGUMENT* pParentArg, BOOLEAN isRequest)
+
+/***********************************************************************/
+
+static BOOLEAN _VerifyArg_Packet_Buffer(OVS_ARGUMENT* pArg, OVS_ARGUMENT* pParentArg, OVS_VERIFY_OPTIONS options)
 {
-    OVS_ARGUMENT_GROUP* pGroup = NULL;
-    pGroup = pParentArg->data;
+    UNREFERENCED_PARAMETER(pParentArg);
+    UNREFERENCED_PARAMETER(options);
 
-    for (UINT i = 0; i < pGroup->count; ++i)
+    if (!VerifyNetBuffer(pArg->data, pArg->length))
     {
-        OVS_ARGUMENT* pArg = pGroup->args + i;
-        OVS_ARGTYPE argType = pArg->type;
+        DEBUGP_ARG(LOG_ERROR, "invalid packet buffer!");
+        OVS_CHECK_RET(__UNEXPECTED__, FALSE);
+    }
 
-        switch (argType)
+    return TRUE;
+}
+
+/***********************************************************************/
+
+static BOOLEAN _VerifyGroup_Default(OVS_ARGUMENT* pArg, OVS_ARGUMENT* pParentArg, OVS_VERIFY_OPTIONS options);
+static BOOLEAN _VerifyArg_NotImplemented(OVS_ARGUMENT* pArg, OVS_ARGUMENT* pParentArg, OVS_VERIFY_OPTIONS options);
+
+static const Func s_verifyArgTunnel[] =
+{
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_TUNNEL_ID, PI_TUNNEL)] = _VerifyArg_NotImplemented,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_TUNNEL_IPV4_SRC, PI_TUNNEL)] = _VerifyArg_NotImplemented,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_TUNNEL_IPV4_DST, PI_TUNNEL)] = _VerifyArg_NotImplemented,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_TUNNEL_TOS, PI_TUNNEL)] = _VerifyArg_NotImplemented,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_TUNNEL_TTL, PI_TUNNEL)] = _VerifyArg_NotImplemented,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_TUNNEL_DONT_FRAGMENT, PI_TUNNEL)] = _VerifyArg_NotImplemented,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_TUNNEL_CHECKSUM, PI_TUNNEL)] = _VerifyArg_NotImplemented,
+};
+
+static const Func s_verifyArgPI[] =
+{
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_PACKET_PRIORITY, PI)] = NULL,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_DP_INPUT_PORT, PI)] = _VerifyArg_PI_InputPort,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_ETH_ADDRESS, PI)] = _VerifyArg_PI_EthAddress,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_ETH_TYPE, PI)] = _VerifyArg_PI_EthType,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_VLAN_TCI, PI)] = _VerifyArg_PI_VlanTci,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_IPV4, PI)] = _VerifyArg_PI_Ipv4,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_IPV6, PI)] = _VerifyArg_PI_Ipv6,
+
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_TCP, PI)] = _VerifyArg_PI_Tcp,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_UDP, PI)] = _VerifyArg_PI_Udp,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_SCTP, PI)] = _VerifyArg_PI_Sctp,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_ICMP, PI)] = _VerifyArg_PI_Icmp,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_ICMP6, PI)] = _VerifyArg_PI_Icmp6,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_ARP, PI)] = _VerifyArg_PI_Arp,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_NEIGHBOR_DISCOVERY, PI)] = _VerifyArg_PI_NeighborDiscovery,
+
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_PACKET_MARK, PI)] = NULL,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_TUNNEL_GROUP, PI)] = _VerifyGroup_PI_Tunnel,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_MPLS, PI)] = _VerifyArg_NotImplemented,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_ENCAP_GROUP, PI)] = _VerifyGroup_Default,
+};
+
+static const Func s_verifyArgFlow[] =
+{
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_FLOW_STATS, FLOW)] = NULL,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_FLOW_TCP_FLAGS, FLOW)] = VerifyArg_Flow_TcpFlags,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_FLOW_TIME_USED, FLOW)] = NULL,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_FLOW_CLEAR, FLOW)] = NULL,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_FLOW_PI_GROUP, FLOW)] = _VerifyGroup_Default,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_FLOW_ACTIONS_GROUP, FLOW)] = _VerifyGroup_Default,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_FLOW_MASK_GROUP, FLOW)] = _VerifyGroup_Default
+};
+
+static const Func s_verifyArgDatapath[] =
+{
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_DATAPATH_NAME, DATAPATH)] = _VerifyArg_NotImplemented,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_DATAPATH_STATS, DATAPATH)] = _VerifyArg_NotImplemented,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_DATAPATH_UPCALL_PORT_ID, DATAPATH)] = _VerifyArg_NotImplemented,
+};
+
+static const Func s_verifyToAttribsUpcall[] =
+{
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_ACTION_UPCALL_PORT_ID, ACTION_UPCALL)] = _VerifyArg_ActionUpcall_PortId,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_ACTION_UPCALL_DATA, ACTION_UPCALL)] = NULL,
+};
+
+static const Func s_argsToAttribsSample[] =
+{
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_ACTION_SAMPLE_PROBABILITY, ACTION_SAMPLE)] = NULL,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_ACTION_SAMPLE_ACTIONS_GROUP, ACTION_SAMPLE)] = _VerifyGroup_Default,
+};
+
+static const Func s_argsToAttribsActions[] =
+{
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_ACTION_OUTPUT_TO_PORT, ACTION)] = _VerifyArg_Action_OutToPort,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_ACTION_UPCALL_GROUP, ACTION)] = _VerifyGroup_Default,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_ACTION_SETINFO_GROUP, ACTION)] = _VerifyArg_NotImplemented,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_ACTION_PUSH_VLAN, ACTION)] = _VerifyArg_Action_PushVlan,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_ACTION_POP_VLAN, ACTION)] = _VerifyArg_Action_PopVlan,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_ACTION_SAMPLE_GROUP, ACTION)] = _VerifyGroup_Default
+
+};
+
+static const Func s_argsToAttribsPacket[] =
+{
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PACKET_BUFFER, PACKET)] = _VerifyArg_Packet_Buffer,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PACKET_PI_GROUP, PACKET)] = _VerifyArg_NotImplemented,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PACKET_ACTIONS_GROUP, PACKET)] = _VerifyGroup_Default,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PACKET_USERDATA, PACKET)] = NULL
+};
+
+static const Func s_argsToAttribsPortOptions[] =
+{
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_OFPORT_OPTION_DESTINATION_PORT, OFPORT_OPTION)] = _VerifyArg_NotImplemented,
+};
+
+static const Func s_argsToAttribsPort[] =
+{
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_OFPORT_NUMBER, OFPORT)] = _VerifyArg_NotImplemented,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_OFPORT_NAME, OFPORT)] = _VerifyArg_NotImplemented,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_OFPORT_STATS, OFPORT)] = _VerifyArg_NotImplemented,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_OFPORT_TYPE, OFPORT)] = _VerifyArg_NotImplemented,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_OFPORT_UPCALL_PORT_ID, OFPORT)] = _VerifyArg_NotImplemented,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_OFPORT_OPTIONS_GROUP, OFPORT)] = _VerifyArg_NotImplemented,
+};
+
+static const OVS_ARG_VERIFY_INFO s_verifyArg[] =
+{
+    { OVS_ARGTYPE_PI_TUNNEL_GROUP, OVS_ARGTYPE_FIRST_PI_TUNNEL, s_verifyArgTunnel },
+    { OVS_ARGTYPE_FLOW_PI_GROUP, OVS_ARGTYPE_FIRST_PI, s_verifyArgPI },
+    { OVS_ARGTYPE_PSEUDOGROUP_FLOW, OVS_ARGTYPE_FIRST_FLOW, s_verifyArgFlow },
+    { OVS_ARGTYPE_PSEUDOGROUP_DATAPATH, OVS_ARGTYPE_FIRST_DATAPATH, s_verifyArgDatapath },
+};
+
+const OVS_ARG_VERIFY_INFO* FindArgVerificationGroup(OVS_ARGTYPE parentArgType)
+{
+    for (int i = 0; i < OVS_ARG_GROUP_COUNT; ++i)
+    {
+        const OVS_ARG_VERIFY_INFO* pGroup = s_verifyArg + i;
+
+        if (parentArgType == pGroup->parentArgType)
         {
-        case OVS_ARGTYPE_ACTION_UPCALL_GROUP:
-            if (!_VerifyGroup_PacketActionsUpcall(pArg))
-            {
-                return FALSE;
-            }
-            break;
-
-        case OVS_ARGTYPE_ACTION_SAMPLE_GROUP:
-            if (!_VerifyGroup_PacketActionsSample(pArg, isRequest))
-            {
-                return FALSE;
-            }
-            break;
-
-        case OVS_ARGTYPE_ACTION_SETINFO_GROUP:
-        {
-            OVS_ARGUMENT_GROUP* pSetGroup = pArg->data;
-            if (pSetGroup->count > 1)
-            {
-                DEBUGP_ARG(LOG_ERROR, "only one key can be set using a set action. count keys to set: %d\n", pSetGroup->count);
-                return FALSE;
-            }
-
-            if (!VerifyGroup_PacketInfo(/*mask*/ FALSE, isRequest, /*parent*/ pArg, /*check transport layer*/ FALSE, /*seek ip*/ FALSE))
-            {
-                return FALSE;
-            }
-        }
-            break;
-
-        case OVS_ARGTYPE_ACTION_OUTPUT_TO_PORT:
-            if (!_VerifyArg_PacketActions_OutToPort(pArg))
-            {
-                return FALSE;
-            }
-            break;
-
-        case OVS_ARGTYPE_ACTION_POP_MPLS:
-            if (!_VerifyArg_PacketActions_PopMpls(pArg))
-            {
-                return FALSE;
-            }
-            break;
-
-        case OVS_ARGTYPE_ACTION_POP_VLAN:
-            if (!_VerifyArg_PacketActions_PopVlan(pArg))
-            {
-                return FALSE;
-            }
-            break;
-
-        case OVS_ARGTYPE_ACTION_PUSH_MPLS:
-            if (!_VerifyArg_PacketActions_PushMpls(pArg))
-            {
-                return FALSE;
-            }
-            break;
-
-        case OVS_ARGTYPE_ACTION_PUSH_VLAN:
-            if (!_VerifyArg_PacketActions_PushVlan(pArg))
-            {
-                return FALSE;
-            }
-            break;
-
-        default:
-            return FALSE;
+            return pGroup;
         }
     }
+
+    OVS_CHECK(__UNEXPECTED__);
+    return NULL;
+}
+
+static __inline BOOLEAN _VerifyArg_NotImplemented(OVS_ARGUMENT* pArg, OVS_ARGUMENT* pParentArg, OVS_VERIFY_OPTIONS options)
+{
+    UNREFERENCED_PARAMETER(pArg);
+    UNREFERENCED_PARAMETER(pParentArg);
+    UNREFERENCED_PARAMETER(options);
+
+    OVS_CHECK_RET(__NOT_IMPLEMENTED__, FALSE);
+}
+
+static __inline BOOLEAN _VerifyGroup_Default(OVS_ARGUMENT* pArg, OVS_ARGUMENT* pParentArg, OVS_VERIFY_OPTIONS options)
+{
+    OVS_ARGUMENT_GROUP* pGroup = pArg->data;
+    const OVS_ARG_VERIFY_INFO* pVerify = FindArgVerificationGroup(pArg->type);
+
+    UNREFERENCED_PARAMETER(pParentArg);
+
+    OVS_CHECK(pVerify);
+
+    OVS_FOR_EACH_ARG(pGroup,
+    {
+        OVS_ARGTYPE first = pVerify->firstChildArgType;
+        Func f = pVerify->f[argType - first + 1];
+
+        if (f && !f(pArg, pArg, options))
+        {
+            OVS_CHECK_RET(__UNEXPECTED__, FALSE);
+        }
+    });
 
     return TRUE;
 }
