@@ -110,6 +110,4 @@ OVS_PERSISTENT_PORT* PersPort_FindVxlanByDestPort_Ref(LE16 udpDestPort);
 BOOLEAN PersPort_Initialize();
 VOID PersPort_Uninitialize();
 
-BOOLEAN PersPort_HaveInternal_Unsafe();
-
 VOID PersPort_DestroyNow_Unsafe(OVS_PERSISTENT_PORT* pPersPort);
