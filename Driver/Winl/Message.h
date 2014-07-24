@@ -185,8 +185,6 @@ BOOLEAN ParseReceivedMessage(VOID* buffer, UINT16 length, _Out_ OVS_NLMSGHDR** p
 //pBuffer: must be non-null. pBuffer->buffer must be NULL
 BOOLEAN WriteMsgsToBuffer(_In_ OVS_NLMSGHDR* pMsgs, int countMsgs, OVS_BUFFER* pBuffer);
 
-BOOLEAN VerifyMessage(_In_ const OVS_NLMSGHDR* pMsg, UINT isRequest);
-
 static __inline OVS_NLMSGHDR* AdvanceMessage(_In_ const OVS_NLMSGHDR* pMsg)
 {
     OVS_NLMSGHDR* pNextMsg = NULL;

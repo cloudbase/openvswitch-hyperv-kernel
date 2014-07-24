@@ -139,6 +139,7 @@
     <ClCompile Include="Winl\Argument.c" />
     <ClCompile Include="Winl\MessageToFlowMatch.c" />
     <ClCompile Include="Winl\Message.c" />
+    <ClCompile Include="Winl\MsgVerification.c" />
     <ClCompile Include="Winl\WinlDatapath.c" />
     <ClCompile Include="Winl\WinlDevice.c" />
     <ClCompile Include="Winl\WinlFlow.c" />
@@ -216,6 +217,7 @@
     <ClInclude Include="Winl\Argument.h" />
     <ClInclude Include="Winl\MessageToFlowMatch.h" />
     <ClInclude Include="Winl\Message.h" />
+    <ClInclude Include="Winl\MsgVerification.h" />
     <ClInclude Include="Winl\Upcall.h" />
     <ClInclude Include="Winl\Winetlink.h" />
     <ClInclude Include="Winl\WinlDatapath.h" />

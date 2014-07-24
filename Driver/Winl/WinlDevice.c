@@ -27,6 +27,8 @@ limitations under the License.
 #include "BufferControl.h"
 #include "Switch.h"
 
+#include "MsgVerification.h"
+
 typedef struct _WINL_DEVICE_EXTENSION
 {
     // Data structure magic #

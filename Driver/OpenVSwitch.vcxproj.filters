@@ -170,6 +170,9 @@
     <ClCompile Include="Winl\ArgumentList.c">
       <Filter>Winl</Filter>
     </ClCompile>
+    <ClCompile Include="Winl\MsgVerification.c">
+      <Filter>Winl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="precomp.h" />
@@ -367,6 +370,9 @@
       <Filter>Winl</Filter>
     </ClInclude>
     <ClInclude Include="Winl\ArgumentList.h">
+      <Filter>Winl</Filter>
+    </ClInclude>
+    <ClInclude Include="Winl\MsgVerification.h">
       <Filter>Winl</Filter>
     </ClInclude>
   </ItemGroup>
