@@ -315,6 +315,8 @@ typedef enum _OVS_ARGTYPE
 
 #define OVS_ARG_GROUP_COUNT 16
 
+#define OVS_ARGTYPE_COUNT(group) (OVS_ARGTYPE_LAST_##group - OVS_ARGTYPE_FIRST_##group + 1)
+
 static __inline BOOLEAN IsArgTypeGroup(OVS_ARGTYPE argType)
 {
     switch (argType)
@@ -343,3 +345,92 @@ static __inline BOOLEAN IsArgTypeGroup(OVS_ARGTYPE argType)
 
 //given an arg type, returns the index of the arg within its group, starting from 1
 #define OVS_ARG_TOINDEX(argType, group) (argType - OVS_ARGTYPE_FIRST_##group + 1)
+#define OVS_ARG_TOINDEX_FIRST(argType, firstArgType) (argType - firstArgType + 1)
+
+#define _OVS_ARGTYPE_FIRST(argType, first, last)            \
+    if (argType >= first && argType <= last)    \
+    return first;           \
+
+#define _OVS_ARGTYPE_LAST(argType, first, last)            \
+    if (argType >= first && argType <= last)    \
+    return last;           \
+
+static __inline OVS_ARGTYPE GetFirstArgTypeInGroup(OVS_ARGTYPE argType)
+{
+    _OVS_ARGTYPE_FIRST(argType, OVS_ARGTYPE_FIRST_PSEUDOGROUP, OVS_ARGTYPE_LAST_PSEUDOGROUP);
+    _OVS_ARGTYPE_FIRST(argType, OVS_ARGTYPE_FIRST_ACTION, OVS_ARGTYPE_LAST_ACTION);
+    _OVS_ARGTYPE_FIRST(argType, OVS_ARGTYPE_FIRST_ACTION_SAMPLE, OVS_ARGTYPE_LAST_ACTION_SAMPLE);
+    _OVS_ARGTYPE_FIRST(argType, OVS_ARGTYPE_FIRST_ACTION_UPCALL, OVS_ARGTYPE_LAST_ACTION_UPCALL);
+    _OVS_ARGTYPE_FIRST(argType, OVS_ARGTYPE_FIRST_DATAPATH, OVS_ARGTYPE_LAST_DATAPATH);
+    _OVS_ARGTYPE_FIRST(argType, OVS_ARGTYPE_FIRST_FLOW, OVS_ARGTYPE_LAST_FLOW);
+    _OVS_ARGTYPE_FIRST(argType, OVS_ARGTYPE_FIRST_OFPORT, OVS_ARGTYPE_LAST_OFPORT);
+    _OVS_ARGTYPE_FIRST(argType, OVS_ARGTYPE_FIRST_OFPORT_OPTION, OVS_ARGTYPE_LAST_OFPORT_OPTION);
+    _OVS_ARGTYPE_FIRST(argType, OVS_ARGTYPE_FIRST_PACKET, OVS_ARGTYPE_LAST_PACKET);
+    _OVS_ARGTYPE_FIRST(argType, OVS_ARGTYPE_FIRST_PI, OVS_ARGTYPE_LAST_PI);
+    _OVS_ARGTYPE_FIRST(argType, OVS_ARGTYPE_FIRST_PI_TUNNEL, OVS_ARGTYPE_LAST_PI_TUNNEL);
+
+    return OVS_ARGTYPE_INVALID;
+}
+
+static __inline OVS_ARGTYPE GetLastArgTypeInGroup(OVS_ARGTYPE argType)
+{
+    _OVS_ARGTYPE_LAST(argType, OVS_ARGTYPE_FIRST_PSEUDOGROUP, OVS_ARGTYPE_LAST_PSEUDOGROUP);
+    _OVS_ARGTYPE_LAST(argType, OVS_ARGTYPE_FIRST_ACTION, OVS_ARGTYPE_LAST_ACTION);
+    _OVS_ARGTYPE_LAST(argType, OVS_ARGTYPE_FIRST_ACTION_SAMPLE, OVS_ARGTYPE_LAST_ACTION_SAMPLE);
+    _OVS_ARGTYPE_LAST(argType, OVS_ARGTYPE_FIRST_ACTION_UPCALL, OVS_ARGTYPE_LAST_ACTION_UPCALL);
+    _OVS_ARGTYPE_LAST(argType, OVS_ARGTYPE_FIRST_DATAPATH, OVS_ARGTYPE_LAST_DATAPATH);
+    _OVS_ARGTYPE_LAST(argType, OVS_ARGTYPE_FIRST_FLOW, OVS_ARGTYPE_LAST_FLOW);
+    _OVS_ARGTYPE_LAST(argType, OVS_ARGTYPE_FIRST_OFPORT, OVS_ARGTYPE_LAST_OFPORT);
+    _OVS_ARGTYPE_LAST(argType, OVS_ARGTYPE_FIRST_OFPORT_OPTION, OVS_ARGTYPE_LAST_OFPORT_OPTION);
+    _OVS_ARGTYPE_LAST(argType, OVS_ARGTYPE_FIRST_PACKET, OVS_ARGTYPE_LAST_PACKET);
+    _OVS_ARGTYPE_LAST(argType, OVS_ARGTYPE_FIRST_PI, OVS_ARGTYPE_LAST_PI);
+    _OVS_ARGTYPE_LAST(argType, OVS_ARGTYPE_FIRST_PI_TUNNEL, OVS_ARGTYPE_LAST_PI_TUNNEL);
+
+    return OVS_ARGTYPE_INVALID;
+}
+
+#define OVS_MAX_2(x1, x2) max(x1, x2)
+#define OVS_MAX_3(x1, ...) max(x1, OVS_MAX_2(__VA_ARGS__))
+#define OVS_MAX_4(x1, ...) max(x1, OVS_MAX_3(__VA_ARGS__))
+#define OVS_MAX_5(x1, ...) max(x1, OVS_MAX_4(__VA_ARGS__))
+#define OVS_MAX_6(x1, ...) max(x1, OVS_MAX_5(__VA_ARGS__))
+#define OVS_MAX_7(x1, ...) max(x1, OVS_MAX_6(__VA_ARGS__))
+#define OVS_MAX_8(x1, ...) max(x1, OVS_MAX_7(__VA_ARGS__))
+#define OVS_MAX_9(x1, ...) max(x1, OVS_MAX_8(__VA_ARGS__))
+#define OVS_MAX_10(x1, ...) max(x1, OVS_MAX_9(__VA_ARGS__))
+#define OVS_MAX_11(x1, ...) max(x1, OVS_MAX_10(__VA_ARGS__))
+
+#define OVS_ARGTYPE_MAX_COUNT OVS_MAX_11                        \
+(                                                               \
+    OVS_ARGTYPE_COUNT(PSEUDOGROUP),                             \
+    OVS_ARGTYPE_COUNT(ACTION),                                  \
+    OVS_ARGTYPE_COUNT(ACTION_SAMPLE),                           \
+    OVS_ARGTYPE_COUNT(ACTION_UPCALL),                           \
+    OVS_ARGTYPE_COUNT(DATAPATH),                                \
+    OVS_ARGTYPE_COUNT(FLOW),                                    \
+    OVS_ARGTYPE_COUNT(OFPORT),                                  \
+    OVS_ARGTYPE_COUNT(OFPORT_OPTION),                           \
+    OVS_ARGTYPE_COUNT(PACKET),                                  \
+    OVS_ARGTYPE_COUNT(PI),                                      \
+    OVS_ARGTYPE_COUNT(PI_TUNNEL)                               \
+)
+
+static __inline int CountArgTypesInGroup(OVS_ARGTYPE argType)
+{
+    OVS_ARGTYPE first = GetFirstArgTypeInGroup(argType);
+    OVS_ARGTYPE last = GetLastArgTypeInGroup(argType);
+
+    OVS_CHECK(first != OVS_ARGTYPE_INVALID);
+    OVS_CHECK(last != OVS_ARGTYPE_INVALID);
+
+    return last - first + 1;
+}
+
+//somewhat equivalent to OVS_ARG_TOINDEX
+static __inline int ArgTypeToIndex(OVS_ARGTYPE argType)
+{
+    OVS_ARGTYPE first = GetFirstArgTypeInGroup(argType);
+    OVS_CHECK(first != OVS_ARGTYPE_INVALID);
+
+    return argType - first + 1;
+}
