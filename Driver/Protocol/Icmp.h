@@ -29,14 +29,16 @@ limitations under the License.
 //rtt = round-trip time
 //This is ICMPv4 [RFC0792]; see ICMPv6 in RFC4443
 
-typedef struct _OVS_ICMP_HEADER {
+typedef struct _OVS_ICMP_HEADER
+{
     UINT8 type;         // Type of message (high bit zero for error messages).
     UINT8 code;         // Type-specific differentiater.
     UINT16 checksum;    // Calculated over ICMP message and IPvx pseudo-header.
     //contents depended on type & code
 }OVS_ICMP_HEADER, *POVS_ICMP_HEADER;
 
-typedef struct _OVS_ICMP_MESSAGE_DEST_UNREACH {
+typedef struct _OVS_ICMP_MESSAGE_DEST_UNREACH
+{
     OVS_ICMP_HEADER header;
     UINT8 unused;
     //length of the padded "original datagram" field, measured in 32-bit words.
@@ -48,10 +50,11 @@ typedef struct _OVS_ICMP_MESSAGE_DEST_UNREACH {
     //followed by 8 bytes of original datagram
 }OVS_ICMP_MESSAGE_DEST_UNREACH, *POVS_ICMP_MESSAGE_DEST_UNREACH;
 
-#define OVS_ICMP_MESSAGE_DEST_UNREACH_SIZE_BARE		8
+#define OVS_ICMP_MESSAGE_DEST_UNREACH_SIZE_BARE        8
 C_ASSERT(sizeof(OVS_ICMP_MESSAGE_DEST_UNREACH) == 28);
 
-typedef struct _OVS_ICMP_MESSAGE_TIME_EXCEEDED {
+typedef struct _OVS_ICMP_MESSAGE_TIME_EXCEEDED
+{
     OVS_ICMP_HEADER header;
     UINT8 unused0;
     //length of the padded "original datagram" field, measured in 32-bit words.
@@ -63,7 +66,8 @@ typedef struct _OVS_ICMP_MESSAGE_TIME_EXCEEDED {
     //followed by 8 bytes of original datagram
 }OVS_ICMP_MESSAGE_TIME_EXCEEDED, *POVS_ICMP_MESSAGE_TIME_EXCEEDED;
 
-typedef struct _OVS_ICMP_MESSAGE_PARAM_PROBLEM {
+typedef struct _OVS_ICMP_MESSAGE_PARAM_PROBLEM
+{
     OVS_ICMP_HEADER header;
     //If code = 0, identifies the octet where an error was detected.
     UINT8 pointer;
@@ -76,7 +80,8 @@ typedef struct _OVS_ICMP_MESSAGE_PARAM_PROBLEM {
     //followed by 8 bytes of original datagram
 }OVS_ICMP_MESSAGE_PARAM_PROBLEM, *POVS_ICMP_MESSAGE_PARAM_PROBLEM;
 
-typedef struct _OVS_ICMP_MESSAGE_REDIRECT {
+typedef struct _OVS_ICMP_MESSAGE_REDIRECT
+{
     OVS_ICMP_HEADER header;
 
     //Address of the gateway to which traffic for the network specified in the internet destination network field of the original
@@ -88,7 +93,8 @@ typedef struct _OVS_ICMP_MESSAGE_REDIRECT {
     //followed by 8 bytes of original datagram
 }OVS_ICMP_MESSAGE_REDIRECT, *POVS_ICMP_MESSAGE_REDIRECT;
 
-typedef struct _OVS_ICMP_MESSAGE_ECHO {
+typedef struct _OVS_ICMP_MESSAGE_ECHO
+{
     OVS_ICMP_HEADER header;
 
     UINT16 identifier;
@@ -97,7 +103,8 @@ typedef struct _OVS_ICMP_MESSAGE_ECHO {
     //followed by 8 bytes of original datagram
 }OVS_ICMP_MESSAGE_ECHO, *POVS_ICMP_MESSAGE_ECHO;
 
-typedef struct _OVS_ICMP_MESSAGE_TIMESTAMP {
+typedef struct _OVS_ICMP_MESSAGE_TIMESTAMP
+{
     OVS_ICMP_HEADER header;
 
     UINT16 identifier;

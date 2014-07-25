@@ -4,7 +4,7 @@ Class       = NetService
 ClassGUID   = {4D36E974-E325-11CE-BFC1-08002BE10318}
 Provider    = %Msft%
 CatalogFile = openvswitch.cat
-DriverVer	= 04/03/2014,18.59.17.503
+DriverVer    = 04/03/2014,18.59.17.503
 
 [Manufacturer]
 %Msft%=MSFT,NTx86,NTia64,NTamd64

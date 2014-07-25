@@ -20,4 +20,4 @@ limitations under the License.
 
 typedef struct _OVS_ARGUMENT OVS_ARGUMENT;
 
-BOOLEAN Reply_SetAttrType(ULONG targetType, ULONG cmd, UINT16 parentArgType, _Inout_ OVS_ARGUMENT* pArg);
+BOOLEAN Reply_SetAttrType(UINT16 parentArgType, _Inout_ OVS_ARGUMENT* pArg);

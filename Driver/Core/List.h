@@ -17,11 +17,11 @@ limitations under the License.
 #pragma once
 
 #define LIST_FOR_EACH_ENTRY(pos, head, member, typeOfPos)          \
-	for (pos = CONTAINING_RECORD((head)->Flink, typeOfPos, member);\
-	&pos->member != (head);                                        \
-	pos = CONTAINING_RECORD(pos->member.Flink, typeOfPos, member))
+    for (pos = CONTAINING_RECORD((head)->Flink, typeOfPos, member);\
+    &pos->member != (head);                                        \
+    pos = CONTAINING_RECORD(pos->member.Flink, typeOfPos, member))
 
 #define LIST_FOR_EACH(structType, pEntry, pHead)                                \
-	for (pEntry = CONTAINING_RECORD((pHead)->Flink, structType, listEntry);     \
-	&pEntry->listEntry != (pHead);                                              \
-	pEntry = CONTAINING_RECORD(pEntry->listEntry.Flink, structType, listEntry))
+    for (pEntry = CONTAINING_RECORD((pHead)->Flink, structType, listEntry);     \
+    &pEntry->listEntry != (pHead);                                              \
+    pEntry = CONTAINING_RECORD(pEntry->listEntry.Flink, structType, listEntry))

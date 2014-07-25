@@ -51,7 +51,6 @@ static void _UpdateRange(_Inout_ OVS_PI_RANGE* pPiRange, SIZE_T offset, SIZE_T s
         pPiRange->startRange = startPos;
         pPiRange->endRange = endPos;
     }
-
     else
     {
         //i.e. if it was set before
@@ -100,26 +99,25 @@ static BOOLEAN _ExtractIpv4(VOID* pNbBuffer, _Inout_ OVS_OFPACKET_INFO* pPacketI
     {
         OVS_TCP_HEADER* pTcpHeader = (OVS_TCP_HEADER*)AdvanceIpv4Header(pIpv4Header);
 
-        pPacketInfo->netProto.ipv4Info.sourcePort = pTcpHeader->sourcePort;
-        pPacketInfo->netProto.ipv4Info.destinationPort = pTcpHeader->destinationPort;
-    }
+        pPacketInfo->tpInfo.sourcePort = pTcpHeader->sourcePort;
+        pPacketInfo->tpInfo.destinationPort = pTcpHeader->destinationPort;
 
+        pPacketInfo->tpInfo.tcpFlags = GetTcpFlags(pTcpHeader->flagsAndOffset);
+    }
     else if (pPacketInfo->ipInfo.protocol == OVS_IPPROTO_UDP)
     {
         OVS_UDP_HEADER* pUdpHeader = (OVS_UDP_HEADER*)AdvanceIpv4Header(pIpv4Header);
 
-        pPacketInfo->netProto.ipv4Info.sourcePort = pUdpHeader->sourcePort;
-        pPacketInfo->netProto.ipv4Info.destinationPort = pUdpHeader->destinationPort;
+        pPacketInfo->tpInfo.sourcePort = pUdpHeader->sourcePort;
+        pPacketInfo->tpInfo.destinationPort = pUdpHeader->destinationPort;
     }
-
     else if (pPacketInfo->ipInfo.protocol == OVS_IPPROTO_SCTP)
     {
         OVS_SCTP_HEADER* pSctpHeader = (OVS_SCTP_HEADER*)AdvanceIpv4Header(pIpv4Header);
 
-        pPacketInfo->netProto.ipv4Info.sourcePort = pSctpHeader->sourcePort;
-        pPacketInfo->netProto.ipv4Info.destinationPort = pSctpHeader->destinationPort;
+        pPacketInfo->tpInfo.sourcePort = pSctpHeader->sourcePort;
+        pPacketInfo->tpInfo.destinationPort = pSctpHeader->destinationPort;
     }
-
     else if (pPacketInfo->ipInfo.protocol == OVS_IPPROTO_ICMP)
     {
         OVS_ICMP_HEADER* pIcmpHeader = (OVS_ICMP_HEADER*)AdvanceIpv4Header(pIpv4Header);
@@ -160,8 +158,8 @@ static BOOLEAN _ExtractIpv4(VOID* pNbBuffer, _Inout_ OVS_OFPACKET_INFO* pPacketI
         }
 
         //turn each byte as word & turn to BE
-        pPacketInfo->netProto.ipv4Info.sourcePort = RtlUshortByteSwap(pIcmpHeader->type);
-        pPacketInfo->netProto.ipv4Info.destinationPort = RtlUshortByteSwap(pIcmpHeader->code);
+        pPacketInfo->tpInfo.sourcePort = RtlUshortByteSwap(pIcmpHeader->type);
+        pPacketInfo->tpInfo.destinationPort = RtlUshortByteSwap(pIcmpHeader->code);
     }
 
     return TRUE;
@@ -207,7 +205,6 @@ static VOID _ExtractIcmp6(VOID* pNbBuffer, ULONG nbLen, OVS_ICMP_HEADER* pIcmpHe
                     pOption = (OVS_ICMP6_ND_OPTION*)((BYTE*)pOption + optionLen);
                 }
             }
-
             else if (pIcmpHeader->type == OVS_ICMP6_ND_NEIGHBOR_ADVERTISMENT)
             {
                 OVS_ICMP6_NEIGHBOR_ADVERTISMENT* pNA = (OVS_ICMP6_NEIGHBOR_ADVERTISMENT*)pIcmpHeader;
@@ -241,8 +238,8 @@ static VOID _ExtractIcmp6(VOID* pNbBuffer, ULONG nbLen, OVS_ICMP_HEADER* pIcmpHe
     }
 
     //turn each byte as word & turn to BE
-    pPacketInfo->netProto.ipv4Info.sourcePort = RtlUshortByteSwap(pIcmpHeader->type);
-    pPacketInfo->netProto.ipv4Info.destinationPort = RtlUshortByteSwap(pIcmpHeader->code);
+    pPacketInfo->tpInfo.sourcePort = RtlUshortByteSwap(pIcmpHeader->type);
+    pPacketInfo->tpInfo.destinationPort = RtlUshortByteSwap(pIcmpHeader->code);
 }
 
 static BOOLEAN _ExtractIpv6(VOID* pNbBuffer, ULONG nbLen, _Inout_ OVS_OFPACKET_INFO* pPacketInfo)
@@ -287,7 +284,6 @@ static BOOLEAN _ExtractIpv6(VOID* pNbBuffer, ULONG nbLen, _Inout_ OVS_OFPACKET_I
                     pPacketInfo->ipInfo.fragment = OVS_FRAGMENT_TYPE_NOT_FRAG;
                 }
             }
-
             else
             {
                 pPacketInfo->ipInfo.fragment = OVS_FRAGMENT_TYPE_FRAG_N;
@@ -307,26 +303,25 @@ static BOOLEAN _ExtractIpv6(VOID* pNbBuffer, ULONG nbLen, _Inout_ OVS_OFPACKET_I
     {
         OVS_TCP_HEADER* pTcpHeader = (OVS_TCP_HEADER*)buffer;
 
-        pPacketInfo->netProto.ipv6Info.sourcePort = pTcpHeader->sourcePort;
-        pPacketInfo->netProto.ipv6Info.destinationPort = pTcpHeader->destinationPort;
-    }
+        pPacketInfo->tpInfo.sourcePort = pTcpHeader->sourcePort;
+        pPacketInfo->tpInfo.destinationPort = pTcpHeader->destinationPort;
 
+        pPacketInfo->tpInfo.tcpFlags = GetTcpFlags(pTcpHeader->flagsAndOffset);
+    }
     else if (extensionType == OVS_IPV6_EXTH_UDP)
     {
         OVS_UDP_HEADER* pUdpHeader = (OVS_UDP_HEADER*)buffer;
 
-        pPacketInfo->netProto.ipv6Info.sourcePort = pUdpHeader->sourcePort;
-        pPacketInfo->netProto.ipv6Info.destinationPort = pUdpHeader->destinationPort;
+        pPacketInfo->tpInfo.sourcePort = pUdpHeader->sourcePort;
+        pPacketInfo->tpInfo.destinationPort = pUdpHeader->destinationPort;
     }
-
     else if (extensionType == OVS_IPV6_EXTH_SCTP)
     {
         OVS_SCTP_HEADER* pSctpHeader = (OVS_SCTP_HEADER*)buffer;
 
-        pPacketInfo->netProto.ipv6Info.sourcePort = pSctpHeader->sourcePort;
-        pPacketInfo->netProto.ipv6Info.destinationPort = pSctpHeader->destinationPort;
+        pPacketInfo->tpInfo.sourcePort = pSctpHeader->sourcePort;
+        pPacketInfo->tpInfo.destinationPort = pSctpHeader->destinationPort;
     }
-
     else if (extensionType == OVS_IPV6_EXTH_ICMP6)
     {
         OVS_ICMP_HEADER* pIcmpHeader = (OVS_ICMP_HEADER*)buffer;
@@ -376,7 +371,6 @@ BOOLEAN PacketInfo_Extract(_In_ VOID* pNbBuffer, ULONG nbLen, UINT16 ovsSourcePo
 
         return ok;
     }
-
     else if (pPacketInfo->ethInfo.type == RtlUshortByteSwap(OVS_ETHERTYPE_ARP))
     {
         OVS_ARP_HEADER* pArp = GetArpHeader(pEthHeader);
@@ -401,12 +395,10 @@ BOOLEAN PacketInfo_Extract(_In_ VOID* pNbBuffer, ULONG nbLen, UINT16 ovsSourcePo
             }
         }
     }
-
     else if (pPacketInfo->ethInfo.type == RtlUshortByteSwap(OVS_ETHERTYPE_IPV6))
     {
         return _ExtractIpv6(pNbBuffer, nbLen, pPacketInfo);
     }
-
     else
     {
         return FALSE;
@@ -430,7 +422,6 @@ BOOLEAN PIFromArg_Tunnel(const OVS_ARGUMENT_GROUP* pArgs, _Inout_ OVS_OFPACKET_I
         switch (argType)
         {
         case OVS_ARGTYPE_PI_TUNNEL_ID:
-
             offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, tunnelInfo, OF_PI_IPV4_TUNNEL, tunnelId);
             size = sizeof(pPacketInfo->tunnelInfo.tunnelId);
 
@@ -441,7 +432,6 @@ BOOLEAN PIFromArg_Tunnel(const OVS_ARGUMENT_GROUP* pArgs, _Inout_ OVS_OFPACKET_I
             break;
 
         case OVS_ARGTYPE_PI_TUNNEL_IPV4_SRC:
-
             offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, tunnelInfo, OF_PI_IPV4_TUNNEL, ipv4Source);
             size = sizeof(pPacketInfo->tunnelInfo.ipv4Source);
 
@@ -450,7 +440,6 @@ BOOLEAN PIFromArg_Tunnel(const OVS_ARGUMENT_GROUP* pArgs, _Inout_ OVS_OFPACKET_I
 
             break;
         case OVS_ARGTYPE_PI_TUNNEL_IPV4_DST:
-
             offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, tunnelInfo, OF_PI_IPV4_TUNNEL, ipv4Destination);
             size = sizeof(pPacketInfo->tunnelInfo.ipv4Destination);
 
@@ -459,7 +448,6 @@ BOOLEAN PIFromArg_Tunnel(const OVS_ARGUMENT_GROUP* pArgs, _Inout_ OVS_OFPACKET_I
             break;
 
         case OVS_ARGTYPE_PI_TUNNEL_TOS:
-
             offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, tunnelInfo, OF_PI_IPV4_TUNNEL, ipv4TypeOfService);
             size = sizeof(pPacketInfo->tunnelInfo.ipv4TypeOfService);
 
@@ -468,7 +456,6 @@ BOOLEAN PIFromArg_Tunnel(const OVS_ARGUMENT_GROUP* pArgs, _Inout_ OVS_OFPACKET_I
             break;
 
         case OVS_ARGTYPE_PI_TUNNEL_TTL:
-
             offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, tunnelInfo, OF_PI_IPV4_TUNNEL, ipv4TimeToLive);
             size = sizeof(pPacketInfo->tunnelInfo.ipv4TimeToLive);
 
@@ -479,13 +466,19 @@ BOOLEAN PIFromArg_Tunnel(const OVS_ARGUMENT_GROUP* pArgs, _Inout_ OVS_OFPACKET_I
             break;
 
         case OVS_ARGTYPE_PI_TUNNEL_DONT_FRAGMENT:
-
             tunnelFlags |= OVS_TUNNEL_FLAG_DONT_FRAGMENT;
             break;
 
         case OVS_ARGTYPE_PI_TUNNEL_CHECKSUM:
-
             tunnelFlags |= OVS_TUNNEL_FLAG_CHECKSUM;
+            break;
+
+        case OVS_ARGTYPE_PI_TUNNEL_OAM:
+            OVS_CHECK_RET(__NOT_IMPLEMENTED__, FALSE);
+            break;
+
+        case OVS_ARGTYPE_PI_TUNNEL_GENEVE_OPTIONS:
+            OVS_CHECK_RET(__NOT_IMPLEMENTED__, FALSE);
             break;
 
         default:
@@ -529,40 +522,41 @@ BOOLEAN GetIpv4TunnelFromArgumentsSimple(const OVS_ARGUMENT_GROUP* pArgs, _Inout
         switch (argType)
         {
         case OVS_ARGTYPE_PI_TUNNEL_ID:
-
             pTunnelInfo->tunnelId = GET_ARG_DATA(pArg, BE64);
 
             tunnelFlags |= OVS_TUNNEL_FLAG_KEY;
             break;
 
         case OVS_ARGTYPE_PI_TUNNEL_IPV4_SRC:
-
             pTunnelInfo->ipv4Source = GET_ARG_DATA(pArg, BE32);
             break;
 
         case OVS_ARGTYPE_PI_TUNNEL_IPV4_DST:
-
             pTunnelInfo->ipv4Destination = GET_ARG_DATA(pArg, BE32);
             break;
 
         case OVS_ARGTYPE_PI_TUNNEL_TOS:
-
             pTunnelInfo->ipv4TypeOfService = GET_ARG_DATA(pArg, UINT8);
             break;
 
         case OVS_ARGTYPE_PI_TUNNEL_TTL:
-
             pTunnelInfo->ipv4TimeToLive = GET_ARG_DATA(pArg, UINT8);
             break;
 
         case OVS_ARGTYPE_PI_TUNNEL_DONT_FRAGMENT:
-
             tunnelFlags |= OVS_TUNNEL_FLAG_DONT_FRAGMENT;
             break;
 
         case OVS_ARGTYPE_PI_TUNNEL_CHECKSUM:
-
             tunnelFlags |= OVS_TUNNEL_FLAG_CHECKSUM;
+            break;
+
+        case OVS_ARGTYPE_PI_TUNNEL_OAM:
+            OVS_CHECK_RET(__NOT_IMPLEMENTED__, FALSE);
+            break;
+
+        case OVS_ARGTYPE_PI_TUNNEL_GENEVE_OPTIONS:
+            OVS_CHECK_RET(__NOT_IMPLEMENTED__, FALSE);
             break;
 
         default:
@@ -586,6 +580,28 @@ VOID PIFromArg_PacketPriority(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout_ OV
     pPacketInfo->physical.packetPriority = GET_ARG_DATA(pArg, UINT32);
 }
 
+VOID PIFromArg_DatapathHash(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout_ OVS_PI_RANGE* pPiRange, _In_ const OVS_ARGUMENT* pArg)
+{
+    SIZE_T offset = 0, size = 0;
+
+    offset = OFFSET_OF(OVS_OFPACKET_INFO, flowHash);
+    size = sizeof(pPacketInfo->flowHash);
+
+    _UpdateRange(pPiRange, offset, size);
+    pPacketInfo->flowHash = GET_ARG_DATA(pArg, UINT32);
+}
+
+VOID PIFromArg_DatapathRecirculationId(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout_ OVS_PI_RANGE* pPiRange, _In_ const OVS_ARGUMENT* pArg)
+{
+    SIZE_T offset = 0, size = 0;
+
+    offset = OFFSET_OF(OVS_OFPACKET_INFO, recirculationId);
+    size = sizeof(pPacketInfo->recirculationId);
+
+    _UpdateRange(pPiRange, offset, size);
+    pPacketInfo->recirculationId = GET_ARG_DATA(pArg, UINT32);
+}
+
 BOOLEAN PIFromArg_DatapathInPort(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout_ OVS_PI_RANGE* pPiRange, _In_ const OVS_ARGUMENT* pArg, BOOLEAN isMask)
 {
     SIZE_T offset = 0, size = 0;
@@ -595,7 +611,6 @@ BOOLEAN PIFromArg_DatapathInPort(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout_
     {
         inPort = OVS_PI_MASK_MATCH_EXACT(UINT32);
     }
-
     else if (inPort >= OVS_MAX_PORTS)
     {
         return FALSE;
@@ -630,7 +645,6 @@ VOID PIFromArg_SetDefaultDatapathInPort(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, 
     {
         //if isMask and mask attr not specified, we assume it's 'any'
     }
-
     else
     {
         offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, physical, OVS_PHYSICAL, ovsInPort);
@@ -670,7 +684,8 @@ static BOOLEAN _GetPIFromArg_VlanTci(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _In
         {
             DEBUGP(LOG_ERROR, "VLAN TCI MASK: EXPECTED EXACT MATCH FOR THE OVS_VLAN_TAG_PRESENT BIT.\n");
         }
-        else {
+        else
+        {
             DEBUGP(LOG_ERROR, "VLAN TCI PI: EXPECTED OVS_VLAN_TAG_PRESENT BIT TO BE SET.\n");
         }
 
@@ -695,7 +710,6 @@ static BOOLEAN _GetPIFromArg_EthType(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _In
     {
         ethType = OVS_PI_MASK_MATCH_EXACT(UINT16);
     }
-
     else if (RtlUshortByteSwap(ethType) < OVS_ETHERTYPE_802_3_MIN)
     {
         DEBUGP(LOG_ERROR, "INVALID ETH TYPE: %X. MINIMUM ACCEPTABLE IS 802.3 (I.E. 0X0600)\n", RtlUshortByteSwap(ethType));
@@ -726,27 +740,27 @@ static BOOLEAN _GetPIFromArg_Ipv4(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout
     }
 
     //1. ip protocol
-    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, ipInfo, OVS_IPV4_INFO, protocol);
+    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, ipInfo, OVS_NET_LAYER_INFO, protocol);
     size = sizeof(pPacketInfo->ipInfo.protocol);
 
     _UpdateRange(pPiRange, offset, size);
     pPacketInfo->ipInfo.protocol = pIpv4Info->protocol;
 
     //2. TOS
-    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, ipInfo, OVS_IPV4_INFO, typeOfService);
+    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, ipInfo, OVS_NET_LAYER_INFO, typeOfService);
     size = sizeof(pPacketInfo->ipInfo.typeOfService);
 
     _UpdateRange(pPiRange, offset, size);
     pPacketInfo->ipInfo.typeOfService = pIpv4Info->tos;
 
     //TTL
-    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, ipInfo, OVS_IPV4_INFO, timeToLive);
+    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, ipInfo, OVS_NET_LAYER_INFO, timeToLive);
     size = sizeof(pPacketInfo->ipInfo.timeToLive);
     _UpdateRange(pPiRange, offset, size);
     pPacketInfo->ipInfo.timeToLive = pIpv4Info->ttl;
 
     //fragmentation type
-    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, ipInfo, OVS_IPV4_INFO, fragment);
+    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, ipInfo, OVS_NET_LAYER_INFO, fragment);
     size = sizeof(pPacketInfo->ipInfo.fragment);
 
     _UpdateRange(pPiRange, offset, size);
@@ -791,28 +805,28 @@ static BOOLEAN _GetPIFromArg_Ipv6(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout
     pPacketInfo->netProto.ipv6Info.flowLabel = pIpv6Info->label;
 
     //ip proto
-    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, ipInfo, OVS_IPV4_INFO, protocol);
+    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, ipInfo, OVS_NET_LAYER_INFO, protocol);
     size = sizeof(pPacketInfo->ipInfo.protocol);
 
     _UpdateRange(pPiRange, offset, size);
     pPacketInfo->ipInfo.protocol = pIpv6Info->protocol;
 
     //TOS
-    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, ipInfo, OVS_IPV4_INFO, typeOfService);
+    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, ipInfo, OVS_NET_LAYER_INFO, typeOfService);
     size = sizeof(pPacketInfo->ipInfo.typeOfService);
 
     _UpdateRange(pPiRange, offset, size);
     pPacketInfo->ipInfo.typeOfService = pIpv6Info->trafficClass;
 
     //TTL
-    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, ipInfo, OVS_IPV4_INFO, timeToLive);
+    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, ipInfo, OVS_NET_LAYER_INFO, timeToLive);
     size = sizeof(pPacketInfo->ipInfo.timeToLive);
 
     _UpdateRange(pPiRange, offset, size);
     pPacketInfo->ipInfo.timeToLive = pIpv6Info->highLimit;
 
     //fragmentation
-    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, ipInfo, OVS_IPV4_INFO, fragment);
+    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, ipInfo, OVS_NET_LAYER_INFO, fragment);
     size = sizeof(pPacketInfo->ipInfo.fragment);
 
     _UpdateRange(pPiRange, offset, size);
@@ -864,7 +878,7 @@ static BOOLEAN _GetPIFromArg_Arp(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout_
     pPacketInfo->netProto.ipv4Info.destination.S_un.S_addr = pArpPI->targetIp;
 
     //proto
-    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, ipInfo, OVS_IPV4_INFO, protocol);
+    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, ipInfo, OVS_NET_LAYER_INFO, protocol);
     size = sizeof(pPacketInfo->ipInfo.protocol);
 
     _UpdateRange(pPiRange, offset, size);
@@ -884,6 +898,34 @@ static BOOLEAN _GetPIFromArg_Arp(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout_
     return TRUE;
 }
 
+static BOOLEAN _GetPIFromArg_Mpls(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout_ OVS_PI_RANGE* pPiRange, _In_ const OVS_ARGUMENT* pArg)
+{
+    const OVS_PI_MPLS* pMplsPI = pArg->data;
+    SIZE_T size = 0, offset = 0;
+
+    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, ipInfo, OVS_NET_LAYER_INFO, mplsTopLabelStackEntry);
+    size = sizeof(pPacketInfo->ipInfo.mplsTopLabelStackEntry);
+
+    _UpdateRange(pPiRange, offset, size);
+    pPacketInfo->ipInfo.mplsTopLabelStackEntry = pMplsPI->mplsLse;
+
+    return TRUE;
+}
+
+static BOOLEAN _GetPIFromArg_TcpFlags(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout_ OVS_PI_RANGE* pPiRange, _In_ const OVS_ARGUMENT* pArg)
+{
+    BE16 tcpFlags = GET_ARG_DATA(pArg, BE16);
+    SIZE_T size = 0, offset = 0;
+
+    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, tpInfo, OVS_TRANSPORT_LAYER_INFO, tcpFlags);
+    size = sizeof(pPacketInfo->tpInfo.tcpFlags);
+
+    _UpdateRange(pPiRange, offset, size);
+    pPacketInfo->tpInfo.tcpFlags = tcpFlags;
+
+    return TRUE;
+}
+
 static VOID _GetPIFromArg_Tcp(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout_ OVS_PI_RANGE* pPiRange, _In_ const OVS_ARGUMENT* pTcpArg, BOOLEAN haveIpv4)
 {
     const OVS_PI_TCP* pTcpPI = pTcpArg->data;
@@ -892,35 +934,34 @@ static VOID _GetPIFromArg_Tcp(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout_ OV
     if (haveIpv4)
     {
         //src port
-        offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, netProto.ipv4Info, OVS_IP4_INFO, sourcePort);
-        size = sizeof(pPacketInfo->netProto.ipv4Info.sourcePort);
+        NESTED_OFFSET_OF(OVS_OFPACKET_INFO, tpInfo, OVS_TRANSPORT_LAYER_INFO, sourcePort);
+        size = sizeof(pPacketInfo->tpInfo.sourcePort);
 
         _UpdateRange(pPiRange, offset, size);
-        pPacketInfo->netProto.ipv4Info.sourcePort = pTcpPI->source;
+        pPacketInfo->tpInfo.sourcePort = pTcpPI->source;
 
         //dest port
-        offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, netProto.ipv4Info, OVS_IP4_INFO, destinationPort);
-        size = sizeof(pPacketInfo->netProto.ipv4Info.destinationPort);
+        offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, tpInfo, OVS_TRANSPORT_LAYER_INFO, destinationPort);
+        size = sizeof(pPacketInfo->tpInfo.destinationPort);
 
         _UpdateRange(pPiRange, offset, size);
-        pPacketInfo->netProto.ipv4Info.destinationPort = pTcpPI->destination;
+        pPacketInfo->tpInfo.destinationPort = pTcpPI->destination;
     }
-
     else
     {
         //src port
-        offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, netProto.ipv6Info, OVS_IPV6_INFO, sourcePort);
-        size = sizeof(pPacketInfo->netProto.ipv6Info.sourcePort);
+        offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, tpInfo, OVS_TRANSPORT_LAYER_INFO, sourcePort);
+        size = sizeof(pPacketInfo->tpInfo.sourcePort);
 
         _UpdateRange(pPiRange, offset, size);
-        pPacketInfo->netProto.ipv6Info.sourcePort = pTcpPI->source;
+        pPacketInfo->tpInfo.sourcePort = pTcpPI->source;
 
         //dest port
-        offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, netProto.ipv6Info, OVS_IPV6_INFO, destinationPort);
-        size = sizeof(pPacketInfo->netProto.ipv6Info.destinationPort);
+        offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, tpInfo, OVS_TRANSPORT_LAYER_INFO, destinationPort);
+        size = sizeof(pPacketInfo->tpInfo.destinationPort);
 
         _UpdateRange(pPiRange, offset, size);
-        pPacketInfo->netProto.ipv6Info.destinationPort = pTcpPI->destination;
+        pPacketInfo->tpInfo.destinationPort = pTcpPI->destination;
     }
 }
 
@@ -932,35 +973,34 @@ static VOID _GetPIFromArg_Udp(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout_ OV
     if (haveIpv4)
     {
         //src port
-        offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, netProto.ipv4Info, OVS_IP4_INFO, sourcePort);
-        size = sizeof(pPacketInfo->netProto.ipv4Info.sourcePort);
+        NESTED_OFFSET_OF(OVS_OFPACKET_INFO, tpInfo, OVS_TRANSPORT_LAYER_INFO, sourcePort);
+        size = sizeof(pPacketInfo->tpInfo.sourcePort);
 
         _UpdateRange(pPiRange, offset, size);
-        pPacketInfo->netProto.ipv4Info.sourcePort = pUdpPI->source;
+        pPacketInfo->tpInfo.sourcePort = pUdpPI->source;
 
         //dest port
-        offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, netProto.ipv4Info, OVS_IP4_INFO, destinationPort);
-        size = sizeof(pPacketInfo->netProto.ipv4Info.destinationPort);
+        offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, tpInfo, OVS_TRANSPORT_LAYER_INFO, destinationPort);
+        size = sizeof(pPacketInfo->tpInfo.destinationPort);
 
         _UpdateRange(pPiRange, offset, size);
-        pPacketInfo->netProto.ipv4Info.destinationPort = pUdpPI->destination;
+        pPacketInfo->tpInfo.destinationPort = pUdpPI->destination;
     }
-
     else
     {
         //src port
-        offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, netProto.ipv6Info, OVS_IPV6_INFO, sourcePort);
-        size = sizeof(pPacketInfo->netProto.ipv6Info.sourcePort);
+        offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, tpInfo, OVS_TRANSPORT_LAYER_INFO, sourcePort);
+        size = sizeof(pPacketInfo->tpInfo.sourcePort);
 
         _UpdateRange(pPiRange, offset, size);
-        pPacketInfo->netProto.ipv6Info.sourcePort = pUdpPI->source;
+        pPacketInfo->tpInfo.sourcePort = pUdpPI->source;
 
         //dest port
-        offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, netProto.ipv6Info, OVS_IPV6_INFO, destinationPort);
-        size = sizeof(pPacketInfo->netProto.ipv6Info.destinationPort);
+        offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, tpInfo, OVS_TRANSPORT_LAYER_INFO, destinationPort);
+        size = sizeof(pPacketInfo->tpInfo.destinationPort);
 
         _UpdateRange(pPiRange, offset, size);
-        pPacketInfo->netProto.ipv6Info.destinationPort = pUdpPI->destination;
+        pPacketInfo->tpInfo.destinationPort = pUdpPI->destination;
     }
 }
 
@@ -972,35 +1012,34 @@ static VOID _GetPIFromArg_Sctp(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout_ O
     if (haveIpv4)
     {
         //src port
-        offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, netProto.ipv4Info, OVS_IP4_INFO, sourcePort);
-        size = sizeof(pPacketInfo->netProto.ipv4Info.sourcePort);
+        NESTED_OFFSET_OF(OVS_OFPACKET_INFO, tpInfo, OVS_TRANSPORT_LAYER_INFO, sourcePort);
+        size = sizeof(pPacketInfo->tpInfo.sourcePort);
 
         _UpdateRange(pPiRange, offset, size);
-        pPacketInfo->netProto.ipv4Info.sourcePort = pSctpPI->source;
+        pPacketInfo->tpInfo.sourcePort = pSctpPI->source;
 
         //dest port
-        offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, netProto.ipv4Info, OVS_IP4_INFO, destinationPort);
-        size = sizeof(pPacketInfo->netProto.ipv4Info.destinationPort);
+        offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, tpInfo, OVS_TRANSPORT_LAYER_INFO, destinationPort);
+        size = sizeof(pPacketInfo->tpInfo.destinationPort);
 
         _UpdateRange(pPiRange, offset, size);
-        pPacketInfo->netProto.ipv4Info.destinationPort = pSctpPI->destination;
+        pPacketInfo->tpInfo.destinationPort = pSctpPI->destination;
     }
-
     else
     {
         //src port
-        offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, netProto.ipv6Info, OVS_IPV6_INFO, sourcePort);
-        size = sizeof(pPacketInfo->netProto.ipv6Info.sourcePort);
+        offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, tpInfo, OVS_TRANSPORT_LAYER_INFO, sourcePort);
+        size = sizeof(pPacketInfo->tpInfo.sourcePort);
 
         _UpdateRange(pPiRange, offset, size);
-        pPacketInfo->netProto.ipv6Info.sourcePort = pSctpPI->source;
+        pPacketInfo->tpInfo.sourcePort = pSctpPI->source;
 
         //dest port
-        offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, netProto.ipv6Info, OVS_IPV6_INFO, destinationPort);
-        size = sizeof(pPacketInfo->netProto.ipv6Info.destinationPort);
+        offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, tpInfo, OVS_TRANSPORT_LAYER_INFO, destinationPort);
+        size = sizeof(pPacketInfo->tpInfo.destinationPort);
 
         _UpdateRange(pPiRange, offset, size);
-        pPacketInfo->netProto.ipv6Info.destinationPort = pSctpPI->destination;
+        pPacketInfo->tpInfo.destinationPort = pSctpPI->destination;
     }
 }
 
@@ -1010,18 +1049,18 @@ static VOID _GetPIFromArg_Icmp4(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout_ 
     SIZE_T offset = 0, size = 0;
 
     //type
-    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, netProto.ipv4Info, OVS_IP4_INFO, sourcePort);
-    size = sizeof(pPacketInfo->netProto.ipv4Info.sourcePort);
+    NESTED_OFFSET_OF(OVS_OFPACKET_INFO, tpInfo, OVS_TRANSPORT_LAYER_INFO, sourcePort);
+    size = sizeof(pPacketInfo->tpInfo.sourcePort);
 
     _UpdateRange(pPiRange, offset, size);
-    pPacketInfo->netProto.ipv4Info.sourcePort = RtlUshortByteSwap(pIcmpPI->type);
+    pPacketInfo->tpInfo.sourcePort = RtlUshortByteSwap(pIcmpPI->type);
 
     //code
-    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, netProto.ipv4Info, OVS_IP4_INFO, destinationPort);
-    size = sizeof(pPacketInfo->netProto.ipv4Info.destinationPort);
+    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, tpInfo, OVS_TRANSPORT_LAYER_INFO, destinationPort);
+    size = sizeof(pPacketInfo->tpInfo.destinationPort);
 
     _UpdateRange(pPiRange, offset, size);
-    pPacketInfo->netProto.ipv4Info.destinationPort = RtlUshortByteSwap(pIcmpPI->code);
+    pPacketInfo->tpInfo.destinationPort = RtlUshortByteSwap(pIcmpPI->code);
 }
 
 static VOID _GetPIFromArg_Icmp6(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout_ OVS_PI_RANGE* pPiRange, _In_ const OVS_ARGUMENT* pIcmp6Arg)
@@ -1030,18 +1069,18 @@ static VOID _GetPIFromArg_Icmp6(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout_ 
     SIZE_T offset = 0, size = 0;
 
     //type
-    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, netProto.ipv6Info, OVS_IPV6_INFO, sourcePort);
-    size = sizeof(pPacketInfo->netProto.ipv6Info.sourcePort);
+    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, tpInfo, OVS_TRANSPORT_LAYER_INFO, sourcePort);
+    size = sizeof(pPacketInfo->tpInfo.sourcePort);
 
     _UpdateRange(pPiRange, offset, size);
-    pPacketInfo->netProto.ipv6Info.sourcePort = RtlUshortByteSwap(pIcmpv6PI->type);
+    pPacketInfo->tpInfo.sourcePort = RtlUshortByteSwap(pIcmpv6PI->type);
 
     //code
-    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, netProto.ipv6Info, OVS_IPV6_INFO, destinationPort);
-    size = sizeof(pPacketInfo->netProto.ipv6Info.destinationPort);
+    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, tpInfo, OVS_TRANSPORT_LAYER_INFO, destinationPort);
+    size = sizeof(pPacketInfo->tpInfo.destinationPort);
 
     _UpdateRange(pPiRange, offset, size);
-    pPacketInfo->netProto.ipv6Info.destinationPort = RtlUshortByteSwap(pIcmpv6PI->code);
+    pPacketInfo->tpInfo.destinationPort = RtlUshortByteSwap(pIcmpv6PI->code);
 }
 
 static VOID _GetPIFromArg_NeighborDiscovery(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout_ OVS_PI_RANGE* pPiRange, _In_ const OVS_ARGUMENT* pIcmp6NdArg)
@@ -1085,13 +1124,19 @@ BOOLEAN GetPacketInfoFromArguments(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inou
 
         switch (argType)
         {
-        case OVS_ARGTYPE_PI_PACKET_PRIORITY:
+        case OVS_ARGTYPE_PI_DATAPATH_HASH:
+            PIFromArg_DatapathHash(pPacketInfo, pPiRange, pArg);
+            break;
 
+        case OVS_ARGTYPE_PI_DATAPATH_RECIRCULATION_ID:
+            PIFromArg_DatapathRecirculationId(pPacketInfo, pPiRange, pArg);
+            break;
+
+        case OVS_ARGTYPE_PI_PACKET_PRIORITY:
             PIFromArg_PacketPriority(pPacketInfo, pPiRange, pArg);
             break;
 
         case OVS_ARGTYPE_PI_DP_INPUT_PORT:
-
             pDatapathInPortArg = pArg;
             if (!PIFromArg_DatapathInPort(pPacketInfo, pPiRange, pArg, isMask))
             {
@@ -1101,37 +1146,33 @@ BOOLEAN GetPacketInfoFromArguments(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inou
             break;
 
         case OVS_ARGTYPE_PI_PACKET_MARK:
-
             PIFromArg_PacketMark(pPacketInfo, pPiRange, pArg);
             break;
 
-        case OVS_ARGTYPE_GROUP_PI_TUNNEL:
-        {
+        case OVS_ARGTYPE_PI_TUNNEL_GROUP:
             OVS_CHECK(IsArgTypeGroup(pArg->type));
 
             if (!PIFromArg_Tunnel(pArg->data, pPacketInfo, pPiRange, isMask))
             {
                 return FALSE;
             }
-        }
+
             break;
 
         case OVS_ARGTYPE_PI_ETH_ADDRESS:
-
             _GetPIFromArg_EthAddress(pPacketInfo, pPiRange, pArg);
             break;
 
         case OVS_ARGTYPE_PI_VLAN_TCI:
-
             pVlanTciArg = pArg;
             if (!_GetPIFromArg_VlanTci(pPacketInfo, pPiRange, pArg, isMask))
             {
                 return FALSE;
             }
+
             break;
 
         case OVS_ARGTYPE_PI_ETH_TYPE:
-
             pEthTypeArg = pArg;
             if (!_GetPIFromArg_EthType(pPacketInfo, pPiRange, pArg, isMask))
             {
@@ -1141,7 +1182,6 @@ BOOLEAN GetPacketInfoFromArguments(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inou
             break;
 
         case OVS_ARGTYPE_PI_IPV4:
-
             haveIpv4 = TRUE;
 
             if (!_GetPIFromArg_Ipv4(pPacketInfo, pPiRange, pArg, isMask))
@@ -1151,7 +1191,6 @@ BOOLEAN GetPacketInfoFromArguments(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inou
             break;
 
         case OVS_ARGTYPE_PI_IPV6:
-
             if (!_GetPIFromArg_Ipv6(pPacketInfo, pPiRange, pArg, isMask))
             {
                 return FALSE;
@@ -1160,7 +1199,6 @@ BOOLEAN GetPacketInfoFromArguments(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inou
             break;
 
         case OVS_ARGTYPE_PI_ARP:
-
             if (!_GetPIFromArg_Arp(pPacketInfo, pPiRange, pArg, isMask))
             {
                 return FALSE;
@@ -1168,33 +1206,35 @@ BOOLEAN GetPacketInfoFromArguments(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inou
 
             break;
 
-        case OVS_ARGTYPE_PI_TCP:
+        case OVS_ARGTYPE_PI_MPLS:
+            _GetPIFromArg_Mpls(pPacketInfo, pPiRange, pArg);
+            break;
 
+        case OVS_ARGTYPE_PI_TCP:
             _GetPIFromArg_Tcp(pPacketInfo, pPiRange, pArg, haveIpv4);
             break;
 
-        case OVS_ARGTYPE_PI_UDP:
+        case OVS_ARGTYPE_PI_TCP_FLAGS:
+            _GetPIFromArg_TcpFlags(pPacketInfo, pPiRange, pArg);
+            break;
 
+        case OVS_ARGTYPE_PI_UDP:
             _GetPIFromArg_Udp(pPacketInfo, pPiRange, pArg, haveIpv4);
             break;
 
         case OVS_ARGTYPE_PI_SCTP:
-
             _GetPIFromArg_Sctp(pPacketInfo, pPiRange, pArg, haveIpv4);
             break;
 
         case OVS_ARGTYPE_PI_ICMP:
-
             _GetPIFromArg_Icmp4(pPacketInfo, pPiRange, pArg);
             break;
 
         case OVS_ARGTYPE_PI_ICMP6:
-
             _GetPIFromArg_Icmp6(pPacketInfo, pPiRange, pArg);
             break;
 
         case OVS_ARGTYPE_PI_NEIGHBOR_DISCOVERY:
-
             _GetPIFromArg_NeighborDiscovery(pPacketInfo, pPiRange, pArg);
             break;
 
@@ -1219,7 +1259,7 @@ BOOLEAN GetPacketInfoFromArguments(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inou
             _UpdateRange(pPiRange, offset, size);
 
             //TODO: we should normally set vlan tci to 0xFFFF in this case.
-            pPacketInfo->ethInfo.tci = 0;
+            pPacketInfo->ethInfo.tci = 0xFFFF;//0;
         }
     }
 
@@ -1233,12 +1273,16 @@ BOOLEAN GetPacketInfoFromArguments(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inou
             _UpdateRange(pPiRange, offset, size);
             pPacketInfo->ethInfo.type = OVS_PI_MASK_MATCH_EXACT(UINT16);
         }
-
         else
         {
-            //TODO: in the future, we might need to support OVS_ETHERTYPE_802_2. i.e. here, to set ethInfo.type == OVS_ETHERTYPE_802_2
+            /*//TODO: in the future, we might need to support OVS_ETHERTYPE_802_2. i.e. here, to set ethInfo.type == OVS_ETHERTYPE_802_2
             DEBUGP(LOG_ERROR, "WE ONLY DEAL WITH 802.3 ETHERNET FRAMES!\n");
-            return FALSE;
+            return FALSE;*/
+            SIZE_T offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, ethInfo, OVS_ETH_INFO, type);
+            SIZE_T size = sizeof(pPacketInfo->ethInfo.type);
+
+            _UpdateRange(pPiRange, offset, size);
+            pPacketInfo->ethInfo.type = RtlUshortByteSwap(OVS_ETHERTYPE_802_2);
         }
     }
 

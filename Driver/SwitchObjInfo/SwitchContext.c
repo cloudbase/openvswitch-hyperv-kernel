@@ -65,10 +65,7 @@ NDIS_STATUS _PortSupported(_In_ OVS_SWITCH_INFO* pSwitchInfo, _In_ NDIS_SWITCH_P
     OVS_CHECK(status == NDIS_STATUS_SUCCESS);
 
 Cleanup:
-    if (pPortPropertyParameters)
-    {
-        ExFreePoolWithTag(pPortPropertyParameters, g_extAllocationTag);
-    }
+    KFree(pPortPropertyParameters);
 
     return status;
 }
@@ -171,7 +168,7 @@ static NDIS_STATUS _InitializeNicList(_Inout_ OVS_SWITCH_INFO* pSwitchInfo)
 
             if (pNicEntry)
             {
-                OVS_CHECK(pNicEntry->pPersistentPort == NULL);
+                OVS_CHECK(pNicEntry->ovsPortNumber == OVS_INVALID_PORT_NUMBER);
 
                 ++(pForwardInfo->countNics);
             }
@@ -183,10 +180,7 @@ static NDIS_STATUS _InitializeNicList(_Inout_ OVS_SWITCH_INFO* pSwitchInfo)
     }
 
 Cleanup:
-    if (nicArray != NULL)
-    {
-        ExFreePoolWithTag(nicArray, g_extAllocationTag);
-    }
+    KFree(nicArray);
 
     return status;
 }
@@ -260,7 +254,7 @@ static NDIS_STATUS _InitializePortList(_Inout_ OVS_SWITCH_INFO* pSwitchInfo)
 
             if (pPortEntry)
             {
-                OVS_CHECK(pPortEntry->pPersistentPort == NULL);
+                OVS_CHECK(pPortEntry->ovsPortNumber == OVS_INVALID_PORT_NUMBER);
 
                 pPortEntry->on = (pCurPort->PortState == NdisSwitchPortStateCreated);
 
@@ -274,10 +268,7 @@ static NDIS_STATUS _InitializePortList(_Inout_ OVS_SWITCH_INFO* pSwitchInfo)
     }
 
 Cleanup:
-    if (portArray != NULL)
-    {
-        ExFreePoolWithTag(portArray, g_extAllocationTag);
-    }
+    KFree(portArray);
 
     return status;
 }
@@ -305,10 +296,7 @@ NDIS_STATUS Sctx_InitSwitch(_Inout_ OVS_SWITCH_INFO* pSwitchInfo)
     pForwardInfo->switchIsActive = TRUE;
 
 Cleanup:
-    if (pSwitchPropertyParameters != NULL)
-    {
-        ExFreePoolWithTag(pSwitchPropertyParameters, g_extAllocationTag);
-    }
+    KFree(pSwitchPropertyParameters);
 
     return status;
 }
@@ -351,7 +339,8 @@ UINT Sctx_MakeBroadcastArrayUnsafe(_In_ const OVS_GLOBAL_FORWARD_INFO* pForwardI
         goto Cleanup;
     }
 
-    do {
+    do
+    {
         pNicEntry = CONTAINING_RECORD(pCurEntry, OVS_NIC_LIST_ENTRY, listEntry);
 
         if (!pNicEntry->connected ||

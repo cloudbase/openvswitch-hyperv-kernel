@@ -27,7 +27,7 @@ limitations under the License.
 #include "Gre.h"
 #include "Vxlan.h"
 
-BOOLEAN CreateMsgFromOFPort(OVS_WINL_PORT* pPort, UINT32 sequence, UINT8 cmd, _Inout_ OVS_MESSAGE* pMsg, UINT32 dpIfIndex, UINT32 pid)
+BOOLEAN CreateMsgFromOFPort(OVS_WINL_PORT* pPort, UINT32 sequence, UINT8 cmd, _Inout_ OVS_MESSAGE* pMsg, UINT32 dpIfIndex, UINT32 pid, BOOLEAN multipleUpcallPids)
 {
     OVS_ARGUMENT* pArgPortName = NULL, *pArgPortType = NULL, *pArgPortNumber = NULL;
     OVS_ARGUMENT* pArgUpcallPid = NULL, *pArgPortSats = NULL, *pArgPortOpts = NULL;
@@ -82,7 +82,15 @@ BOOLEAN CreateMsgFromOFPort(OVS_WINL_PORT* pPort, UINT32 sequence, UINT8 cmd, _I
     argsSize += pArgPortName->length;
 
     //arg 4: port upcall pid
-    pArgUpcallPid = CreateArgument_Alloc(OVS_ARGTYPE_OFPORT_UPCALL_PORT_ID, &pPort->upcallId);
+    if (multipleUpcallPids)
+    {
+        pArgUpcallPid = CreateArgument_Alloc(OVS_ARGTYPE_OFPORT_UPCALL_PORT_ID, &pPort->upcallPortIds);
+    }
+    else
+    {
+        pArgUpcallPid = CreateArgument_Alloc(OVS_ARGTYPE_OFPORT_UPCALL_PORT_ID, &pPort->upcallPortIds.ids[0]);
+    }
+
     if (!pArgUpcallPid)
     {
         ok = FALSE;
@@ -102,7 +110,7 @@ BOOLEAN CreateMsgFromOFPort(OVS_WINL_PORT* pPort, UINT32 sequence, UINT8 cmd, _I
 
     if (pPort->pOptions)
     {
-        pArgPortOpts = CreateArgumentFromGroup(OVS_ARGTYPE_GROUP_OFPORT_OPTIONS, pPort->pOptions);
+        pArgPortOpts = CreateArgumentFromGroup(OVS_ARGTYPE_OFPORT_OPTIONS_GROUP, pPort->pOptions);
         if (!pArgPortOpts)
         {
             pArgPortOpts = NULL;
@@ -117,8 +125,7 @@ BOOLEAN CreateMsgFromOFPort(OVS_WINL_PORT* pPort, UINT32 sequence, UINT8 cmd, _I
         }
     }
 
-    pMsg->pArgGroup = AllocArgumentGroup();
-
+    pMsg->pArgGroup = KZAlloc(sizeof(OVS_ARGUMENT_GROUP));
     if (!pMsg->pArgGroup)
     {
         goto Cleanup;
@@ -142,74 +149,25 @@ BOOLEAN CreateMsgFromOFPort(OVS_WINL_PORT* pPort, UINT32 sequence, UINT8 cmd, _I
 Cleanup:
     if (ok)
     {
-        if (pArgPortNumber)
-        {
-            FreeArgument(pArgPortNumber);
-        }
-
-        if (pArgPortType)
-        {
-            FreeArgument(pArgPortType);
-        }
-
-        if (pArgPortName)
-        {
-            FreeArgument(pArgPortName);
-        }
-
-        if (pArgUpcallPid)
-        {
-            FreeArgument(pArgUpcallPid);
-        }
-
-        if (pArgPortSats)
-        {
-            FreeArgument(pArgPortSats);
-        }
-
-        if (pArgPortOpts)
-        {
-            FreeArgument(pArgPortOpts);
-        }
+        KFree(pArgPortNumber);
+        KFree(pArgPortType);
+        KFree(pArgPortName);
+        KFree(pArgUpcallPid);
+        KFree(pArgPortSats);
+        KFree(pArgPortOpts);
 
         return TRUE;
     }
-
     else
     {
-        if (pArgPortNumber)
-        {
-            DestroyArgument(pArgPortNumber);
-        }
+        DestroyArgument(pArgPortNumber);
+        DestroyArgument(pArgPortType);
+        DestroyArgument(pArgPortName);
+        DestroyArgument(pArgUpcallPid);
+        DestroyArgument(pArgPortSats);
+        DestroyArgument(pArgPortOpts);
 
-        if (pArgPortType)
-        {
-            DestroyArgument(pArgPortType);
-        }
-
-        if (pArgPortName)
-        {
-            DestroyArgument(pArgPortName);
-        }
-
-        if (pArgUpcallPid)
-        {
-            DestroyArgument(pArgUpcallPid);
-        }
-
-        if (pArgPortSats)
-        {
-            DestroyArgument(pArgPortSats);
-        }
-
-        if (pArgPortOpts)
-            DestroyArgument(pArgPortOpts);
-
-        if (pMsg->pArgGroup)
-        {
-            FreeArguments(pMsg->pArgGroup);
-            FreeArgGroup(pMsg->pArgGroup);
-        }
+        FreeGroupWithArgs(pMsg->pArgGroup);
 
         return FALSE;
     }

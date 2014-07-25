@@ -16,28 +16,31 @@ limitations under the License.
 
 #pragma once
 
-#define OVS_NIC_ENTRY_NAME_SIZE		IF_MAX_STRING_SIZE
+#define OVS_NIC_ENTRY_NAME_SIZE        IF_MAX_STRING_SIZE
 
 #include "Switch.h"
 #include "Ethernet.h"
 
 /* STRUCTS AND FUNCTIONS FOR HANDLING HYPER-V SWITCH NICS */
 
-typedef struct _OVS_NIC_INFO {
-    BYTE					mac[OVS_ETHERNET_ADDRESS_LENGTH];
+typedef struct _OVS_NIC_INFO
+{
+    BYTE                    mac[OVS_ETHERNET_ADDRESS_LENGTH];
     NDIS_SWITCH_PORT_ID     portId;
     NDIS_SWITCH_NIC_INDEX   nicIndex;
-    ULONG	                mtu;
+    ULONG                   mtu;
     BOOLEAN                 nicConnected;
 
 #ifdef DBG
-    CHAR					nicName[OVS_NIC_ENTRY_NAME_SIZE + 1];
-    CHAR					vmName[OVS_NIC_ENTRY_NAME_SIZE + 1];
+    CHAR                    nicName[OVS_NIC_ENTRY_NAME_SIZE + 1];
+    CHAR                    vmName[OVS_NIC_ENTRY_NAME_SIZE + 1];
 #endif
 }OVS_NIC_INFO, *POVS_NIC_INFO;
 
 typedef struct _OVS_NIC_LIST_ENTRY
 {
+    OVS_REF_COUNT                       refCount;
+
     LIST_ENTRY                          listEntry;
     UINT8                               macAddress[OVS_ETHERNET_ADDRESS_LENGTH];
     NDIS_SWITCH_PORT_ID                 portId;
@@ -45,16 +48,15 @@ typedef struct _OVS_NIC_LIST_ENTRY
     NDIS_SWITCH_NIC_TYPE                nicType;
 
     BOOLEAN                             connected;
-    ULONG								mtu;
+    ULONG                               mtu;
 
-    //OVS_OFPORT_STATS					portStats;
+    //OVS_OFPORT_STATS                  portStats;
 
-    //when a nic is connected, it will have pPersistentPort = NULL
-    //when a port is created from ovs, if it's physical (i.e. vm), its pNicInfo
-    OVS_PERSISTENT_PORT*				pPersistentPort;
+    //OVS_INVALID_PORT_NUMBER (0xFFFF) if we don't have one
+    UINT16                              ovsPortNumber;
 #ifdef DBG
-    CHAR								vmName[OVS_NIC_ENTRY_NAME_SIZE + 1];
-    CHAR								adapName[OVS_NIC_ENTRY_NAME_SIZE + 1];
+    CHAR                                vmName[OVS_NIC_ENTRY_NAME_SIZE + 1];
+    CHAR                                adapName[OVS_NIC_ENTRY_NAME_SIZE + 1];
 #endif
 } OVS_NIC_LIST_ENTRY, *POVS_NIC_LIST_ENTRY;
 
@@ -75,44 +77,6 @@ static __inline VOID NicListEntry_To_NicInfo(_In_ const OVS_NIC_LIST_ENTRY* pNic
     pNicInfo->mtu = pNicListEntry->mtu;
 }
 
-static __inline BOOLEAN HaveNdisPortExternal(_In_ const OVS_GLOBAL_FORWARD_INFO* pForwardInfo)
-{
-    BOOLEAN ok = FALSE;
-    LOCK_STATE_EX lockState = { 0 };
-
-    OVS_CHECK(pForwardInfo);
-
-    Rwlock_LockRead(pForwardInfo->pRwLock, &lockState);
-
-    ok = (pForwardInfo->pExternalNic ? TRUE : FALSE);
-
-    if (pForwardInfo->pExternalNic)
-    {
-        OVS_CHECK(pForwardInfo->pExternalNic->nicIndex != NDIS_SWITCH_DEFAULT_NIC_INDEX);
-        OVS_CHECK(pForwardInfo->pExternalNic->portId != NDIS_SWITCH_DEFAULT_PORT_ID);
-    }
-
-    Rwlock_Unlock(pForwardInfo->pRwLock, &lockState);
-
-    return ok;
-}
-
-static __inline BOOLEAN HaveNdisPortInternal_Unsafe(_In_ const OVS_GLOBAL_FORWARD_INFO* pForwardInfo)
-{
-    BOOLEAN ok = FALSE;
-
-    OVS_CHECK(pForwardInfo);
-
-    ok = (pForwardInfo->pInternalNic ? TRUE : FALSE);
-
-    if (pForwardInfo->pInternalNic)
-    {
-        OVS_CHECK(pForwardInfo->pInternalNic->portId != NDIS_SWITCH_DEFAULT_PORT_ID);
-    }
-
-    return ok;
-}
-
 /*****************************************************/
 
 VOID Sctx_ClearNicListUnsafe(_Inout_ OVS_GLOBAL_FORWARD_INFO* pForwardInfo);
@@ -130,11 +94,8 @@ OVS_NIC_LIST_ENTRY* Sctx_FindNicBy_Unsafe(_In_ OVS_GLOBAL_FORWARD_INFO* pForward
 OVS_NIC_LIST_ENTRY* Sctx_FindNicByPortIdAndNicIndex_Unsafe(_In_ const OVS_GLOBAL_FORWARD_INFO* pForwardIno, _In_ NDIS_SWITCH_PORT_ID portId, _In_ NDIS_SWITCH_NIC_INDEX nicIndex);
 OVS_NIC_LIST_ENTRY* Sctx_FindNicByPortId_Unsafe(_In_ const OVS_GLOBAL_FORWARD_INFO* pForwardIno, _In_ NDIS_SWITCH_PORT_ID portId);
 
+VOID NicEntry_DestroyNow_Unsafe(OVS_NIC_LIST_ENTRY* pNicEntry);
 NDIS_STATUS Sctx_DeleteNicUnsafe(_In_ const OVS_GLOBAL_FORWARD_INFO* pForwardInfo, _In_ NDIS_SWITCH_PORT_ID portId, _In_ NDIS_SWITCH_NIC_INDEX nicIndex);
 
-//i.e. you must lock the pForwardInfo->pRwLock
-VOID Sctx_Nic_SetPersistentPort_Unsafe(_Inout_ OVS_NIC_LIST_ENTRY* pNicEntry);
-//i.e. you must lock the pForwardInfo->pRwLock
-VOID Sctx_Nic_UnsetPersistentPort_Unsafe(_Inout_ OVS_NIC_LIST_ENTRY* pNicEntry);
-
-VOID Sctx_Nic_Disable_Unsafe(_Inout_ OVS_GLOBAL_FORWARD_INFO* pForwardInfo, _Inout_ OVS_NIC_LIST_ENTRY* pNicEntry);
+//returns the ovs port number of the found pers port
+UINT16 Sctx_Nic_SetPersistentPort(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, NDIS_SWITCH_PORT_ID portId);

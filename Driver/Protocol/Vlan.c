@@ -38,7 +38,6 @@ BOOLEAN Vlan_Pop(OVS_NET_BUFFER* pOvsNb)
 
         ONB_Advance(pOvsNb, OVS_ETHERNET_VLAN_LEN);
     }
-
     else
     {
         return TRUE;
@@ -93,7 +92,6 @@ BOOLEAN Vlan_Push(OVS_NET_BUFFER* pOvsNb, const OVS_ACTION_PUSH_VLAN* pVlan)
         pEthHeaderTagged->type = pVlan->protocol;
         pEthHeaderTagged->tci = pVlan->vlanTci | RtlUshortByteSwap(OVS_VLAN_CFI_MASK);
     }
-
     else
     {
         DEBUGP(LOG_ERROR, "cannot push vlan: we already have a vlan header!\n");

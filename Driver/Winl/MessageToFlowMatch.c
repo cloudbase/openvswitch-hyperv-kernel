@@ -54,33 +54,39 @@ BOOLEAN GetPacketContextFromPIArgs(_In_ const OVS_ARGUMENT_GROUP* pArgGroup, _In
 
         switch (argType)
         {
-        case OVS_ARGTYPE_PI_PACKET_PRIORITY:
+        case OVS_ARGTYPE_PI_DATAPATH_HASH:
+            PIFromArg_DatapathHash(pPacketInfo, pPiRange, pArg);
+            break;
 
+        case OVS_ARGTYPE_PI_DATAPATH_RECIRCULATION_ID:
+            PIFromArg_DatapathRecirculationId(pPacketInfo, pPiRange, pArg);
+            break;
+
+        case OVS_ARGTYPE_PI_PACKET_PRIORITY:
             PIFromArg_PacketPriority(pPacketInfo, pPiRange, pArg);
             break;
 
         case OVS_ARGTYPE_PI_PACKET_MARK:
-
             PIFromArg_PacketMark(pPacketInfo, pPiRange, pArg);
             break;
 
         case OVS_ARGTYPE_PI_DP_INPUT_PORT:
-
             pDatapathInPortArg = pArg;
             if (!PIFromArg_DatapathInPort(pPacketInfo, pPiRange, pArg, /*is mask*/FALSE))
+            {
                 return FALSE;
+            }
 
             break;
 
-        case OVS_ARGTYPE_GROUP_PI_TUNNEL:
-        {
+        case OVS_ARGTYPE_PI_TUNNEL_GROUP:
             OVS_CHECK(IsArgTypeGroup(pArg->type));
 
             if (!PIFromArg_Tunnel(pArg->data, pPacketInfo, pPiRange, /*is mask*/ FALSE))
             {
                 return FALSE;
             }
-        }
+
             break;
 
         default:
@@ -138,7 +144,6 @@ static BOOLEAN _VerifyMasks(_In_ const OVS_FLOW_MATCH* pFlowMatch, _In_ const OV
             OVS_CHECK(__UNEXPECTED__);
             return FALSE;
         }
-
         else if (!isWildcard && !pPacketInfoArg)
         {
             DEBUGP(LOG_ERROR, __FUNCTION__ " arg type %u -- mask for eth type is 'exact', but we don't have the key!\n", OVS_ARGTYPE_PI_ARP);
@@ -165,7 +170,6 @@ static BOOLEAN _VerifyMasks(_In_ const OVS_FLOW_MATCH* pFlowMatch, _In_ const OV
             OVS_CHECK(__UNEXPECTED__);
             return FALSE;
         }
-
         else if (!isWildcard && !pPacketInfoArg)
         {
             DEBUGP(LOG_ERROR, __FUNCTION__ " arg type %u -- mask for eth type is 'exact', but we don't have the key!\n", OVS_ARGTYPE_PI_IPV4);
@@ -192,7 +196,6 @@ static BOOLEAN _VerifyMasks(_In_ const OVS_FLOW_MATCH* pFlowMatch, _In_ const OV
             OVS_CHECK(__UNEXPECTED__);
             return FALSE;
         }
-
         else if (!isWildcard && !pPacketInfoArg)
         {
             DEBUGP(LOG_ERROR, __FUNCTION__ " arg type %u -- mask for eth type is 'exact', but we don't have the key!\n", OVS_ARGTYPE_PI_IPV6);
@@ -218,7 +221,6 @@ static BOOLEAN _VerifyMasks(_In_ const OVS_FLOW_MATCH* pFlowMatch, _In_ const OV
     {
         isWildcard = (pMask->ipInfo.protocol == OVS_PI_MASK_MATCH_WILDCARD(UINT8) ? TRUE : FALSE);
     }
-
     else
     {
         isWildcard = FALSE;
@@ -364,7 +366,7 @@ static BOOLEAN _VerifyMasks(_In_ const OVS_FLOW_MATCH* pFlowMatch, _In_ const OV
     }
 
     //IPV6 / ICMP6 / ND
-    isWildcard = (pMask ? (pMask->netProto.ipv6Info.sourcePort == OVS_PI_MASK_MATCH_WILDCARD(UINT8)) : FALSE);
+    isWildcard = (pMask ? (pMask->tpInfo.sourcePort == OVS_PI_MASK_MATCH_WILDCARD(UINT8)) : FALSE);
 
     pPacketInfoArg = FindArgument(pPIGroup, OVS_ARGTYPE_PI_NEIGHBOR_DISCOVERY);
 
@@ -390,7 +392,6 @@ static BOOLEAN _VerifyMasks(_In_ const OVS_FLOW_MATCH* pFlowMatch, _In_ const OV
 
         return FALSE;
     }
-
     else if (!isWildcard && !pPacketInfoArg)
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " arg type %u -- mask for ipv6 src port is 'exact', but we don't have the key!\n", OVS_ARGTYPE_PI_NEIGHBOR_DISCOVERY);
@@ -414,7 +415,7 @@ static BOOLEAN _PIFromArgs_HandleEncap(_In_ const OVS_ARGUMENT_GROUP* pPIGroup, 
 
     pVlanTciArg = FindArgument(pPIGroup, OVS_ARGTYPE_PI_VLAN_TCI);
 
-    pEncapArg = FindArgument(pPIGroup, OVS_ARGTYPE_GROUP_PI_ENCAPSULATION);
+    pEncapArg = FindArgument(pPIGroup, OVS_ARGTYPE_PI_ENCAP_GROUP);
 
     if (!pVlanTciArg || !pEncapArg)
     {
@@ -514,24 +515,14 @@ BOOLEAN GetFlowMatchFromArguments(_Inout_ OVS_FLOW_MATCH* pFlowMatch, _In_ const
     }
 
     pEthTypeArg = FindArgument(pPIGroup, OVS_ARGTYPE_PI_ETH_TYPE);
-
-    if (!pEthTypeArg)
-    {
-        DEBUGP(LOG_ERROR, __FUNCTION__ " expected key: %u\n", OVS_ARGTYPE_PI_ETH_TYPE);
-
-        return FALSE;
-    }
+#if OVS_VERSION == OVS_VERSION_1_11
+    EXPECT(pEthAddrArg);
+#endif
 
     pEthAddrArg = FindArgument(pPIGroup, OVS_ARGTYPE_PI_ETH_ADDRESS);
+    EXPECT(pEthAddrArg);
 
-    if (!pEthAddrArg)
-    {
-        DEBUGP(LOG_ERROR, __FUNCTION__ " expected key: %u\n", OVS_ARGTYPE_PI_ETH_ADDRESS);
-
-        return FALSE;
-    }
-
-    if (RtlUshortByteSwap(OVS_ETHERTYPE_QTAG) == GET_ARG_DATA(pEthTypeArg, BE16))
+    if (pEthTypeArg && RtlUshortByteSwap(OVS_ETHERTYPE_QTAG) == GET_ARG_DATA(pEthTypeArg, BE16))
     {
         if (!_PIFromArgs_HandleEncap(pPIGroup, pEthAddrArg, &encapIsValid))
         {
@@ -559,12 +550,11 @@ BOOLEAN GetFlowMatchFromArguments(_Inout_ OVS_FLOW_MATCH* pFlowMatch, _In_ const
             memset(pStart, OVS_PI_MASK_MATCH_EXACT(UINT8), range);
         }
     }
-
     else
     {
         OVS_ARGUMENT* pEncapArg = NULL;
 
-        pEncapArg = FindArgument(pPIMaskGroup, OVS_ARGTYPE_GROUP_PI_ENCAPSULATION);
+        pEncapArg = FindArgument(pPIMaskGroup, OVS_ARGTYPE_PI_ENCAP_GROUP);
 
         if (pEncapArg)
         {
@@ -574,7 +564,7 @@ BOOLEAN GetFlowMatchFromArguments(_Inout_ OVS_FLOW_MATCH* pFlowMatch, _In_ const
                 return FALSE;
             }
 
-            if (!_MasksFromArgs_HandleEncap(pPIMaskGroup, pEncapArg, pEthTypeArg))
+            if (!pEthTypeArg || !_MasksFromArgs_HandleEncap(pPIMaskGroup, pEncapArg, pEthTypeArg))
             {
                 return FALSE;
             }
@@ -596,7 +586,9 @@ BOOLEAN GetFlowMatchFromArguments(_Inout_ OVS_FLOW_MATCH* pFlowMatch, _In_ const
     //b) if it is a bug, we can do little in the kernel to help it.
 #if __VERIFY_MASKS
     if (!_VerifyMasks(pFlowMatch, pPIGroup, pPIMaskGroup))
+    {
         return FALSE;
+    }
 #endif
 
     return TRUE;

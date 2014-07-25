@@ -28,6 +28,10 @@ limitations under the License.
 #include "ArgumentType.h"
 #include "PersistentPort.h"
 
+#include "ArgVerification.h"
+#include "MsgVerification.h"
+#include "ArgumentList.h"
+
 static BOOLEAN _CreateIpv4Args(const OVS_OFPACKET_INFO* pPacketInfo, OVS_ARGUMENT_SLIST_ENTRY** ppArgList)
 {
     OVS_PI_IPV4 ipv4PI = { 0 };
@@ -40,7 +44,6 @@ static BOOLEAN _CreateIpv4Args(const OVS_OFPACKET_INFO* pPacketInfo, OVS_ARGUMEN
     ipv4PI.fragmentType = pPacketInfo->ipInfo.fragment;
 
     if (!CreateArgInList(OVS_ARGTYPE_PI_IPV4, &ipv4PI, ppArgList))
-
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " failed appending ipv4 packet info\n");
         return FALSE;
@@ -63,7 +66,6 @@ static BOOLEAN _CreateIpv6Args(const OVS_OFPACKET_INFO* pPacketInfo, OVS_ARGUMEN
     ipv6PI.fragmentType = pPacketInfo->ipInfo.fragment;
 
     if (!CreateArgInList(OVS_ARGTYPE_PI_IPV6, &ipv6PI, ppArgList))
-
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " failed appending ipv6 packet info\n");
         return FALSE;
@@ -84,9 +86,23 @@ static BOOLEAN _CreateArpArgs(const OVS_OFPACKET_INFO* pPacketInfo, OVS_ARGUMENT
     RtlCopyMemory(arpPI.targetMac, pPacketInfo->netProto.arpInfo.destinationMac, OVS_ETHERNET_ADDRESS_LENGTH);
 
     if (!CreateArgInList(OVS_ARGTYPE_PI_ARP, &arpPI, ppArgList))
-
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " failed appending arp packet info\n");
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+static BOOLEAN _CreateMplsArgs(const OVS_OFPACKET_INFO* pPacketInfo, OVS_ARGUMENT_SLIST_ENTRY** ppArgList)
+{
+    OVS_PI_MPLS mplsPI = { 0 };
+
+    mplsPI.mplsLse = pPacketInfo->ipInfo.mplsTopLabelStackEntry;
+
+    if (!CreateArgInList(OVS_ARGTYPE_PI_MPLS, &mplsPI, ppArgList))
+    {
+        DEBUGP(LOG_ERROR, __FUNCTION__ " failed appending mpls packet info\n");
         return FALSE;
     }
 
@@ -96,26 +112,23 @@ static BOOLEAN _CreateArpArgs(const OVS_OFPACKET_INFO* pPacketInfo, OVS_ARGUMENT
 static BOOLEAN _CreateTcpArgs(const OVS_OFPACKET_INFO* pPacketInfo, const OVS_OFPACKET_INFO* pMask, OVS_ARGUMENT_SLIST_ENTRY** ppArgList)
 {
     OVS_PI_TCP tcpPI = { 0 };
+    BE16 tcpFlags = 0;
 
-    if (pPacketInfo->ethInfo.type == RtlUshortByteSwap(OVS_ETHERTYPE_IPV4))
-    {
-        const OVS_IP4_INFO* pIpv4Info = (pMask ? &pMask->netProto.ipv4Info : &pPacketInfo->netProto.ipv4Info);
+    const OVS_TRANSPORT_LAYER_INFO* pTransportInfo = (pMask ? &pMask->tpInfo : &pPacketInfo->tpInfo);
 
-        tcpPI.source = pIpv4Info->sourcePort;
-        tcpPI.destination = pIpv4Info->destinationPort;
-    }
-    else if (pPacketInfo->ethInfo.type == RtlUshortByteSwap(OVS_ETHERTYPE_IPV6))
-    {
-        const OVS_IPV6_INFO* pIpv6Info = (pMask ? &pMask->netProto.ipv6Info : &pPacketInfo->netProto.ipv6Info);
-
-        tcpPI.source = pIpv6Info->sourcePort;
-        tcpPI.destination = pIpv6Info->destinationPort;
-    }
+    tcpPI.source = pTransportInfo->sourcePort;
+    tcpPI.destination = pTransportInfo->destinationPort;
+    tcpFlags = pTransportInfo->tcpFlags;
 
     if (!CreateArgInList(OVS_ARGTYPE_PI_TCP, &tcpPI, ppArgList))
-
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " failed appending tcp packet info\n");
+        return FALSE;
+    }
+
+    if (!CreateArgInList(OVS_ARGTYPE_PI_TCP_FLAGS, &tcpFlags, ppArgList))
+    {
+        DEBUGP(LOG_ERROR, __FUNCTION__ " failed appending tcp flags\n");
         return FALSE;
     }
 
@@ -126,23 +139,12 @@ static BOOLEAN _CreateUdpArgs(const OVS_OFPACKET_INFO* pPacketInfo, const OVS_OF
 {
     OVS_PI_UDP udpPI = { 0 };
 
-    if (pPacketInfo->ethInfo.type == RtlUshortByteSwap(OVS_ETHERTYPE_IPV4))
-    {
-        const OVS_IP4_INFO* pIpv4Info = (pMask ? &pMask->netProto.ipv4Info : &pPacketInfo->netProto.ipv4Info);
+    const OVS_TRANSPORT_LAYER_INFO* pTransportInfo = (pMask ? &pMask->tpInfo : &pPacketInfo->tpInfo);
 
-        udpPI.source = pIpv4Info->sourcePort;
-        udpPI.destination = pIpv4Info->destinationPort;
-    }
-    else if (pPacketInfo->ethInfo.type == RtlUshortByteSwap(OVS_ETHERTYPE_IPV6))
-    {
-        const OVS_IPV6_INFO* pIpv6Info = (pMask ? &pMask->netProto.ipv6Info : &pPacketInfo->netProto.ipv6Info);
-
-        udpPI.source = pIpv6Info->sourcePort;
-        udpPI.destination = pIpv6Info->destinationPort;
-    }
+    udpPI.source = pTransportInfo->sourcePort;
+    udpPI.destination = pTransportInfo->destinationPort;
 
     if (!CreateArgInList(OVS_ARGTYPE_PI_UDP, &udpPI, ppArgList))
-
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " failed appending udp packet info\n");
         return FALSE;
@@ -155,23 +157,12 @@ static BOOLEAN _CreateSctpArgs(const OVS_OFPACKET_INFO* pPacketInfo, const OVS_O
 {
     OVS_PI_SCTP sctpPI = { 0 };
 
-    if (pPacketInfo->ethInfo.type == RtlUshortByteSwap(OVS_ETHERTYPE_IPV4))
-    {
-        const OVS_IP4_INFO* pIpv4Info = (pMask ? &pMask->netProto.ipv4Info : &pPacketInfo->netProto.ipv4Info);
+    const OVS_TRANSPORT_LAYER_INFO* pTransportInfo = (pMask ? &pMask->tpInfo : &pPacketInfo->tpInfo);
 
-        sctpPI.source = pIpv4Info->sourcePort;
-        sctpPI.destination = pIpv4Info->destinationPort;
-    }
-    else if (pPacketInfo->ethInfo.type == RtlUshortByteSwap(OVS_ETHERTYPE_IPV6))
-    {
-        const OVS_IPV6_INFO* pIpv6Info = (pMask ? &pMask->netProto.ipv6Info : &pPacketInfo->netProto.ipv6Info);
-
-        sctpPI.source = pIpv6Info->sourcePort;
-        sctpPI.destination = pIpv6Info->destinationPort;
-    }
+    sctpPI.source = pTransportInfo->sourcePort;
+    sctpPI.destination = pTransportInfo->destinationPort;
 
     if (!CreateArgInList(OVS_ARGTYPE_PI_SCTP, &sctpPI, ppArgList))
-
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " failed appending sctp packet info\n");
         return FALSE;
@@ -184,11 +175,10 @@ static BOOLEAN _CreateIcmp4Args(const OVS_OFPACKET_INFO* pPacketInfo, OVS_ARGUME
 {
     OVS_PI_ICMP icmpPI = { 0 };
 
-    icmpPI.type = (UINT8)RtlUshortByteSwap(pPacketInfo->netProto.ipv4Info.sourcePort);
-    icmpPI.code = (UINT8)RtlUshortByteSwap(pPacketInfo->netProto.ipv4Info.destinationPort);
+    icmpPI.type = (UINT8)RtlUshortByteSwap(pPacketInfo->tpInfo.sourcePort);
+    icmpPI.code = (UINT8)RtlUshortByteSwap(pPacketInfo->tpInfo.destinationPort);
 
     if (!CreateArgInList(OVS_ARGTYPE_PI_ICMP, &icmpPI, ppArgList))
-
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " failed appending icmp packet info\n");
         return FALSE;
@@ -201,11 +191,10 @@ static BOOLEAN _CreateIcmp6Args(const OVS_OFPACKET_INFO* pPacketInfo, OVS_ARGUME
 {
     OVS_CHECK(pIcmp6PI);
 
-    pIcmp6PI->type = (UINT8)RtlUshortByteSwap(pPacketInfo->netProto.ipv6Info.sourcePort);
-    pIcmp6PI->code = (UINT8)RtlUshortByteSwap(pPacketInfo->netProto.ipv6Info.destinationPort);
+    pIcmp6PI->type = (UINT8)RtlUshortByteSwap(pPacketInfo->tpInfo.sourcePort);
+    pIcmp6PI->code = (UINT8)RtlUshortByteSwap(pPacketInfo->tpInfo.destinationPort);
 
     if (!CreateArgInList(OVS_ARGTYPE_PI_ICMP6, pIcmp6PI, ppArgList))
-
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " failed appending icmp6 packet info\n");
         return FALSE;
@@ -223,7 +212,6 @@ static BOOLEAN _CreateIp6NeighborDiscoveryArgs(const OVS_OFPACKET_INFO* pPacketI
     RtlCopyMemory(neighborDiscoveryPI.targetMac, pPacketInfo->netProto.ipv6Info.neighborDiscovery.ndTargetMac, OVS_ETHERNET_ADDRESS_LENGTH);
 
     if (!CreateArgInList(OVS_ARGTYPE_PI_NEIGHBOR_DISCOVERY, &neighborDiscoveryPI, ppArgList))
-
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " failed appending icmp6 nd packet info\n");
         return FALSE;
@@ -266,6 +254,17 @@ static BOOLEAN _CreateArgsFromLayer3And4InList(const OVS_OFPACKET_INFO* pPacketI
         if (!_CreateArpArgs(pInfoToWrite, ppArgList))
         {
             DEBUGP(LOG_ERROR, __FUNCTION__ " create arp args failed\n");
+            ok = FALSE;
+            return FALSE;
+        }
+    }
+
+    else if (pPacketInfo->ethInfo.type == RtlUshortByteSwap(OVS_ETHERTYPE_MPLS_UNICAST) ||
+        pPacketInfo->ethInfo.type == RtlUshortByteSwap(OVS_ETHERTYPE_MPLS_MULTICAST))
+    {
+        if (!_CreateMplsArgs(pInfoToWrite, ppArgList))
+        {
+            DEBUGP(LOG_ERROR, __FUNCTION__ " create mpls args failed\n");
             ok = FALSE;
             return FALSE;
         }
@@ -361,13 +360,13 @@ static BOOLEAN _CreateActionsGroupToList(OVS_ARGTYPE groupType, const OVS_ARGUME
     OVS_ARGUMENT* pGroupArg = NULL;
     BOOLEAN ok = TRUE;
 
-    pCurListArg = pHeadArg = AllocateArgListItem();
-
+    pHeadArg = KZAlloc(sizeof(OVS_ARGUMENT_SLIST_ENTRY));
     if (!pHeadArg)
     {
         return FALSE;
     }
 
+    pCurListArg = pHeadArg;
     ok = _CreateActionsArgsToList(pArgGroup, &pCurListArg);
     if (!ok)
     {
@@ -377,7 +376,7 @@ static BOOLEAN _CreateActionsGroupToList(OVS_ARGTYPE groupType, const OVS_ARGUME
     pGroupArg = CreateGroupArgFromList(groupType, &pHeadArg);
     if (!pGroupArg)
     {
-        FreeArgListItem(pHeadArg);
+        KFree(pHeadArg);
         return FALSE;
     }
 
@@ -396,13 +395,13 @@ static BOOLEAN _SampleActionToList(const OVS_ARGUMENT_GROUP* pArgGroup, OVS_ARGU
 
     OVS_ARGUMENT_SLIST_ENTRY* pCurListArg = NULL, *pHeadArg = NULL;
 
-    pCurListArg = pHeadArg = AllocateArgListItem();
-
+    pHeadArg = KZAlloc(sizeof(OVS_ARGUMENT_SLIST_ENTRY));
     if (!pHeadArg)
     {
         return FALSE;
     }
 
+    pCurListArg = pHeadArg;
     OVS_ARGUMENT* pGroupArg = NULL;
 
     for (UINT i = 0; i < pArgGroup->count; ++i)
@@ -420,16 +419,16 @@ static BOOLEAN _SampleActionToList(const OVS_ARGUMENT_GROUP* pArgGroup, OVS_ARGU
 
             break;
 
-        case OVS_ARGTYPE_GROUP_ACTIONS:
-            _CreateActionsGroupToList(OVS_ARGTYPE_GROUP_ACTIONS, pArg->data, &pCurListArg);
+        case OVS_ARGTYPE_ACTION_SAMPLE_ACTIONS_GROUP:
+            _CreateActionsGroupToList(OVS_ARGTYPE_ACTION_SAMPLE_ACTIONS_GROUP, pArg->data, &pCurListArg);
             break;
         }
     }
 
-    pGroupArg = CreateGroupArgFromList(OVS_ARGTYPE_GROUP_ACTIONS_SAMPLE, &pHeadArg);
+    pGroupArg = CreateGroupArgFromList(OVS_ARGTYPE_ACTION_SAMPLE_GROUP, &pHeadArg);
     if (!pGroupArg)
     {
-        FreeArgListItem(pHeadArg);
+        KFree(pHeadArg);
         return FALSE;
     }
 
@@ -452,7 +451,7 @@ static OVS_ARGUMENT* _CreateIpv4TunnelGroup(const OF_PI_IPV4_TUNNEL* pTunnelInfo
     UINT totalSize = 0;
     BOOLEAN ok = TRUE;
 
-    pArgListCur = AllocateArgListItem();
+    pArgListCur = KZAlloc(sizeof(OVS_ARGUMENT_SLIST_ENTRY));
     if (!pArgListCur)
     {
         return FALSE;
@@ -464,7 +463,6 @@ static OVS_ARGUMENT* _CreateIpv4TunnelGroup(const OF_PI_IPV4_TUNNEL* pTunnelInfo
     if (pTunnelInfo->tunnelFlags & OVS_TUNNEL_FLAG_KEY)
     {
         if (!CreateArgInList(OVS_ARGTYPE_PI_TUNNEL_ID, &pTunnelInfo->tunnelId, &pArgListCur))
-
         {
             ok = FALSE;
             goto Cleanup;
@@ -474,7 +472,6 @@ static OVS_ARGUMENT* _CreateIpv4TunnelGroup(const OF_PI_IPV4_TUNNEL* pTunnelInfo
     if (pTunnelInfo->tunnelFlags & OVS_TUNNEL_FLAG_DONT_FRAGMENT)
     {
         if (!CreateArgInList(OVS_ARGTYPE_PI_TUNNEL_DONT_FRAGMENT, NULL, &pArgListCur))
-
         {
             ok = FALSE;
             goto Cleanup;
@@ -484,7 +481,6 @@ static OVS_ARGUMENT* _CreateIpv4TunnelGroup(const OF_PI_IPV4_TUNNEL* pTunnelInfo
     if (pTunnelInfo->tunnelFlags & OVS_TUNNEL_FLAG_CHECKSUM)
     {
         if (!CreateArgInList(OVS_ARGTYPE_PI_TUNNEL_CHECKSUM, NULL, &pArgListCur))
-
         {
             ok = FALSE;
             goto Cleanup;
@@ -495,7 +491,6 @@ static OVS_ARGUMENT* _CreateIpv4TunnelGroup(const OF_PI_IPV4_TUNNEL* pTunnelInfo
     if (pTunnelInfo->ipv4Source)
     {
         if (!CreateArgInList(OVS_ARGTYPE_PI_TUNNEL_IPV4_SRC, &pTunnelInfo->ipv4Source, &pArgListCur))
-
         {
             ok = FALSE;
             goto Cleanup;
@@ -506,7 +501,6 @@ static OVS_ARGUMENT* _CreateIpv4TunnelGroup(const OF_PI_IPV4_TUNNEL* pTunnelInfo
     if (pTunnelInfo->ipv4Destination)
     {
         if (!CreateArgInList(OVS_ARGTYPE_PI_TUNNEL_IPV4_DST, &pTunnelInfo->ipv4Destination, &pArgListCur))
-
         {
             ok = FALSE;
             goto Cleanup;
@@ -517,7 +511,6 @@ static OVS_ARGUMENT* _CreateIpv4TunnelGroup(const OF_PI_IPV4_TUNNEL* pTunnelInfo
     if (pTunnelInfo->ipv4TypeOfService)
     {
         if (!CreateArgInList(OVS_ARGTYPE_PI_TUNNEL_TOS, &pTunnelInfo->ipv4TypeOfService, &pArgListCur))
-
         {
             ok = FALSE;
             goto Cleanup;
@@ -525,7 +518,6 @@ static OVS_ARGUMENT* _CreateIpv4TunnelGroup(const OF_PI_IPV4_TUNNEL* pTunnelInfo
     }
 
     if (!CreateArgInList(OVS_ARGTYPE_PI_TUNNEL_TTL, &pTunnelInfo->ipv4TimeToLive, &pArgListCur))
-
     {
         ok = FALSE;
         goto Cleanup;
@@ -535,7 +527,7 @@ static OVS_ARGUMENT* _CreateIpv4TunnelGroup(const OF_PI_IPV4_TUNNEL* pTunnelInfo
     argArray = ArgumentListToArray(pArgHead, &countArgs, &totalSize);
 
     //OVS_ARGUMENT_GROUP
-    pTunnelGroup = AllocArgumentGroup();
+    pTunnelGroup = KZAlloc(sizeof(OVS_ARGUMENT_GROUP));
     if (!pTunnelGroup)
     {
         return NULL;
@@ -546,7 +538,7 @@ static OVS_ARGUMENT* _CreateIpv4TunnelGroup(const OF_PI_IPV4_TUNNEL* pTunnelInfo
     pTunnelGroup->groupSize = (UINT16)totalSize;
 
     //parent OVS_ARGUMENT
-    pTunnelArg = ExAllocatePoolWithTag(NonPagedPool, sizeof(OVS_ARGUMENT), g_extAllocationTag);
+    pTunnelArg = KAlloc(sizeof(OVS_ARGUMENT));
     if (!pTunnelArg)
     {
         ok = FALSE;
@@ -555,40 +547,22 @@ static OVS_ARGUMENT* _CreateIpv4TunnelGroup(const OF_PI_IPV4_TUNNEL* pTunnelInfo
 
     pTunnelArg->data = pTunnelGroup;
     pTunnelArg->length = pTunnelGroup->groupSize + OVS_ARGUMENT_GROUP_HEADER_SIZE;
-    pTunnelArg->type = OVS_ARGTYPE_GROUP_PI_TUNNEL;
+    pTunnelArg->type = OVS_ARGTYPE_PI_TUNNEL_GROUP;
 
-    VerifyArgGroupSize(pTunnelArg->data);
+    VerifyGroup_Size_Recursive(pTunnelArg->data);
 
 Cleanup:
 
     if (ok)
     {
-        FreeArgList(&pArgHead);
+        DestroyOrFreeArgList(&pArgHead, /*destroy*/ FALSE);
     }
-
     else
     {
-        if (pTunnelArg)
-        {
-            DestroyArgument(pTunnelArg);
-        }
-        else if (pTunnelGroup)
-        {
-            DestroyArgumentGroup(pTunnelGroup);
-        }
-        else if (argArray)
-        {
-            DestroyArguments(argArray, countArgs);
-        }
-        else
-        {
-            DestroyArgList(&pArgHead);
-        }
-
-        if (pArgHead)
-        {
-            FreeArgList(&pArgHead);
-        }
+        DestroyOrFreeArgList(&pArgHead, /*destroy*/ TRUE);
+        KFree(argArray);
+        KFree(pTunnelGroup);
+        KFree(pTunnelArg);
 
         return NULL;
     }
@@ -611,7 +585,6 @@ static OVS_ARGUMENT* _CreateSetActionArg(const OVS_ARGUMENT* pArgument)
     switch (argType)
     {
     case OVS_ARGTYPE_PI_IPV4_TUNNEL:
-
     {
         OVS_ARGUMENT* pArg = _CreateIpv4TunnelGroup(pArgument->data);
         return pArg;
@@ -620,7 +593,7 @@ static OVS_ARGUMENT* _CreateSetActionArg(const OVS_ARGUMENT* pArgument)
 
     default:
     {
-        OVS_ARGUMENT* pPacketInfoArg = AllocArgument();
+        OVS_ARGUMENT* pPacketInfoArg = KZAlloc(sizeof(OVS_ARGUMENT));
         if (!pPacketInfoArg)
         {
             DEBUGP(LOG_ERROR, "could not alloc key arg\n");
@@ -646,7 +619,7 @@ static BOOLEAN _CreateActionsArgsToList(const OVS_ARGUMENT_GROUP* pArgGroup, OVS
 
         switch (argType)
         {
-        case OVS_ARGTYPE_GROUP_ACTIONS_SETINFO:
+        case OVS_ARGTYPE_ACTION_SETINFO_GROUP:
         {
             OVS_ARGUMENT_GROUP* pSetGroup = NULL;
             OVS_ARGUMENT* pPacketInfoArg = NULL, *pSetArg = NULL;
@@ -657,8 +630,7 @@ static BOOLEAN _CreateActionsArgsToList(const OVS_ARGUMENT_GROUP* pArgGroup, OVS
                 return FALSE;
             }
 
-            pSetGroup = AllocArgumentGroup();
-
+            pSetGroup = KZAlloc(sizeof(OVS_ARGUMENT_GROUP));
             if (!pSetGroup)
             {
                 return FALSE;
@@ -668,9 +640,9 @@ static BOOLEAN _CreateActionsArgsToList(const OVS_ARGUMENT_GROUP* pArgGroup, OVS
             pSetGroup->count = 1;
             pSetGroup->groupSize = pPacketInfoArg->length + OVS_ARGUMENT_HEADER_SIZE;
 
-            pSetArg = AllocArgument();
+            pSetArg = KZAlloc(sizeof(OVS_ARGUMENT));
             pSetArg->data = pSetGroup;
-            pSetArg->type = OVS_ARGTYPE_GROUP_ACTIONS_SETINFO;
+            pSetArg->type = OVS_ARGTYPE_ACTION_SETINFO_GROUP;
             pSetArg->length = pSetGroup->groupSize + OVS_ARGUMENT_GROUP_HEADER_SIZE;
 
             if (!AppendArgumentToList(pSetArg, ppArgList))
@@ -680,19 +652,22 @@ static BOOLEAN _CreateActionsArgsToList(const OVS_ARGUMENT_GROUP* pArgGroup, OVS
         }
             break;
 
-        case OVS_ARGTYPE_GROUP_ACTIONS_SAMPLE:
+        case OVS_ARGTYPE_ACTION_SAMPLE_GROUP:
             ok = _SampleActionToList(pArg->data, ppArgList);
             if (!ok)
+            {
                 return FALSE;
+            }
 
             break;
 
-        case OVS_ARGTYPE_GROUP_ACTIONS_UPCALL:
+        case OVS_ARGTYPE_ACTION_UPCALL_GROUP:
         {
-            OVS_ARGUMENT_GROUP* pUpcallGroup = AllocArgumentGroup();
+            OVS_ARGUMENT_GROUP* pUpcallGroup = NULL;
             OVS_ARGUMENT* pUpcallArg = NULL;
             BOOLEAN ok = TRUE;
 
+            pUpcallGroup = KZAlloc(sizeof(OVS_ARGUMENT_GROUP));
             if (NULL == pUpcallGroup)
             {
                 return FALSE;
@@ -701,10 +676,7 @@ static BOOLEAN _CreateActionsArgsToList(const OVS_ARGUMENT_GROUP* pArgGroup, OVS
             ok = CopyArgumentGroup(pUpcallGroup, pArg->data, /*actionsToAdd*/0);
             if (!ok)
             {
-                if (pUpcallGroup)
-                {
-                    DestroyArgumentGroup(pUpcallGroup);
-                }
+                DestroyArgumentGroup(pUpcallGroup);
                 return FALSE;
             }
 
@@ -739,7 +711,7 @@ static BOOLEAN _CreateActionsArgsToList(const OVS_ARGUMENT_GROUP* pArgGroup, OVS
     return TRUE;
 }
 
-static OVS_ARGUMENT* _CreateActionsGroup(const OVS_ARGUMENT_GROUP* pActions)
+static OVS_ARGUMENT* _CreateFlowActionsGroup(const OVS_ARGUMENT_GROUP* pActions)
 {
     OVS_ARGUMENT_GROUP* pActionsGroup = NULL;
     OVS_ARGUMENT* argArray = NULL, *pActionsArg = NULL;
@@ -751,7 +723,7 @@ static OVS_ARGUMENT* _CreateActionsGroup(const OVS_ARGUMENT_GROUP* pActions)
     UINT16 countArgs = 0;
     UINT totalSize = 0;
 
-    pArgListCur = AllocateArgListItem();
+    pArgListCur = KZAlloc(sizeof(OVS_ARGUMENT_SLIST_ENTRY));
     if (!pArgListCur)
     {
         return FALSE;
@@ -777,7 +749,7 @@ static OVS_ARGUMENT* _CreateActionsGroup(const OVS_ARGUMENT_GROUP* pActions)
         }
     }
 
-    pActionsGroup = AllocArgumentGroup();
+    pActionsGroup = KZAlloc(sizeof(OVS_ARGUMENT_GROUP));
     if (!pActionsGroup)
     {
         ok = FALSE;
@@ -788,7 +760,7 @@ static OVS_ARGUMENT* _CreateActionsGroup(const OVS_ARGUMENT_GROUP* pActions)
     pActionsGroup->count = countArgs;
     pActionsGroup->groupSize = (UINT16)totalSize;
 
-    pActionsArg = AllocArgument();
+    pActionsArg = KZAlloc(sizeof(OVS_ARGUMENT));
     if (!pActionsArg)
     {
         ok = FALSE;
@@ -797,33 +769,19 @@ static OVS_ARGUMENT* _CreateActionsGroup(const OVS_ARGUMENT_GROUP* pActions)
 
     pActionsArg->data = pActionsGroup;
     pActionsArg->length = pActionsGroup->groupSize + OVS_ARGUMENT_GROUP_HEADER_SIZE;
-    pActionsArg->type = OVS_ARGTYPE_GROUP_ACTIONS;
+    pActionsArg->type = OVS_ARGTYPE_FLOW_ACTIONS_GROUP;
 
 Cleanup:
     if (ok)
     {
-        FreeArgList(&pArgHead);
+        DestroyOrFreeArgList(&pArgHead, /*destroy*/ FALSE);
     }
-
     else
     {
-        if (pActionsArg)
-        {
-            DestroyArgument(pActionsArg);
-        }
-        else if (pActionsGroup)
-        {
-            DestroyArgumentGroup(pActionsGroup);
-        }
-        else if (argArray)
-        {
-            DestroyArguments(argArray, countArgs);
-            FreeArgList(&pArgHead);
-        }
-        else if (pArgHead)
-        {
-            DestroyArgList(&pArgHead);
-        }
+        DestroyOrFreeArgList(&pArgHead, /*destroy*/ TRUE);
+        KFree(argArray);
+        KFree(pActionsGroup);
+        KFree(pActionsArg);
 
         return NULL;
     }
@@ -848,14 +806,14 @@ static OVS_ARGUMENT* _CreateEncapsulationArg(const OVS_OFPACKET_INFO* pPacketInf
 
     ethType = (pMask ? pMask->ethInfo.type : pPacketInfo->ethInfo.type);
 
-    pEncapsGroup = AllocArgumentGroup();
+    pEncapsGroup = KZAlloc(sizeof(OVS_ARGUMENT_GROUP));
     if (!pEncapsGroup)
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " failed allocating group\n");
         return FALSE;
     }
 
-    pEncapsArg = AllocArgument();
+    pEncapsArg = KZAlloc(sizeof(OVS_ARGUMENT));
     if (!pEncapsArg)
     {
         ok = FALSE;
@@ -863,7 +821,7 @@ static OVS_ARGUMENT* _CreateEncapsulationArg(const OVS_OFPACKET_INFO* pPacketInf
         goto Cleanup;
     }
 
-    pArgListCur = AllocateArgListItem();
+    pArgListCur = KZAlloc(sizeof(OVS_ARGUMENT_SLIST_ENTRY));
     if (!pArgListCur)
     {
         ok = FALSE;
@@ -874,10 +832,21 @@ static OVS_ARGUMENT* _CreateEncapsulationArg(const OVS_OFPACKET_INFO* pPacketInf
     pArgHead = pArgListCur;
     pArgHead->pArg = NULL;
 
-    OVS_CHECK(pPacketInfo->ethInfo.type != RtlUshortByteSwap(OVS_ETHERTYPE_802_2));
+    //NOTE: 802.2 frames are represented in ovs messages as:
+    //packet info eth type = missing (=> filled by us)
+    //mask eth info = exact match 
+    if (pPacketInfo->ethInfo.type == RtlUshortByteSwap(OVS_ETHERTYPE_802_2) &&
+        pMask && pMask->ethInfo.type)
+    {
+        if (pMask->ethInfo.type != OVS_PI_MASK_MATCH_EXACT(BE16))
+        {
+            DEBUGP(LOG_ERROR, __FUNCTION__ " expected 802.2 mask to be exact!\n");
+            ok = FALSE;
+            goto Cleanup;
+        }
+    }
 
     if (!CreateArgInList(OVS_ARGTYPE_PI_ETH_TYPE, &ethType, &pArgListCur)) //UINT16
-
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " failed appending enc eth type\n");
 
@@ -906,55 +875,24 @@ static OVS_ARGUMENT* _CreateEncapsulationArg(const OVS_OFPACKET_INFO* pPacketInf
 
     pEncapsArg->data = pEncapsGroup;
     pEncapsArg->length = (UINT16)totalSize + OVS_ARGUMENT_GROUP_HEADER_SIZE;
-    pEncapsArg->type = OVS_ARGTYPE_GROUP_PI_ENCAPSULATION;
+    pEncapsArg->type = OVS_ARGTYPE_PI_ENCAP_GROUP;
 
-    VerifyArgGroupSize(pEncapsArg->data);
+    VerifyGroup_Size_Recursive(pEncapsArg->data);
 
 Cleanup:
 
     if (ok)
     {
-        FreeArgList(&pArgHead);
+        DestroyOrFreeArgList(&pArgHead, /*destroy*/ FALSE);
+        return pEncapsArg;
     }
-    else
-    {
-        if (pEncapsArg)
-        {
-            DestroyArgument(pEncapsArg);
+    
+    DestroyOrFreeArgList(&pArgHead, /*destroy*/ TRUE);
+    KFree(argArray);
+    KFree(pEncapsGroup);
+    KFree(pEncapsArg);
 
-            if (pArgHead)
-            {
-                FreeArgList(&pArgHead);
-            }
-        }
-        else if (pEncapsGroup)
-        {
-            DestroyArgumentGroup(pEncapsGroup);
-
-            if (pArgHead)
-            {
-                FreeArgList(&pArgHead);
-            }
-        }
-        else if (argArray)
-        {
-            OVS_CHECK(countArgs > 0);
-            DestroyArguments(argArray, countArgs);
-
-            if (pArgHead)
-            {
-                FreeArgList(&pArgHead);
-            }
-        }
-        else
-        {
-            DestroyArgList(&pArgHead);
-        }
-
-        return NULL;
-    }
-
-    return pEncapsArg;
+    return NULL;
 }
 
 static BOOLEAN _CreateEncapsulationGroupToList(const OVS_OFPACKET_INFO* pPacketInfo, const OVS_OFPACKET_INFO* pMask, OVS_ARGUMENT_SLIST_ENTRY** ppArgList)
@@ -991,7 +929,6 @@ static BOOLEAN _CreateEthernetArgsInList(const OVS_OFPACKET_INFO* pPacketInfo, c
 
     //ETH ADDRESS
     if (!CreateArgInList(OVS_ARGTYPE_PI_ETH_ADDRESS, &ethAddrPI, ppArgList))
-
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " failed appending eth addr key\n");
         return FALSE;
@@ -1009,7 +946,6 @@ static BOOLEAN _CreateEthernetArgsInList(const OVS_OFPACKET_INFO* pPacketInfo, c
         {
             ethType = RtlUshortByteSwap(OVS_ETHERTYPE_QTAG);
         }
-
         else
         {
             ethType = OVS_PI_MASK_MATCH_EXACT(UINT16);
@@ -1070,21 +1006,18 @@ static BOOLEAN _CreateInPortArgInList(const OVS_OFPACKET_INFO* pPacketInfo, cons
             {
                 inputPortValue = OVS_PI_MASK_MATCH_EXACT(UINT32);
             }
-
             else
             {
                 OVS_CHECK(__UNEXPECTED__);
                 return TRUE;
             }
         }
-
         else
         {
             OVS_CHECK(__UNEXPECTED__);
             return TRUE;
         }
     }
-
     else
     {
         UINT16 highBits = 0;
@@ -1105,7 +1038,6 @@ static BOOLEAN _CreateInPortArgInList(const OVS_OFPACKET_INFO* pPacketInfo, cons
     }
 
     if (!CreateArgInList(OVS_ARGTYPE_PI_DP_INPUT_PORT, &inputPortValue, ppArgList))
-
     {
         return FALSE;
     }
@@ -1129,7 +1061,7 @@ static BOOLEAN _CreateTunnelArgInList(const OVS_OFPACKET_INFO* pPacketInfo, cons
             return FALSE;
         }
 
-        DbgPrintArg(pArg, 0, 0);
+        DBGPRINT_ARG(LOG_INFO, pArg, 0, 0);
 
         if (!AppendArgumentToList(pArg, ppArgList))
         {
@@ -1146,10 +1078,9 @@ static OVS_ARGUMENT_SLIST_ENTRY* _CreateArgListFromPacketInfo(const OVS_OFPACKET
     OVS_ARGUMENT_SLIST_ENTRY* pArgHead = NULL;
     BOOLEAN ok = TRUE;
     BOOLEAN encapsulated = FALSE;
-    UINT32 packetPriority = 0, packetMark = 0;
+    UINT32 packetPriority = 0, packetMark = 0, datapathHash = 0, recircId = 0;
 
-    pArgListCur = AllocateArgListItem();
-
+    pArgListCur = KZAlloc(sizeof(OVS_ARGUMENT_SLIST_ENTRY));
     if (!pArgListCur)
     {
         return NULL;
@@ -1160,16 +1091,28 @@ static OVS_ARGUMENT_SLIST_ENTRY* _CreateArgListFromPacketInfo(const OVS_OFPACKET
 
     packetPriority = (pMask ? pMask->physical.packetPriority : pPacketInfo->physical.packetPriority);
     packetMark = (pMask ? pMask->physical.packetMark : pPacketInfo->physical.packetMark);
+    datapathHash = (pMask ? pMask->flowHash : pPacketInfo->flowHash);
+    recircId = (pMask ? pMask->recirculationId : pPacketInfo->recirculationId);
+
+    if (!CreateArgInList(OVS_ARGTYPE_PI_DATAPATH_HASH, &datapathHash, &pArgListCur))
+    {
+        DEBUGP(LOG_ERROR, __FUNCTION__ " failed appending datapath hash\n");
+        return NULL;
+    }
+
+    if (!CreateArgInList(OVS_ARGTYPE_PI_DATAPATH_RECIRCULATION_ID, &recircId, &pArgListCur))
+    {
+        DEBUGP(LOG_ERROR, __FUNCTION__ " failed appending datapath recirculation id\n");
+        return NULL;
+    }
 
     if (!CreateArgInList(OVS_ARGTYPE_PI_PACKET_PRIORITY, &packetPriority, &pArgListCur))
-
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " failed appending packet priority\n");
         return NULL;
     }
 
     if (!CreateArgInList(OVS_ARGTYPE_PI_PACKET_MARK, &packetMark, &pArgListCur))
-
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " failed appending packet mark\n");
         ok = FALSE;
@@ -1214,7 +1157,7 @@ static OVS_ARGUMENT_SLIST_ENTRY* _CreateArgListFromPacketInfo(const OVS_OFPACKET
 Cleanup:
     if (!ok)
     {
-        DestroyArgList(&pArgHead);
+        DestroyOrFreeArgList(&pArgHead, /*destroy*/ TRUE);
         return NULL;
     }
 
@@ -1240,19 +1183,19 @@ OVS_ARGUMENT* CreateArgFromPacketInfo(const OVS_OFPACKET_INFO* pPacketInfo, cons
     if (!args)
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " could not convert arg list to array\n");
-        DestroyArgList(&pList);
+        DestroyOrFreeArgList(&pList, /*destroy*/ TRUE);
         return NULL;
     }
 
     OVS_CHECK(size <= MAXUINT16);
 
-    pArgGroup = AllocArgumentGroup();
+    pArgGroup = KZAlloc(sizeof(OVS_ARGUMENT_GROUP));
     if (!pArgGroup)
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " failed allocating arg group\n");
 
-        DestroyArgList(&pList);
-        FreeArgument(args);
+        DestroyOrFreeArgList(&pList, /*destroy*/ TRUE);
+        KFree(args);
         return NULL;
     }
 
@@ -1264,16 +1207,16 @@ OVS_ARGUMENT* CreateArgFromPacketInfo(const OVS_OFPACKET_INFO* pPacketInfo, cons
     if (!pResult)
     {
         DEBUGP(LOG_ERROR, "CreateArgumentFromGroup failed\n");
-        DestroyArgList(&pList);
-        FreeArgument(args);
+        DestroyOrFreeArgList(&pList, /*destroy*/ TRUE);
+        KFree(args);
         return NULL;
     }
 
-    DbgPrintArg(pResult, 0, 0);
+    DBGPRINT_ARG(LOG_INFO, pResult, 0, 0);
 
-    FreeArgList(&pList);
+    DestroyOrFreeArgList(&pList, /*destroy*/ FALSE);
 
-    VerifyArgGroupSize(pArgGroup);
+    VerifyGroup_Size_Recursive(pArgGroup);
 
     return pResult;
 }
@@ -1295,21 +1238,47 @@ static UINT64 _TicksToMiliseconds(UINT64 tickCount)
 }
 
 //TODO: should we put OVS_MESSAGE_FLAG_MULTIPART for Flow_Dump?
-BOOLEAN CreateMsgFromFlow(OVS_FLOW* pFlow, UINT8 command, _Inout_ OVS_MESSAGE* pMsg, UINT32 sequence, UINT32 dpIfIndex, UINT32 portId)
+BOOLEAN CreateMsgFromFlow(_In_ const OVS_FLOW* pFlow, UINT8 command, _Inout_ OVS_MESSAGE* pMsg, UINT32 sequence, UINT32 dpIfIndex, UINT32 portId)
 {
     OVS_ARGUMENT_GROUP* pFlowGroup = NULL;
     OVS_ARGUMENT* pPIArg, *pMasksArg, *pTimeUsedArg, *pFlowStats, *pTcpFlags, *pActionsArg;
     BOOLEAN ok = TRUE;
     UINT16 flowArgCount = 0;
     UINT16 curArg = 0;
-    OVS_WINL_FLOW_STATS stats = { 0 };
+    OVS_WINL_FLOW_STATS winlStats = { 0 };
+    OVS_FLOW_STATS stats = { 0 };
     UINT64 tickCount = 0;
     UINT8 tcpFlags = 0;
     UINT16 argsDataSize = 0;
+    LOCK_STATE_EX lockState = { 0 };
+
+    OVS_OFPACKET_INFO unmaskedPacketInfo = { 0 };
+    OVS_OFPACKET_INFO maskedPacketInfo = { 0 };
+    OVS_OFPACKET_INFO packetInfoMask = { 0 };
 
     OVS_CHECK(pMsg);
 
     pPIArg = pMasksArg = pTimeUsedArg = pFlowStats = pTcpFlags = pActionsArg = NULL;
+
+    FLOW_LOCK_READ(pFlow, &lockState);
+
+    unmaskedPacketInfo = pFlow->unmaskedPacketInfo;
+    maskedPacketInfo = pFlow->maskedPacketInfo;
+    packetInfoMask = pFlow->pMask->packetInfo;
+
+#if OVS_VERSION == OVS_VERSION_1_11
+    tickCount = pFlow->stats.lastUsedTime;
+    stats.noOfMatchedPackets = pFlow->stats.packetsMached;
+    stats.noOfMatchedBytes = pFlow->stats.bytesMatched;
+    tcpFlags = pFlow->stats.tcpFlags;
+#elif OVS_VERSION == OVS_VERSION_2_3
+    //TODO: Flow_GetStats()
+    Flow_GetStats_Unsafe(pFlow, &stats);
+    winlStats.noOfMatchedBytes = stats.bytesMatched;
+    winlStats.noOfMatchedPackets = stats.packetsMached;
+#endif
+
+    FLOW_UNLOCK(pFlow, &lockState);
 
     //2. INIT OVS_MESSAGE
     pMsg->length = sizeof(OVS_MESSAGE);
@@ -1324,22 +1293,15 @@ BOOLEAN CreateMsgFromFlow(OVS_FLOW* pFlow, UINT8 command, _Inout_ OVS_MESSAGE* p
 
     pMsg->dpIfIndex = dpIfIndex;
 
-    NdisAcquireSpinLock(&pFlow->spinLock);
-    tickCount = pFlow->stats.lastUsedTime;
-    stats.noOfMatchedPackets = pFlow->stats.packetsMached;
-    stats.noOfMatchedBytes = pFlow->stats.bytesMatched;
-    tcpFlags = pFlow->stats.tcpFlags;
-    NdisReleaseSpinLock(&pFlow->spinLock);
-
     //3. OVS_ARGUMENT_GROUP
-    pFlowGroup = AllocArgumentGroup();
+    pFlowGroup = KZAlloc(sizeof(OVS_ARGUMENT_GROUP));
     if (!pFlowGroup)
     {
         return FALSE;
     }
 
     //3.1. Packet Info
-    pPIArg = CreateArgFromPacketInfo(&pFlow->unmaskedPacketInfo, NULL, OVS_ARGTYPE_GROUP_PI);
+    pPIArg = CreateArgFromPacketInfo(&unmaskedPacketInfo, NULL, OVS_ARGTYPE_FLOW_PI_GROUP);
     if (!pPIArg)
     {
         ok = FALSE;
@@ -1350,7 +1312,7 @@ BOOLEAN CreateMsgFromFlow(OVS_FLOW* pFlow, UINT8 command, _Inout_ OVS_MESSAGE* p
     ++curArg;
 
     //3.2. Packet Info Mask
-    pMasksArg = CreateArgFromPacketInfo(&pFlow->maskedPacketInfo, &pFlow->pMask->packetInfo, OVS_ARGTYPE_GROUP_MASK);
+    pMasksArg = CreateArgFromPacketInfo(&maskedPacketInfo, &packetInfoMask, OVS_ARGTYPE_FLOW_MASK_GROUP);
     if (!pMasksArg)
     {
         ok = FALSE;
@@ -1380,7 +1342,7 @@ BOOLEAN CreateMsgFromFlow(OVS_FLOW* pFlow, UINT8 command, _Inout_ OVS_MESSAGE* p
     }
 
     //3.4. Flow Stats
-    if (stats.noOfMatchedPackets > 0)
+    if (winlStats.noOfMatchedPackets > 0)
     {
         pFlowStats = CreateArgument_Alloc(OVS_ARGTYPE_FLOW_STATS, &stats);
         if (!pFlowStats)
@@ -1407,13 +1369,19 @@ BOOLEAN CreateMsgFromFlow(OVS_FLOW* pFlow, UINT8 command, _Inout_ OVS_MESSAGE* p
         ++curArg;
     }
 
-    pActionsArg = _CreateActionsGroup(pFlow->pActions);
+    FLOW_LOCK_READ(pFlow, &lockState);
+    //NOTE: we don't need to use OVS_REFERENCE for pFlow->pActions here
+    //because the actions cannot be deleted while under the lock of pFlow
+    //pFlow is here referenced, so it and its Actions cannot be deleted
+    pActionsArg = _CreateFlowActionsGroup(pFlow->pActions->pActionGroup);
+    FLOW_UNLOCK(pFlow, &lockState);
+
     if (!pActionsArg)
     {
         return FALSE;
     }
 
-    DbgPrintArg(pActionsArg, 0, 0);
+    DBGPRINT_ARG(LOG_INFO, pActionsArg, 0, 0);
 
     argsDataSize += pActionsArg->length;
     ++curArg;
@@ -1455,69 +1423,27 @@ BOOLEAN CreateMsgFromFlow(OVS_FLOW* pFlow, UINT8 command, _Inout_ OVS_MESSAGE* p
     pMsg->pArgGroup = pFlowGroup;
 
 Cleanup:
-    VerifyArgGroupSize(pMsg->pArgGroup);
+    VerifyGroup_Size_Recursive(pMsg->pArgGroup);
 
     if (ok)
     {
-        FreeArgument(pPIArg);
-        FreeArgument(pMasksArg);
-
-        if (pTimeUsedArg)
-        {
-            FreeArgument(pTimeUsedArg);
-        }
-
-        if (pFlowStats)
-        {
-            FreeArgument(pFlowStats);
-        }
-
-        if (pTcpFlags)
-        {
-            FreeArgument(pTcpFlags);
-        }
-
-        if (pActionsArg)
-        {
-            FreeArgument(pActionsArg);
-        }
+        KFree(pPIArg);
+        KFree(pMasksArg);
+        KFree(pTimeUsedArg);
+        KFree(pFlowStats);
+        KFree(pTcpFlags);
+        KFree(pActionsArg);
     }
     else
     {
-        if (pFlowGroup->args)
-            FreeArguments(pFlowGroup);
+        FreeGroupWithArgs(pFlowGroup);
 
-        FreeArgGroup(pFlowGroup);
-
-        if (pPIArg)
-        {
-            DestroyArgument(pPIArg);
-        }
-
-        if (pMasksArg)
-        {
-            DestroyArgument(pMasksArg);
-        }
-
-        if (pTimeUsedArg)
-        {
-            DestroyArgument(pTimeUsedArg);
-        }
-
-        if (pFlowStats)
-        {
-            DestroyArgument(pFlowStats);
-        }
-
-        if (pTcpFlags)
-        {
-            DestroyArgument(pTcpFlags);
-        }
-
-        if (pActionsArg)
-        {
-            DestroyArgument(pActionsArg);
-        }
+        DestroyArgument(pPIArg);
+        DestroyArgument(pMasksArg);
+        DestroyArgument(pTimeUsedArg);
+        DestroyArgument(pFlowStats);
+        DestroyArgument(pTcpFlags);
+        DestroyArgument(pActionsArg);
     }
 
     return ok;

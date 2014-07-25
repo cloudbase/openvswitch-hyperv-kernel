@@ -20,7 +20,8 @@ limitations under the License.
 extern PNDIS_RW_LOCK_EX g_pArpRWLock;
 extern LIST_ENTRY g_arpTable;
 
-typedef struct _OVS_ARP_TABLE_ENTRY {
+typedef struct _OVS_ARP_TABLE_ENTRY
+{
     LIST_ENTRY listEntry;
     BYTE ip[4];
     BYTE mac[OVS_ETHERNET_ADDRESS_LENGTH];
@@ -86,7 +87,8 @@ static BYTE* _Arp_FindTableEntry_Unsafe(_In_ const BYTE ip[4])
         return NULL;
     }
 
-    do {
+    do
+    {
         OVS_ARP_TABLE_ENTRY* pArpEntry = CONTAINING_RECORD(pCurEntry, OVS_ARP_TABLE_ENTRY, listEntry);
 
         if (RtlEqualMemory(ip, pArpEntry->ip, sizeof(OVS_IPV4_ADDRESS_LENGTH)))
@@ -106,12 +108,14 @@ VOID Arp_InsertTableEntry(_In_ const BYTE ip[4], _In_ const BYTE mac[OVS_ETHERNE
     LOCK_STATE_EX lockState = { 0 };
     BYTE* pMacAddr = NULL;
 
-    Rwlock_LockWrite(g_pArpRWLock, &lockState);
+    NdisAcquireRWLockWrite(g_pArpRWLock, &lockState, 0);
 
     pMacAddr = _Arp_FindTableEntry_Unsafe(ip);
     if (!pMacAddr)
     {
-        OVS_ARP_TABLE_ENTRY* pArpEntry = ExAllocatePoolWithTag(NonPagedPool, sizeof(OVS_ARP_TABLE_ENTRY), g_extAllocationTag);
+        OVS_ARP_TABLE_ENTRY* pArpEntry = NULL;
+        
+        pArpEntry = KAlloc(sizeof(OVS_ARP_TABLE_ENTRY));
         if (!pArpEntry)
         {
             DEBUGP(LOG_ERROR, "Failed to allocate arp table entry!\n");
@@ -123,13 +127,12 @@ VOID Arp_InsertTableEntry(_In_ const BYTE ip[4], _In_ const BYTE mac[OVS_ETHERNE
 
         InsertHeadList(&g_arpTable, &pArpEntry->listEntry);
     }
-
     else
     {
         RtlCopyMemory(pMacAddr, mac, OVS_ETHERNET_ADDRESS_LENGTH);
     }
 
-    Rwlock_Unlock(g_pArpRWLock, &lockState);
+    NdisReleaseRWLock(g_pArpRWLock, &lockState);
 }
 
 const BYTE* Arp_FindTableEntry(_In_ const BYTE ip[4])
@@ -137,11 +140,11 @@ const BYTE* Arp_FindTableEntry(_In_ const BYTE ip[4])
     LOCK_STATE_EX lockState = { 0 };
     const BYTE* pMac = NULL;
 
-    Rwlock_LockRead(g_pArpRWLock, &lockState);
+    NdisAcquireRWLockRead(g_pArpRWLock, &lockState, 0);
 
     pMac = _Arp_FindTableEntry_Unsafe(ip);
 
-    Rwlock_Unlock(g_pArpRWLock, &lockState);
+    NdisReleaseRWLock(g_pArpRWLock, &lockState);
 
     return pMac;
 }
@@ -152,7 +155,7 @@ VOID Arp_DestroyTable()
     PLIST_ENTRY headList = NULL;
     LOCK_STATE_EX lockState = { 0 };
 
-    Rwlock_LockWrite(g_pArpRWLock, &lockState);
+    NdisAcquireRWLockWrite(g_pArpRWLock, &lockState, 0);
 
     while (!IsListEmpty(&g_arpTable))
     {
@@ -160,8 +163,8 @@ VOID Arp_DestroyTable()
 
         pArpEntry = CONTAINING_RECORD(headList, OVS_ARP_TABLE_ENTRY, listEntry);
 
-        ExFreePoolWithTag(pArpEntry, g_extAllocationTag);
+        KFree(pArpEntry);
     }
 
-    Rwlock_Unlock(g_pArpRWLock, &lockState);
+    NdisReleaseRWLock(g_pArpRWLock, &lockState);
 }

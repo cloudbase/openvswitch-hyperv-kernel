@@ -27,11 +27,11 @@ typedef struct _OVS_GLOBAL_FORWARD_INFO
 {
     BOOLEAN                 switchIsActive;
 
-    OVS_NIC_LIST_ENTRY*		pExternalNic;
-    OVS_NIC_LIST_ENTRY*		pInternalNic;
+    OVS_NIC_LIST_ENTRY*     pExternalNic;
+    OVS_NIC_LIST_ENTRY*     pInternalNic;
 
-    OVS_PORT_LIST_ENTRY*	pExternalPort;
-    OVS_PORT_LIST_ENTRY*	pInternalPort;
+    OVS_PORT_LIST_ENTRY*    pExternalPort;
+    OVS_PORT_LIST_ENTRY*    pInternalPort;
 
     LIST_ENTRY              nicList;
 
@@ -43,15 +43,17 @@ typedef struct _OVS_GLOBAL_FORWARD_INFO
     UINT32                  countPorts;
     BOOLEAN                 isInitialRestart;
 
-    OVS_PERSISTENT_PORTS_INFO	persistentPortsInfo;
+    OVS_PERSISTENT_PORTS_INFO    persistentPortsInfo;
 } OVS_GLOBAL_FORWARD_INFO, *POVS_GLOBAL_FORWARD_INFO;
 
-typedef enum _OVS_SWITCH_DATAFLOW_STATE {
+typedef enum _OVS_SWITCH_DATAFLOW_STATE
+{
     OVS_SWITCH_PAUSED,
     OVS_SWITCH_RUNNING
 } OVS_SWITCH_DATAFLOW_STATE, *POVS_SWITCH_DATAFLOW_STATE;
 
-typedef enum _OVS_SWITCH_CONTROLFLOW_STATE {
+typedef enum _OVS_SWITCH_CONTROLFLOW_STATE
+{
     OVS_SWITCH_UNKNOWN,
     OVS_SWITCH_ATTACHED,
     OVS_SWITCH_DETACHED
@@ -59,25 +61,32 @@ typedef enum _OVS_SWITCH_CONTROLFLOW_STATE {
 
 typedef struct _OVS_SWITCH_INFO
 {
-    // The link *must* always be the first field.
-    LIST_ENTRY link;
+    //must be the first field in the struct
+    OVS_REF_COUNT             refCount;
 
-    OVS_GLOBAL_FORWARD_INFO* pForwardInfo;
+    //entry in switchList of OVS_DRIVER
+    LIST_ENTRY                listEntry;
 
-    NDIS_HANDLE filterHandle;
-    NDIS_SWITCH_CONTEXT switchContext;
+    OVS_GLOBAL_FORWARD_INFO*  pForwardInfo;
+
+    NDIS_HANDLE               filterHandle;
+    NDIS_SWITCH_CONTEXT       switchContext;
     NDIS_SWITCH_OPTIONAL_HANDLERS switchHandlers;
 
-    OVS_SWITCH_DATAFLOW_STATE		dataFlowState;
-    OVS_SWITCH_CONTROLFLOW_STATE	controlFlowState;
+    OVS_SWITCH_DATAFLOW_STATE     dataFlowState;
+    OVS_SWITCH_CONTROLFLOW_STATE  controlFlowState;
 
     volatile LONG pendingInjectedNblCount;
     volatile LONG pendingOidCount;
 
-    NDIS_SWITCH_NIC_OID_REQUEST*	pOldNicRequest;
+    NDIS_SWITCH_NIC_OID_REQUEST*  pOldNicRequest;
 
     NET_IFINDEX datapathIfIndex;
 } OVS_SWITCH_INFO, *POVS_SWITCH_INFO;
+
+#define FWDINFO_LOCK_READ(pForwardInfo, pLockState) NdisAcquireRWLockRead(pForwardInfo->pRwLock, pLockState, 0)
+#define FWDINFO_LOCK_WRITE(pForwardInfo, pLockState) NdisAcquireRWLockWrite(pForwardInfo->pRwLock, pLockState, 0)
+#define FWDINFO_UNLOCK(pForwardInfo, pLockState) NdisReleaseRWLock(pForwardInfo->pRwLock, pLockState)
 
 /*****************************************************  SWITCH ****************************************************/
 

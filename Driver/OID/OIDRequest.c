@@ -76,8 +76,7 @@ NDIS_SWITCH_OBJECT_ID* pPropertyId, NDIS_SWITCH_PROPERTY_ENUM_PARAMETERS** ppSwi
         OVS_CHECK(propertyType != NdisSwitchPropertyTypeCustom);
     }
 
-    pOutputBuffer = ExAllocatePoolWithTag(NonPagedPool, outputBufferLength, g_extAllocationTag);
-
+    pOutputBuffer = KAlloc(outputBufferLength);
     if (pOutputBuffer == NULL)
     {
         status = NDIS_STATUS_RESOURCES;
@@ -89,10 +88,10 @@ NDIS_SWITCH_OBJECT_ID* pPropertyId, NDIS_SWITCH_PROPERTY_ENUM_PARAMETERS** ppSwi
         //bytesNeeded: at first ener in loop, it is 0 (local var); it is an out var of OID_IssueOidRequest
         if (bytesNeeded != 0)
         {
-            ExFreePoolWithTag(pOutputBuffer, g_extAllocationTag);
+            KFree(pOutputBuffer);
 
             outputBufferLength = (USHORT)bytesNeeded;
-            pOutputBuffer = ExAllocatePoolWithTag(NonPagedPool, outputBufferLength, g_extAllocationTag);
+            pOutputBuffer = KAlloc(outputBufferLength);
 
             if (pOutputBuffer == NULL)
             {
@@ -112,10 +111,9 @@ NDIS_SWITCH_OBJECT_ID* pPropertyId, NDIS_SWITCH_PROPERTY_ENUM_PARAMETERS** ppSwi
     } while (status == NDIS_STATUS_INVALID_LENGTH);
 
 Cleanup:
-    if (status != NDIS_STATUS_SUCCESS &&
-        pOutputBuffer != NULL)
+    if (status != NDIS_STATUS_SUCCESS)
     {
-        ExFreePoolWithTag(pOutputBuffer, g_extAllocationTag);
+        KFree(pOutputBuffer);
         pOutputBuffer = NULL;
     }
 
@@ -334,8 +332,7 @@ NDIS_SWITCH_PORT_PROPERTY_ENUM_PARAMETERS** ppPortPropertyEnumParameters)
         OVS_CHECK(propertyType != NdisSwitchPortPropertyTypeCustom);
     }
 
-    pOutputBuffer = ExAllocatePoolWithTag(NonPagedPool, outputBufferLength, g_extAllocationTag);
-
+    pOutputBuffer = KAlloc(outputBufferLength);
     if (pOutputBuffer == NULL)
     {
         status = NDIS_STATUS_RESOURCES;
@@ -346,11 +343,11 @@ NDIS_SWITCH_PORT_PROPERTY_ENUM_PARAMETERS** ppPortPropertyEnumParameters)
     {
         if (bytesNeeded != 0)
         {
-            ExFreePoolWithTag(pOutputBuffer, g_extAllocationTag);
+            KFree(pOutputBuffer);
 
             outputBufferLength = (USHORT)bytesNeeded;
-            pOutputBuffer = ExAllocatePoolWithTag(NonPagedPool, outputBufferLength, g_extAllocationTag);
 
+            pOutputBuffer = KAlloc(outputBufferLength);
             if (pOutputBuffer == NULL)
             {
                 status = NDIS_STATUS_RESOURCES;
@@ -369,10 +366,9 @@ NDIS_SWITCH_PORT_PROPERTY_ENUM_PARAMETERS** ppPortPropertyEnumParameters)
     } while (status == NDIS_STATUS_INVALID_LENGTH);
 
 Cleanup:
-    if (status != NDIS_STATUS_SUCCESS &&
-        pOutputBuffer != NULL)
+    if (status != NDIS_STATUS_SUCCESS)
     {
-        ExFreePoolWithTag(pOutputBuffer, g_extAllocationTag);
+        KFree(pOutputBuffer);
         pOutputBuffer = NULL;
     }
 
@@ -391,16 +387,13 @@ NDIS_STATUS OID_GetPortArrayUnsafe(OVS_SWITCH_INFO* pSwitchInfo, NDIS_SWITCH_POR
 
     do
     {
-        if (pPortArray != NULL)
-        {
-            ExFreePoolWithTag(pPortArray, g_extAllocationTag);
-        }
+        KFree(pPortArray);
 
         if (bytesNeeded != 0)
         {
             arrayLength = bytesNeeded;
-            pPortArray = ExAllocatePoolWithTag(NonPagedPool, arrayLength, g_extAllocationTag);
 
+            pPortArray = KAlloc(arrayLength);
             if (pPortArray == NULL)
             {
                 status = NDIS_STATUS_RESOURCES;
@@ -418,9 +411,9 @@ NDIS_STATUS OID_GetPortArrayUnsafe(OVS_SWITCH_INFO* pSwitchInfo, NDIS_SWITCH_POR
 
     *ppOutPortArray = pPortArray;
 Cleanup:
-    if (status != NDIS_STATUS_SUCCESS && pPortArray != NULL)
+    if (status != NDIS_STATUS_SUCCESS)
     {
-        ExFreePoolWithTag(pPortArray, g_extAllocationTag);
+        KFree(pPortArray);
     }
 
     return status;
@@ -634,7 +627,7 @@ NDIS_STATUS _OnOidNicRequest(_Inout_ OVS_SWITCH_INFO* pSwitchInfo, _In_ const ND
         pSwitchInfo->pOldNicRequest = pNicOidRequest;
 
         pNewNicOidRequest = (PNDIS_SWITCH_NIC_OID_REQUEST)
-            ExAllocatePoolWithTag(NonPagedPool, sizeof(NDIS_SWITCH_NIC_OID_REQUEST), g_extAllocationTag);
+            KAlloc(sizeof(NDIS_SWITCH_NIC_OID_REQUEST));
 
         if (pNewNicOidRequest == NULL)
         {
@@ -704,16 +697,13 @@ NDIS_STATUS OID_GetNicArrayUnsafe(OVS_SWITCH_INFO* pSwitchInfo, NDIS_SWITCH_NIC_
 
     do
     {
-        if (pNicArray != NULL)
-        {
-            ExFreePoolWithTag(pNicArray, g_extAllocationTag);
-        }
+        KFree(pNicArray);
 
         if (bytesNeeded != 0)
         {
             arrayLength = bytesNeeded;
-            pNicArray = ExAllocatePoolWithTag(NonPagedPool, arrayLength, g_extAllocationTag);
 
+            pNicArray = KAlloc(arrayLength);
             if (pNicArray == NULL)
             {
                 status = NDIS_STATUS_RESOURCES;
@@ -732,9 +722,9 @@ NDIS_STATUS OID_GetNicArrayUnsafe(OVS_SWITCH_INFO* pSwitchInfo, NDIS_SWITCH_NIC_
     *ppNicArray = pNicArray;
 
 Cleanup:
-    if (status != NDIS_STATUS_SUCCESS && pNicArray != NULL)
+    if (status != NDIS_STATUS_SUCCESS)
     {
-        ExFreePoolWithTag(pNicArray, g_extAllocationTag);
+        KFree(pNicArray);
     }
 
     return status;
@@ -839,7 +829,7 @@ UINT timeout, ULONG* pOutBytesNeeded)
         goto Cleanup;
     }
 
-    pOidRequest = (POVS_OID_REQUEST)ExAllocatePoolWithTag(NonPagedPool, sizeof(OVS_OID_REQUEST), g_extAllocationTag);
+    pOidRequest = (POVS_OID_REQUEST)KAlloc(sizeof(OVS_OID_REQUEST));
     if (pOidRequest == NULL)
     {
         goto Cleanup;
@@ -910,10 +900,7 @@ Cleanup:
         NdisInterlockedDecrement(&pSwitchInfo->pendingOidCount);
     }
 
-    if (pOidRequest != NULL)
-    {
-        ExFreePoolWithTag(pOidRequest, g_extAllocationTag);
-    }
+    KFree(pOidRequest);
 
     return status;
 }

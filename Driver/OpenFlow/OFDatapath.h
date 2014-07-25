@@ -23,38 +23,82 @@ limitations under the License.
 
 typedef struct _OVS_FLOW_TABLE OVS_FLOW_TABLE;
 
-typedef struct _OVS_DATAPATH_STATS {
+typedef struct _OVS_DATAPATH_STATS
+{
     UINT64 flowTableMatches;
     UINT64 flowTableMissed;
-    //i.e. lost = not sent to usr space
+    //i.e. packets lost = not sent to user space (had no flow)
     UINT64 countLost;
     //# of flows present
+#if OVS_VERSION == OVS_VERSION_1_11
     UINT64 countFlows;
+#elif OVS_VERSION >= OVS_VERSION_2_3
+    UINT64 masksMatched;
+#endif
 }OVS_DATAPATH_STATS, *POVS_DATAPATH_STATS;
+
+typedef struct _OVS_DATAPATH_MEGAFLOW_STATS
+{
+    UINT64 masksMatched;
+    UINT32 countMasks;
+    //may be used in the future. ATM these values are unused
+    BYTE padding[20];
+}OVS_DATAPATH_MEGAFLOW_STATS, *POVS_DATAPATH_MEGAFLOW_STATS;
+
+//NOTE: this enum is used as FLAGS: multiple values can be used, OR-ed together
+typedef enum _OVS_DATAPATH_FEATURE
+{
+    OVS_DATAPATH_FEATURE_LAST_NLA_UNALIGNED = 1,
+    OVS_DATAPATH_FEATURE_MULITPLE_PIDS_PER_VPORT = 2
+}OVS_DATAPATH_FEATURE;
 
 typedef struct _OVS_DATAPATH
 {
-    char*				name;
+    //must be the first field in the struct
+    OVS_REF_COUNT refCount;
+
+    //entry in OVS_DRIVER
+    LIST_ENTRY        listEntry;
+
+    char*                name;
     //we keep one single datapath, which is created at startup.
     //we set 'deleted' = true, when it is 'deleted' from userspace
     //and we set it to false when it's created from userspace.
     //it tells us if the datapath struct is usable.
-    BOOLEAN				deleted;
-    PNDIS_RW_LOCK_EX	pStatsRwLock;
-    OVS_FLOW_TABLE*		pFlowTable;
+    BOOLEAN                deleted;
+    /* protects stats and any other fields, and allows the replace of pFlowTable with another flow table
+    **  to destroy the pFlowTable, you must;
+    **        acquire this rw lock for write (so no thread would get a reference to it in the mean time)
+    **        replace the pFlowTable
+    **        at this moment we can destroy the pFlowTable only when / if no one else is using it.
+    **        ** references to pFlowTable are retrieved (and released) using pDatapath->pRwLock
+    **        call FlowTable_Destroy: if pFlowTable->refCount == 0, it will destroy the flow table
+    **                                else, it will mark pFlowTable for deletion, so that the last dereferncing will destroy it.
+    **        unlock the rw lock (now the datapath is safe to use by other threads, and its pFlowTable is safe to be retrieved)
+    */
+    PNDIS_RW_LOCK_EX    pRwLock;
 
-    NET_IFINDEX			switchIfIndex;
+    OVS_FLOW_TABLE*        pFlowTable;
 
-    OVS_DATAPATH_STATS	statistics;
+    ULONG                switchIfIndex;
+
+    OVS_DATAPATH_STATS    statistics;
+
+    //values: constants of enum OVS_DATAPATH_FEATURE
+    UINT32                userFeatures;
 }OVS_DATAPATH, *POVS_DATAPATH;
+
+#define DATAPATH_LOCK_READ(pDatapath, pLockState) NdisAcquireRWLockRead(pDatapath->pRwLock, pLockState, 0)
+#define DATAPATH_LOCK_WRITE(pDatapath, pLockState) NdisAcquireRWLockWrite(pDatapath->pRwLock, pLockState, 0)
+#define DATAPATH_UNLOCK(pDatapath, pLockState) NdisReleaseRWLock(pDatapath->pRwLock, pLockState)
 
 BOOLEAN CreateMsgFromDatapath(OVS_DATAPATH* pDatapath, UINT32 sequence, UINT8 cmd, _Inout_ OVS_MESSAGE* pMsg, UINT32 dpIfIndex, UINT32 pid);
 
-OVS_DATAPATH* GetDefaultDatapath();
+OVS_DATAPATH* GetDefaultDatapath_Ref(const char* funcName);
 BOOLEAN CreateDefaultDatapath(NDIS_HANDLE ndisFilterHandle);
-
+VOID Datapath_DestroyNow_Unsafe(OVS_DATAPATH* pDatapath);
 BOOLEAN Datapath_FlushFlows(OVS_DATAPATH* pDatapath);
 
-VOID FlowTable_LockRead(_In_ LOCK_STATE_EX* pLockState);
-VOID FlowTable_LockWrite(_In_ LOCK_STATE_EX* pLockState);
-VOID FlowTable_Unlock(_In_ LOCK_STATE_EX* pLockState);
+OVS_FLOW_TABLE* Datapath_ReferenceFlowTable(OVS_DATAPATH* pDatapath);
+
+VOID Datapath_DestroyNow_Unsafe(OVS_DATAPATH* pDatapath);

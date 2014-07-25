@@ -21,9 +21,12 @@ limitations under the License.
 //RFC 1112 (version 1), updated by 2236 (version 2), updated by 3376 (version 3), updated by 4604
 
 // Define the structure of an IGMPv1/IGMPv2 header.
-typedef struct _OVS_IGMP_HEADER {
-    union {
-        struct {
+typedef struct _OVS_IGMP_HEADER
+{
+    union
+    {
+        struct
+        {
             //v1:
             //1 = query; 2 = report
             UINT8 type : 4;
@@ -36,7 +39,9 @@ typedef struct _OVS_IGMP_HEADER {
         //0x12 = Version 1 Membership Report
         UINT8 versionType;
     };
-    union {
+    
+    union
+    {
         // IGMPv1.
         UINT8 reserved;
         // IGMPv2; meaningful only in Membership Query messages = the maximum allowed time before sending a responding report in units of 1/10 second.

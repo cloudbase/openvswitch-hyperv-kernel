@@ -26,14 +26,14 @@ limitations under the License.
 #undef HIDWORD
 #endif
 
-typedef UINT16	LE16;
-typedef UINT32	LE32;
-typedef UINT64	LE64;
+typedef UINT16    LE16;
+typedef UINT32    LE32;
+typedef UINT64    LE64;
 
-typedef UINT16	BE16;
-typedef UINT32	BE32;
-typedef UINT64	BE64;
-typedef UINT64	QWORD;
+typedef UINT16    BE16;
+typedef UINT32    BE32;
+typedef UINT64    BE64;
+typedef UINT64    QWORD;
 
 //byte
 #define LONIBBLE(b)         ((BYTE)(((DWORD_PTR)(b)) & 0xf))

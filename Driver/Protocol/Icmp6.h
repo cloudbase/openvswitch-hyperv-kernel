@@ -21,36 +21,41 @@ limitations under the License.
 #include "Ipv6.h"
 #include "Ethernet.h"
 
-enum { OVS_ICMP6_ND_NEIGHBOR_SOLICITATION = 135, OVS_ICMP6_ND_NEIGHBOR_ADVERTISMENT = 136 };
+enum
+{
+    OVS_ICMP6_ND_NEIGHBOR_SOLICITATION = 135,
+    OVS_ICMP6_ND_NEIGHBOR_ADVERTISMENT = 136
+};
 
 //NEIGHBOR SOLICITATION
 /*
 0                   1                   2                   3
 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 + -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
-| Type		   | Code		   | Checksum						|
+| Type         | Code          | Checksum                       |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-| Reserved														|
+| Reserved                                                      |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|	Target Address												|
-+																+
-|																|
-+																+
-|																|
-+																+
-|																|
+|    Target Address                                             |
++                                                               +
+|                                                               |
++                                                               +
+|                                                               |
++                                                               +
+|                                                               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-| Options ...													|
+| Options ...                                                   |
 + -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
 */
 
-typedef struct _OVS_ICMP6_NEIGHBOR_SOLICITATION {
-    BYTE		type;
-    BYTE		code;
-    UINT16		checksum;
-    UINT32		reserved;
+typedef struct _OVS_ICMP6_NEIGHBOR_SOLICITATION
+{
+    BYTE          type;
+    BYTE          code;
+    UINT16        checksum;
+    UINT32        reserved;
     //The IP address of the target of the solicitation. It MUST NOT be a multicast address.
-    IN6_ADDR	targetIp;
+    IN6_ADDR      targetIp;
 
     /*
     OPTIONS
@@ -72,34 +77,35 @@ C_ASSERT(sizeof(OVS_ICMP6_NEIGHBOR_SOLICITATION) == 24);
 0                   1                   2                   3
 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-| Type	      | Code          | Checksum						|
+| Type        | Code          | Checksum                        |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|R|S|O| Reserved												|
+|R|S|O| Reserved                                                |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|																|
-+																+
-|																|
-+						Target Address							+
-|																|
-+																+
-|																|
+|                                                               |
++                                                               +
+|                                                               |
++                        Target Address                         +
+|                                                               |
++                                                               +
+|                                                               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-| Options ...													|
+| Options ...                                                    |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 */
 
-typedef struct _OVS_ICMP6_NEIGHBOR_ADVERTISMENT {
-    BYTE		type;
-    BYTE		code;
-    UINT16		checksum;
+typedef struct _OVS_ICMP6_NEIGHBOR_ADVERTISMENT
+{
+    BYTE        type;
+    BYTE        code;
+    UINT16      checksum;
 
     //1st bit of reserved: Router flag;
     //2nd bit of reserved: Solicited flag;
     //3rd bit of reserved: Override flag;
     //29 bits are reserved
-    UINT32		reserved;
+    UINT32      reserved;
     //The IP address of the target of the solicitation. It MUST NOT be a multicast address.
-    IN6_ADDR	targetIp;
+    IN6_ADDR    targetIp;
 
     /*
     OPTIONS
@@ -131,13 +137,14 @@ C_ASSERT(sizeof(OVS_ICMP6_NEIGHBOR_SOLICITATION) == 24);
 
 minimum Ipv6 MTU: 1280 (RFC2460)
 */
-typedef struct _OVS_ICMP6_PACKET_TOO_BIG {
-    BYTE		type;
-    BYTE		code;
-    UINT16		checksum;
+typedef struct _OVS_ICMP6_PACKET_TOO_BIG
+{
+    BYTE          type;
+    BYTE          code;
+    UINT16        checksum;
 
-    UINT32		mtu;
-    OVS_IPV6_HEADER	ipv6Header;
+    UINT32        mtu;
+    OVS_IPV6_HEADER    ipv6Header;
 }OVS_ICMP6_PACKET_TOO_BIG;
 
 C_ASSERT(sizeof(OVS_ICMP6_PACKET_TOO_BIG) == 48);
@@ -146,16 +153,22 @@ C_ASSERT(sizeof(OVS_ICMP6_PACKET_TOO_BIG) == 48);
 
 /***********************************************************/
 
-typedef enum { OVS_ICMP6_ND_OPTION_SOURCE_LINK_ADDRESS = 1, OVS_ICMP6_ND_OPTION_TARGET_LINK_ADDRESS = 2, } OVS_ICMP6_ND_OPTION_TYPE;
+typedef enum
+{
+    OVS_ICMP6_ND_OPTION_SOURCE_LINK_ADDRESS = 1,
+    OVS_ICMP6_ND_OPTION_TARGET_LINK_ADDRESS = 2
+} OVS_ICMP6_ND_OPTION_TYPE;
 
-typedef struct _OVS_ICMP6_ND_OPTION {
+typedef struct _OVS_ICMP6_ND_OPTION
+{
     BYTE type;
     BYTE length;
 }OVS_ICMP6_ND_OPTION, *POVS_ICMP6_ND_OPTION;
 
 C_ASSERT(sizeof(OVS_ICMP6_ND_OPTION) == 2);
 
-typedef struct _OVS_ICMP6_ND_OPTION_LINK_ADDRESS {
+typedef struct _OVS_ICMP6_ND_OPTION_LINK_ADDRESS
+{
     //1 for Source Link-layer Address
     //2 for Target Link - layer Address
     BYTE type;

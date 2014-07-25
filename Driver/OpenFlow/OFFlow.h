@@ -20,57 +20,87 @@ limitations under the License.
 #include "Ethernet.h"
 #include "PacketInfo.h"
 
-typedef struct _OVS_CACHE OVS_CACHE;
 typedef struct _OVS_DATAPATH OVS_DATAPATH;
 typedef struct _OVS_ARGUMENT OVS_ARGUMENT;
 typedef struct _OVS_ARGUMENT_GROUP OVS_ARGUMENT_GROUP;
 typedef struct _OVS_NET_BUFFER OVS_NET_BUFFER;
 typedef struct _OVS_MESSAGE OVS_MESSAGE;
+typedef struct _OVS_ACTIONS OVS_ACTIONS;
 
-typedef struct _OVS_PI_RANGE {
+typedef struct _OVS_PI_RANGE
+{
+    //TODO: consider using UINT16 instead
     SIZE_T startRange;
     SIZE_T endRange;
 }OVS_PI_RANGE, *POVS_PI_RANGE;
 
-typedef struct _OVS_FLOW_MASK {
+typedef struct _OVS_FLOW_MASK
+{
     //a flow mask can be shared by multiple packet info-s (to save disk space)
     int refCount;
     //entry in OVS_FLOW_TABLE
-    LIST_ENTRY			listEntry;
-    OVS_PI_RANGE		piRange;
+    LIST_ENTRY          listEntry;
+    OVS_PI_RANGE        piRange;
     //Value is MASK, i.e. its bytes mean 'exact match' or 'wildcard'
-    OVS_OFPACKET_INFO		packetInfo;
+    OVS_OFPACKET_INFO   packetInfo;
 }OVS_FLOW_MASK, *POVS_FLOW_MASK;
 
-typedef struct _OVS_FLOW {
+typedef struct _OVS_FLOW_STATS
+{
+    UINT64 lastUsedTime;
+    UINT64 packetsMached;
+    UINT64 bytesMatched;
+    UINT8  tcpFlags;
+}OVS_FLOW_STATS, *POVS_FLOW_STATS;
+
+typedef struct _OVS_FLOW
+{
+    //must be the first field in the struct
+    OVS_REF_COUNT    refCount;
+
+    //lock that protects the flow against modifications
+    PNDIS_RW_LOCK_EX pRwLock;
+
     //list entry in OVS_FLOW_TABLE
-    LIST_ENTRY	entryInTable;
+    LIST_ENTRY       listEntry;
 
-    OVS_OFPACKET_INFO	maskedPacketInfo;
-    OVS_OFPACKET_INFO	unmaskedPacketInfo;
-    OVS_FLOW_MASK*	pMask;
+#if OVS_VERSION >= OVS_VERSION_2_3
+    //i.e. NUMA node id
+    UINT lastStatsWriter;
+#endif
 
-    OVS_ARGUMENT_GROUP* pActions;
+    //once set, cannot be modified
+    OVS_OFPACKET_INFO    maskedPacketInfo;
+    //once set, cannot be modified
+    OVS_OFPACKET_INFO    unmaskedPacketInfo;
+    //once set, cannot be modified, nor the ptr changed
+    OVS_FLOW_MASK*    pMask;
 
-    //locks the values below
-    NDIS_SPIN_LOCK	spinLock;
+    //once set in a flow, the actions can only be replaced, but the struct OVS_ARGUMENT_GROUP itself cannot be modified
+    OVS_ACTIONS*      pActions;
 
-    struct  {
-        UINT64 lastUsedTime;
-        UINT64 packetsMached;
-        UINT64 bytesMatched;
-        UINT8 tcpFlags;
-    } stats;
+#if OVS_VERSION == OVS_VERSION_1_11
+    OVS_FLOW_STATS    stats;
+#else
+    //we should have one stats struct for each NUMA node
+    OVS_FLOW_STATS**    statsArray;
+#endif
 }OVS_FLOW, *POVS_FLOW;
 
+#define FLOW_LOCK_READ(pFlow, pLockState) NdisAcquireRWLockRead(pFlow->pRwLock, pLockState, 0)
+#define FLOW_LOCK_WRITE(pFlow, pLockState) NdisAcquireRWLockWrite(pFlow->pRwLock, pLockState, 0)
+#define FLOW_UNLOCK(pFlow, pLockState) NdisReleaseRWLock(pFlow->pRwLock, pLockState)
+
 //a match is a pair (packet info, mask), with PI range = to apply mask and compare [startRange, endRange]
-typedef struct _OVS_FLOW_MATCH {
-    OVS_OFPACKET_INFO*		pPacketInfo;
-    OVS_FLOW_MASK*			pFlowMask;
-    OVS_PI_RANGE			piRange;
+typedef struct _OVS_FLOW_MATCH
+{
+    OVS_OFPACKET_INFO*        pPacketInfo;
+    OVS_FLOW_MASK*            pFlowMask;
+    OVS_PI_RANGE              piRange;
 }OVS_FLOW_MATCH, *POVS_FLOW_MATCH;
 
-typedef struct _OVS_WINL_FLOW_STATS {
+typedef struct _OVS_WINL_FLOW_STATS
+{
     UINT64 noOfMatchedPackets;
     UINT64 noOfMatchedBytes;
 }OVS_WINL_FLOW_STATS, *POVS_WINL_FLOW_STATS;
@@ -90,17 +120,19 @@ static __inline SIZE_T RoundDown(SIZE_T a, SIZE_T b)
 /*********************************** FLOW ***********************************/
 
 OVS_FLOW* Flow_Create();
-VOID Flow_Free(OVS_FLOW* pFlow);
+VOID Flow_DestroyNow_Unsafe(OVS_FLOW* pFlow);
 
-static __inline void Flow_ClearStats(OVS_FLOW* pFlow)
-{
-    pFlow->stats.lastUsedTime = 0;
-    pFlow->stats.tcpFlags = 0;
-    pFlow->stats.packetsMached = 0;
-    pFlow->stats.bytesMatched = 0;
-}
+//NOTE: must lock with pFlow's lock
+void Flow_ClearStats_Unsafe(OVS_FLOW* pFlow);
 
-void Flow_UpdateTimeUsed(OVS_FLOW* pFlow, OVS_NET_BUFFER* pOvsNb);
+#if OVS_VERSION == OVS_VERSION_1_11
+void Flow_UpdateTimeUsed_Unsafe(OVS_FLOW* pFlow, OVS_NET_BUFFER* pOvsNb);
+
+#elif OVS_VERSION >= OVS_VERSION_2_3
+
+void Flow_UpdateStats_Unsafe(OVS_FLOW* pFlow, OVS_NET_BUFFER* pOvsNb);
+void Flow_GetStats_Unsafe(_In_ const OVS_FLOW* pFlow, _Out_ OVS_FLOW_STATS* pFlowStats);
+#endif
 
 /*********************************** FLOW MATCH ***********************************/
 void FlowMatch_Initialize(OVS_FLOW_MATCH* pFlowMatch, OVS_OFPACKET_INFO* pPacketInfo, OVS_FLOW_MASK* pFlowMask);
@@ -108,11 +140,28 @@ void FlowMatch_Initialize(OVS_FLOW_MATCH* pFlowMatch, OVS_OFPACKET_INFO* pPacket
 /*********************************** FLOW MASK ***********************************/
 VOID FlowMask_DeleteReference(OVS_FLOW_MASK* pFlowMask);
 OVS_FLOW_MASK* FlowMask_Create();
+
 BOOLEAN FlowMask_Equal(const OVS_FLOW_MASK* pLhs, const OVS_FLOW_MASK* pRhs);
 
 #if OVS_DBGPRINT_FLOW
 void DbgPrintFlow(const char* msg, _In_ const OVS_OFPACKET_INFO* pPacketInfo, _In_ const OVS_OFPACKET_INFO* pMask, ULONG start, ULONG end);
-void DbgPrintFlowWithActions(const char* msg, _In_ const OVS_OFPACKET_INFO* pPacketInfo, _In_ const OVS_OFPACKET_INFO* pMask, ULONG start, ULONG end, _In_ const OVS_ARGUMENT_GROUP* pActions);
+
+void DbgPrintFlowWithActions(const char* msg, _In_ const OVS_OFPACKET_INFO* pPacketInfo, _In_ const OVS_OFPACKET_INFO* pMask,
+    ULONG start, ULONG end, _In_ const OVS_ARGUMENT_GROUP* pActions);
+
 void DbgPrintAllFlows();
-void FlowWithActions_ToString(const char* msg, _In_ const OVS_OFPACKET_INFO* pPacketInfo, _In_ const OVS_OFPACKET_INFO* pMask, ULONG start, ULONG end, _In_ const OVS_ARGUMENT_GROUP* pActions, CHAR str[501]);
+
+void FlowWithActions_ToString(const char* msg, _In_ const OVS_OFPACKET_INFO* pPacketInfo, _In_ const OVS_OFPACKET_INFO* pMask,
+    ULONG start, ULONG end, _In_ const OVS_ARGUMENT_GROUP* pActions, _Out_ CHAR str[501]);
+
+#define DBGPRINT_FLOW(logLevel, msg, pFlow) DbgPrintFlow(msg, &(pFlow->unmaskedPacketInfo), &(pFlow->pMask->packetInfo),        \
+    (ULONG)pFlow->pMask->piRange.startRange, (ULONG)pFlow->pMask->piRange.endRange)
+
+#define DBGPRINT_FLOWMATCH(logLevel, msg, pFlowMatch) DbgPrintFlow(msg,                                                    \
+    (pFlowMatch)->pPacketInfo, (pFlowMatch)->pFlowMask ? &((pFlowMatch)->pFlowMask->packetInfo) : NULL,        \
+    (ULONG)(pFlowMatch)->piRange.startRange, (ULONG)(pFlowMatch)->piRange.endRange)
+
+#else
+#define DBGPRINT_FLOW(logLevel, msg, pFlow)                DEBUGP(logLevel, msg "\n")
+#define DBGPRINT_FLOWMATCH(logLevel, msg, pFlowMatch)    DEBUGP(logLevel, msg "\n")
 #endif

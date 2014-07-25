@@ -131,12 +131,15 @@
     <ClCompile Include="Protocol\Vlan.c" />
     <ClCompile Include="SwitchObjInfo\Sctx_Port.c" />
     <ClCompile Include="Winl\ArgToAttribute.c" />
+    <ClCompile Include="Winl\ArgumentList.c" />
+    <ClCompile Include="Winl\ArgVerification.c" />
     <ClCompile Include="Winl\AttrToArgument.c" />
     <ClCompile Include="Winl\BufferControl.c" />
     <ClCompile Include="Winl\FlowToMessage.c" />
     <ClCompile Include="Winl\Argument.c" />
     <ClCompile Include="Winl\MessageToFlowMatch.c" />
     <ClCompile Include="Winl\Message.c" />
+    <ClCompile Include="Winl\MsgVerification.c" />
     <ClCompile Include="Winl\WinlDatapath.c" />
     <ClCompile Include="Winl\WinlDevice.c" />
     <ClCompile Include="Winl\WinlFlow.c" />
@@ -188,8 +191,7 @@
   </ItemGroup>
   <ItemGroup>
     <Inf Exclude="@(Inf)" Include="*.inf" />
-    <FilesToPackage Include="$(TargetPath)" />
-    <Inf Include="openvswitch.inf" />
+    <FilesToPackage Include="$(TargetPath)" Condition="'$(ConfigurationType)'=='Driver' or '$(ConfigurationType)'=='DynamicLibrary'" />
   </ItemGroup>
   <ItemGroup>
     <None Exclude="@(None)" Include="*.ico;*.cur;*.bmp;*.dlg;*.rct;*.gif;*.jpg;*.jpeg;*.wav;*.jpe;*.tiff;*.tif;*.png;*.rc2" />
@@ -197,6 +199,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\Debug.h" />
+    <ClInclude Include="Core\OvsRefCount.h" />
     <ClInclude Include="OpenFlow\OFFlowTable.h" />
     <ClInclude Include="precomp.h" />
     <ClInclude Include="OpenFlow\OFAction.h" />
@@ -204,7 +207,9 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="SwitchObjInfo\Sctx_Port.h" />
     <ClInclude Include="Winl\ArgToAttribute.h" />
+    <ClInclude Include="Winl\ArgumentList.h" />
     <ClInclude Include="Winl\ArgumentType.h" />
+    <ClInclude Include="Winl\ArgVerification.h" />
     <ClInclude Include="Winl\Attribute.h" />
     <ClInclude Include="Winl\AttrToArgument.h" />
     <ClInclude Include="Winl\BufferControl.h" />
@@ -212,6 +217,7 @@
     <ClInclude Include="Winl\Argument.h" />
     <ClInclude Include="Winl\MessageToFlowMatch.h" />
     <ClInclude Include="Winl\Message.h" />
+    <ClInclude Include="Winl\MsgVerification.h" />
     <ClInclude Include="Winl\Upcall.h" />
     <ClInclude Include="Winl\Winetlink.h" />
     <ClInclude Include="Winl\WinlDatapath.h" />

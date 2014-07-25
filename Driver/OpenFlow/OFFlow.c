@@ -35,6 +35,10 @@ limitations under the License.
 #include "Argument.h"
 #include "Gre.h"
 #include "Checksum.h"
+#include "OFFlowTable.h"
+
+#include "PersistentPort.h"
+
 #include <ntstrsafe.h>
 
 /***********************************************/
@@ -46,18 +50,18 @@ VOID FlowMask_DeleteReference(OVS_FLOW_MASK* pFlowMask)
         return;
     }
 
-    OVS_CHECK(mask->refCount);
+    OVS_CHECK(pFlowMask->refCount);
     pFlowMask->refCount--;
 
     if (!pFlowMask->refCount)
     {
         RemoveEntryList(&pFlowMask->listEntry);
 
-        ExFreePoolWithTag(pFlowMask, g_extAllocationTag);
+        KFree(pFlowMask);
     }
 }
 
-VOID Flow_Free(OVS_FLOW* pFlow)
+VOID Flow_DestroyNow_Unsafe(OVS_FLOW* pFlow)
 {
     if (!pFlow)
     {
@@ -66,10 +70,7 @@ VOID Flow_Free(OVS_FLOW* pFlow)
 
     FlowMask_DeleteReference(pFlow->pMask);
 
-    if (pFlow->pActions)
-    {
-        DestroyArgumentGroup(pFlow->pActions);
-    }
+    OVS_REFCOUNT_DESTROY(pFlow->pActions);
 
     KFree(pFlow);
 }
@@ -78,6 +79,8 @@ void FlowMatch_Initialize(OVS_FLOW_MATCH* pFlowMatch, OVS_OFPACKET_INFO* pPacket
 {
     RtlZeroMemory(pFlowMatch, sizeof(OVS_FLOW_MATCH));
     RtlZeroMemory(pPacketInfo, sizeof(OVS_OFPACKET_INFO));
+
+    pPacketInfo->physical.ovsInPort = OVS_INVALID_PORT_NUMBER;
 
     pFlowMatch->pPacketInfo = pPacketInfo;
     pFlowMatch->pFlowMask = pFlowMask;
@@ -93,17 +96,50 @@ OVS_FLOW* Flow_Create()
 {
     OVS_FLOW* pFlow = NULL;
 
-    pFlow = KAlloc(sizeof(OVS_FLOW));
+    pFlow = KZAlloc(sizeof(OVS_FLOW));
     if (!pFlow)
     {
         return NULL;
     }
 
-    RtlZeroMemory(pFlow, sizeof(OVS_FLOW));
+    pFlow->statsArray = KZAlloc(1 * sizeof(OVS_FLOW_STATS));
+    if (!pFlow->statsArray)
+    {
+        KFree(pFlow);
+        return NULL;
+    }
 
-    NdisAllocateSpinLock(&pFlow->spinLock);
+    pFlow->pRwLock = NdisAllocateRWLock(NULL);
+    pFlow->refCount.Destroy = Flow_DestroyNow_Unsafe;
 
     return pFlow;
+}
+
+void Flow_ClearStats_Unsafe(OVS_FLOW* pFlow)
+{
+#if OVS_VERSION == OVS_VERSION_1_11
+    pFlow->stats.lastUsedTime = 0;
+    pFlow->stats.tcpFlags = 0;
+    pFlow->stats.packetsMached = 0;
+    pFlow->stats.bytesMatched = 0;
+#elif OVS_VERSION >= OVS_VERSION_2_3
+
+    USHORT maxNodeNumber = 0;
+
+    maxNodeNumber = KeQueryHighestNodeNumber();
+    OVS_CHECK(maxNodeNumber == 0);
+
+    for (USHORT i = 0; i <= maxNodeNumber; ++i)
+    {
+        OVS_FLOW_STATS* pFlowStats = NULL;
+
+        pFlowStats = pFlow->statsArray[i];
+
+        if (pFlowStats)
+            RtlZeroMemory(pFlowStats, sizeof(OVS_FLOW_STATS));
+    }
+
+#endif
 }
 
 BOOLEAN FlowMask_Equal(const OVS_FLOW_MASK* pLhs, const OVS_FLOW_MASK* pRhs)
@@ -128,18 +164,18 @@ OVS_FLOW_MASK* FlowMask_Create()
 {
     OVS_FLOW_MASK* pFlowMask = NULL;
 
-    pFlowMask = ExAllocatePoolWithTag(NonPagedPool, sizeof(OVS_FLOW_MASK), g_extAllocationTag);
+    pFlowMask = KZAlloc(sizeof(OVS_FLOW_MASK));
     if (!pFlowMask)
     {
         return NULL;
     }
 
-    pFlowMask->refCount = 0;
-
     return pFlowMask;
 }
 
-void Flow_UpdateTimeUsed(OVS_FLOW* pFlow, OVS_NET_BUFFER* pOvsNb)
+#if OVS_VERSION == OVS_VERSION_1_11
+
+void Flow_UpdateTimeUsed_Unsafe(OVS_FLOW* pFlow, OVS_NET_BUFFER* pOvsNb)
 {
     UINT8 tcpFlags = 0;
     ULONG bufferLen = 0;
@@ -156,15 +192,80 @@ void Flow_UpdateTimeUsed(OVS_FLOW* pFlow, OVS_NET_BUFFER* pOvsNb)
 
     bufferLen = ONB_GetDataLength(pOvsNb);
 
-    NdisAcquireSpinLock(&pFlow->spinLock);
+    //NdisAcquireSpinLock(&pFlow->spinLock);
     pFlow->stats.packetsMached++;
     pFlow->stats.bytesMatched += bufferLen;
 
     pFlow->stats.lastUsedTime = KeQueryPerformanceCounter(NULL).QuadPart;
     pFlow->stats.tcpFlags |= tcpFlags;
 
-    NdisReleaseSpinLock(&pFlow->spinLock);
+    //NdisReleaseSpinLock(&pFlow->spinLock);
 }
+
+#elif OVS_VERSION >= OVS_VERSION_2_3
+
+void Flow_UpdateStats_Unsafe(OVS_FLOW* pFlow, OVS_NET_BUFFER* pOvsNb)
+{
+    OVS_FLOW_STATS* pFlowStats = NULL;
+    USHORT numaNodeId = 0;
+    ULONG bufferLen = 0;
+
+    bufferLen = ONB_GetDataLength(pOvsNb);
+
+    numaNodeId = KeGetCurrentNodeNumber();
+
+    pFlowStats = pFlow->statsArray[numaNodeId];
+
+    if (pFlowStats)
+    {
+        //TODO
+    }
+
+    else
+    {
+        //TODO
+    }
+
+    pFlowStats->packetsMached++;
+    pFlowStats->bytesMatched += bufferLen;
+
+    pFlowStats->lastUsedTime = KeQueryPerformanceCounter(NULL).QuadPart;
+    pFlowStats->tcpFlags |= pOvsNb->pOriginalPacketInfo->tpInfo.tcpFlags;
+}
+
+void Flow_GetStats_Unsafe(_In_ const OVS_FLOW* pFlow, _Out_ OVS_FLOW_STATS* pFlowStats)
+{
+    USHORT maxNodeNumber = 0;
+
+    pFlowStats->tcpFlags = 0;
+    pFlowStats->lastUsedTime = 0;
+
+    maxNodeNumber = KeQueryHighestNodeNumber();
+
+    for (USHORT i = 0; i <= maxNodeNumber; ++i)
+    {
+        OVS_FLOW_STATS* pCurFlowStats = NULL;
+
+        pCurFlowStats = pFlow->statsArray[i];
+
+        if (pCurFlowStats)
+        {
+            UINT64 lastUsedTime = pFlowStats->lastUsedTime;
+
+            pFlowStats->packetsMached += pCurFlowStats->packetsMached;
+            pFlowStats->bytesMatched += pCurFlowStats->bytesMatched;
+
+            pFlowStats->tcpFlags |= pCurFlowStats->tcpFlags;
+
+            if (!lastUsedTime || pCurFlowStats->lastUsedTime > lastUsedTime)
+            {
+                pFlowStats->lastUsedTime = pCurFlowStats->lastUsedTime;
+            }
+        }
+    }
+}
+
+#endif
 
 #if OVS_DBGPRINT_FLOW
 
@@ -466,9 +567,9 @@ static void _DbgPrintFlow_Ipv4(_In_ const OVS_OFPACKET_INFO* pPacketInfo, _In_ c
         len += strlen(tempDest);
     }
 
-    if (!pMask || pMask->netProto.ipv4Info.destinationPort != OVS_PI_MASK_MATCH_WILDCARD(UINT16))
+    if (!pMask || pMask->tpInfo.destinationPort != OVS_PI_MASK_MATCH_WILDCARD(UINT16))
     {
-        ULONG dstPort = pPacketInfo->netProto.ipv4Info.destinationPort;
+        ULONG dstPort = pPacketInfo->tpInfo.destinationPort;
 
         RtlStringCchPrintfA(tempDest, maxTempLen, "ipv4_dst_port: %u; ", dstPort);
         RtlStringCchCopyA(str + len, maxLen - len, tempDest);
@@ -476,9 +577,9 @@ static void _DbgPrintFlow_Ipv4(_In_ const OVS_OFPACKET_INFO* pPacketInfo, _In_ c
         len += strlen(tempDest);
     }
 
-    if (!pMask || pMask->netProto.ipv4Info.sourcePort != OVS_PI_MASK_MATCH_WILDCARD(UINT16))
+    if (!pMask || pMask->tpInfo.sourcePort != OVS_PI_MASK_MATCH_WILDCARD(UINT16))
     {
-        ULONG srcPort = pPacketInfo->netProto.ipv4Info.sourcePort;
+        ULONG srcPort = pPacketInfo->tpInfo.sourcePort;
 
         RtlStringCchPrintfA(tempDest, maxTempLen, "ipv4_src_port: %u; ", srcPort);
         RtlStringCchCopyA(str + len, maxLen - len, tempDest);
@@ -501,6 +602,46 @@ static void _DbgPrintFlow_Ipv6(_In_ const OVS_OFPACKET_INFO* pPacketInfo, _In_ c
     //DEBUGP(LOG_WARN, __FUNCTION__ " have no dbgprint for flow/ipv6!\n");
 }
 
+static void _DbgPrintFlow_Encap(_In_ const OVS_OFPACKET_INFO* pPacketInfo, _In_ const OVS_OFPACKET_INFO* pMask, _In_ ULONG maxLen, _Inout_ CHAR* str, _Inout_ size_t* pLen)
+{
+    size_t len = *pLen;
+
+    enum { maxTempLen = 100 };
+    CHAR tempDest[maxTempLen + 1];
+
+    RtlStringCchCopyA(tempDest, maxTempLen, "encap: {");
+    RtlStringCchCopyA(str + len, maxLen - len, tempDest);
+
+    len += strlen(tempDest);
+
+    if (!pMask || pMask->ethInfo.type != OVS_PI_MASK_MATCH_WILDCARD(UINT32))
+    {
+        BE16 ethType = pPacketInfo->ethInfo.type;
+
+        RtlStringCchPrintfA(tempDest, maxTempLen, "ethType=%u; ", RtlUshortByteSwap(ethType));
+        RtlStringCchCopyA(str + len, maxLen - len, tempDest);
+
+        len += strlen(tempDest);
+    }
+
+    if (!pMask || pMask->ethInfo.tci != OVS_PI_MASK_MATCH_WILDCARD(UINT32))
+    {
+        BE16 tci = pPacketInfo->ethInfo.tci;
+
+        RtlStringCchPrintfA(tempDest, maxTempLen, "tci=%u; ", RtlUshortByteSwap(tci));
+        RtlStringCchCopyA(str + len, maxLen - len, tempDest);
+
+        len += strlen(tempDest);
+    }
+
+    RtlStringCchCopyA(tempDest, maxTempLen, "}");
+    RtlStringCchCopyA(str + len, maxLen - len, tempDest);
+
+    len += strlen(tempDest);
+
+    *pLen = len;
+}
+
 static void _DbgPrintFlow_Set(_In_ const OVS_ARGUMENT_GROUP* pArgs, _In_ ULONG maxLen, _Inout_ CHAR* str)
 {
     OVS_ARGUMENT* pArg;
@@ -514,8 +655,23 @@ static void _DbgPrintFlow_Set(_In_ const OVS_ARGUMENT_GROUP* pArgs, _In_ ULONG m
 
     switch (argType)
     {
-    case OVS_ARGTYPE_PI_PACKET_PRIORITY:
+    case OVS_ARGTYPE_PI_DATAPATH_HASH:
+    {
+        UINT32 hash = GET_ARG_DATA(pArg, UINT32);
+        RtlStringCchPrintfA(tempStr, 100, "dp hash=%u; ", hash);
+        RtlStringCchCatA(str, maxLen, tempStr);
+    }
+        break;
 
+    case OVS_ARGTYPE_PI_DATAPATH_RECIRCULATION_ID:
+    {
+        UINT32 id = GET_ARG_DATA(pArg, UINT32);
+        RtlStringCchPrintfA(tempStr, 100, "dp recirc id=%u; ", id);
+        RtlStringCchCatA(str, maxLen, tempStr);
+    }
+        break;
+
+    case OVS_ARGTYPE_PI_PACKET_PRIORITY:
     {
         UINT32 priority = GET_ARG_DATA(pArg, UINT32);
         RtlStringCchPrintfA(tempStr, 100, "priority=%u; ", priority);
@@ -524,7 +680,6 @@ static void _DbgPrintFlow_Set(_In_ const OVS_ARGUMENT_GROUP* pArgs, _In_ ULONG m
         break;
 
     case OVS_ARGTYPE_PI_PACKET_MARK:
-
     {
         UINT32 mark = GET_ARG_DATA(pArg, UINT32);
         RtlStringCchPrintfA(tempStr, 100, "mark=%u; ", mark);
@@ -533,7 +688,6 @@ static void _DbgPrintFlow_Set(_In_ const OVS_ARGUMENT_GROUP* pArgs, _In_ ULONG m
         break;
 
     case OVS_ARGTYPE_PI_IPV4_TUNNEL:
-
     {
         OF_PI_IPV4_TUNNEL* pTunnel = pArg->data;
         RtlStringCchPrintfA(tempStr, 100, "tunnel={id=%016llx,src=%u.%u.%u.%u, dst=%u.%u.%u.%u, tos=%u, ttl=%u, %flags=0x%x;}; ",
@@ -546,46 +700,35 @@ static void _DbgPrintFlow_Set(_In_ const OVS_ARGUMENT_GROUP* pArgs, _In_ ULONG m
         break;
 
     case OVS_ARGTYPE_PI_ETH_ADDRESS:
-
-    {
         RtlStringCchCatA(str, maxLen, "eth_addr; ");
-    }
         break;
 
     case OVS_ARGTYPE_PI_IPV4:
-
-    {
         RtlStringCchCatA(str, maxLen, "ipv4; ");
-    }
         break;
 
     case OVS_ARGTYPE_PI_IPV6:
-
-    {
         RtlStringCchCatA(str, maxLen, "ipv6; ");
-    }
         break;
 
     case OVS_ARGTYPE_PI_TCP:
-
-    {
         RtlStringCchCatA(str, maxLen, "tcp; ");
-    }
         break;
 
     case OVS_ARGTYPE_PI_UDP:
-
-    {
         RtlStringCchCatA(str, maxLen, "udp; ");
-    }
         break;
 
     case OVS_ARGTYPE_PI_SCTP:
-
-    {
         RtlStringCchCatA(str, maxLen, "sctp; ");
-    }
         break;
+
+    case OVS_ARGTYPE_PI_MPLS:
+        RtlStringCchCatA(str, maxLen, "mpls; ");
+        break;
+
+    default:
+        OVS_CHECK(__UNEXPECTED__);
     }
 }
 
@@ -624,21 +767,19 @@ void FlowWithActions_ToString(const char* msg, _In_ const OVS_OFPACKET_INFO* pPa
     switch (RtlUshortByteSwap(pPacketInfo->ethInfo.type))
     {
     case OVS_ETHERTYPE_ARP:
-    {
         _DbgPrintFlow_Arp(pPacketInfo, pMask, maxLen, str, &len);
-    }
         break;
 
     case OVS_ETHERTYPE_IPV4:
-    {
         _DbgPrintFlow_Ipv4(pPacketInfo, pMask, maxLen, str, &len);
-    }
         break;
 
     case OVS_ETHERTYPE_IPV6:
-    {
         _DbgPrintFlow_Ipv6(pPacketInfo, pMask, maxLen, str, &len);
-    }
+        break;
+
+    case OVS_ETHERTYPE_802_2:
+        _DbgPrintFlow_Encap(pPacketInfo, pMask, maxLen, str, &len);
         break;
 
     default:
@@ -670,32 +811,40 @@ void FlowWithActions_ToString(const char* msg, _In_ const OVS_OFPACKET_INFO* pPa
             }
                 break;
 
-            case OVS_ARGTYPE_GROUP_ACTIONS_UPCALL:
-            {
+            case OVS_ARGTYPE_ACTION_UPCALL_GROUP:
                 RtlStringCchCatA(str, maxLen - 1, "upcall; ");
-            }
                 break;
 
-            case OVS_ARGTYPE_GROUP_ACTIONS_SETINFO:
+            case OVS_ARGTYPE_ACTION_SETINFO_GROUP:
                 _DbgPrintFlow_Set(pArg->data, maxLen, str);
                 break;
 
-            case OVS_ARGTYPE_GROUP_ACTIONS_SAMPLE:
-            {
+            case OVS_ARGTYPE_ACTION_SAMPLE_GROUP:
                 RtlStringCchCatA(str, maxLen - 1, "sample; ");
-            }
                 break;
 
             case OVS_ARGTYPE_ACTION_PUSH_VLAN:
-            {
                 RtlStringCchCatA(str, maxLen - 1, "push vlan; ");
-            }
                 break;
 
             case OVS_ARGTYPE_ACTION_POP_VLAN:
-            {
                 RtlStringCchCatA(str, maxLen - 1, "pop vlan; ");
-            }
+                break;
+
+            case OVS_ARGTYPE_ACTION_PUSH_MPLS:
+                RtlStringCchCatA(str, maxLen - 1, "push mpls; ");
+                break;
+
+            case OVS_ARGTYPE_ACTION_POP_MPLS:
+                RtlStringCchCatA(str, maxLen - 1, "pop mpls; ");
+                break;
+
+            case OVS_ARGTYPE_ACTION_RECIRCULATION:
+                RtlStringCchCatA(str, maxLen - 1, "recirc; ");
+                break;
+
+            case OVS_ARGTYPE_ACTION_HASH:
+                RtlStringCchCatA(str, maxLen - 1, "hash; ");
                 break;
             }
         }
@@ -728,14 +877,15 @@ void DbgPrintAllFlows()
     LOCK_STATE_EX lockState;
     UINT countMsgs = 0;
 
-    pDatapath = GetDefaultDatapath();
-    if (!pDatapath) {
+    pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
+    if (!pDatapath)
+    {
         return;
     }
 
-    FlowTable_LockRead(&lockState);
+    pFlowTable = Datapath_ReferenceFlowTable(pDatapath);
 
-    pFlowTable = pDatapath->pFlowTable;
+    FLOWTABLE_LOCK_READ(pFlowTable, &lockState);
 
     if (pFlowTable->countFlows > 0)
     {
@@ -746,24 +896,28 @@ void DbgPrintAllFlows()
 
         while (pCurItem != pFlowTable->pFlowList)
         {
-            OVS_FLOW* pFlow = CONTAINING_RECORD(pCurItem, OVS_FLOW, entryInTable);
+            OVS_FLOW* pFlow = CONTAINING_RECORD(pCurItem, OVS_FLOW, listEntry);
 
             ULONG startRange = (ULONG)pFlow->pMask->piRange.startRange;
             ULONG endRange = (ULONG)pFlow->pMask->piRange.endRange;
 
-            DbgPrintFlowWithActions("flow dump: ", &pFlow->unmaskedPacketInfo, &pFlow->pMask->packetInfo, startRange, endRange, pFlow->pActions);
+            FLOW_LOCK_READ(pFlow, &lockState);
+            DbgPrintFlowWithActions("flow dump: ", &pFlow->unmaskedPacketInfo, &pFlow->pMask->packetInfo, startRange, endRange, pFlow->pActions->pActionGroup);
+            FLOW_UNLOCK(pFlow, &lockState);
 
             ++i;
             pCurItem = pCurItem->Flink;
         }
     }
-
     else
     {
         DEBUGP(LOG_INFO, "flow table empty!\n");
     }
 
-    FlowTable_Unlock(&lockState);
+    FLOWTABLE_UNLOCK(pFlowTable, &lockState);
+
+    OVS_REFCOUNT_DEREFERENCE(pFlowTable);
+    OVS_REFCOUNT_DEREFERENCE(pDatapath);
 }
 
 #endif
