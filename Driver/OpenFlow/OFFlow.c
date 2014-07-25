@@ -80,6 +80,8 @@ void FlowMatch_Initialize(OVS_FLOW_MATCH* pFlowMatch, OVS_OFPACKET_INFO* pPacket
     RtlZeroMemory(pFlowMatch, sizeof(OVS_FLOW_MATCH));
     RtlZeroMemory(pPacketInfo, sizeof(OVS_OFPACKET_INFO));
 
+    pPacketInfo->physical.ovsInPort = OVS_INVALID_PORT_NUMBER;
+
     pFlowMatch->pPacketInfo = pPacketInfo;
     pFlowMatch->pFlowMask = pFlowMask;
 
