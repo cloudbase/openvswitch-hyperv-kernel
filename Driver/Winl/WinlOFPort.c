@@ -273,6 +273,14 @@ OVS_ERROR OFPort_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         }
     }
 
+    pArg = FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_OFPORT_STATS);
+    if (pArg)
+    {
+        OVS_OFPORT_STATS* pStats = pArg->data;
+
+        pPersPort->stats = *pStats;
+    }
+
     context.sequence = pMsg->sequence;
     context.dpIfIndex = pDatapath->switchIfIndex;
     context.pReplyMsg = &replyMsg;
@@ -481,8 +489,12 @@ OVS_ERROR OFPort_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         pPersPort->upcallPortIds = upcallPids;
     }
 
+    pArg = FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_OFPORT_STATS);
     if (pArg)
     {
+        OVS_OFPORT_STATS* pStats = pArg->data;
+
+        OFPort_AddStats(&(pPersPort->stats), pStats);
     }
 
     context.sequence = pMsg->sequence;
