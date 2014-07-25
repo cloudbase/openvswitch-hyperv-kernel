@@ -195,6 +195,11 @@ VOID Packet_Execute(_In_ OVS_ARGUMENT_GROUP* pArgGroup, const FILE_OBJECT* pFile
         pOvsNb->pSourcePort = pSourcePersPort;
     }
 
+    else
+    {
+        pOvsNb->pSourcePort = PersPort_FindInternal_Ref();
+    }
+
     pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
     if (!pDatapath)
     {
