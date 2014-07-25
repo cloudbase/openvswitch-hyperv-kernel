@@ -45,7 +45,12 @@ typedef struct _OVS_PERSISTENT_PORT
     //OpenFlow / ovs port type
     OVS_OFPORT_TYPE  ofPortType;
     OVS_OFPORT_STATS stats;
-    UINT32           upcallPortId;
+
+#if OVS_VERSION == OVS_VERSION_1_11
+    UINT32                upcallPortId;
+#elif OVS_VERSION >= OVS_VERSION_2_3
+    OVS_UPCALL_PORT_IDS    upcallPortIds;
+#endif
 
     OVS_TUNNELING_PORT_OPTIONS*    pOptions;
 

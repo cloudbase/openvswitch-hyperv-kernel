@@ -326,9 +326,13 @@ typedef enum _OVS_ARGTYPE
 
     OVS_ARGTYPE_OFPORT_OPTIONS_GROUP,       //0x124
 
+    //OVS 1.11:
     //The Port Id associated with the file HANDLE that handles the upcalls coming from this ovs port.
     //if (portId == 0) => do not queue upcall
     //data type: UINT32
+    //OVS 2.3:
+    //array of Port Ids associated with the file HANDLE that handles the upcalls coming from this ovs port.
+    //if we have only one port id, and its value is 0 => don't queue upcall
     OVS_ARGTYPE_OFPORT_UPCALL_PORT_ID,        //0x125
 
     //data type: OVS_OFPORT_STATS

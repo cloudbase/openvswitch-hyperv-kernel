@@ -799,7 +799,21 @@ static BOOLEAN _ProcessPacket(OVS_NET_BUFFER* pOvsNb, _In_ const OVS_PERSISTENT_
         upcallInfo.command = OVS_MESSAGE_COMMAND_PACKET_UPCALL_MISS;
         upcallInfo.pPacketInfo = &packetInfo;
         upcallInfo.pUserData = NULL;
+
+#if OVS_VERSION == OVS_VERSION_1_11
         upcallInfo.portId = pSourcePort ? pSourcePort->upcallPortId : 0;
+#elif OVS_VERSION >= OVS_VERSION_2_3
+        if (pSourcePort)
+        {
+            //TODO: normally, we should do a "find"
+            upcallInfo.portId = (pSourcePort->upcallPortIds.count > 0) ? pSourcePort->upcallPortIds.ids[0] : 0;
+        }
+
+        else
+        {
+            upcallInfo.portId = 0;
+        }
+#endif
 
         //sendpacket to userspace only if the datapath has been 'created' (i.e. activated) from userspace
         //and we have a persistent port associated with the source NDIS_SWITCH_PORT_ID
