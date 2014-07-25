@@ -33,6 +33,8 @@ limitations under the License.
 #include "OFFlowTable.h"
 #include "Winetlink.h"
 
+#define OVS_CHECK_ECHO 0
+
 _Use_decl_annotations_
 OVS_ERROR Flow_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 {
@@ -102,6 +104,14 @@ OVS_ERROR Flow_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         DEBUGP(LOG_ERROR, "flow create fail: have no actions arg!\n");
         return OVS_ERROR_INVAL;
     }
+
+#if OVS_CHECK_ECHO
+    if (!(pMsg->flags & OVS_MESSAGE_FLAG_ECHO))
+    {
+        error = OVS_ERROR_INVAL;
+        goto Cleanup;
+    }
+#endif
 
     pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
     if (!pDatapath)
@@ -333,6 +343,14 @@ OVS_ERROR Flow_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
             error = OVS_ERROR_INVAL;
             goto Cleanup;
         }
+
+#if OVS_CHECK_ECHO
+        if (!(pMsg->flags & OVS_MESSAGE_FLAG_ECHO))
+        {
+            error = OVS_ERROR_INVAL;
+            goto Cleanup;
+        }
+#endif
     }
 
     pDatapath = GetDefaultDatapath_Ref(__FUNCTION__);
