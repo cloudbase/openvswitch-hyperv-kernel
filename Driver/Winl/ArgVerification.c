@@ -569,6 +569,7 @@ static const Func s_verifyArgPI[] =
     [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_IPV6, PI)] = _VerifyArg_PI_Ipv6,
 
     [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_TCP, PI)] = _VerifyArg_PI_Tcp,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_TCP_FLAGS, PI)] = _VerifyArg_NotImplemented,
     [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_UDP, PI)] = _VerifyArg_PI_Udp,
     [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_SCTP, PI)] = _VerifyArg_PI_Sctp,
     [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_ICMP, PI)] = _VerifyArg_PI_Icmp,
@@ -675,7 +676,7 @@ const OVS_ARG_VERIFY_INFO* FindArgVerificationGroup(OVS_ARGTYPE parentArgType)
     return NULL;
 }
 
-static __inline BOOLEAN _VerifyArg_NotImplemented(OVS_ARGUMENT* pArg, OVS_ARGUMENT* pParentArg, OVS_VERIFY_OPTIONS options)
+static BOOLEAN _VerifyArg_NotImplemented(OVS_ARGUMENT* pArg, OVS_ARGUMENT* pParentArg, OVS_VERIFY_OPTIONS options)
 {
     UNREFERENCED_PARAMETER(pArg);
     UNREFERENCED_PARAMETER(pParentArg);
@@ -684,7 +685,7 @@ static __inline BOOLEAN _VerifyArg_NotImplemented(OVS_ARGUMENT* pArg, OVS_ARGUME
     OVS_CHECK_RET(__NOT_IMPLEMENTED__, FALSE);
 }
 
-static __inline BOOLEAN _VerifyGroup_Default(OVS_ARGUMENT* pArg, OVS_ARGUMENT* pParentArg, OVS_VERIFY_OPTIONS options)
+static BOOLEAN _VerifyGroup_Default(OVS_ARGUMENT* pArg, OVS_ARGUMENT* pParentArg, OVS_VERIFY_OPTIONS options)
 {
     OVS_ARGUMENT_GROUP* pGroup = pArg->data;
     const OVS_ARG_VERIFY_INFO* pVerify = FindArgVerificationGroup(pArg->type);

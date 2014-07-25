@@ -57,8 +57,8 @@ typedef enum _OVS_HASH_ALGORITHM_TYPE {
 
 typedef struct _OVS_ACTION_FLOW_HASH {
     //values: constant(s) of enum OVS_HASH_ALGORITHM_TYPE
-    UINT32		hashAlgorithm;
-    UINT32		basis;
+    UINT32        hashAlgorithm;
+    UINT32        basis;
 }OVS_ACTION_FLOW_HASH, *POVS_ACTION_FLOW_HASH;
 
 /**********************************************/

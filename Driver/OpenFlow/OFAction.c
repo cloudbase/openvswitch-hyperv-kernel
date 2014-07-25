@@ -609,6 +609,15 @@ static BOOLEAN _Action_SetInfo(_Inout_ OVS_ARGUMENT_GROUP* pActionGroup, const O
 
         return _ValidateTransportPort(pPacketInfo);
 
+    case OVS_ARGTYPE_PI_TCP_FLAGS:
+        if (pPacketInfo->ipInfo.protocol != IPPROTO_TCP)
+        {
+            DEBUGP(LOG_ERROR, __FUNCTION__ " packet info's proto != tcp\n");
+            return FALSE;
+        }
+
+        return TRUE;
+
     case OVS_ARGTYPE_PI_UDP:
         if (pPacketInfo->ipInfo.protocol != IPPROTO_UDP)
         {

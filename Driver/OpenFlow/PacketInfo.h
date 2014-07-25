@@ -90,9 +90,11 @@ typedef struct _OVS_TRANSPORT_LAYER_INFO {
     BE16 sourcePort;
     //destination port for TCP & UDP. For ICMP it is Code; BE
     BE16 destinationPort;
+
+    BE16 tcpFlags;
 }OVS_TRANSPORT_LAYER_INFO, *POVS_TRANSPORT_LAYER_INFO;
 
-C_ASSERT(sizeof(OVS_TRANSPORT_LAYER_INFO) == 4);
+C_ASSERT(sizeof(OVS_TRANSPORT_LAYER_INFO) == 8);
 
 __declspec(align(8))
 typedef struct _OVS_IP4_INFO

@@ -28,8 +28,8 @@ limitations under the License.
 
 #define OVS_ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
 
-#define OVS_VERSION_1_11		111
-#define OVS_VERSION_2_3			203
+#define OVS_VERSION_1_11        111
+#define OVS_VERSION_2_3            203
 
 #define OVS_VERSION OVS_VERSION_2_3
 
@@ -104,10 +104,10 @@ static __inline VOID* ConstCast(const VOID* value)
     return (VOID*)value;
 }
 
-#define CONST_CAST_TYPE(Type)	                                \
-static __inline Type* ConstCast##Type(const Type* value)	    \
-{														        \
-	return (Type*)value;									    \
+#define CONST_CAST_TYPE(Type)                                    \
+static __inline Type* ConstCast##Type(const Type* value)        \
+{                                                                \
+    return (Type*)value;                                        \
 }
 
 //use e.g.: CONST_CAST_TYPE(OVS_FLOW_STATS)

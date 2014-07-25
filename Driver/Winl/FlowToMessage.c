@@ -112,15 +112,23 @@ static BOOLEAN _CreateMplsArgs(const OVS_OFPACKET_INFO* pPacketInfo, OVS_ARGUMEN
 static BOOLEAN _CreateTcpArgs(const OVS_OFPACKET_INFO* pPacketInfo, const OVS_OFPACKET_INFO* pMask, OVS_ARGUMENT_SLIST_ENTRY** ppArgList)
 {
     OVS_PI_TCP tcpPI = { 0 };
+    BE16 tcpFlags = 0;
 
     const OVS_TRANSPORT_LAYER_INFO* pTransportInfo = (pMask ? &pMask->tpInfo : &pPacketInfo->tpInfo);
 
     tcpPI.source = pTransportInfo->sourcePort;
     tcpPI.destination = pTransportInfo->destinationPort;
+    tcpFlags = pTransportInfo->tcpFlags;
 
     if (!CreateArgInList(OVS_ARGTYPE_PI_TCP, &tcpPI, ppArgList))
     {
         DEBUGP(LOG_ERROR, __FUNCTION__ " failed appending tcp packet info\n");
+        return FALSE;
+    }
+
+    if (!CreateArgInList(OVS_ARGTYPE_PI_TCP_FLAGS, &tcpFlags, ppArgList))
+    {
+        DEBUGP(LOG_ERROR, __FUNCTION__ " failed appending tcp flags\n");
         return FALSE;
     }
 

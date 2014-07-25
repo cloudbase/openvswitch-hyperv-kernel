@@ -101,6 +101,8 @@ static BOOLEAN _ExtractIpv4(VOID* pNbBuffer, _Inout_ OVS_OFPACKET_INFO* pPacketI
 
         pPacketInfo->tpInfo.sourcePort = pTcpHeader->sourcePort;
         pPacketInfo->tpInfo.destinationPort = pTcpHeader->destinationPort;
+
+        pPacketInfo->tpInfo.tcpFlags = GetTcpFlags(pTcpHeader->flagsAndOffset);
     }
     else if (pPacketInfo->ipInfo.protocol == OVS_IPPROTO_UDP)
     {
@@ -303,6 +305,8 @@ static BOOLEAN _ExtractIpv6(VOID* pNbBuffer, ULONG nbLen, _Inout_ OVS_OFPACKET_I
 
         pPacketInfo->tpInfo.sourcePort = pTcpHeader->sourcePort;
         pPacketInfo->tpInfo.destinationPort = pTcpHeader->destinationPort;
+
+        pPacketInfo->tpInfo.tcpFlags = GetTcpFlags(pTcpHeader->flagsAndOffset);
     }
     else if (extensionType == OVS_IPV6_EXTH_UDP)
     {
@@ -892,6 +896,20 @@ static BOOLEAN _GetPIFromArg_Mpls(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout
     return TRUE;
 }
 
+static BOOLEAN _GetPIFromArg_TcpFlags(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout_ OVS_PI_RANGE* pPiRange, _In_ const OVS_ARGUMENT* pArg)
+{
+    BE16 tcpFlags = GET_ARG_DATA(pArg, BE16);
+    SIZE_T size = 0, offset = 0;
+
+    offset = NESTED_OFFSET_OF(OVS_OFPACKET_INFO, tpInfo, OVS_TRANSPORT_LAYER_INFO, tcpFlags);
+    size = sizeof(pPacketInfo->tpInfo.tcpFlags);
+
+    _UpdateRange(pPiRange, offset, size);
+    pPacketInfo->tpInfo.tcpFlags = tcpFlags;
+
+    return TRUE;
+}
+
 static VOID _GetPIFromArg_Tcp(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inout_ OVS_PI_RANGE* pPiRange, _In_ const OVS_ARGUMENT* pTcpArg, BOOLEAN haveIpv4)
 {
     const OVS_PI_TCP* pTcpPI = pTcpArg->data;
@@ -1178,6 +1196,10 @@ BOOLEAN GetPacketInfoFromArguments(_Inout_ OVS_OFPACKET_INFO* pPacketInfo, _Inou
 
         case OVS_ARGTYPE_PI_TCP:
             _GetPIFromArg_Tcp(pPacketInfo, pPiRange, pArg, haveIpv4);
+            break;
+
+        case OVS_ARGTYPE_PI_TCP_FLAGS:
+            _GetPIFromArg_TcpFlags(pPacketInfo, pPiRange, pArg);
             break;
 
         case OVS_ARGTYPE_PI_UDP:
