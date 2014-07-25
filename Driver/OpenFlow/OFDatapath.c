@@ -64,35 +64,41 @@ OVS_DATAPATH* GetDefaultDatapath_Ref(const char* funcName)
     return pDatapath;
 }
 
-static void _GetDatapathStats(OVS_DATAPATH* pDatapath, OVS_DATAPATH_STATS* pStats)
+//unsafe = does not lock datapath
+static void _GetDatapathStats_Unsafe(_In_ OVS_DATAPATH* pDatapath, _Out_ OVS_DATAPATH_STATS* pStats, _Out_ OVS_DATAPATH_MEGAFLOW_STATS* pMegaFlowStats)
 {
     OVS_FLOW_TABLE* pFlowTable = NULL;
-    LOCK_STATE_EX lockStateData = { 0 }, lockStateFlowTable = { 0 };
-
-    DATAPATH_LOCK_READ(pDatapath, &lockStateData);
+#if OVS_VERSION == OVS_VERSION_1_11
+    LOCK_STATE_EX lockState = { 0 };
+#endif
 
     pFlowTable = pDatapath->pFlowTable;
 
-    FLOWTABLE_LOCK_READ(pFlowTable, &lockStateFlowTable);
+#if OVS_VERSION == OVS_VERSION_1_11
+    FLOWTABLE_LOCK_READ(pFlowTable, &lockState);
     pStats->countFlows = pFlowTable->countFlows;
-    FLOWTABLE_UNLOCK(pFlowTable, &lockStateFlowTable);
+    FLOWTABLE_UNLOCK(pFlowTable, &lockState);
+#elif OVS_VERSION >= OVS_VERSION_2_3
+    pMegaFlowStats->masksMatched = pDatapath->statistics.masksMatched;
+    pMegaFlowStats->countMasks = FlowTable_CountMasks(pDatapath->pFlowTable);
+#endif
 
     pStats->flowTableMatches = pDatapath->statistics.flowTableMatches;
     pStats->flowTableMissed = pDatapath->statistics.flowTableMissed;
     pStats->countLost = pDatapath->statistics.countLost;
-
-    DATAPATH_UNLOCK(pDatapath, &lockStateData);
 }
 
 BOOLEAN CreateMsgFromDatapath(OVS_DATAPATH* pDatapath, UINT32 sequence, UINT8 cmd, _Inout_ OVS_MESSAGE* pMsg, UINT32 dpIfIndex, UINT32 pid)
 {
     OVS_ARGUMENT_GROUP* pArgGroup = NULL;
-    OVS_ARGUMENT* pNameArg = NULL, *pStatsArg = NULL;
+    OVS_ARGUMENT* pNameArg = NULL, *pStatsArg = NULL, *pMFStatsArg = NULL, *pUserFeaturesArg = NULL;
     char* datapathName = NULL;
     OVS_DATAPATH_STATS dpStats = { 0 };
+    OVS_DATAPATH_MEGAFLOW_STATS dpMegaFlowStats = { 0 };
     BOOLEAN ok = TRUE;
     ULONG nameLen = 0;
     LOCK_STATE_EX lockState;
+    UINT32 userFeatures = 0;
 
     OVS_CHECK(pMsg);
 
@@ -102,7 +108,8 @@ BOOLEAN CreateMsgFromDatapath(OVS_DATAPATH* pDatapath, UINT32 sequence, UINT8 cm
     datapathName = KAlloc(nameLen);
     RtlCopyMemory(datapathName, pDatapath->name, nameLen);
 
-    _GetDatapathStats(pDatapath, &dpStats);
+    _GetDatapathStats_Unsafe(pDatapath, &dpStats, &dpMegaFlowStats);
+    userFeatures = pDatapath->userFeatures;
 
     DATAPATH_UNLOCK(pDatapath, &lockState);
 
@@ -112,9 +119,8 @@ BOOLEAN CreateMsgFromDatapath(OVS_DATAPATH* pDatapath, UINT32 sequence, UINT8 cm
         return FALSE;
     }
 
-    AllocateArgumentsToGroup(2, pArgGroup);
-
     datapathName = pDatapath->name;
+    AllocateArgumentsToGroup(4, pArgGroup);
 
     pNameArg = CreateArgumentStringA_Alloc(OVS_ARGTYPE_DATAPATH_NAME, datapathName);
     if (!pNameArg)
@@ -135,6 +141,26 @@ BOOLEAN CreateMsgFromDatapath(OVS_DATAPATH* pDatapath, UINT32 sequence, UINT8 cm
 
     pArgGroup->args[1] = *pStatsArg;
     pArgGroup->groupSize += pStatsArg->length;
+
+    pMFStatsArg = CreateArgument_Alloc(OVS_ARGTYPE_DATAPATH_MEGAFLOW_STATS, &dpMegaFlowStats);
+    if (!pMFStatsArg)
+    {
+        ok = FALSE;
+        goto Cleanup;
+    }
+
+    pArgGroup->args[2] = *pMFStatsArg;
+    pArgGroup->groupSize += pMFStatsArg->length;
+
+    pUserFeaturesArg = CreateArgument_Alloc(OVS_ARGTYPE_DATAPATH_USER_FEATURES, &userFeatures);
+    if (!pUserFeaturesArg)
+    {
+        ok = FALSE;
+        goto Cleanup;
+    }
+
+    pArgGroup->args[3] = *pUserFeaturesArg;
+    pArgGroup->groupSize += pUserFeaturesArg->length;
 
     pMsg->length = sizeof(OVS_MESSAGE);
     pMsg->type = OVS_MESSAGE_TARGET_DATAPATH;

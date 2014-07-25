@@ -838,6 +838,11 @@ Cleanup:
     {
         ++pDatapath->statistics.flowTableMatches;
 
+#if OVS_VERSION >= OVS_VERSION_2_3
+        //TODO: don't know when exactly to increase this
+        ++pDatapath->statistics.masksMatched;
+#endif
+
         //we don't use the pActions anymore
         //the actions are not modified, once set in a flow, so there's no need to lock the pFlow to dereference pActions
         OVS_REFCOUNT_DEREFERENCE(pOvsNb->pActions);

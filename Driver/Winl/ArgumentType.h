@@ -293,7 +293,17 @@ typedef enum _OVS_ARGTYPE
     //data type: OVS_DATAPATH_STATS
     OVS_ARGTYPE_DATAPATH_STATS,                //0x103
 
-    OVS_ARGTYPE_LAST_DATAPATH = OVS_ARGTYPE_DATAPATH_STATS,
+    //Datapath request: never
+    //Datapath reply: always
+    //data type: OVS_DATAPATH_MEGAFLOW_STATS
+    OVS_ARGTYPE_DATAPATH_MEGAFLOW_STATS,    //0x104
+
+    //Datapath request: new or set
+    //Datapath reply: always
+    //data type: UINT32. values: constants of enum OVS_DATAPATH_FEATURE
+    OVS_ARGTYPE_DATAPATH_USER_FEATURES,        //0x105
+
+    OVS_ARGTYPE_LAST_DATAPATH = OVS_ARGTYPE_DATAPATH_USER_FEATURES,
 
     /****************************************** TARGET: OFPORT; group: MAIN ************************************************/
 

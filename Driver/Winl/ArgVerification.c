@@ -6,6 +6,7 @@
 #include "Ipv6.h"
 #include "OFFlow.h"
 #include "OFAction.h"
+#include "OFDatapath.h"
 
 #include "Message.h"
 #include "Nbls.h"
@@ -528,6 +529,19 @@ static __inline BOOLEAN _VerifyArg_Action_PopVlan(OVS_ARGUMENT* pArg, OVS_ARGUME
 
 /***********************************************************************/
 
+static BOOLEAN _VerifyArg_Datapath_Features(OVS_ARGUMENT* pArg, OVS_ARGUMENT* pParentArg, OVS_VERIFY_OPTIONS options)
+{
+    UINT32 features = GET_ARG_DATA(pArg, UINT32);
+    UINT32 allFeatures = (OVS_DATAPATH_FEATURE_LAST_NLA_UNALIGNED | OVS_DATAPATH_FEATURE_MULITPLE_PIDS_PER_VPORT);
+
+    UNREFERENCED_PARAMETER(pParentArg);
+    UNREFERENCED_PARAMETER(options);
+
+    OVS_CHECK_RET(features == (features & allFeatures), FALSE);
+
+    return TRUE;
+}
+
 static BOOLEAN _VerifyArg_Packet_Buffer(OVS_ARGUMENT* pArg, OVS_ARGUMENT* pParentArg, OVS_VERIFY_OPTIONS options)
 {
     UNREFERENCED_PARAMETER(pParentArg);
@@ -601,6 +615,8 @@ static const Func s_verifyArgDatapath[] =
     [OVS_ARG_TOINDEX(OVS_ARGTYPE_DATAPATH_NAME, DATAPATH)] = _VerifyArg_NotImplemented,
     [OVS_ARG_TOINDEX(OVS_ARGTYPE_DATAPATH_STATS, DATAPATH)] = _VerifyArg_NotImplemented,
     [OVS_ARG_TOINDEX(OVS_ARGTYPE_DATAPATH_UPCALL_PORT_ID, DATAPATH)] = _VerifyArg_NotImplemented,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_DATAPATH_USER_FEATURES, DATAPATH)] = _VerifyArg_Datapath_Features,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_DATAPATH_MEGAFLOW_STATS, DATAPATH)] = _VerifyArg_NotImplemented,
 };
 
 static const Func s_verifyToAttribsUpcall[] =
