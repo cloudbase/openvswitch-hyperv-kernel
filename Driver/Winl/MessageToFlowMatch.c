@@ -515,24 +515,14 @@ BOOLEAN GetFlowMatchFromArguments(_Inout_ OVS_FLOW_MATCH* pFlowMatch, _In_ const
     }
 
     pEthTypeArg = FindArgument(pPIGroup, OVS_ARGTYPE_PI_ETH_TYPE);
-
-    if (!pEthTypeArg)
-    {
-        DEBUGP(LOG_ERROR, __FUNCTION__ " expected key: %u\n", OVS_ARGTYPE_PI_ETH_TYPE);
-
-        return FALSE;
-    }
+#if OVS_VERSION == OVS_VERSION_1_11
+    EXPECT(pEthAddrArg);
+#endif
 
     pEthAddrArg = FindArgument(pPIGroup, OVS_ARGTYPE_PI_ETH_ADDRESS);
+    EXPECT(pEthAddrArg);
 
-    if (!pEthAddrArg)
-    {
-        DEBUGP(LOG_ERROR, __FUNCTION__ " expected key: %u\n", OVS_ARGTYPE_PI_ETH_ADDRESS);
-
-        return FALSE;
-    }
-
-    if (RtlUshortByteSwap(OVS_ETHERTYPE_QTAG) == GET_ARG_DATA(pEthTypeArg, BE16))
+    if (pEthTypeArg && RtlUshortByteSwap(OVS_ETHERTYPE_QTAG) == GET_ARG_DATA(pEthTypeArg, BE16))
     {
         if (!_PIFromArgs_HandleEncap(pPIGroup, pEthAddrArg, &encapIsValid))
         {
@@ -574,7 +564,7 @@ BOOLEAN GetFlowMatchFromArguments(_Inout_ OVS_FLOW_MATCH* pFlowMatch, _In_ const
                 return FALSE;
             }
 
-            if (!_MasksFromArgs_HandleEncap(pPIMaskGroup, pEncapArg, pEthTypeArg))
+            if (!pEthTypeArg || !_MasksFromArgs_HandleEncap(pPIMaskGroup, pEncapArg, pEthTypeArg))
             {
                 return FALSE;
             }
