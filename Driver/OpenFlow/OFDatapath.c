@@ -119,7 +119,6 @@ BOOLEAN CreateMsgFromDatapath(OVS_DATAPATH* pDatapath, UINT32 sequence, UINT8 cm
         return FALSE;
     }
 
-    datapathName = pDatapath->name;
     AllocateArgumentsToGroup(4, pArgGroup);
 
     pNameArg = CreateArgumentStringA_Alloc(OVS_ARGTYPE_DATAPATH_NAME, datapathName);
