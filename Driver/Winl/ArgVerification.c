@@ -559,6 +559,7 @@ static BOOLEAN _VerifyArg_Packet_Buffer(OVS_ARGUMENT* pArg, OVS_ARGUMENT* pParen
 /***********************************************************************/
 
 static BOOLEAN _VerifyGroup_Default(OVS_ARGUMENT* pArg, OVS_ARGUMENT* pParentArg, OVS_VERIFY_OPTIONS options);
+static BOOLEAN _VerifyGroup_Flow_PI(OVS_ARGUMENT* pArg, OVS_ARGUMENT* pParentArg, OVS_VERIFY_OPTIONS options);
 static BOOLEAN _VerifyArg_NotImplemented(OVS_ARGUMENT* pArg, OVS_ARGUMENT* pParentArg, OVS_VERIFY_OPTIONS options);
 
 static const Func s_verifyArgTunnel[] =
@@ -607,7 +608,7 @@ static const Func s_verifyArgFlow[] =
     [OVS_ARG_TOINDEX(OVS_ARGTYPE_FLOW_TCP_FLAGS, FLOW)] = VerifyArg_Flow_TcpFlags,
     [OVS_ARG_TOINDEX(OVS_ARGTYPE_FLOW_TIME_USED, FLOW)] = NULL,
     [OVS_ARG_TOINDEX(OVS_ARGTYPE_FLOW_CLEAR, FLOW)] = NULL,
-    [OVS_ARG_TOINDEX(OVS_ARGTYPE_FLOW_PI_GROUP, FLOW)] = _VerifyGroup_Default,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_FLOW_PI_GROUP, FLOW)] = _VerifyGroup_Flow_PI,
     [OVS_ARG_TOINDEX(OVS_ARGTYPE_FLOW_ACTIONS_GROUP, FLOW)] = _VerifyGroup_Default,
     [OVS_ARG_TOINDEX(OVS_ARGTYPE_FLOW_MASK_GROUP, FLOW)] = _VerifyGroup_Default
 };
@@ -707,6 +708,37 @@ static BOOLEAN _VerifyGroup_Default(OVS_ARGUMENT* pArg, OVS_ARGUMENT* pParentArg
 {
     OVS_ARGUMENT_GROUP* pGroup = pArg->data;
     const OVS_ARG_VERIFY_INFO* pVerify = FindArgVerificationGroup(pArg->type);
+
+    UNREFERENCED_PARAMETER(pParentArg);
+
+    OVS_CHECK(pVerify);
+
+    OVS_FOR_EACH_ARG(pGroup,
+    {
+        OVS_ARGTYPE first = pVerify->firstChildArgType;
+        Func f = pVerify->f[argType - first + 1];
+
+        if (f && !f(pArg, pArg, options))
+        {
+            OVS_CHECK_RET(__UNEXPECTED__, FALSE);
+        }
+    });
+
+    return TRUE;
+}
+
+static __inline BOOLEAN _VerifyGroup_Flow_PI(OVS_ARGUMENT* pArg, OVS_ARGUMENT* pParentArg, OVS_VERIFY_OPTIONS options)
+{
+    OVS_ARGUMENT_GROUP* pGroup = pArg->data;
+    const OVS_ARG_VERIFY_INFO* pVerify = FindArgVerificationGroup(pArg->type);
+
+    if (options & OVS_VERIFY_OPTION_NEW_OR_SET)
+    {
+#if OVS_VERSION == OVS_VERSION_1_11
+        EXPECT(FindArgument(pGroup, OVS_ARGTYPE_PI_ETH_TYPE));
+#endif
+        EXPECT(FindArgument(pGroup, OVS_ARGTYPE_PI_ETH_ADDRESS));
+    }
 
     UNREFERENCED_PARAMETER(pParentArg);
 
