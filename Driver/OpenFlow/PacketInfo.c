@@ -473,6 +473,14 @@ BOOLEAN PIFromArg_Tunnel(const OVS_ARGUMENT_GROUP* pArgs, _Inout_ OVS_OFPACKET_I
             tunnelFlags |= OVS_TUNNEL_FLAG_CHECKSUM;
             break;
 
+        case OVS_ARGTYPE_PI_TUNNEL_OAM:
+            OVS_CHECK_RET(__NOT_IMPLEMENTED__, FALSE);
+            break;
+
+        case OVS_ARGTYPE_PI_TUNNEL_GENEVE_OPTIONS:
+            OVS_CHECK_RET(__NOT_IMPLEMENTED__, FALSE);
+            break;
+
         default:
             return FALSE;
         }
@@ -541,6 +549,14 @@ BOOLEAN GetIpv4TunnelFromArgumentsSimple(const OVS_ARGUMENT_GROUP* pArgs, _Inout
 
         case OVS_ARGTYPE_PI_TUNNEL_CHECKSUM:
             tunnelFlags |= OVS_TUNNEL_FLAG_CHECKSUM;
+            break;
+
+        case OVS_ARGTYPE_PI_TUNNEL_OAM:
+            OVS_CHECK_RET(__NOT_IMPLEMENTED__, FALSE);
+            break;
+
+        case OVS_ARGTYPE_PI_TUNNEL_GENEVE_OPTIONS:
+            OVS_CHECK_RET(__NOT_IMPLEMENTED__, FALSE);
             break;
 
         default:

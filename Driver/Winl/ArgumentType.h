@@ -182,7 +182,13 @@ typedef enum _OVS_ARGTYPE
     //data type: no data (it's a flag)
     OVS_ARGTYPE_PI_TUNNEL_CHECKSUM,        //0x067
 
-    OVS_ARGTYPE_LAST_PI_TUNNEL = OVS_ARGTYPE_PI_TUNNEL_CHECKSUM,
+    //data type: no data (it's a flag)
+    OVS_ARGTYPE_PI_TUNNEL_OAM,                //0x068
+
+    //data: an array of "geneve options" structs (not yet defined!)
+    OVS_ARGTYPE_PI_TUNNEL_GENEVE_OPTIONS,    //0x069
+
+    OVS_ARGTYPE_LAST_PI_TUNNEL = OVS_ARGTYPE_PI_TUNNEL_GENEVE_OPTIONS,
 
     /************************************* TARGET: PACKET; GROUP: MAIN *****************************************************/
 

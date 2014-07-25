@@ -37,6 +37,14 @@ typedef enum
     //PORT type VXLAN
     OVS_OFPORT_TYPE_VXLAN = 4,
 
+    //NOTE: not supported yet
+    OVS_OFPORT_TYPE_GENEVE = 6,
+    //same as GRE, except keys are 64-bit
+    //NOTE: not supported yet
+    OVS_OFPORT_TYPE_GRE64 = 104,
+    //NOTE: not supported yet
+    OVS_OFPORT_TYPE_LISP = 105,
+
     /********* NOTE: **********
     **        The of port types below are defined by the kernel only.
     **        Care must be taken for future versions, these port type codes not to collide with the userspace port type codes.

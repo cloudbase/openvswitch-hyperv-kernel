@@ -570,6 +570,8 @@ static const Func s_verifyArgTunnel[] =
     [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_TUNNEL_TTL, PI_TUNNEL)] = _VerifyArg_NotImplemented,
     [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_TUNNEL_DONT_FRAGMENT, PI_TUNNEL)] = _VerifyArg_NotImplemented,
     [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_TUNNEL_CHECKSUM, PI_TUNNEL)] = _VerifyArg_NotImplemented,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_TUNNEL_OAM, PI_TUNNEL)] = _VerifyArg_NotImplemented,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_TUNNEL_GENEVE_OPTIONS, PI_TUNNEL)] = _VerifyArg_NotImplemented,
 };
 
 static const Func s_verifyArgPI[] =
