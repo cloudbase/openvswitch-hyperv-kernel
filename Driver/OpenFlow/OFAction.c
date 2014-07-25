@@ -149,10 +149,13 @@ static BOOLEAN _ExecuteAction_Set(OVS_NET_BUFFER* pONb, const OVS_ARGUMENT_GROUP
     return ok;
 }
 
+//TODO: this function was never tested, and is likely to contain errors
 static BOOLEAN _ExecuteAction_Sample(_Inout_ OVS_NET_BUFFER *pOvsNb, _In_ const OVS_ARGUMENT_GROUP* pArguments,
     _In_ const OutputToPortCallback outputToPort)
 {
-    const OVS_ARGUMENT_GROUP* pActionsArgs = NULL;
+    OVS_ARGUMENT_GROUP* pSampleActionsArgs = NULL;
+    OVS_ARGUMENT_GROUP* pOldActionsArgs = NULL;
+    BOOLEAN ok = TRUE;
 
     for (UINT i = 0; i < pArguments->count; ++i)
     {
@@ -166,19 +169,39 @@ static BOOLEAN _ExecuteAction_Sample(_Inout_ OVS_NET_BUFFER *pOvsNb, _In_ const 
             UINT32 value = GET_ARG_DATA(pArg, UINT32);
 
             if ((UINT32)QuickRandom(100) >= value)
-            {
-                return 0;
-            }
+                return TRUE;
         }
             break;
 
         case OVS_ARGTYPE_ACTION_SAMPLE_ACTIONS_GROUP:
-            pActionsArgs = pArg->data;
+            pSampleActionsArgs = pArg->data;
             break;
         }
     }
 
-    return ExecuteActions(pOvsNb, outputToPort);
+    //we must execute the actions in pSampleActionsArgs, so we must save the original
+    //actions arg group, and put it back later (to have a correct cleanup at the end)
+    if (pSampleActionsArgs)
+    {
+        pOldActionsArgs = pOvsNb->pActions->pActionGroup;
+        pOvsNb->pActions->pActionGroup = pSampleActionsArgs;
+    }
+
+    //TODO: the actions in the sample are expected to be:
+    // a) no actions (i.e. pSampleActionsArgs count = 0 and size = 0)
+    // b) send to userspace
+    //In the cases above, it is safe to use this net buffer.
+    //An unexpected case is, if there is an action that modified the ONB. In this case,
+    //we should duplicate the ONB and send the ONB. OR, we might be able to implement 
+    //some copy-on-write functionality for OVS_NET_BUFFER
+    ok = ExecuteActions(pOvsNb, outputToPort);
+
+    if (pSampleActionsArgs)
+    {
+        pOvsNb->pActions->pActionGroup = pOldActionsArgs;
+    }
+
+    return ok;
 }
 
 static BOOLEAN _ExecuteAction_Hash(_Inout_ OVS_NET_BUFFER *pOvsNb, _In_ const OVS_ARGUMENT_GROUP* pArguments)
