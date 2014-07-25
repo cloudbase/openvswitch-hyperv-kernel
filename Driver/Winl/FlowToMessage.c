@@ -1245,7 +1245,8 @@ BOOLEAN CreateMsgFromFlow(_In_ const OVS_FLOW* pFlow, UINT8 command, _Inout_ OVS
     BOOLEAN ok = TRUE;
     UINT16 flowArgCount = 0;
     UINT16 curArg = 0;
-    OVS_WINL_FLOW_STATS stats = { 0 };
+    OVS_WINL_FLOW_STATS winlStats = { 0 };
+    OVS_FLOW_STATS stats = { 0 };
     UINT64 tickCount = 0;
     UINT8 tcpFlags = 0;
     UINT16 argsDataSize = 0;
@@ -1265,10 +1266,17 @@ BOOLEAN CreateMsgFromFlow(_In_ const OVS_FLOW* pFlow, UINT8 command, _Inout_ OVS
     maskedPacketInfo = pFlow->maskedPacketInfo;
     packetInfoMask = pFlow->pMask->packetInfo;
 
+#if OVS_VERSION == OVS_VERSION_1_11
     tickCount = pFlow->stats.lastUsedTime;
     stats.noOfMatchedPackets = pFlow->stats.packetsMached;
     stats.noOfMatchedBytes = pFlow->stats.bytesMatched;
     tcpFlags = pFlow->stats.tcpFlags;
+#elif OVS_VERSION == OVS_VERSION_2_3
+    //TODO: Flow_GetStats()
+    Flow_GetStats_Unsafe(pFlow, &stats);
+    winlStats.noOfMatchedBytes = stats.bytesMatched;
+    winlStats.noOfMatchedPackets = stats.packetsMached;
+#endif
 
     FLOW_UNLOCK(pFlow, &lockState);
 
@@ -1334,7 +1342,7 @@ BOOLEAN CreateMsgFromFlow(_In_ const OVS_FLOW* pFlow, UINT8 command, _Inout_ OVS
     }
 
     //3.4. Flow Stats
-    if (stats.noOfMatchedPackets > 0)
+    if (winlStats.noOfMatchedPackets > 0)
     {
         pFlowStats = CreateArgument_Alloc(OVS_ARGTYPE_FLOW_STATS, &stats);
         if (!pFlowStats)

@@ -818,7 +818,11 @@ static BOOLEAN _ProcessPacket(OVS_NET_BUFFER* pOvsNb, _In_ const OVS_PERSISTENT_
 
     pOvsNb->pActions = OVS_REFCOUNT_REFERENCE(pFlow->pActions);
 
+#if OVS_VERSION == OVS_VERSION_1_11
     Flow_UpdateTimeUsed_Unsafe(pFlow, pOvsNb);
+#elif OVS_VERSION >= OVS_VERSION_2_3
+    Flow_UpdateStats_Unsafe(pFlow, pOvsNb);
+#endif
 
     FLOW_UNLOCK(pFlow, &lockState);
 
