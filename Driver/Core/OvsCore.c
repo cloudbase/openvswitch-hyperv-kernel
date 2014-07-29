@@ -19,27 +19,26 @@ limitations under the License.
 #include "OFDatapath.h"
 #include "OFFlow.h"
 #include "WinlDevice.h"
-#include "OFPort.h"
 #include "Gre.h"
 #include "Vxlan.h"
 #include "OFFlowTable.h"
-#include "PersistentPort.h"
+#include "OFPort.h"
 
 ULONG g_extAllocationTag = 'xsvO';
+NDIS_RW_LOCK_EX* g_pRefRwLock = NULL;
 
-NDIS_STATUS OvsInit(NDIS_HANDLE ndisHandle)
+NDIS_STATUS OvsInit(NET_IFINDEX dpIfIndex)
 {
     INT64 timeInMs = 10 /*mins*/ * 60 /*s*/ * 1000 /*ms*/;
 
-    if (!PersPort_Initialize())
+    if (!OFPort_Initialize())
     {
         return NDIS_STATUS_FAILURE;
     }
 
-    UNREFERENCED_PARAMETER(ndisHandle);
     UNREFERENCED_PARAMETER(timeInMs);
 
-    if (!CreateDefaultDatapath(ndisHandle))
+    if (!CreateDefaultDatapath(dpIfIndex))
     {
         return NDIS_STATUS_FAILURE;
     }
@@ -49,31 +48,7 @@ NDIS_STATUS OvsInit(NDIS_HANDLE ndisHandle)
 
 VOID OvsUninit()
 {
-    OVS_DATAPATH* pDefaultDatapath = NULL;
+    Driver_RemoveDatapath();
 
-    pDefaultDatapath = GetDefaultDatapath();
-    FlowTable_Destroy(pDefaultDatapath->pFlowTable);
-    ExFreePoolWithTag(pDefaultDatapath, g_extAllocationTag);
-
-    PersPort_Uninitialize();
-}
-
-VOID Rwlock_LockRead(_In_ PNDIS_RW_LOCK_EX pRwLock, _In_ LOCK_STATE_EX* pLockState)
-{
-    DEBUGP_LOCK(LOG_INFO, "rw lock: %p; op: read\n", pRwLock);
-
-    NdisAcquireRWLockRead(pRwLock, pLockState, 0);
-}
-
-VOID Rwlock_LockWrite(_In_ PNDIS_RW_LOCK_EX pRwLock, _In_ LOCK_STATE_EX* pLockState)
-{
-    DEBUGP_LOCK(LOG_INFO, "rw lock: %p; op: write\n", pRwLock);
-
-    NdisAcquireRWLockWrite(pRwLock, pLockState, 0);
-}
-
-VOID Rwlock_Unlock(_In_ PNDIS_RW_LOCK_EX pRwLock, _In_ LOCK_STATE_EX* pLockState)
-{
-    DEBUGP_LOCK(LOG_INFO, "rw unlock: %p\n", pRwLock);
-    NdisReleaseRWLock(pRwLock, pLockState);
+    OFPort_Uninitialize();
 }

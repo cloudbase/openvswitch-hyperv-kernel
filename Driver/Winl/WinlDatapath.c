@@ -16,162 +16,112 @@ limitations under the License.
 
 #include "WinlDatapath.h"
 #include "OFDatapath.h"
-#include "OFPort.h"
 #include "List.h"
 #include "Message.h"
 #include "ArgumentType.h"
 #include "WinlDevice.h"
 #include "Winetlink.h"
 #include "Error.h"
-#include "PersistentPort.h"
+#include "OFPort.h"
 #include "Sctx_Nic.h"
 #include "OFFlowTable.h"
 
 #include <Netioapi.h>
 
-extern OVS_SWITCH_INFO* g_pSwitchInfo;
+//NOTE: Assuming the verification part has done its job (arg & msg verification), we can use the input data as valid
 
-_Use_decl_annotations_
-OVS_ERROR Datapath_New(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
+static OVS_ERROR _Datapath_SetName(OVS_DATAPATH* pDatapath, const char* newName)
 {
-    OVS_DATAPATH* pDatapath = NULL;
-    OVS_MESSAGE replyMsg = { 0 };
-    OVS_ARGUMENT* pArgName = NULL, *pArgUpcallPid = NULL;
-    LOCK_STATE_EX lockState = { 0 }, fwdLockState = { 0 };
-    OVS_ERROR error = OVS_ERROR_NOERROR;
     ULONG dpNameLen = 0;
-    UINT32 upcallPid = 0;
 
-    pDatapath = GetDefaultDatapath();
-    if (!pDatapath)
+    if (!pDatapath->deleted)
     {
-        return OVS_ERROR_NODEV;
-    }
-
-    pArgName = FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_DATAPATH_NAME);
-    if (!pArgName)
-    {
-        error = OVS_ERROR_INVAL;
-        goto Cleanup;
-    }
-
-    pArgUpcallPid = FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_DATAPATH_UPCALL_PORT_ID);
-    if (!pArgUpcallPid)
-    {
-        error = OVS_ERROR_INVAL;
-        goto Cleanup;
-    }
-
-    upcallPid = GET_ARG_DATA(pArgUpcallPid, UINT32);
-
-    Rwlock_LockWrite(g_pSwitchInfo->pForwardInfo->pRwLock, &fwdLockState);
-    Rwlock_LockWrite(pDatapath->pStatsRwLock, &lockState);
-
-    if (!pDatapath->deleted || pDatapath->name)
-    {
-        if (pDatapath->name)
-        {
-            ExFreePoolWithTag(pDatapath->name, g_extAllocationTag);
-        }
+        KFree(pDatapath->name);
     }
 
     pDatapath->deleted = FALSE;
 
-    dpNameLen = (ULONG)strlen(pArgName->data) + 1;
+    dpNameLen = (ULONG)strlen(newName) + 1;
 
-    pDatapath->name = ExAllocatePoolWithTag(NonPagedPool, dpNameLen, g_extAllocationTag);
+    pDatapath->name = KAlloc(dpNameLen);
     if (!pDatapath->name)
     {
-        error = OVS_ERROR_INVAL;
-        goto Cleanup;
+        return OVS_ERROR_NOMEM;
     }
 
-    RtlCopyMemory(pDatapath->name, pArgName->data, dpNameLen);
+    RtlCopyMemory(pDatapath->name, newName, dpNameLen);
 
-    pDatapath->switchIfIndex = g_pSwitchInfo->datapathIfIndex;
+    return OVS_ERROR_NOERROR;
+}
 
-    Rwlock_Unlock(pDatapath->pStatsRwLock, &lockState);
-    Rwlock_Unlock(g_pSwitchInfo->pForwardInfo->pRwLock, &fwdLockState);
+_Use_decl_annotations_
+OVS_ERROR WinlDatapath_New(OVS_DATAPATH* pDatapath, const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
+{
+    OVS_MESSAGE replyMsg = { 0 };
+    OVS_ARGUMENT* pArgName = NULL, *pArgUpcallPid = NULL, *pUserFeaturesArg = NULL;
+    LOCK_STATE_EX lockState = { 0 };
+    OVS_ERROR error = OVS_ERROR_NOERROR;
+    UINT32 upcallPid = 0;
+    BOOLEAN locked = FALSE;
 
-    if (0 == pDatapath->switchIfIndex)
+    pArgName = FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_DATAPATH_NAME);
+    OVS_CHECK(pArgName);
+
+    pArgUpcallPid = FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_DATAPATH_UPCALL_PORT_ID);
+    OVS_CHECK(pArgUpcallPid);
+
+    upcallPid = GET_ARG_DATA(pArgUpcallPid, UINT32);
+
+    DATAPATH_LOCK_WRITE(pDatapath, &lockState);
+    locked = TRUE;
+    
+    CHECK_E(_Datapath_SetName(pDatapath, pArgName->data));
+    CHECK_B_E(pDatapath->switchIfIndex, OVS_ERROR_NODEV);
+
+    pUserFeaturesArg = FindArgument(pMsg->pArgGroup, OVS_ARGTYPE_DATAPATH_USER_FEATURES);
+    if (pUserFeaturesArg)
     {
-        error = OVS_ERROR_NODEV;
-        goto Cleanup;
+        pDatapath->userFeatures = GET_ARG_DATA(pUserFeaturesArg, UINT32);
     }
+    
+    DATAPATH_UNLOCK(pDatapath, &lockState);
+    locked = FALSE;
 
-    if (!CreateMsgFromDatapath(pDatapath, pMsg->sequence, OVS_MESSAGE_COMMAND_NEW, &replyMsg, pDatapath->switchIfIndex, pMsg->pid))
-    {
-        if (replyMsg.pArgGroup)
-        {
-            DestroyArgumentGroup(replyMsg.pArgGroup);
-            replyMsg.pArgGroup = NULL;
-        }
-        error = OVS_ERROR_INVAL;
-        goto Cleanup;
-    }
-
+    //TODO: should we set pMsg->dpIfIndex to pDatapath->switchIfIndex?
+    CHECK_E(CreateMsgFromDatapath(pDatapath, pMsg, &replyMsg, OVS_MESSAGE_COMMAND_NEW));
     OVS_CHECK(replyMsg.type == OVS_MESSAGE_TARGET_DATAPATH);
-    error = WriteMsgsToDevice((OVS_NLMSGHDR*)&replyMsg, 1, pFileObject, OVS_MULTICAST_GROUP_NONE);
-    if (error != OVS_ERROR_NOERROR)
-    {
-        goto Cleanup;
-    }
+
+    CHECK_E(WriteMsgsToDevice((OVS_NLMSGHDR*)&replyMsg, 1, pFileObject, OVS_MULTICAST_GROUP_NONE));
 
 Cleanup:
-
-    if (replyMsg.pArgGroup)
-    {
-        DestroyArgumentGroup(replyMsg.pArgGroup);
-        replyMsg.pArgGroup = NULL;
-    }
-
+    DATAPATH_UNLOCK_IF(pDatapath, &lockState, locked);
+    DestroyArgumentGroup(replyMsg.pArgGroup);
     return error;
 }
 
 _Use_decl_annotations_
-OVS_ERROR Datapath_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
+OVS_ERROR WinlDatapath_Delete(OVS_DATAPATH** ppDatapath, const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 {
     OVS_MESSAGE replyMsg = { 0 };
-    OVS_DATAPATH *pDatapath = NULL;
     LOCK_STATE_EX lockState = { 0 };
     OVS_ERROR error = OVS_ERROR_NOERROR;
+    OVS_DATAPATH* pDatapath = *ppDatapath;
 
-    DEBUGP(LOG_ERROR, "cannot delete datapath: we must always have one!\n");
-    pDatapath = GetDefaultDatapath();
-
-    if (!pDatapath)
-    {
-        return OVS_ERROR_NODEV;
-    }
+    DATAPATH_LOCK_READ(pDatapath, &lockState);
 
     if (pDatapath->deleted || !pDatapath->name)
     {
-        DEBUGP(LOG_ERROR, "expected the datapath not to exist");
+        DATAPATH_UNLOCK(pDatapath, &lockState);
+
+        DEBUGP(LOG_ERROR, "expected the datapath to exist");
         error = OVS_ERROR_INVAL;
         goto Cleanup;
     }
 
-    Rwlock_LockWrite(pDatapath->pStatsRwLock, &lockState);
-
     RtlZeroMemory(&replyMsg, sizeof(replyMsg));
-    if (!CreateMsgFromDatapath(pDatapath, pMsg->sequence, OVS_MESSAGE_COMMAND_DELETE, &replyMsg, pDatapath->switchIfIndex, pMsg->pid))
-    {
-        error = OVS_ERROR_INVAL;
-    }
+    CHECK_E(CreateMsgFromDatapath(pDatapath, pMsg, &replyMsg, OVS_MESSAGE_COMMAND_DELETE));
 
-    pDatapath->deleted = TRUE;
-
-    FlowTable_LockWrite(&lockState);
-
-    FlowTable_Destroy(pDatapath->pFlowTable);
-    pDatapath->pFlowTable = NULL;
-
-    FlowTable_Unlock(&lockState);
-
-    ExFreePoolWithTag(pDatapath->name, g_extAllocationTag);
-    pDatapath->name = NULL;
-
-    Rwlock_Unlock(pDatapath->pStatsRwLock, &lockState);
+    DATAPATH_UNLOCK(pDatapath, &lockState);
 
     if (error != OVS_ERROR_NOERROR)
     {
@@ -186,42 +136,25 @@ OVS_ERROR Datapath_Delete(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObjec
     replyMsg.command = OVS_MESSAGE_COMMAND_NEW;
     OVS_CHECK(replyMsg.type == OVS_MESSAGE_TARGET_DATAPATH);
 
-    error = WriteMsgsToDevice((OVS_NLMSGHDR*)&replyMsg, 1, pFileObject, OVS_MULTICAST_GROUP_NONE);
-    if (error != OVS_ERROR_NOERROR)
-    {
-        goto Cleanup;
-    }
+    CHECK_E(WriteMsgsToDevice((OVS_NLMSGHDR*)&replyMsg, 1, pFileObject, OVS_MULTICAST_GROUP_NONE));
 
 Cleanup:
-    if (replyMsg.pArgGroup)
-    {
-        DestroyArgumentGroup(replyMsg.pArgGroup);
-        replyMsg.pArgGroup = NULL;
-    }
+    OVS_REFCOUNT_DEREF_AND_DESTROY(pDatapath);
+    *ppDatapath = NULL;
+
+    DestroyArgumentGroup(replyMsg.pArgGroup);
 
     return error;
 }
 
 _Use_decl_annotations_
-OVS_ERROR Datapath_Get(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
+OVS_ERROR WinlDatapath_Get(OVS_DATAPATH* pDatapath, const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 {
     OVS_MESSAGE replyMsg = { 0 };
-    OVS_DATAPATH *pDatapath = NULL;
     OVS_ERROR error = OVS_ERROR_NOERROR;
 
-    pDatapath = GetDefaultDatapath();
-
-    if (!pDatapath)
-    {
-        return OVS_ERROR_NODEV;
-    }
-
     RtlZeroMemory(&replyMsg, sizeof(replyMsg));
-    if (!CreateMsgFromDatapath(pDatapath, pMsg->sequence, OVS_MESSAGE_COMMAND_NEW, &replyMsg, pDatapath->switchIfIndex, pMsg->pid))
-    {
-        error = OVS_ERROR_INVAL;
-        goto Cleanup;
-    }
+    CHECK_E(CreateMsgFromDatapath(pDatapath, pMsg, &replyMsg, OVS_MESSAGE_COMMAND_NEW));
 
     if (pMsg->flags & OVS_MESSAGE_FLAG_DUMP)
     {
@@ -229,95 +162,60 @@ OVS_ERROR Datapath_Get(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
     }
 
     replyMsg.command = OVS_MESSAGE_COMMAND_NEW;
-    OVS_CHECK(replyMsg.type == OVS_MESSAGE_TARGET_DATAPATH);
 
-    error = WriteMsgsToDevice((OVS_NLMSGHDR*)&replyMsg, 1, pFileObject, OVS_MULTICAST_GROUP_NONE);
-    if (error != OVS_ERROR_NOERROR)
-    {
-        goto Cleanup;
-    }
+    OVS_CHECK(replyMsg.type == OVS_MESSAGE_TARGET_DATAPATH);
+    CHECK_E(WriteMsgsToDevice((OVS_NLMSGHDR*)&replyMsg, 1, pFileObject, OVS_MULTICAST_GROUP_NONE));
 
 Cleanup:
-    if (replyMsg.pArgGroup)
-    {
-        DestroyArgumentGroup(replyMsg.pArgGroup);
-        replyMsg.pArgGroup = NULL;
-    }
+    DestroyArgumentGroup(replyMsg.pArgGroup);
 
     return error;
 }
 
 _Use_decl_annotations_
-OVS_ERROR Datapath_Set(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
+OVS_ERROR WinlDatapath_Set(OVS_DATAPATH* pDatapath, const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 {
-    OVS_DATAPATH *pDatapath = NULL;
     OVS_MESSAGE replyMsg = { 0 };
     OVS_ERROR error = OVS_ERROR_NOERROR;
+    OVS_ARGUMENT* pUserFeaturesArg = NULL;
+    LOCK_STATE_EX lockState = { 0 };
 
-    DEBUGP(LOG_ERROR, "setting dp has no meaning!\n");
-    OVS_CHECK(0);
+    DEBUGP(LOG_WARN, "setting dp has no meaning!\n");
 
-    pDatapath = GetDefaultDatapath();
+    DATAPATH_LOCK_WRITE(pDatapath, &lockState);
 
-    if (!pDatapath)
+    if (pUserFeaturesArg)
     {
-        return OVS_ERROR_NODEV;
+        pDatapath->userFeatures = GET_ARG_DATA(pUserFeaturesArg, UINT32);
     }
 
-    if (!CreateMsgFromDatapath(pDatapath, pMsg->sequence, OVS_MESSAGE_COMMAND_NEW, &replyMsg, pDatapath->switchIfIndex, pMsg->pid))
-    {
-        error = OVS_ERROR_INVAL;
-        goto Cleanup;
-    }
+    DATAPATH_UNLOCK(pDatapath, &lockState);
+
+    CHECK_E(CreateMsgFromDatapath(pDatapath, pMsg, &replyMsg, OVS_MESSAGE_COMMAND_NEW));
 
     OVS_CHECK(replyMsg.type == OVS_MESSAGE_TARGET_DATAPATH);
-    error = WriteMsgsToDevice((OVS_NLMSGHDR*)&replyMsg, 1, pFileObject, OVS_MULTICAST_GROUP_NONE);
-    if (error != OVS_ERROR_NOERROR)
-    {
-        goto Cleanup;
-    }
+    CHECK_E(WriteMsgsToDevice((OVS_NLMSGHDR*)&replyMsg, 1, pFileObject, OVS_MULTICAST_GROUP_NONE));
 
 Cleanup:
-    if (replyMsg.pArgGroup)
-    {
-        DestroyArgumentGroup(replyMsg.pArgGroup);
-        replyMsg.pArgGroup = NULL;
-    }
+    DestroyArgumentGroup(replyMsg.pArgGroup);
 
     return error;
 }
 
 _Use_decl_annotations_
-OVS_ERROR Datapath_Dump(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
+OVS_ERROR WinlDatapath_Dump(OVS_DATAPATH* pDatapath, const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
 {
-    OVS_DATAPATH* pDatapath = NULL;
     OVS_MESSAGE replyMsg = { 0 }, *msgs = NULL;
     OVS_ERROR error = OVS_ERROR_NOERROR;
 
-    pDatapath = GetDefaultDatapath();
-
-    if (!pDatapath)
-    {
-        return OVS_ERROR_NODEV;
-    }
-
     if (!pDatapath->deleted)
     {
-        if (!CreateMsgFromDatapath(pDatapath, pMsg->sequence, OVS_MESSAGE_COMMAND_NEW, &replyMsg, pDatapath->switchIfIndex, pMsg->pid))
-        {
-            error = OVS_ERROR_INVAL;
-            goto Cleanup;
-        }
+        CHECK_E(CreateMsgFromDatapath(pDatapath, pMsg, &replyMsg, OVS_MESSAGE_COMMAND_NEW));
 
         replyMsg.flags |= OVS_MESSAGE_FLAG_MULTIPART;
 
-        msgs = ExAllocatePoolWithTag(NonPagedPool, 2 * sizeof(OVS_MESSAGE), g_extAllocationTag);
-
-        if (!msgs)
-        {
-            error = OVS_ERROR_INVAL;
-            goto Cleanup;
-        }
+        msgs = KAlloc(2 * sizeof(OVS_MESSAGE));
+        CHECK_B_E(msgs, OVS_ERROR_NOMEM);
 
         msgs[0] = replyMsg;
         msgs[1] = replyMsg;
@@ -329,27 +227,13 @@ OVS_ERROR Datapath_Dump(const OVS_MESSAGE* pMsg, const FILE_OBJECT* pFileObject)
         OVS_CHECK(replyMsg.type == OVS_MESSAGE_TARGET_DATAPATH);
         error = WriteMsgsToDevice((OVS_NLMSGHDR*)msgs, 2, pFileObject, OVS_MULTICAST_GROUP_NONE);
 
-        if (replyMsg.pArgGroup)
-        {
-            DestroyArgumentGroup(replyMsg.pArgGroup);
-            replyMsg.pArgGroup = NULL;
-        }
+        DestroyArgumentGroup(replyMsg.pArgGroup);
 
-        ExFreePoolWithTag(msgs, g_extAllocationTag);
+        KFree(msgs);
     }
-
     else
     {
-        replyMsg.type = OVS_MESSAGE_TARGET_DUMP_DONE;
-        replyMsg.command = OVS_MESSAGE_COMMAND_NEW;
-        replyMsg.sequence = pMsg->sequence;
-        replyMsg.dpIfIndex = pDatapath->switchIfIndex;
-        replyMsg.flags = 0;
-        replyMsg.pArgGroup = NULL;
-        replyMsg.length = sizeof(OVS_MESSAGE_DONE);
-        replyMsg.pid = pMsg->pid;
-        replyMsg.reserved = 0;
-        replyMsg.version = 1;
+        CHECK_E(CreateReplyMsgDone(pMsg, &replyMsg, sizeof(OVS_MESSAGE_DONE), OVS_MESSAGE_COMMAND_NEW));
 
         error = WriteMsgsToDevice((OVS_NLMSGHDR*)&replyMsg, 1, pFileObject, OVS_MULTICAST_GROUP_NONE);
     }

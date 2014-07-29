@@ -19,20 +19,23 @@ limitations under the License.
 #include "precomp.h"
 
 //used in ASSERT-s
-#define __NEVER_TRIED_THIS__	0
-#define __NOT_IMPLEMENTED__		0
-#define __UNEXPECTED__			0
+#define __NEVER_TRIED_THIS__      0
+#define __NOT_IMPLEMENTED__       0
+#define __UNEXPECTED__            0
 
 #define KAlloc(size) ExAllocatePoolWithTag(NonPagedPool, size, g_extAllocationTag)
-#define KFree(p) ExFreePoolWithTag(p, g_extAllocationTag)
+#define KFree(p) KFreeSafe(p)
 
 #define OVS_ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
+#define OVS_CONST_CAST(p) ((VOID*)p)
 
-typedef struct _OVS_FLOW		OVS_FLOW;
-typedef struct _OVS_OFPACKET_INFO			OVS_OFPACKET_INFO;
-typedef struct _OF_PI_IPV4_TUNNEL			OF_PI_IPV4_TUNNEL;
-typedef struct _OVS_OFPORT		OVS_OFPORT;
-typedef struct _OVS_DATAPATH	OVS_DATAPATH;
+/*************************************/
+
+typedef struct _OVS_FLOW                     OVS_FLOW;
+typedef struct _OVS_OFPACKET_INFO            OVS_OFPACKET_INFO;
+typedef struct _OF_PI_IPV4_TUNNEL            OF_PI_IPV4_TUNNEL;
+typedef struct _OVS_OFPORT                   OVS_OFPORT;
+typedef struct _OVS_DATAPATH                 OVS_DATAPATH;
 
 /*************************************/
 
@@ -41,12 +44,8 @@ extern ULONG  g_extAllocationTag;
 
 /*************************************/
 
-NDIS_STATUS OvsInit(NDIS_HANDLE ndisHandle);
+NDIS_STATUS OvsInit(NET_IFINDEX dpIfIndex);
 VOID OvsUninit();
-
-VOID Rwlock_LockRead(_In_ PNDIS_RW_LOCK_EX pRwLock, _In_ LOCK_STATE_EX* pLockState);
-VOID Rwlock_LockWrite(_In_ PNDIS_RW_LOCK_EX pRwLock, _In_ LOCK_STATE_EX* pLockState);
-VOID Rwlock_Unlock(_In_ PNDIS_RW_LOCK_EX pRwLock, _In_ LOCK_STATE_EX* pLockState);
 
 __inline void WcharArrayToAscii(CHAR* dest, const WCHAR* src, UINT count)
 {
@@ -66,7 +65,6 @@ static __inline char* IfCountedStringToCharArray(_In_ const IF_COUNTED_STRING* p
     OVS_CHECK(len <= IF_MAX_STRING_SIZE + 1);
 
     result = KAlloc(len + 1);
-
     if (!result)
     {
         return NULL;
@@ -78,30 +76,9 @@ static __inline char* IfCountedStringToCharArray(_In_ const IF_COUNTED_STRING* p
     return result;
 }
 
-static __inline WCHAR* IfCountedStringToWCharArray(_In_ const IF_COUNTED_STRING* pCountedStr)
-{
-    WCHAR* result = NULL;
-    ULONG len = pCountedStr->Length / 2;
-
-    OVS_CHECK(pCountedStr);
-    OVS_CHECK(len <= IF_MAX_STRING_SIZE + 1);
-
-    result = KAlloc(len + 1);
-
-    if (!result)
-    {
-        return NULL;
-    }
-
-    wcscpy_s(result, len, pCountedStr->String);
-    result[len] = 0;
-
-    return result;
-}
-
 static __inline VOID* KZAlloc(SIZE_T size)
 {
-    VOID* p = ExAllocatePoolWithTag(NonPagedPool, size, g_extAllocationTag);
+    VOID* p = KAlloc(size);
     if (!p)
     {
         return NULL;
@@ -109,4 +86,12 @@ static __inline VOID* KZAlloc(SIZE_T size)
 
     RtlZeroMemory(p, size);
     return p;
+}
+
+static __inline VOID KFreeSafe(VOID* p)
+{
+    if (p)
+    {
+        ExFreePoolWithTag(p, g_extAllocationTag);
+    }
 }

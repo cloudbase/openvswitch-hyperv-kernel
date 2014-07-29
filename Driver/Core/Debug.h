@@ -26,12 +26,12 @@ limitations under the License.
 
 extern ULONG g_debugLevel;
 
-#define DEBUGP(lev, str, ...)	\
-{								\
-	if ((lev) <= g_debugLevel)	\
-    {								\
-	DbgPrint(str, __VA_ARGS__);	\
-    }								\
+#define DEBUGP(lev, str, ...)          \
+{                                      \
+    if ((lev) <= g_debugLevel)         \
+    {                                  \
+         DbgPrint(str, __VA_ARGS__);   \
+    }                                  \
 }
 
 #else
@@ -40,31 +40,80 @@ extern ULONG g_debugLevel;
 
 #endif
 
-#define OVS_DBGPRINT_OID		0
-#define OVS_DBGPRINT_ARG		0
-#define OVS_DBGPRINT_FRAMES		0
-#define OVS_DBGPRINT_FLOW		0
-#define OVS_DBGPRINT_FILE		0
-#define OVS_DBGPRINT_LOCK		0
+#define OVS_DBGPRINT_OID         0
+#define OVS_DBGPRINT_ARG         0
+#define OVS_DBGPRINT_FRAMES      0
+#define OVS_DBGPRINT_FLOW        0
+#define OVS_DBGPRINT_FILE        0
+#define OVS_DBGPRINT_LOCK        0
 
-#define OVS_VERIFY_WINL_MESSAGES	1
-#define OVS_USE_ASSERTS				0
+#define OVS_VERIFY_WINL_MESSAGES    1
+#define OVS_USE_ASSERTS             0
 
 #ifdef DBG
 
-#if OVS_USE_ASSERTS
-#define OVS_CHECK(x) ASSERT(x)
-#else
-#define OVS_CHECK(x)
-#endif //OVS_USE_ASSERTS
+#define OVS_USE_REFCOUNT_CALL_STACK    1
+
+#undef OVS_USE_ASSERTS
+#define OVS_USE_ASSERTS                1
 
 #else
-#define OVS_CHECK(x)
+#define OVS_USE_REFCOUNT_CALL_STACK    0
 
 //we won't verify WINL messages on release mode
 #undef OVS_VERIFY_WINL_MESSAGES
-#define OVS_VERIFY_WINL_MESSAGES	0
+#define OVS_VERIFY_WINL_MESSAGES       0
 #endif //DBG
+
+//OVS_USE_ASSERTS is not #define-d on release mode
+#if OVS_USE_ASSERTS
+#define OVS_CHECK(x) ASSERT(x)
+#define OVS_CHECK_OR(x, expr) { if (!(x)) { ASSERT(0); expr; } }
+#define OVS_CHECK_BREAK(x) { if (!(x)) { ASSERT(0); break; } }
+#define OVS_CHECK_RET(x, value) { if (!(x)) { ASSERT(0); return value; } }
+#define OVS_CHECK_GC(x) { if (!(x)) { ASSERT(0); goto Cleanup; } }
+#else
+#define OVS_CHECK(x)
+#define OVS_CHECK_OR(x, expr) { if (!(x)) expr; }
+#define OVS_CHECK_BREAK(x) { if (!(x)) break; }
+#define OVS_CHECK_RET(x, value) { if (!(x)) return value; }
+#define OVS_CHECK_GC(x) { if (!(x)) goto Cleanup; }
+#endif //OVS_USE_ASSERTS
+
+//on failure, return FALSE
+#define EXPECT(expr)    OVS_CHECK_RET(expr, FALSE)
+
+#define CHECK_E(expr)                           \
+{                                               \
+    error = (expr);                             \
+    if (error != OVS_ERROR_NOERROR)             \
+    {                                           \
+    OVS_CHECK(__UNEXPECTED__);                  \
+    goto Cleanup;                               \
+    }                                           \
+}
+
+//check boolean expr, on failure, set ok = FALSE and goto Cleanup
+#define CHECK_B(expr)                           \
+{                                               \
+    if (!(expr))                                \
+    {                                           \
+    ok = FALSE;                                 \
+    OVS_CHECK(__UNEXPECTED__);                  \
+    goto Cleanup;                               \
+    }                                           \
+}
+
+//check boolean expr, and use OVS_ERROR
+#define CHECK_B_E(expr, errorVal)               \
+{                                               \
+    if (!(expr))                                \
+    {                                           \
+    error = errorVal;                           \
+    OVS_CHECK(__UNEXPECTED__);                  \
+    goto Cleanup;                               \
+    }                                           \
+}
 
 #pragma warning( disable: 4127)
 
@@ -105,7 +154,7 @@ extern ULONG g_debugLevel;
 #endif
 
 #define OVS_IPV4_U32_TO_4_BYTES(ip)     \
-	RtlUlongByteSwap(ip) >> 24,			\
-	(RtlUlongByteSwap(ip) >> 16) & 0xff,\
-	(RtlUlongByteSwap(ip) >> 8) & 0xff, \
-	RtlUlongByteSwap(ip) & 0xff
+    RtlUlongByteSwap(ip) >> 24,            \
+    (RtlUlongByteSwap(ip) >> 16) & 0xff,\
+    (RtlUlongByteSwap(ip) >> 8) & 0xff, \
+    RtlUlongByteSwap(ip) & 0xff

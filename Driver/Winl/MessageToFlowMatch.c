@@ -25,77 +25,7 @@ limitations under the License.
 #include "Ipv6.h"
 #include "OFAction.h"
 #include "ArgumentType.h"
-#include "PersistentPort.h"
-
-BOOLEAN GetPacketContextFromPIArgs(_In_ const OVS_ARGUMENT_GROUP* pArgGroup, _Inout_ OVS_OFPACKET_INFO* pPacketInfo)
-{
-    OF_PI_IPV4_TUNNEL* pTunnelInfo = &pPacketInfo->tunnelInfo;
-    OVS_PI_RANGE* pPiRange = NULL;
-    OVS_ARGUMENT* pDatapathInPortArg = NULL;
-    OVS_FLOW_MATCH flowMatch = { 0 };
-
-    pPacketInfo->physical.ovsInPort = OVS_INVALID_PORT_NUMBER;
-    pPacketInfo->physical.packetPriority = 0;
-    pPacketInfo->physical.packetMark = 0;
-
-    RtlZeroMemory(pTunnelInfo, sizeof(OF_PI_IPV4_TUNNEL));
-    RtlZeroMemory(&flowMatch, sizeof(flowMatch));
-    flowMatch.pPacketInfo = pPacketInfo;
-
-    OVS_CHECK(pArgGroup);
-
-    pPiRange = &flowMatch.piRange;
-    pPacketInfo = flowMatch.pPacketInfo;
-
-    for (UINT i = 0; i < pArgGroup->count; ++i)
-    {
-        OVS_ARGUMENT* pArg = pArgGroup->args + i;
-        OVS_ARGTYPE argType = pArg->type;
-
-        switch (argType)
-        {
-        case OVS_ARGTYPE_PI_PACKET_PRIORITY:
-
-            PIFromArg_PacketPriority(pPacketInfo, pPiRange, pArg);
-            break;
-
-        case OVS_ARGTYPE_PI_PACKET_MARK:
-
-            PIFromArg_PacketMark(pPacketInfo, pPiRange, pArg);
-            break;
-
-        case OVS_ARGTYPE_PI_DP_INPUT_PORT:
-
-            pDatapathInPortArg = pArg;
-            if (!PIFromArg_DatapathInPort(pPacketInfo, pPiRange, pArg, /*is mask*/FALSE))
-                return FALSE;
-
-            break;
-
-        case OVS_ARGTYPE_GROUP_PI_TUNNEL:
-        {
-            OVS_CHECK(IsArgTypeGroup(pArg->type));
-
-            if (!PIFromArg_Tunnel(pArg->data, pPacketInfo, pPiRange, /*is mask*/ FALSE))
-            {
-                return FALSE;
-            }
-        }
-            break;
-
-        default:
-            //nothing to do here: the rest are non-context / non-metadata keys
-            break;
-        }
-    }
-
-    if (!pDatapathInPortArg)
-    {
-        PIFromArg_SetDefaultDatapathInPort(pPacketInfo, pPiRange, FALSE);
-    }
-
-    return TRUE;
-}
+#include "OFPort.h"
 
 static BOOLEAN _VerifyMasks(_In_ const OVS_FLOW_MATCH* pFlowMatch, _In_ const OVS_ARGUMENT_GROUP* pPIGroup, _In_ const OVS_ARGUMENT_GROUP* pMaskGroup)
 {
@@ -105,7 +35,7 @@ static BOOLEAN _VerifyMasks(_In_ const OVS_FLOW_MATCH* pFlowMatch, _In_ const OV
     BOOLEAN isWildcard = FALSE;
     BOOLEAN isIcmp6 = FALSE;
 
-    OVS_OFPACKET_INFO* pPacketInfo = NULL, *pMask = NULL;
+    const OVS_OFPACKET_INFO* pPacketInfo = NULL, *pMask = NULL;
 
     OVS_CHECK(pFlowMatch);
 
@@ -114,8 +44,8 @@ static BOOLEAN _VerifyMasks(_In_ const OVS_FLOW_MATCH* pFlowMatch, _In_ const OV
         return TRUE;
     }
 
-    pPacketInfo = pFlowMatch->pPacketInfo;
-    pMask = (pFlowMatch->pFlowMask ? &pFlowMatch->pFlowMask->packetInfo : NULL);
+    pPacketInfo = &(pFlowMatch->packetInfo);
+    pMask = (pFlowMatch->haveMask ? &(pFlowMatch->flowMask.packetInfo) : NULL);
 
     //NOTE: we must have key, but we need not have mask!
     OVS_CHECK(pPacketInfo);
@@ -127,53 +57,20 @@ static BOOLEAN _VerifyMasks(_In_ const OVS_FLOW_MATCH* pFlowMatch, _In_ const OV
     {
     case OVS_ETHERTYPE_ARP:
         pPacketInfoArg = FindArgument(pPIGroup, OVS_ARGTYPE_PI_ARP);
-
         pMaskArg = FindArgument(pMaskGroup, OVS_ARGTYPE_PI_ARP);
 
-        if (isWildcard && pMaskArg)
-        {
-            DEBUGP(LOG_ERROR, __FUNCTION__ " cannot have mask arg type %u: eth type is wildcard!\n", OVS_ARGTYPE_PI_ARP);
-
-            //remove the assert and the 'return FALSE' if it fails, and it also looks to be a valid scenario
-            OVS_CHECK(__UNEXPECTED__);
-            return FALSE;
-        }
-
-        else if (!isWildcard && !pPacketInfoArg)
-        {
-            DEBUGP(LOG_ERROR, __FUNCTION__ " arg type %u -- mask for eth type is 'exact', but we don't have the key!\n", OVS_ARGTYPE_PI_ARP);
-
-            //remove the assert and the 'return FALSE' if it fails, and it also looks to be a valid scenario
-            OVS_CHECK(__UNEXPECTED__);
-            return FALSE;
-        }
-
+        EXPECT(!isWildcard || !pMaskArg);
+        EXPECT(isWildcard || pPacketInfoArg);
         break;
 
     case OVS_ETHERTYPE_IPV4:
         isIpv4 = TRUE;
 
         pPacketInfoArg = FindArgument(pPIGroup, OVS_ARGTYPE_PI_IPV4);
-
         pMaskArg = FindArgument(pMaskGroup, OVS_ARGTYPE_PI_IPV4);
 
-        if (isWildcard && pMaskArg)
-        {
-            DEBUGP(LOG_ERROR, __FUNCTION__ " cannot have mask arg type %u: eth type is wildcard!\n", OVS_ARGTYPE_PI_IPV4);
-
-            //remove the assert and the 'return FALSE' if it fails, and it also looks to be a valid scenario
-            OVS_CHECK(__UNEXPECTED__);
-            return FALSE;
-        }
-
-        else if (!isWildcard && !pPacketInfoArg)
-        {
-            DEBUGP(LOG_ERROR, __FUNCTION__ " arg type %u -- mask for eth type is 'exact', but we don't have the key!\n", OVS_ARGTYPE_PI_IPV4);
-
-            //remove the assert and the 'return FALSE' if it fails, and it also looks to be a valid scenario
-            OVS_CHECK(__UNEXPECTED__);
-            return FALSE;
-        }
+        EXPECT(!isWildcard || !pMaskArg);
+        EXPECT(isWildcard || pPacketInfoArg);
 
         break;
 
@@ -181,36 +78,14 @@ static BOOLEAN _VerifyMasks(_In_ const OVS_FLOW_MATCH* pFlowMatch, _In_ const OV
         isIpv6 = TRUE;
 
         pPacketInfoArg = FindArgument(pPIGroup, OVS_ARGTYPE_PI_IPV6);
-
         pMaskArg = FindArgument(pMaskGroup, OVS_ARGTYPE_PI_IPV6);
 
-        if (isWildcard && pMaskArg)
-        {
-            DEBUGP(LOG_ERROR, __FUNCTION__ " cannot have mask arg type %u: eth type is wildcard!\n", OVS_ARGTYPE_PI_IPV6);
-
-            //remove the assert and the 'return FALSE' if it fails, and it also looks to be a valid scenario
-            OVS_CHECK(__UNEXPECTED__);
-            return FALSE;
-        }
-
-        else if (!isWildcard && !pPacketInfoArg)
-        {
-            DEBUGP(LOG_ERROR, __FUNCTION__ " arg type %u -- mask for eth type is 'exact', but we don't have the key!\n", OVS_ARGTYPE_PI_IPV6);
-
-            //remove the assert and the 'return FALSE' if it fails, and it also looks to be a valid scenario
-            OVS_CHECK(__UNEXPECTED__);
-            return FALSE;
-        }
+        EXPECT(!isWildcard || !pMaskArg);
+        EXPECT(isWildcard || pPacketInfoArg);
         break;
 
     default:
-        if (!isWildcard)
-        {
-            DEBUGP(LOG_ERROR, __FUNCTION__ " invalid eth type, when eth type mask = exact!\n");
-            //remove the assert and the 'return FALSE' if it fails, and it also looks to be a valid scenario
-            OVS_CHECK(__UNEXPECTED__);
-            return FALSE;
-        }
+        EXPECT(isWildcard);
         //ignore: we have eth type wildcarded
     }
 
@@ -218,7 +93,6 @@ static BOOLEAN _VerifyMasks(_In_ const OVS_FLOW_MATCH* pFlowMatch, _In_ const OV
     {
         isWildcard = (pMask->ipInfo.protocol == OVS_PI_MASK_MATCH_WILDCARD(UINT8) ? TRUE : FALSE);
     }
-
     else
     {
         isWildcard = FALSE;
@@ -230,173 +104,63 @@ static BOOLEAN _VerifyMasks(_In_ const OVS_FLOW_MATCH* pFlowMatch, _In_ const OV
     {
     case OVS_IPPROTO_TCP:
         pPacketInfoArg = FindArgument(pPIGroup, OVS_ARGTYPE_PI_TCP);
-
         pMaskArg = FindArgument(pMaskGroup, OVS_ARGTYPE_PI_TCP);
 
-        if (pMaskArg && !isIpv4 && !isIpv6)
-        {
-            DEBUGP(LOG_ERROR, __FUNCTION__ " arg type %u: we have neither ipv4, nor ipv6, but have mask for tcp? (bad)\n", OVS_ARGTYPE_PI_TCP);
-
-            //remove the assert and the 'return FALSE' if it fails, and it also looks to be a valid scenario
-            OVS_CHECK(__UNEXPECTED__);
-            return FALSE;
-        }
-        else if (isWildcard && pMaskArg)
-        {
-            //the userspace actually sets mask this way
-        }
-        else if (!isWildcard && !pPacketInfoArg)
-        {
-            DEBUGP(LOG_ERROR, __FUNCTION__ " arg type %u -- mask for proto is 'exact', but we don't have the key!\n", OVS_ARGTYPE_PI_TCP);
-
-            //remove the assert and the 'return FALSE' if it fails, and it also looks to be a valid scenario
-            OVS_CHECK(__UNEXPECTED__);
-            return FALSE;
-        }
-
+        EXPECT(!(pMaskArg && !isIpv4 && !isIpv6));
+        EXPECT(isWildcard || pPacketInfoArg);
         break;
 
     case OVS_IPPROTO_UDP:
         pPacketInfoArg = FindArgument(pPIGroup, OVS_ARGTYPE_PI_UDP);
-
         pMaskArg = FindArgument(pMaskGroup, OVS_ARGTYPE_PI_UDP);
 
-        if (pMaskArg && !isIpv4 && !isIpv6)
-        {
-            DEBUGP(LOG_ERROR, __FUNCTION__ " arg type %u: we have neither ipv4, nor ipv6, but have mask for udp? (bad)\n", OVS_ARGTYPE_PI_UDP);
-
-            return FALSE;
-        }
-        else if (isWildcard && pMaskArg)
-        {
-            //the userspace actually sets mask this way
-        }
-        else if (!isWildcard && !pPacketInfoArg)
-        {
-            DEBUGP(LOG_ERROR, __FUNCTION__ " arg type %u -- mask for proto is 'exact', but we don't have the key!\n", OVS_ARGTYPE_PI_UDP);
-
-            return FALSE;
-        }
+        EXPECT(!(pMaskArg && !isIpv4 && !isIpv6));
+        EXPECT(isWildcard || pPacketInfoArg);
         break;
 
     case OVS_IPPROTO_SCTP:
         pPacketInfoArg = FindArgument(pPIGroup, OVS_ARGTYPE_PI_SCTP);
-
         pMaskArg = FindArgument(pMaskGroup, OVS_ARGTYPE_PI_SCTP);
 
-        if (pMaskArg && !isIpv4 && !isIpv6)
-        {
-            DEBUGP(LOG_ERROR, __FUNCTION__ " arg type %u: we have neither ipv4, nor ipv6, but have mask for sctp? (bad)\n", OVS_ARGTYPE_PI_SCTP);
-
-            return FALSE;
-        }
-        else if (isWildcard && pMaskArg)
-        {
-            //the userspace actually sets mask this way
-        }
-        else if (!isWildcard && !pPacketInfoArg)
-        {
-            DEBUGP(LOG_ERROR, __FUNCTION__ " arg type %u -- mask for proto is 'exact', but we don't have the key!\n", OVS_ARGTYPE_PI_SCTP);
-
-            return FALSE;
-        }
-
+        EXPECT(!(pMaskArg && !isIpv4 && !isIpv6));
+        EXPECT(isWildcard || pPacketInfoArg);
         break;
 
     case OVS_IPPROTO_ICMP:
         pPacketInfoArg = FindArgument(pPIGroup, OVS_ARGTYPE_PI_ICMP);
-
         pMaskArg = FindArgument(pMaskGroup, OVS_ARGTYPE_PI_ICMP);
 
-        if (pMaskArg && !isIpv4)
-        {
-            DEBUGP(LOG_ERROR, __FUNCTION__ " arg type %u: we don't have ipv4, but have mask for icmp4? (bad)\n", OVS_ARGTYPE_PI_ICMP);
-
-            return FALSE;
-        }
-        else if (isWildcard && pMaskArg)
-        {
-            //the userspace actually sets mask this way
-        }
-        else if (!isWildcard && !pPacketInfoArg)
-        {
-            DEBUGP(LOG_ERROR, __FUNCTION__ " arg type %u -- mask for proto is 'exact', but we don't have the key!\n", OVS_ARGTYPE_PI_ICMP);
-
-            return FALSE;
-        }
-
+        EXPECT(!(pMaskArg && !isIpv4));
+        EXPECT(isWildcard || pPacketInfoArg);
         break;
 
     case OVS_IPV6_EXTH_ICMP6:
         isIcmp6 = TRUE;
 
         pPacketInfoArg = FindArgument(pPIGroup, OVS_ARGTYPE_PI_ICMP6);
-
         pMaskArg = FindArgument(pMaskGroup, OVS_ARGTYPE_PI_ICMP6);
 
-        if (pMaskArg && !isIpv6)
-        {
-            DEBUGP(LOG_ERROR, __FUNCTION__ " arg type %u: we don't have ipv6, but have mask for icmp6? (bad)\n", OVS_ARGTYPE_PI_ICMP6);
-
-            return FALSE;
-        }
-        else if (isWildcard && pMaskArg)
-        {
-            //the userspace actually sets mask this way
-        }
-        else if (!isWildcard && !pPacketInfoArg)
-        {
-            DEBUGP(LOG_ERROR, __FUNCTION__ " arg type %u -- mask for proto is 'exact', but we don't have the key!\n", OVS_ARGTYPE_PI_ICMP6);
-
-            return FALSE;
-        }
-
+        EXPECT(!(pMaskArg && !isIpv6));
+        EXPECT(isWildcard || pPacketInfoArg);
         break;
 
     default:
         //ignore: we have ipv4 proto wildcarded
-        if (!isWildcard)
-        {
-            DEBUGP(LOG_ERROR, __FUNCTION__ " invalid ipv4/ipv6 proto, when proto mask = exact!\n");
-            return FALSE;
-        }
+        EXPECT(isWildcard);
         //ignore: we have eth type wildcarded
     }
 
     //IPV6 / ICMP6 / ND
-    isWildcard = (pMask ? (pMask->netProto.ipv6Info.sourcePort == OVS_PI_MASK_MATCH_WILDCARD(UINT8)) : FALSE);
+    isWildcard = (pMask ? (pMask->tpInfo.sourcePort == OVS_PI_MASK_MATCH_WILDCARD(UINT8)) : FALSE);
 
     pPacketInfoArg = FindArgument(pPIGroup, OVS_ARGTYPE_PI_NEIGHBOR_DISCOVERY);
-
     pMaskArg = FindArgument(pMaskGroup, OVS_ARGTYPE_PI_NEIGHBOR_DISCOVERY);
 
-    if (pMaskArg && !isIcmp6)
-    {
-        DEBUGP(LOG_ERROR, __FUNCTION__ " arg type %u: we don't have icmp6, but have mask for icmp6/nd? (bad)\n", OVS_ARGTYPE_PI_NEIGHBOR_DISCOVERY);
+    EXPECT(pMaskArg || isIcmp6);
+    EXPECT(pMaskArg || isIpv6);
 
-        return FALSE;
-    }
-
-    if (pMaskArg && !isIpv6)
-    {
-        DEBUGP(LOG_ERROR, __FUNCTION__ " arg type %u: we don't have ipv6, but have mask for icmp6/nd? (bad)\n", OVS_ARGTYPE_PI_NEIGHBOR_DISCOVERY);
-
-        return FALSE;
-    }
-
-    if (isWildcard && pMaskArg)
-    {
-        DEBUGP(LOG_ERROR, __FUNCTION__ " cannot have mask arg type %u: ipv6 src port is wildcard!\n", OVS_ARGTYPE_PI_NEIGHBOR_DISCOVERY);
-
-        return FALSE;
-    }
-
-    else if (!isWildcard && !pPacketInfoArg)
-    {
-        DEBUGP(LOG_ERROR, __FUNCTION__ " arg type %u -- mask for ipv6 src port is 'exact', but we don't have the key!\n", OVS_ARGTYPE_PI_NEIGHBOR_DISCOVERY);
-
-        return FALSE;
-    }
+    EXPECT(isWildcard || pMaskArg);
+    EXPECT(isWildcard || pPacketInfoArg);
 
     return TRUE;
 }
@@ -407,41 +171,21 @@ static BOOLEAN _PIFromArgs_HandleEncap(_In_ const OVS_ARGUMENT_GROUP* pPIGroup, 
 
     OVS_ARGUMENT* pVlanTciArg = NULL, *pEncapArg = NULL;
 
-    OVS_CHECK(pEncapValid);
-    OVS_CHECK(pEthTypeArg);
-
     *pEncapValid = FALSE;
 
     pVlanTciArg = FindArgument(pPIGroup, OVS_ARGTYPE_PI_VLAN_TCI);
+    pEncapArg = FindArgument(pPIGroup, OVS_ARGTYPE_PI_ENCAP_GROUP);
 
-    pEncapArg = FindArgument(pPIGroup, OVS_ARGTYPE_GROUP_PI_ENCAPSULATION);
-
-    if (!pVlanTciArg || !pEncapArg)
-    {
-        DEBUGP(LOG_ERROR, "the vlan frame is invalid!\n");
-        return FALSE;
-    }
+    EXPECT(pVlanTciArg && pEncapArg);
 
     pEthTypeArg->isDisabled = TRUE;
-
     vlanTci = GET_ARG_DATA(pVlanTciArg, BE16);
     pEncapArg->isDisabled = TRUE;
 
     *pEncapValid = TRUE;
 
-    if (!vlanTci)
-    {
-        if (pEncapArg->length > 0)
-        {
-            DEBUGP(LOG_ERROR, "The truncated vlan header has vlan tci != 0!\n");
-            return FALSE;
-        }
-    }
-    else
-    {
-        DEBUGP(LOG_ERROR, "Tried to set encapsulation data to a non-vlan frame!\n");
-        return FALSE;
-    }
+    EXPECT(vlanTci);
+    EXPECT(pEncapArg->length == 0);
 
     return TRUE;
 }
@@ -450,145 +194,83 @@ static BOOLEAN _MasksFromArgs_HandleEncap(_In_ const OVS_ARGUMENT_GROUP* pMaskGr
 {
     BE16 ethType = 0;
     BE16 vlanTci = 0;
-    BOOLEAN ok = TRUE;
     OVS_ARGUMENT* pVlanTciArg = NULL;
-
-    OVS_CHECK(pEncapArg);
 
     pEncapArg->isDisabled = TRUE;
 
-    if (pEtherTypeArg)
-    {
-        ethType = GET_ARG_DATA(pEtherTypeArg, BE16);
-    }
-    else
-    {
-        DEBUGP(LOG_ERROR, "The eth type argument was not found\n");
-        return FALSE;
-    }
+    EXPECT(pEtherTypeArg);
+    ethType = GET_ARG_DATA(pEtherTypeArg, BE16);
 
-    if (ethType == OVS_PI_MASK_MATCH_EXACT(UINT16))
-    {
-        pEtherTypeArg->isDisabled = TRUE;
-    }
-    else
-    {
-        DEBUGP(LOG_ERROR, "The vlan frame must have an exact match for ethType. Mask value: %x.\n", RtlUshortByteSwap(ethType));
-        return FALSE;
-    }
+    EXPECT(ethType == OVS_PI_MASK_MATCH_EXACT(UINT16));
+    pEtherTypeArg->isDisabled = TRUE;
 
     pVlanTciArg = FindArgument(pMaskGroup, OVS_ARGTYPE_PI_VLAN_TCI);
+    EXPECT(pVlanTciArg);
+    vlanTci = GET_ARG_DATA(pVlanTciArg, BE16);
 
-    if (pVlanTciArg)
-    {
-        vlanTci = GET_ARG_DATA(pVlanTciArg, BE16);
-    }
-    else
-    {
-        DEBUGP(LOG_ERROR, "vlan tci arg not given");
-        return FALSE;
-    }
+    EXPECT(vlanTci & RtlUshortByteSwap(OVS_VLAN_TAG_PRESENT));
 
-    if (!(vlanTci & RtlUshortByteSwap(OVS_VLAN_TAG_PRESENT)))
-    {
-        DEBUGP(LOG_ERROR, "The vlan field 'tag present' bit must be exact match! Mask value: %x.\n", RtlUshortByteSwap(vlanTci));
-        return FALSE;
-    }
-
-    return ok;
+    return TRUE;
 }
 
 BOOLEAN GetFlowMatchFromArguments(_Inout_ OVS_FLOW_MATCH* pFlowMatch, _In_ const OVS_ARGUMENT_GROUP* pPIGroup, const OVS_ARGUMENT_GROUP* pPIMaskGroup)
 {
     BOOLEAN encapIsValid = FALSE;
-    BOOLEAN ok = TRUE;
     OVS_ARGUMENT* pEthTypeArg = NULL, *pEthAddrArg = NULL;
     OVS_PI_RANGE* pPiRange = NULL;
     OVS_OFPACKET_INFO* pPacketInfo = NULL;
 
     OVS_CHECK(pFlowMatch);
 
-    if (!pFlowMatch)
-    {
-        return FALSE;
-    }
-
     pEthTypeArg = FindArgument(pPIGroup, OVS_ARGTYPE_PI_ETH_TYPE);
-
-    if (!pEthTypeArg)
-    {
-        DEBUGP(LOG_ERROR, __FUNCTION__ " expected key: %u\n", OVS_ARGTYPE_PI_ETH_TYPE);
-
-        return FALSE;
-    }
-
+    EXPECT(pEthAddrArg);
+    
     pEthAddrArg = FindArgument(pPIGroup, OVS_ARGTYPE_PI_ETH_ADDRESS);
+    EXPECT(pEthAddrArg);
 
-    if (!pEthAddrArg)
+    if (pEthTypeArg && RtlUshortByteSwap(OVS_ETHERTYPE_QTAG) == GET_ARG_DATA(pEthTypeArg, BE16))
     {
-        DEBUGP(LOG_ERROR, __FUNCTION__ " expected key: %u\n", OVS_ARGTYPE_PI_ETH_ADDRESS);
-
-        return FALSE;
+        EXPECT(_PIFromArgs_HandleEncap(pPIGroup, pEthAddrArg, &encapIsValid));
     }
 
-    if (RtlUshortByteSwap(OVS_ETHERTYPE_QTAG) == GET_ARG_DATA(pEthTypeArg, BE16))
-    {
-        if (!_PIFromArgs_HandleEncap(pPIGroup, pEthAddrArg, &encapIsValid))
-        {
-            return FALSE;
-        }
-    }
+    pPiRange = &(pFlowMatch->piRange);
+    pPacketInfo = &(pFlowMatch->packetInfo);
 
-    pPiRange = &pFlowMatch->piRange;
-    pPacketInfo = pFlowMatch->pPacketInfo;
-
-    ok = GetPacketInfoFromArguments(pPacketInfo, pPiRange, pPIGroup, /*isMask*/ FALSE);
-    if (!ok)
-    {
-        return FALSE;
-    }
+    EXPECT(GetPacketInfoFromArguments(pPacketInfo, pPiRange, pPIGroup, /*isMask*/ FALSE));
 
     if (!pPIMaskGroup)
     {
-        if (pFlowMatch->pFlowMask)
+        if (pFlowMatch->haveMask)
         {
-            UINT8* pStart = (UINT8*)&pFlowMatch->pFlowMask->packetInfo + pPiRange->startRange;
+            //TODO: this is buggy - create exact match args instead of exact match packet info!
+            //Also, do not wildcard tunnel info!
+            UINT8* pStart = (UINT8*)&pFlowMatch->flowMask.packetInfo + pPiRange->startRange;
             UINT16 range = (UINT16)(pPiRange->endRange - pPiRange->startRange);
 
-            pFlowMatch->pFlowMask->piRange = *pPiRange;
+            pFlowMatch->flowMask.piRange = *pPiRange;
             memset(pStart, OVS_PI_MASK_MATCH_EXACT(UINT8), range);
         }
     }
-
     else
     {
         OVS_ARGUMENT* pEncapArg = NULL;
 
-        pEncapArg = FindArgument(pPIMaskGroup, OVS_ARGTYPE_GROUP_PI_ENCAPSULATION);
-
+        pEncapArg = FindArgument(pPIMaskGroup, OVS_ARGTYPE_PI_ENCAP_GROUP);
         if (pEncapArg)
         {
-            if (!encapIsValid)
-            {
-                DEBUGP(LOG_ERROR, "Tryed to set encapsulation to non-vlan frame!\n");
-                return FALSE;
-            }
+            EXPECT(encapIsValid);
 
-            if (!_MasksFromArgs_HandleEncap(pPIMaskGroup, pEncapArg, pEthTypeArg))
+            if (pEthTypeArg)
             {
-                return FALSE;
+                EXPECT(_MasksFromArgs_HandleEncap(pPIMaskGroup, pEncapArg, pEthTypeArg));
             }
         }
 
-        OVS_CHECK(pFlowMatch->pFlowMask);
-        pPiRange = &pFlowMatch->pFlowMask->piRange;
-        pPacketInfo = &pFlowMatch->pFlowMask->packetInfo;
+        OVS_CHECK(pFlowMatch->haveMask);
+        pPiRange = &pFlowMatch->flowMask.piRange;
+        pPacketInfo = &pFlowMatch->flowMask.packetInfo;
 
-        ok = GetPacketInfoFromArguments(pPacketInfo, pPiRange, pPIMaskGroup, /*is mask*/TRUE);
-        if (!ok)
-        {
-            return FALSE;
-        }
+        EXPECT(GetPacketInfoFromArguments(pPacketInfo, pPiRange, pPIMaskGroup, /*is mask*/TRUE));
     }
 
     //if the userspace gives us bad / unexpected args, we cannot simply deny the flow:
@@ -596,7 +278,9 @@ BOOLEAN GetFlowMatchFromArguments(_Inout_ OVS_FLOW_MATCH* pFlowMatch, _In_ const
     //b) if it is a bug, we can do little in the kernel to help it.
 #if __VERIFY_MASKS
     if (!_VerifyMasks(pFlowMatch, pPIGroup, pPIMaskGroup))
+    {
         return FALSE;
+    }
 #endif
 
     return TRUE;

@@ -22,6 +22,6 @@ typedef struct _OVS_ARGUMENT_GROUP OVS_ARGUMENT_GROUP;
 typedef struct _OVS_UPCALL_INFO OVS_UPCALL_INFO;
 typedef struct _OVS_OFPACKET_INFO OVS_OFPACKET_INFO;
 
-VOID Packet_Execute(_In_ OVS_ARGUMENT_GROUP* pArgGroup, const FILE_OBJECT* pFileObject);
+VOID WinlPacket_Execute(OVS_SWITCH_INFO* pSwitchInfo, OVS_DATAPATH* pDatapath, _In_ OVS_ARGUMENT_GROUP* pArgGroup, const FILE_OBJECT* pFileObject);
 
-BOOLEAN QueuePacketToUserspace(NET_BUFFER* pNb, const OVS_UPCALL_INFO* pUpcallInfo);
+BOOLEAN QueuePacketToUserspace(OVS_DATAPATH* pDatapath, _In_ NET_BUFFER* pNb, _In_ const OVS_UPCALL_INFO* pUpcallInfo);

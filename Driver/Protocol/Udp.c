@@ -100,7 +100,6 @@ static void _Udp_SetPort(OVS_NET_BUFFER* pOvsNb, BE16* pPort, BE16 newPort)
             pUdpHeader->checksum = OVS_UDP_CHECKSUM_MANGLED;
         }
     }
-
     else
     {
         *pPort = newPort;

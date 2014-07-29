@@ -40,7 +40,8 @@ VOID DbgPrintNbFrames(NET_BUFFER* pNb, const char* msg)
 
     OVS_CHECK(buffer);
 
-    if (pEthHeader->type == RtlUshortByteSwap(OVS_ETHERTYPE_QTAG)) {
+    if (pEthHeader->type == RtlUshortByteSwap(OVS_ETHERTYPE_QTAG))
+    {
         pEthHeader += OVS_ETHERNET_VLAN_LEN;
     }
 
@@ -54,11 +55,10 @@ VOID DbgPrintNbFrames(NET_BUFFER* pNb, const char* msg)
 
         ReadIpv4ProtocolFrame(pIpv4Header);
     }
-
-    else if (pEthHeader->type == RtlUshortByteSwap(OVS_ETHERTYPE_IPV6)) {
+    else if (pEthHeader->type == RtlUshortByteSwap(OVS_ETHERTYPE_IPV6))
+    {
         DEBUGP_FRAMES(LOG_INFO, "ipv6\n");
     }
-
     else if (pEthHeader->type == RtlUshortByteSwap(OVS_ETHERTYPE_ARP))
     {
         OVS_ARP_HEADER* pArpHeader = NULL;
@@ -93,11 +93,6 @@ VOID DbgPrintOnbFrames(OVS_NET_BUFFER* pOvsNb, const char* msg)
     UNREFERENCED_PARAMETER(pOvsNb);
     UNREFERENCED_PARAMETER(msg);
 #endif
-}
-
-void FreeFrameBuffer(_In_ void* buffer)
-{
-    ExFreePoolWithTag(buffer, g_extAllocationTag);
 }
 
 BOOLEAN ReadProtocolFrame(_In_ NET_BUFFER* pNb)

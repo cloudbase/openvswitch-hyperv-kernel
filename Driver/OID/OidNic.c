@@ -31,7 +31,7 @@ NDIS_STATUS Nic_Create(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH_
         NdisMSleep(100);
     }
 
-    Rwlock_LockWrite(pForwardInfo->pRwLock, &lockState);
+    FWDINFO_LOCK_WRITE(pForwardInfo, &lockState);
 
     OVS_CHECK(pNic->NicState != NdisSwitchNicStateConnected);
     status = Sctx_AddNicUnsafe(pForwardInfo, pNic, &pNicEntry);
@@ -57,7 +57,7 @@ NDIS_STATUS Nic_Create(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH_
         }
     }
 
-    Rwlock_Unlock(pForwardInfo->pRwLock, &lockState);
+    FWDINFO_UNLOCK(pForwardInfo, &lockState);
 
     return status;
 }
@@ -66,14 +66,17 @@ _Use_decl_annotations_
 VOID Nic_Connect(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH_NIC_PARAMETERS* pNic)
 {
     OVS_NIC_LIST_ENTRY* pNicEntry = NULL;
+    NDIS_SWITCH_PORT_ID portId = NDIS_SWITCH_DEFAULT_PORT_ID;
+    NDIS_SWITCH_NIC_INDEX nicIndex = NDIS_SWITCH_DEFAULT_NIC_INDEX;
     LOCK_STATE_EX lockState = { 0 };
+    UINT16 ofPortNumber = OVS_INVALID_PORT_NUMBER;
 
     while (pForwardInfo->isInitialRestart)
     {
         NdisMSleep(100);
     }
 
-    Rwlock_LockWrite(pForwardInfo->pRwLock, &lockState);
+    FWDINFO_LOCK_READ(pForwardInfo, &lockState);
 
     if (pNic->NicType == NdisSwitchNicTypeExternal &&
         pNic->NicIndex != NDIS_SWITCH_DEFAULT_NIC_INDEX)
@@ -97,18 +100,39 @@ VOID Nic_Connect(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH_NIC_PA
         pNicEntry = Sctx_FindNicByPortIdAndNicIndex_Unsafe(pForwardInfo, pNic->PortId, pNic->NicIndex);
 
         OVS_CHECK(pNicEntry != NULL);
+
+        pNicEntry = OVS_REFCOUNT_REFERENCE(pNicEntry);
     }
 
     if (pNicEntry)
     {
-        OVS_CHECK(pNicEntry->pPersistentPort == NULL);
+        OVS_CHECK(pNicEntry->ofPortNumber == OVS_INVALID_PORT_NUMBER);
+
+        portId = pNicEntry->portId;
+        nicIndex = pNicEntry->nicIndex;
+    }
+
+    FWDINFO_UNLOCK(pForwardInfo, &lockState);
+
+    if (portId != NDIS_SWITCH_DEFAULT_PORT_ID)
+    {
+        ofPortNumber = Sctx_Nic_SetOFPort(pForwardInfo, portId, nicIndex);
+    }
+
+    FWDINFO_LOCK_WRITE(pForwardInfo, &lockState);
+
+    if (pNicEntry)
+    {
+        pNicEntry->ofPortNumber = ofPortNumber;
         pNicEntry->connected = TRUE;
 
         ++(pForwardInfo->countNics);
-        Sctx_Nic_SetPersistentPort_Unsafe(pNicEntry);
     }
 
-    Rwlock_Unlock(pForwardInfo->pRwLock, &lockState);
+    FWDINFO_UNLOCK(pForwardInfo, &lockState);
+
+    //Cleanup
+    OVS_REFCOUNT_DEREFERENCE(pNicEntry);
 }
 
 _Use_decl_annotations_
@@ -141,7 +165,7 @@ VOID Nic_Disconnect(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH_NIC
         NdisMSleep(100);
     }
 
-    Rwlock_LockWrite(pForwardInfo->pRwLock, &lockState);
+    FWDINFO_LOCK_WRITE(pForwardInfo, &lockState);
 
     if (pNic->NicType == NdisSwitchNicTypeExternal)
     {
@@ -152,14 +176,12 @@ VOID Nic_Disconnect(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH_NIC
             pNicEntry = pForwardInfo->pExternalNic;
         }
     }
-
     else if (pNic->NicType == NdisSwitchNicTypeInternal)
     {
         OVS_CHECK(pForwardInfo->pInternalNic);
 
         pNicEntry = pForwardInfo->pInternalNic;
     }
-
     else
     {
         pNicEntry = Sctx_FindNicByPortIdAndNicIndex_Unsafe(pForwardInfo, pNic->PortId, pNic->NicIndex);
@@ -169,10 +191,13 @@ VOID Nic_Disconnect(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH_NIC
 
     if (pNicEntry != NULL)
     {
-        Sctx_Nic_Disable_Unsafe(pForwardInfo, pNicEntry);
+        pNicEntry->connected = FALSE;
+        --(pForwardInfo->countNics);
+
+        //we no longer need to 'unset' the of port: it will try (eventually) to send to this port id, but it will not find nic, so it will fail.
     }
 
-    Rwlock_Unlock(pForwardInfo->pRwLock, &lockState);
+    FWDINFO_UNLOCK(pForwardInfo, &lockState);
 }
 
 _Use_decl_annotations_
@@ -185,7 +210,8 @@ VOID Nic_Delete(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH_NIC_PAR
         NdisMSleep(100);
     }
 
-    Rwlock_LockWrite(pForwardInfo->pRwLock, &lockState);
+    FWDINFO_LOCK_WRITE(pForwardInfo, &lockState);
+
     if (pNic->NicType == NdisSwitchNicTypeExternal)
     {
         OVS_CHECK(pForwardInfo->pExternalNic);
@@ -196,7 +222,6 @@ VOID Nic_Delete(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH_NIC_PAR
             pForwardInfo->pExternalNic = NULL;
         }
     }
-
     else if (pNic->NicType == NdisSwitchNicTypeInternal)
     {
         OVS_CHECK(pForwardInfo->pInternalNic);
@@ -210,7 +235,7 @@ VOID Nic_Delete(OVS_GLOBAL_FORWARD_INFO* pForwardInfo, const NDIS_SWITCH_NIC_PAR
 
     Sctx_DeleteNicUnsafe(pForwardInfo, pNic->PortId, pNic->NicIndex);
 
-    Rwlock_Unlock(pForwardInfo->pRwLock, &lockState);
+    FWDINFO_UNLOCK(pForwardInfo, &lockState);
     return;
 }
 

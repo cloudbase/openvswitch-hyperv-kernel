@@ -26,7 +26,6 @@ VOID FreeDuplicateNbl(_In_ const OVS_SWITCH_INFO* pSwitchInfo, _In_ NET_BUFFER_L
 VOID* ReadNb_Alloc(_In_ NET_BUFFER* net_buffer);
 VOID* GetNbBufferData(_In_ NET_BUFFER* pNb, _Out_ void** pAllocBuffer);
 VOID* GetNbBufferData_OfSize(_In_ NET_BUFFER* pNb, ULONG size, _Out_ void** pAllocBuffer);
-VOID FreeNbBufferData(VOID* allocBuffer);
 
 VOID FreeClonedNblFragment(_In_ NET_BUFFER_LIST* pNbl, _In_ ULONG dataOffsetDelta);
 VOID FreeClonedNblNormal(_In_ NET_BUFFER_LIST* pNbl);

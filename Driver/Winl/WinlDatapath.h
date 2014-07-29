@@ -21,8 +21,8 @@ limitations under the License.
 
 typedef struct _OVS_MESSAGE OVS_MESSAGE;
 
-OVS_ERROR Datapath_New(_In_ const OVS_MESSAGE* pMsg, _In_ const FILE_OBJECT* pFileObject);
-OVS_ERROR Datapath_Delete(_In_ const OVS_MESSAGE* pMsg, _In_ const FILE_OBJECT* pFileObject);
-OVS_ERROR Datapath_Get(_In_ const OVS_MESSAGE* pMsg, _In_ const FILE_OBJECT* pFileObject);
-OVS_ERROR Datapath_Set(_In_ const OVS_MESSAGE* pMsg, _In_ const FILE_OBJECT* pFileObject);
-OVS_ERROR Datapath_Dump(_In_ const OVS_MESSAGE* pMsg, _In_ const FILE_OBJECT* pFileObject);
+OVS_ERROR WinlDatapath_New(OVS_DATAPATH* pDatapath, _In_ const OVS_MESSAGE* pMsg, _In_ const FILE_OBJECT* pFileObject);
+OVS_ERROR WinlDatapath_Delete(OVS_DATAPATH** ppDatapath, _In_ const OVS_MESSAGE* pMsg, _In_ const FILE_OBJECT* pFileObject);
+OVS_ERROR WinlDatapath_Get(OVS_DATAPATH* pDatapath, _In_ const OVS_MESSAGE* pMsg, _In_ const FILE_OBJECT* pFileObject);
+OVS_ERROR WinlDatapath_Set(OVS_DATAPATH* pDatapath, _In_ const OVS_MESSAGE* pMsg, _In_ const FILE_OBJECT* pFileObject);
+OVS_ERROR WinlDatapath_Dump(OVS_DATAPATH* pDatapath, _In_ const OVS_MESSAGE* pMsg, _In_ const FILE_OBJECT* pFileObject);

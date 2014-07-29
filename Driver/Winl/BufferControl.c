@@ -21,23 +21,26 @@ limitations under the License.
 #include "OvsCore.h"
 #include "Winetlink.h"
 
-#define OVS_MAX_QUEUED_BUFFERS		50
+#define OVS_MAX_QUEUED_BUFFERS        50
 
 /*****************************************/
 
-typedef struct _OVS_BUFFER_ENTRY {
+typedef struct _OVS_BUFFER_ENTRY
+{
     LIST_ENTRY listEntry;
     OVS_BUFFER buffer;
 }OVS_BUFFER_ENTRY;
 
-typedef struct _OVS_UNICAST_BUFFER_ENTRY {
+typedef struct _OVS_UNICAST_BUFFER_ENTRY
+{
     LIST_ENTRY listEntry;
     UINT portId;
     OVS_BUFFER buffer;
     const FILE_OBJECT* pFileObject;
 }OVS_UNICAST_BUFFER_ENTRY, *POVS_UNICAST_BUFFER_ENTRY;
 
-typedef struct _OVS_MULTICAST_BUFFER_ENTRY {
+typedef struct _OVS_MULTICAST_BUFFER_ENTRY
+{
     LIST_ENTRY listEntry;
     UINT32 groupId;
     //TODO: we need a queue of buffers for multicast / notifications
@@ -48,25 +51,28 @@ typedef struct _OVS_MULTICAST_BUFFER_ENTRY {
     //NOTE: each multicast group has port Ids -- should we consider them when working with groupId-s?
 } OVS_MULTICAST_BUFFER_ENTRY;
 
-typedef struct _OVS_QUEUED_BUFFER_ENTRY {
-    LIST_ENTRY	listEntry;
-    UINT		portId;
+typedef struct _OVS_QUEUED_BUFFER_ENTRY
+{
+    LIST_ENTRY    listEntry;
+    UINT          portId;
 
-    LIST_ENTRY	bufferQueue;
-    UINT		count;
+    LIST_ENTRY    bufferQueue;
+    UINT          count;
 }OVS_QUEUED_BUFFER_ENTRY;
 
-typedef struct _OVS_DEVICE_FILE_INFO {
+typedef struct _OVS_DEVICE_FILE_INFO
+{
     const FILE_OBJECT* pFileObject;
     //TRUE = a request (write) was set, so a unicast reply (read) is expected; else, a read will search a multicast (notify) buffer
     //for 'send packet to userspace', it should be FALSE.
-    BOOLEAN expectReply;
-    UINT	portId;
+    BOOLEAN            expectReply;
+    UINT               portId;
     //if none, it should be set to OVS_MULTICAST_GROUP_NONE
-    UINT	groupId;
+    UINT               groupId;
 }OVS_DEVICE_FILE_INFO;
 
-typedef struct _OVS_DEVICE_FILE_INFO_ENTRY {
+typedef struct _OVS_DEVICE_FILE_INFO_ENTRY
+{
     LIST_ENTRY listEntry;
     OVS_DEVICE_FILE_INFO info;
 }OVS_DEVICE_FILE_INFO_ENTRY;
@@ -100,7 +106,7 @@ VOID DbgPrintDeviceFiles()
     OVS_DEVICE_FILE_INFO_ENTRY* pEntry = NULL;
     int i = 0;
 
-    LIST_FOR_EACH(OVS_DEVICE_FILE_INFO_ENTRY, pEntry, &g_deviceFileInfoList)
+    OVS_LIST_FOR_EACH(OVS_DEVICE_FILE_INFO_ENTRY, pEntry, &g_deviceFileInfoList)
     {
         DEBUGP_FILE(LOG_INFO, "file %d:\n", i);
         DEBUGP_FILE(LOG_INFO, "file object: %p\n", pEntry->info.pFileObject);
@@ -117,7 +123,7 @@ VOID DbgPrintUCastBuffers()
     OVS_UNICAST_BUFFER_ENTRY* pEntry = NULL;
     int i = 0;
 
-    LIST_FOR_EACH(OVS_UNICAST_BUFFER_ENTRY, pEntry, &g_unicastBufferList)
+    OVS_LIST_FOR_EACH(OVS_UNICAST_BUFFER_ENTRY, pEntry, &g_unicastBufferList)
     {
         DEBUGP_FILE(LOG_INFO, "ucast buffer %d:\n", i);
         DEBUGP_FILE(LOG_INFO, "file object: %p\n", pEntry->pFileObject);
@@ -135,7 +141,7 @@ VOID DbgPrintMCastBuffers()
     OVS_MULTICAST_BUFFER_ENTRY* pEntry = NULL;
     int i = 0;
 
-    LIST_FOR_EACH(OVS_MULTICAST_BUFFER_ENTRY, pEntry, &g_multicastFileObjects)
+    OVS_LIST_FOR_EACH(OVS_MULTICAST_BUFFER_ENTRY, pEntry, &g_multicastFileObjects)
     {
         DEBUGP_FILE(LOG_INFO, "mcast buffer %d:\n", i);
         DEBUGP_FILE(LOG_INFO, "file object: %p\n", pEntry->pFileObject);
@@ -154,7 +160,7 @@ VOID DbgPrintQueuedBuffers()
     OVS_QUEUED_BUFFER_ENTRY* pEntry = NULL;
     int i = 0;
 
-    LIST_FOR_EACH(OVS_QUEUED_BUFFER_ENTRY, pEntry, &g_queuedBufferList)
+    OVS_LIST_FOR_EACH(OVS_QUEUED_BUFFER_ENTRY, pEntry, &g_queuedBufferList)
     {
         OVS_BUFFER_ENTRY* pBufferEntry = NULL;
         UINT j = 0;
@@ -163,7 +169,7 @@ VOID DbgPrintQueuedBuffers()
         DEBUGP_FILE(LOG_INFO, "port id: %u\n", pEntry->portId);
         DEBUGP_FILE(LOG_INFO, "count: %u\n", pEntry->count);
 
-        LIST_FOR_EACH(OVS_BUFFER_ENTRY, pBufferEntry, &pEntry->bufferQueue)
+        OVS_LIST_FOR_EACH(OVS_BUFFER_ENTRY, pBufferEntry, &pEntry->bufferQueue)
         {
             DEBUGP_FILE(LOG_INFO, "buffer %u ptr: %p\n", j, pBufferEntry->buffer.p);
             DEBUGP_FILE(LOG_INFO, "buffer %u size: %u\n", j, pBufferEntry->buffer.size);
@@ -194,10 +200,12 @@ static OVS_DEVICE_FILE_INFO_ENTRY* _FindDeviceFileInfo_Unsafe(_In_ const FILE_OB
 {
     OVS_DEVICE_FILE_INFO_ENTRY* pEntry = NULL;
 
-    LIST_FOR_EACH(OVS_DEVICE_FILE_INFO_ENTRY, pEntry, &g_deviceFileInfoList)
+    OVS_LIST_FOR_EACH(OVS_DEVICE_FILE_INFO_ENTRY, pEntry, &g_deviceFileInfoList)
     {
         if (pEntry->info.pFileObject == pFileObject)
+        {
             return pEntry;
+        }
     }
 
     return NULL;
@@ -210,10 +218,12 @@ static OVS_DEVICE_FILE_INFO_ENTRY* _FindDeviceFileInfoByPortId_Unsafe(UINT portI
 
     OVS_CHECK(portId);
 
-    LIST_FOR_EACH(OVS_DEVICE_FILE_INFO_ENTRY, pEntry, &g_deviceFileInfoList)
+    OVS_LIST_FOR_EACH(OVS_DEVICE_FILE_INFO_ENTRY, pEntry, &g_deviceFileInfoList)
     {
         if (pEntry->info.portId == portId)
+        {
             return pEntry;
+        }
     }
 
     return NULL;
@@ -224,7 +234,7 @@ OVS_UNICAST_BUFFER_ENTRY* _FindBufferUnicast_Unsafe(_In_ const OVS_DEVICE_FILE_I
 {
     OVS_UNICAST_BUFFER_ENTRY* pEntry = NULL;
 
-    LIST_FOR_EACH(OVS_UNICAST_BUFFER_ENTRY, pEntry, &g_unicastBufferList)
+    OVS_LIST_FOR_EACH(OVS_UNICAST_BUFFER_ENTRY, pEntry, &g_unicastBufferList)
     {
         if (pEntry->pFileObject == pFileInfo->pFileObject)
         {
@@ -241,7 +251,7 @@ OVS_MULTICAST_BUFFER_ENTRY* _FindBufferMulticast_Unsafe(_In_ const OVS_DEVICE_FI
 {
     OVS_MULTICAST_BUFFER_ENTRY* pEntry = NULL;
 
-    LIST_FOR_EACH(OVS_MULTICAST_BUFFER_ENTRY, pEntry, &g_multicastFileObjects)
+    OVS_LIST_FOR_EACH(OVS_MULTICAST_BUFFER_ENTRY, pEntry, &g_multicastFileObjects)
     {
         if (pEntry->pFileObject == pFileInfo->pFileObject)
         {
@@ -258,7 +268,7 @@ OVS_QUEUED_BUFFER_ENTRY* _FindQueuedBuffer_Unsafe(_In_ const OVS_DEVICE_FILE_INF
 {
     OVS_QUEUED_BUFFER_ENTRY* pEntry = NULL;
 
-    LIST_FOR_EACH(OVS_QUEUED_BUFFER_ENTRY, pEntry, &g_queuedBufferList)
+    OVS_LIST_FOR_EACH(OVS_QUEUED_BUFFER_ENTRY, pEntry, &g_queuedBufferList)
     {
         if (pEntry->portId == pFileInfo->portId)
         {
@@ -283,11 +293,12 @@ BOOLEAN _RemoveMulticastBuffer_Unsafe(OVS_DEVICE_FILE_INFO* pFileInfo)
     {
         --pBufferEntry->refCount;
     }
-
     else
     {
         if (IsBufferEmpty(&pBufferEntry->buffer))
+        {
             FreeBufferData(&pBufferEntry->buffer);
+        }
 
         RemoveEntryList(&pBufferEntry->listEntry);
 
@@ -330,6 +341,7 @@ BOOLEAN _McGroup_Join_Unsafe(_In_ const FILE_OBJECT* pFileObject, UINT32 groupId
 
     //we currently do not allow one fd / HANDLE to belong to multiple multicast groups
     OVS_CHECK(pFileEntry->info.groupId == 0);
+    OVS_CHECK(groupId != 0);
 
     pFileEntry->info.groupId = groupId;
 
@@ -392,8 +404,21 @@ OVS_ERROR _BufferCtl_ReadUnicast_Unsafe(_Inout_ OVS_BUFFER* pBuffer, _Inout_ VOI
         bytesLeft = pBuffer->size - pBuffer->offset;
         bytesRead = min(toRead, bytesLeft);
 
-        //copy from our data to system buffer
-        RtlCopyMemory(pOutBuf, srcBuffer, bytesRead);
+        //copy from our data to device io buffer
+        __try
+        {
+            RtlCopyMemory(pOutBuf, srcBuffer, bytesRead);
+        }
+        __except (EXCEPTION_EXECUTE_HANDLER)
+        {
+#ifdef DBG
+            ULONG status = GetExceptionCode();
+            DEBUGP(LOG_ERROR, "ucast read mem copy exception: 0x%x\n", status);
+            OVS_CHECK(__UNEXPECTED__);
+#endif
+
+            return OVS_ERROR_IO;
+        }
 
         if (bytesRead == bytesLeft)
         {
@@ -443,8 +468,22 @@ OVS_ERROR _BufferCtl_ReadMulticast_Unsafe(_Inout_ OVS_BUFFER* pBuffer, _Inout_ V
         bytesLeft = pBuffer->size;
         bytesRead = min(toRead, bytesLeft);
 
-        //copy from our data to system buffer
-        RtlCopyMemory(pOutBuf, srcBuffer, bytesRead);
+        //copy from our data to device io buffer
+        __try
+        {
+            RtlCopyMemory(pOutBuf, srcBuffer, bytesRead);
+        }
+
+        __except (EXCEPTION_EXECUTE_HANDLER)
+        {
+#ifdef DBG
+            ULONG status = GetExceptionCode();
+            DEBUGP(LOG_ERROR, "mcast read mem copy exception: 0x%x\n", status);
+            OVS_CHECK(__UNEXPECTED__);
+#endif
+
+            return OVS_ERROR_IO;
+        }
 
         if (bytesRead == bytesLeft)
         {
@@ -536,9 +575,9 @@ VOID BufferCtl_Uninit()
     OVS_DEVICE_FILE_INFO_ENTRY* pEntry = NULL;
     BOOLEAN okMcast = TRUE, okUcast = TRUE;
 
-    Rwlock_LockWrite(g_pOvsDeviceRWLock, &lockState);
+    NdisAcquireRWLockWrite(g_pOvsDeviceRWLock, &lockState, 0);
 
-    LIST_FOR_EACH(OVS_DEVICE_FILE_INFO_ENTRY, pEntry, &g_deviceFileInfoList)
+    OVS_LIST_FOR_EACH(OVS_DEVICE_FILE_INFO_ENTRY, pEntry, &g_deviceFileInfoList)
     {
         if (pEntry->info.groupId)
         {
@@ -561,7 +600,7 @@ VOID BufferCtl_Uninit()
     OVS_CHECK(IsListEmpty(&g_unicastBufferList));
     OVS_CHECK(IsListEmpty(&g_multicastFileObjects));
 
-    Rwlock_Unlock(g_pOvsDeviceRWLock, &lockState);
+    NdisReleaseRWLock(g_pOvsDeviceRWLock, &lockState);
 
     NdisFreeRWLock(g_pOvsDeviceRWLock);
 }
@@ -688,6 +727,7 @@ OVS_ERROR BufferCtl_Read_Unsafe(const FILE_OBJECT* pFileObject, VOID* pOutBuf, U
 
     if (!pFileEntry)
     {
+        OVS_CHECK(__UNEXPECTED__);
         return OVS_ERROR_NOENT;
     }
 
@@ -738,7 +778,11 @@ OVS_ERROR BufferCtl_Read_Unsafe(const FILE_OBJECT* pFileObject, VOID* pOutBuf, U
             {
                 error = _PopBufferFromQueue_Unsafe(pQBufferEntry, &buffer);
                 if (error != OVS_ERROR_NOERROR)
+                {
+                    OVS_CHECK(__UNEXPECTED__);
                     return error;
+                }
+
             } while (IsBufferEmpty(&buffer));
 
             //mcast read reads without concern for offset in buffer.

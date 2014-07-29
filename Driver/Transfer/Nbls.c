@@ -40,7 +40,7 @@ VOID* ReadNb_Alloc(_In_ NET_BUFFER* net_buffer)
     buffer = NdisGetDataBuffer(net_buffer, bufferSize, NULL, 1, 0);
     if (buffer)
     {
-        allocBuffer = ExAllocatePoolWithTag(NonPagedPool, bufferSize, g_extAllocationTag);
+        allocBuffer = KAlloc(bufferSize);
         if (!allocBuffer)
         {
             return NULL;
@@ -51,7 +51,7 @@ VOID* ReadNb_Alloc(_In_ NET_BUFFER* net_buffer)
     }
     else
     {
-        allocBuffer = ExAllocatePoolWithTag(NonPagedPool, bufferSize, g_extAllocationTag);
+        allocBuffer = KAlloc(bufferSize);
         OVS_CHECK(allocBuffer);
 
         buffer = NdisGetDataBuffer(net_buffer, bufferSize, allocBuffer, 1, 0);
@@ -88,7 +88,7 @@ VOID* GetNbBufferData_OfSize(NET_BUFFER* pNb, ULONG size, void** pAllocBuffer)
         return buffer;
     }
 
-    *pAllocBuffer = ExAllocatePoolWithTag(NonPagedPool, size, g_extAllocationTag);
+    *pAllocBuffer = KAlloc(size);
     OVS_CHECK(*pAllocBuffer);
 
     buffer = NdisGetDataBuffer(pNb, size, *pAllocBuffer, 1, 0);
@@ -103,12 +103,6 @@ VOID* GetNbBufferData_OfSize(NET_BUFFER* pNb, ULONG size, void** pAllocBuffer)
         DEBUGP(LOG_ERROR, "could not retrieve mac header: should have allocated storage in NdisGetDataBuffer!\n");
         return NULL;
     }
-}
-
-VOID FreeNbBufferData(VOID* allocBuffer)
-{
-    DEBUGP(LOG_INFO, "calling FreeNbBufferData... hopefully");
-    ExFreePoolWithTag(allocBuffer, g_extAllocationTag);
 }
 
 ULONG CountNbls(_In_ NET_BUFFER_LIST* pNbl)
@@ -252,7 +246,7 @@ NET_BUFFER_LIST* DuplicateNbl(const OVS_SWITCH_INFO* pSwitchInfo, NET_BUFFER_LIS
     {
         nbLen = NET_BUFFER_DATA_LENGTH(pNb);
 
-        pBuffer = ExAllocatePoolWithTag(NonPagedPool, nbLen, g_extAllocationTag);
+        pBuffer = KAlloc(nbLen);
         if (!pBuffer)
         {
             break;
@@ -286,7 +280,7 @@ NET_BUFFER_LIST* DuplicateNbl(const OVS_SWITCH_INFO* pSwitchInfo, NET_BUFFER_LIS
         pSrcNbBuffer = NdisGetDataBuffer(pNb, nbLen, NULL, 1, 0);
         if (!pSrcNbBuffer)
         {
-            pSrcNbBuffer = ExAllocatePoolWithTag(NonPagedPool, nbLen, g_extAllocationTag);
+            pSrcNbBuffer = KAlloc(nbLen);
             OVS_CHECK(pSrcNbBuffer);
 
             if (!pSrcNbBuffer)
@@ -307,10 +301,7 @@ NET_BUFFER_LIST* DuplicateNbl(const OVS_SWITCH_INFO* pSwitchInfo, NET_BUFFER_LIS
         OVS_CHECK(pBuffer);
         RtlCopyMemory(pBuffer, pSrcNbBuffer, nbLen);
 
-        if (pResBuffer)
-        {
-            ExFreePoolWithTag(pResBuffer, g_extAllocationTag);
-        }
+        KFree(pResBuffer);
 
         pResBuffer = NULL;
     }
@@ -355,7 +346,7 @@ VOID FreeDuplicateNbl(const OVS_SWITCH_INFO* pSwitchInfo, NET_BUFFER_LIST* pNbl)
         OVS_CHECK(pMdl->Next == NULL);
 
         buffer = MmGetMdlVirtualAddress(pMdl);
-        ExFreePoolWithTag(buffer, g_extAllocationTag);
+        KFree(buffer);
 
         IoFreeMdl(pMdl);
         NdisFreeNetBuffer(pNb);
@@ -389,7 +380,7 @@ VOID DbgPrintMdl(MDL* pMdl)
 #ifndef BUFFER_PRINT
     UNREFERENCED_PARAMETER(pMdl);
 #else
-    //	UINT i = 0;
+    //UINT i = 0;
     BYTE* buffer = NULL;
 
     DEBUGP("MDL: 0x%x; count=%d; offset=%d;\nmdl data:", pMdl, MmGetMdlByteCount(pMdl), MmGetMdlByteOffset(pMdl));
@@ -397,13 +388,15 @@ VOID DbgPrintMdl(MDL* pMdl)
     buffer = (BYTE*)MmGetSystemAddressForMdlSafe(pMdl, NormalPagePriority);
     OVS_CHECK(buffer);
 
-    /*for (i = 0; i < MmGetMdlByteCount(pMdl); ++i) {
-        if (i % 16 == 0) {
+    /*for (i = 0; i < MmGetMdlByteCount(pMdl); ++i)
+    {
+        if (i % 16 == 0)
+        {
         DEBUGP("\n");
         }
 
         DEBUGP("%02x ", buffer[i]);
-        }*/
+    }*/
 
     DEBUGP("\n--end MDL--\n");
 #endif
@@ -425,8 +418,8 @@ static ULONG _CountMdls(NET_BUFFER* pNb)
 VOID DbgPrintNb(NET_BUFFER* pNb, LPCSTR msg)
 {
     //#ifndef BUFFER_PRINT
-    //	UNREFERENCED_PARAMETER(pNb);
-    //	UNREFERENCED_PARAMETER(msg);
+    //UNREFERENCED_PARAMETER(pNb);
+    //UNREFERENCED_PARAMETER(msg);
     //#else
     //MDL* pMdl = NULL;
     BYTE* buffer = NULL, *bufferAlloc = NULL;
@@ -442,9 +435,10 @@ VOID DbgPrintNb(NET_BUFFER* pNb, LPCSTR msg)
     DEBUGP(LOG_INFO, "NB: 0x%x; data len=%d; data offset=%d; cur mdl=0x%x; cur mdl offset=%d; count mdls=%d\n", pNb,
         NET_BUFFER_DATA_LENGTH(pNb), NET_BUFFER_DATA_OFFSET(pNb), NET_BUFFER_CURRENT_MDL(pNb), NET_BUFFER_CURRENT_MDL_OFFSET(pNb), _CountMdls(pNb));
 
-    /*for (pMdl = NET_BUFFER_CURRENT_MDL(pNb); pMdl != NULL; pMdl = pMdl->Next) {
+    /*for (pMdl = NET_BUFFER_CURRENT_MDL(pNb); pMdl != NULL; pMdl = pMdl->Next)
+    {
         DbgPrintMdl(pMdl);
-        }*/
+    }*/
 
     //BYTE* NdisGetDataBuffer(pNb, NET_BUFFER_DATA_LENGTH(pNb), 0, 0, 1);
 
@@ -453,7 +447,7 @@ VOID DbgPrintNb(NET_BUFFER* pNb, LPCSTR msg)
     buffer = (BYTE*)NdisGetDataBuffer(pNb, bufPrintLen, NULL, 1, 0);
     if (!buffer)
     {
-        bufferAlloc = (BYTE*)ExAllocatePoolWithTag(NonPagedPool, bufPrintLen, g_extAllocationTag);
+        bufferAlloc = (BYTE*)KAlloc(bufPrintLen);
 
         buffer = (BYTE*)NdisGetDataBuffer(pNb, bufPrintLen, bufferAlloc, 1, 0);
         OVS_CHECK(buffer);
@@ -473,10 +467,7 @@ VOID DbgPrintNb(NET_BUFFER* pNb, LPCSTR msg)
         DEBUGP(LOG_INFO, "%02x ", buffer[i]);
     }
 
-    if (bufferAlloc)
-    {
-        ExFreePoolWithTag(bufferAlloc, g_extAllocationTag);
-    }
+    KFree(bufferAlloc);
 
     DEBUGP(LOG_INFO, "\n--end NB--\n");
 }
@@ -531,7 +522,8 @@ VOID DbgPrintNbl(NET_BUFFER_LIST* pNbl, LPCSTR msg)
 #else
     NET_BUFFER* pNb = NULL;
 
-    if (msg) {
+    if (msg)
+    {
         DEBUGP(msg);
         DEBUGP("----------");
     }
@@ -539,7 +531,8 @@ VOID DbgPrintNbl(NET_BUFFER_LIST* pNbl, LPCSTR msg)
     DEBUGP("NBL: 0x%x; context=0x%x; context data start=0x%x; context data size=%d\n; count nbs:%d\n", pNbl,
         pNbl->Context, NET_BUFFER_LIST_CONTEXT_DATA_START(pNbl), NET_BUFFER_LIST_CONTEXT_DATA_SIZE(pNbl), _CountNbs(pNbl));
 
-    for (pNb = NET_BUFFER_LIST_FIRST_NB(pNbl); pNb != NULL; pNb = NET_BUFFER_NEXT_NB(pNb)) {
+    for (pNb = NET_BUFFER_LIST_FIRST_NB(pNbl); pNb != NULL; pNb = NET_BUFFER_NEXT_NB(pNb))
+    {
         DbgPrintNb(pNb, NULL);
     }
 
@@ -569,7 +562,8 @@ VOID DbgPrintNblList(NET_BUFFER_LIST* pNbl)
 {
     DEBUGP(LOG_LOUD, "NBL list: ");
 
-    while (pNbl != NULL) {
+    while (pNbl != NULL)
+    {
         DEBUGP(LOG_LOUD, "%p -> ", pNbl);
         pNbl = NET_BUFFER_LIST_NEXT_NBL(pNbl);
     }
@@ -676,7 +670,8 @@ void DbgPrintArp(OVS_ARP_HEADER* pArpHeader)
 {
     OVS_CHECK(pArpHeader);
 
-    if (RtlUshortByteSwap(pArpHeader->operation) == 1) {
+    if (RtlUshortByteSwap(pArpHeader->operation) == 1)
+    {
         DEBUGP(LOG_INFO, "ARP request: from mac = %02x-%02x-%02x-%02x-%02x-%02x; ip = %d.%d.%d.%d: who has %d.%d.%d.%d?\n",
             pArpHeader->senderHardwareAddress[0],
             pArpHeader->senderHardwareAddress[1],
@@ -752,22 +747,39 @@ BOOLEAN VerifyProtocolHeader(BYTE* buffer, ULONG* pLength, UINT16* pEthType)
         break;
 
     case OVS_ETHERTYPE_IPV4:
+    {
+        OVS_IPV4_HEADER* pIpv4Header = (OVS_IPV4_HEADER*)buffer;
+        UINT16 offset = 0;
+
         nextHeader = VerifyIpv4Frame(buffer, pLength, &protoType);
         if (!nextHeader)
+        {
             return FALSE;
+        }
 
-        if (!_VerifyTransportHeader(nextHeader, pLength, *pEthType, protoType))
-            return FALSE;
+        offset = Ipv4_GetFragmentOffset(pIpv4Header);
 
+        if (offset == 0)
+        {
+            if (!_VerifyTransportHeader(nextHeader, pLength, *pEthType, protoType))
+            {
+                return FALSE;
+            }
+        }
+    }
         break;
 
     case OVS_ETHERTYPE_IPV6:
         nextHeader = VerifyIpv6Frame(buffer, pLength, &protoType);
         if (!nextHeader)
+        {
             return FALSE;
+        }
 
         if (!_VerifyTransportHeader(nextHeader, pLength, *pEthType, protoType))
+        {
             return FALSE;
+        }
 
         break;
 
@@ -799,7 +811,6 @@ static BOOLEAN _VerifyTransportHeader(VOID* buffer, ULONG* pLength, UINT16 ethTy
     switch (protoType)
     {
     case OVS_IPPROTO_GRE:
-    {
         advancedBuffer = VerifyGreHeader(advancedBuffer, pLength, &ethType);
         if (!advancedBuffer)
         {
@@ -807,8 +818,6 @@ static BOOLEAN _VerifyTransportHeader(VOID* buffer, ULONG* pLength, UINT16 ethTy
         }
 
         return VerifyProtocolHeader(advancedBuffer, pLength, &ethType);
-    }
-        break;
 
     case OVS_IPPROTO_ICMP:
         if (RtlUshortByteSwap(ethType) != OVS_ETHERTYPE_IPV4)
@@ -883,7 +892,9 @@ BOOLEAN VerifyNetBuffer(VOID* buffer, ULONG length)
     nextHeader = VerifyEthernetFrame(buffer, &sizeLeft, &ethType);
 
     if (!nextHeader)
+    {
         return FALSE;
+    }
 
     return VerifyProtocolHeader(nextHeader, &length, &ethType);
 }

@@ -21,7 +21,7 @@ limitations under the License.
 #define OVS_ETHERNET_ADDRESS_LENGTH 6
 
 //The additional bytes (on top of the Ethernet header) that VLAN requires
-#define OVS_ETHERNET_VLAN_LEN	4
+#define OVS_ETHERNET_VLAN_LEN    4
 
 //Canonical Format Indicator
 #define OVS_VLAN_CFI_MASK           0x1000
@@ -45,21 +45,21 @@ typedef struct _OVS_PI_ETH_ADDRESS OVS_PI_ETH_ADDRESS;
 //TODO: see about 802.1Q frames.
 typedef struct _OVS_ETHERNET_HEADER
 {
-    BYTE	destination_addr[OVS_ETHERNET_ADDRESS_LENGTH];
-    BYTE	source_addr[OVS_ETHERNET_ADDRESS_LENGTH];
-    WORD	type;
+    BYTE    destination_addr[OVS_ETHERNET_ADDRESS_LENGTH];
+    BYTE    source_addr[OVS_ETHERNET_ADDRESS_LENGTH];
+    WORD    type;
 }OVS_ETHERNET_HEADER, *POVS_ETHERNET_HEADER;
 
 C_ASSERT(sizeof(OVS_ETHERNET_HEADER) == 14);
 
 typedef struct _OVS_ETHERNET_HEADER_TAGGED
 {
-    BYTE	destination_addr[OVS_ETHERNET_ADDRESS_LENGTH];
-    BYTE	source_addr[OVS_ETHERNET_ADDRESS_LENGTH];
+    BYTE    destination_addr[OVS_ETHERNET_ADDRESS_LENGTH];
+    BYTE    source_addr[OVS_ETHERNET_ADDRESS_LENGTH];
     //protocol type = 0x8100
-    WORD	type;
+    WORD    type;
     //tag control information: 3-bit user priority; 1-bit canonical format indicator (CFI); 12-bit VLAN indicator.
-    WORD	tci;
+    WORD    tci;
 
     WORD clientType;
 }OVS_ETHERNET_HEADER_TAGGED, *POVS_ETHERNET_HEADER_TAGGED;
@@ -67,13 +67,16 @@ typedef struct _OVS_ETHERNET_HEADER_TAGGED
 C_ASSERT(sizeof(OVS_ETHERNET_HEADER_TAGGED) == 18);
 
 //TEB = Transparent Ethernet Bridging
-typedef enum {
+typedef enum
+{
     OVS_ETHERTYPE_TEB = 0x6558,
     OVS_ETHERTYPE_IPV4 = 0x800,
     OVS_ETHERTYPE_IPV6 = 0x86DD,
     OVS_ETHERTYPE_QTAG = 0x8100,
     OVS_ETHERTYPE_ARP = 0x0806,
-    OVS_ETHERTYPE_RARP = 0x8035
+    OVS_ETHERTYPE_RARP = 0x8035,
+    OVS_ETHERTYPE_MPLS_UNICAST = 0x8847,
+    OVS_ETHERTYPE_MPLS_MULTICAST = 0x8848
 } OVS_ETHERNET_TYPE;
 
 #ifdef DBG

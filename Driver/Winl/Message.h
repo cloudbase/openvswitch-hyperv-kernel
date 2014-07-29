@@ -18,21 +18,23 @@ limitations under the License.
 
 #include "precomp.h"
 #include "Argument.h"
+#include "Error.h"
 
 #define FLAGS enum
 
 typedef struct _OVS_BUFFER OVS_BUFFER;
 
 //OVS_USERSPACE_PACKET_CMD_MISS is the userspace correspondent of the kernel ovs message type = OVS_MESSAGE_COMMAND_PACKET_UPCALL_MISS
-#define OVS_USERSPACE_PACKET_CMD_MISS			1
+#define OVS_USERSPACE_PACKET_CMD_MISS                 1
 //OVS_USERSPACE_PACKET_CMD_ACTION is the correspondent of the kernel ovs message type = OVS_MESSAGE_COMMAND_PACKET_UPCALL_ACTION
-#define	OVS_USERSPACE_PACKET_CMD_ACTION			2
+#define    OVS_USERSPACE_PACKET_CMD_ACTION            2
 //OVS_USERSPACE_PACKET_CMD_EXECUTE is the correspondent of the kernel ovs message type = OVS_MESSAGE_COMMAND_PACKET_UPCALL_EXECUTE
-#define OVS_USERSPACE_PACKET_CMD_EXECUTE		3
+#define OVS_USERSPACE_PACKET_CMD_EXECUTE              3
 
 #define OVS_VPORT_MCGROUP 33
 
-typedef enum _OVS_MESSAGE_TARGET_TYPE {
+typedef enum _OVS_MESSAGE_TARGET_TYPE
+{
     OVS_MESSAGE_TARGET_RTM_GETROUTE = 0,
     OVS_MESSAGE_TARGET_NO_OPERATION = 1,
     OVS_MESSAGE_TARGET_ERROR = 2,
@@ -53,7 +55,11 @@ typedef enum _OVS_MESSAGE_TARGET_TYPE {
     OVS_MESSAGE_TARGET_INVALID = 0xFFFF
 }OVS_MESSAGE_TARGET_TYPE;
 
-typedef enum _OVS_MESSAGE_COMMAND_TYPE {
+#define OVS_GENL_TARGET_TO_INDEX(target) (target - OVS_MESSAGE_TARGET_FLOW)
+#define OVS_GENL_TARGET_COUNT 4
+
+typedef enum _OVS_MESSAGE_COMMAND_TYPE
+{
     OVS_MESSAGE_COMMAND_INVALID,
     OVS_MESSAGE_COMMAND_NEW,
     OVS_MESSAGE_COMMAND_DELETE,
@@ -68,7 +74,8 @@ typedef enum _OVS_MESSAGE_COMMAND_TYPE {
     OVS_MESSAGE_COMMAND_PACKET_UPCALL_EXECUTE
 }OVS_MESSAGE_COMMAND_TYPE;
 
-typedef struct _OVS_NLMSGHDR {
+typedef struct _OVS_NLMSGHDR
+{
     //length of the message, including header
     UINT32 length;
 
@@ -84,13 +91,15 @@ typedef struct _OVS_NLMSGHDR {
 
 C_ASSERT(16 == sizeof(OVS_NLMSGHDR));
 
-typedef struct _OVS_NL_ATTRIBUTE{
+typedef struct _OVS_NL_ATTRIBUTE
+{
     UINT16 length;
     UINT16 type;
 }OVS_NL_ATTRIBUTE;
 
 //message from / to the user space
-typedef struct _OVS_MESSAGE {
+typedef struct _OVS_MESSAGE
+{
     OVS_NLMSGHDR;
 
     //new / delete / get / set /dump / error
@@ -108,8 +117,22 @@ typedef struct _OVS_MESSAGE {
 
 C_ASSERT(OVS_MESSAGE_HEADER_SIZE == 24);
 
+typedef struct _OVS_MESSAGE_CONTROL
+{
+    OVS_NLMSGHDR;
+
+    UINT8 command;
+    UINT8 version;
+    UINT16 reserved;
+}OVS_MESSAGE_CONTROL, *POVS_MESSAGE_CONTROL;
+
+#define OVS_CTRL_MESSAGE_HEADER_SIZE    (sizeof(OVS_MESSAGE_CONTROL))
+
+C_ASSERT(OVS_CTRL_MESSAGE_HEADER_SIZE == 20);
+
 //message to the userspace
-typedef struct _OVS_MESSAGE_ERROR {
+typedef struct _OVS_MESSAGE_ERROR
+{
     OVS_NLMSGHDR;
 
     int error;
@@ -119,20 +142,23 @@ typedef struct _OVS_MESSAGE_ERROR {
 C_ASSERT(sizeof(OVS_MESSAGE_ERROR) == 36);
 
 //message to the userspace
-typedef struct _OVS_MESSAGE_DONE {
+typedef struct _OVS_MESSAGE_DONE
+{
     OVS_NLMSGHDR;
 }OVS_MESSAGE_DONE, *POVS_MESSAGE_DONE;
 
 C_ASSERT(sizeof(OVS_MESSAGE_DONE) == 16);
 
-typedef struct _OVS_MESSAGE_ROUTE_TABLE {
+typedef struct _OVS_MESSAGE_ROUTE_TABLE
+{
     OVS_NLMSGHDR;
 
     //e.g. AF_INET
     BYTE socketFamily;
 }OVS_MESSAGE_ROUTE_TABLE;
 
-typedef struct _OVS_MESSAGE_MULTICAST {
+typedef struct _OVS_MESSAGE_MULTICAST
+{
     OVS_NLMSGHDR;
 
     //if true, join; if else, leave
@@ -141,7 +167,8 @@ typedef struct _OVS_MESSAGE_MULTICAST {
 }OVS_MESSAGE_MULTICAST;
 
 //message from the user space
-typedef struct _OVS_MESSAGE_SET_FILE_PID {
+typedef struct _OVS_MESSAGE_SET_FILE_PID
+{
     OVS_NLMSGHDR;
 }OVS_MESSAGE_SET_FILE_PID, *POVS_MESSAGE_SET_FILE_PID;
 
@@ -171,8 +198,6 @@ BOOLEAN ParseReceivedMessage(VOID* buffer, UINT16 length, _Out_ OVS_NLMSGHDR** p
 
 //pBuffer: must be non-null. pBuffer->buffer must be NULL
 BOOLEAN WriteMsgsToBuffer(_In_ OVS_NLMSGHDR* pMsgs, int countMsgs, OVS_BUFFER* pBuffer);
-
-BOOLEAN VerifyMessage(_In_ const OVS_NLMSGHDR* pMsg, UINT isRequest);
 
 static __inline OVS_NLMSGHDR* AdvanceMessage(_In_ const OVS_NLMSGHDR* pMsg)
 {
@@ -235,4 +260,34 @@ static __inline OVS_MESSAGE_COMMAND_TYPE UserspacePacketCmdToKernelCmd(ULONG cmd
     return resultCmd;
 }
 
-static BOOLEAN _ParseArgGroup_FromAttributes(_In_ BYTE** ppBuffer, UINT16* pBytesLeft, UINT16 groupSize, _Inout_ OVS_ARGUMENT_GROUP* pGroup, OVS_ARGTYPE parentArgType, UINT16 targetType, UINT8 cmd);
+VOID DestroyMessages(_Inout_ OVS_MESSAGE* msgs, UINT countMsgs);
+
+static __inline OVS_ARGTYPE MessageTargetTypeToArgType(OVS_MESSAGE_TARGET_TYPE targetType)
+{
+    switch (targetType)
+    {
+    case OVS_MESSAGE_TARGET_DATAPATH:
+        return OVS_ARGTYPE_PSEUDOGROUP_DATAPATH;
+
+    case OVS_MESSAGE_TARGET_FLOW:
+        return OVS_ARGTYPE_PSEUDOGROUP_FLOW;
+
+    case OVS_MESSAGE_TARGET_PORT:
+        return OVS_ARGTYPE_PSEUDOGROUP_OFPORT;
+
+    case OVS_MESSAGE_TARGET_PACKET:
+        return OVS_ARGTYPE_PSEUDOGROUP_PACKET;
+
+    default:
+        OVS_CHECK_RET(__UNEXPECTED__, OVS_ARGTYPE_INVALID);
+    }
+}
+
+OVS_ERROR CreateMsg(OVS_MESSAGE* pMsg, UINT32 portId, UINT32 sequence, UINT32 length, OVS_MESSAGE_TARGET_TYPE target, UINT8 command,
+    UINT32 dpIfIndex, UINT16 countArgs);
+
+OVS_ERROR CreateReplyMsg(_In_ const OVS_MESSAGE* pInMsg, _Out_ OVS_MESSAGE* pOutMsg, UINT32 length,
+    UINT8 command, UINT16 countArgs);
+
+OVS_ERROR CreateReplyMsgDone(_In_ const OVS_MESSAGE* pInMsg, _Out_ OVS_MESSAGE* pOutMsg, UINT32 length,
+    UINT8 command);

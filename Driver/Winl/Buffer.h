@@ -18,10 +18,11 @@ limitations under the License.
 
 #include "precomp.h"
 
-typedef struct _OVS_BUFFER {
-    VOID*	p;
-    UINT	size;
-    UINT	offset;
+typedef struct _OVS_BUFFER
+{
+    VOID*    p;
+    UINT     size;
+    UINT     offset;
 } OVS_BUFFER;
 
 static __inline VOID InitializeBuffer(_Inout_  OVS_BUFFER* pBuf)
@@ -37,9 +38,11 @@ static __inline BOOLEAN AllocateBuffer(_Inout_ OVS_BUFFER* pBuf, UINT size)
     OVS_CHECK(!pBuf->p);
     OVS_CHECK(!pBuf->offset);
 
-    pBuf->p = ExAllocatePoolWithTag(NonPagedPool, size, g_extAllocationTag);
+    pBuf->p = KAlloc(size);
     if (!pBuf->p)
+    {
         return FALSE;
+    }
 
     pBuf->size = size;
 
@@ -57,7 +60,7 @@ static __inline VOID FreeBufferData(_Inout_ OVS_BUFFER* pBuf)
 {
     if (!IsBufferEmpty(pBuf))
     {
-        ExFreePoolWithTag(pBuf->p, g_extAllocationTag);
+        KFree(pBuf->p);
 
         RtlZeroMemory(pBuf, sizeof(OVS_BUFFER));
     }

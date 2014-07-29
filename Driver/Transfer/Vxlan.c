@@ -22,6 +22,7 @@ limitations under the License.
 #include "Nbls.h"
 #include "OvsNetBuffer.h"
 #include "Argument.h"
+#include "OFPort.h"
 
 ULONG Vxlan_BytesNeeded(UINT16 tunnelFlags)
 {
@@ -79,7 +80,7 @@ VOID* Vxlan_BuildHeader(_In_ const OF_PI_IPV4_TUNNEL* pTunnel, _In_ const OVS_TU
     OVS_CHECK(vxlanHeaderSize == sizeof(OVS_UDP_HEADER) + sizeof(OVS_VXLAN_HEADER));
     *pHaveChecksum = FALSE;
 
-    pVxlanFullHeader = ExAllocatePoolWithTag(NonPagedPool, vxlanHeaderSize, g_extAllocationTag);
+    pVxlanFullHeader = KAlloc(vxlanHeaderSize);
     if (!pVxlanFullHeader)
     {
         return NULL;

@@ -35,8 +35,6 @@ limitations under the License.
 #include "Gre.h"
 #include "Vxlan.h"
 
-extern OVS_SWITCH_INFO* g_pSwitchInfo;
-
 static volatile LONG g_upcallSequence = 0;
 
 static LONG _NextUpcallSequence()
@@ -50,254 +48,180 @@ static LONG _NextUpcallSequence()
     return result;
 }
 
-VOID Packet_Execute(_In_ OVS_ARGUMENT_GROUP* pArgGroup, const FILE_OBJECT* pFileObject)
+static OVS_NET_BUFFER* _CreateONBFromArg(OVS_ARGUMENT* pOnbArg)
 {
     OVS_NET_BUFFER* pOvsNb = NULL;
-    OVS_FLOW* pFlow = NULL;
-    OVS_DATAPATH* pDatapath = NULL;
-    OVS_ETHERNET_HEADER* ethHeader = NULL;
-    BOOLEAN ok = FALSE;
-    LOCK_STATE_EX lockState = { 0 };
     OVS_BUFFER buffer = { 0 };
-    OVS_GLOBAL_FORWARD_INFO* pFwdContext = NULL;
-    OVS_NIC_INFO sourcePort = { 0 };
     ULONG additionalSize = max(Gre_BytesNeeded(0xFFFF), Vxlan_BytesNeeded(0xFFFF));
-    OVS_ARGUMENT* pArg = NULL;
-    OVS_ARGUMENT_GROUP* pPacketInfoArgs = NULL, *pActionsArgs = NULL, *pTargetActions = NULL;
+    OVS_ETHERNET_HEADER* pEthHeader = NULL;
 
-    UNREFERENCED_PARAMETER(pFileObject);
-
-    pArg = FindArgument(pArgGroup, OVS_ARGTYPE_NETBUFFER);
-    if (!pArg)
-    {
-        DEBUGP(LOG_ERROR, __FUNCTION__ " fail: have no arg net buffer!\n");
-        return;
-    }
-
-    buffer.size = pArg->length;
+    buffer.size = pOnbArg->length;
     buffer.offset = 0;
-    buffer.p = pArg->data;
-
-    //i.e. packet info
-    pPacketInfoArgs = FindArgumentGroup(pArgGroup, OVS_ARGTYPE_GROUP_PI);
-    if (!pPacketInfoArgs)
-    {
-        DEBUGP(LOG_ERROR, __FUNCTION__ " fail: have no arg key!\n");
-        return;
-    }
-
-    pActionsArgs = FindArgumentGroup(pArgGroup, OVS_ARGTYPE_GROUP_ACTIONS);
-    if (!pActionsArgs)
-    {
-        DEBUGP(LOG_ERROR, __FUNCTION__ " fail: have no arg group actions!\n");
-        return;
-    }
+    buffer.p = pOnbArg->data;
 
     pOvsNb = ONB_CreateFromBuffer(&buffer, additionalSize);
+    OVS_CHECK_RET(pOvsNb, NULL);
 
-    if (!pOvsNb)
-    {
-        DEBUGP(LOG_ERROR, __FUNCTION__ " fail: could not create ONB!\n");
-        return;
-    }
+    pEthHeader = (OVS_ETHERNET_HEADER*)ONB_GetData(pOvsNb);
+    OVS_CHECK(RtlUshortByteSwap(pEthHeader->type) >= OVS_ETHERTYPE_802_3_MIN);
 
-    ethHeader = (OVS_ETHERNET_HEADER*)ONB_GetData(pOvsNb);
+    return pOvsNb;
+}
 
-    OVS_CHECK(RtlUshortByteSwap(ethHeader->type) >= OVS_ETHERTYPE_802_3_MIN);
+static OVS_FLOW* _CreateFlowFromArgs(OVS_NET_BUFFER* pOvsNb, OVS_ARGUMENT_GROUP* pPIArgs, OVS_ARGUMENT_GROUP* pActionsArgs)
+{
+    OVS_FLOW* pFlow = NULL;
+    BOOLEAN ok = TRUE;
+    OVS_ACTIONS* pTargetActions = NULL;
 
     pFlow = Flow_Create();
-    if (!pFlow)
-    {
-        DEBUGP(LOG_ERROR, __FUNCTION__ " fail: could not alloc flow!\n");
-        ok = FALSE;
-        goto Cleanup;
-    }
+    OVS_CHECK_GC(pFlow);
 
     ok = PacketInfo_Extract(ONB_GetData(pOvsNb), ONB_GetDataLength(pOvsNb), OVS_INVALID_PORT_NUMBER, &pFlow->maskedPacketInfo);
-    if (!ok) {
-        DEBUGP(LOG_ERROR, __FUNCTION__ " fail: could not extract keys from packet!\n");
-        goto Cleanup;
-    }
+    OVS_CHECK_GC(ok);
 
-    ok = GetPacketContextFromPIArgs(pPacketInfoArgs, &pFlow->maskedPacketInfo);
-    if (!ok) {
-        DEBUGP(LOG_ERROR, __FUNCTION__ " fail: could not extract context keys from packet!\n");
-        goto Cleanup;
-    }
+    ok = GetPacketContextFromPIArgs(pPIArgs, &pFlow->maskedPacketInfo);
+    OVS_CHECK_GC(ok);
 
-    pTargetActions = AllocArgumentGroup();
-    if (NULL == pTargetActions)
-    {
-        DEBUGP(LOG_ERROR, __FUNCTION__ " fail: could not alloc group for target actions!\n");
-        return;
-    }
+    pTargetActions = Actions_Create();
+    OVS_CHECK_GC(pTargetActions);
 
-    if (!CopyArgumentGroup(pTargetActions, pActionsArgs, /*actionsToAdd*/0))
-    {
-        DEBUGP(LOG_ERROR, __FUNCTION__ " fail: could not copy actions group\n");
-        DestroyArgumentGroup(pTargetActions);
-        return;
-    }
+    OVS_CHECK_GC(CopyArgumentGroup(pTargetActions->pActionGroup, pActionsArgs, /*actionsToAdd*/0));
 
-    ok = ProcessReceivedActions(pTargetActions, &pFlow->maskedPacketInfo, /*recursivity depth*/0);
-    if (!ok)
-    {
-        DEBUGP(LOG_ERROR, __FUNCTION__ "ProcessReceivedActions failed!\n");
-        goto Cleanup;
-    }
+    ok = ProcessReceivedActions(pTargetActions->pActionGroup, &pFlow->maskedPacketInfo, /*recursivity depth*/0);
+    OVS_CHECK_GC(ok);
 
     pFlow->pActions = pTargetActions;
 
-    pOvsNb->pFlow = pFlow;
+Cleanup:
+    return pFlow;
+}
+
+static VOID _SetOnbMetadata(OVS_NET_BUFFER* pOvsNb, OVS_FLOW* pFlow, OVS_SWITCH_INFO* pSwitchInfo, OVS_DATAPATH* pDatapath)
+{
+    pOvsNb->pActions = pFlow->pActions;
     pOvsNb->pOriginalPacketInfo = &pFlow->maskedPacketInfo;
     pOvsNb->packetPriority = pFlow->maskedPacketInfo.physical.packetPriority;
     pOvsNb->packetMark = pFlow->maskedPacketInfo.physical.packetMark;
 
     pOvsNb->pDestinationPort = NULL;
     pOvsNb->sendToPortNormal = FALSE;
-    pOvsNb->pSourceNic = &sourcePort;
-    pOvsNb->pSwitchInfo = g_pSwitchInfo;
+
+    pOvsNb->pSwitchInfo = pSwitchInfo;
+    pOvsNb->pDatapath = pDatapath;
     pOvsNb->sendFlags = 0;
 
-    if (pOvsNb->pOriginalPacketInfo->physical.ovsInPort != OVS_INVALID_PORT_NUMBER)
+    if (pOvsNb->pOriginalPacketInfo->physical.ofInPort != OVS_INVALID_PORT_NUMBER)
     {
-        Rwlock_LockRead(g_pSwitchInfo->pForwardInfo->pRwLock, &lockState);
+        OVS_OFPORT* pSourceOFPort = OFPort_FindByNumber_Ref(pOvsNb->pOriginalPacketInfo->physical.ofInPort);
 
-        OVS_PERSISTENT_PORT* pPersPort = PersPort_FindByNumber_Unsafe(pOvsNb->pOriginalPacketInfo->physical.ovsInPort);
-        if (pPersPort && pPersPort->pNicListEntry)
-        {
-            NicListEntry_To_NicInfo(pPersPort->pNicListEntry, &sourcePort);
-        }
-
-        pOvsNb->pSourcePort = pPersPort;
-
-        Rwlock_Unlock(g_pSwitchInfo->pForwardInfo->pRwLock, &lockState);
+        pOvsNb->pSourcePort = pSourceOFPort;
     }
 
-    pDatapath = GetDefaultDatapath();
-
-    if (!pDatapath)
+    else
     {
-        ok = FALSE;
-        DEBUGP(LOG_ERROR, __FUNCTION__ " fail: have no datapath!\n");
-        goto Cleanup;
+        pOvsNb->pSourcePort = OFPort_FindInternal_Ref();
     }
-
-    OVS_CHECK(g_pSwitchInfo);
-    pFwdContext = g_pSwitchInfo->pForwardInfo;
-    OVS_CHECK(pFwdContext);
-
-    FlowTable_LockRead(&lockState);
 
     pOvsNb->pTunnelInfo = NULL;
+}
+
+//NOTE: Assuming the verification part has done its job (arg & msg verification), we can use the input data as valid
+
+VOID WinlPacket_Execute(OVS_SWITCH_INFO* pSwitchInfo, OVS_DATAPATH* pDatapath, _In_ OVS_ARGUMENT_GROUP* pArgGroup, const FILE_OBJECT* pFileObject)
+{
+    OVS_NET_BUFFER* pOvsNb = NULL;
+    OVS_FLOW* pFlow = NULL;
+    BOOLEAN ok = FALSE;
+    //OVS_NIC_INFO sourcePort = { 0 };
+    
+    OVS_ARGUMENT* pOnbArg = NULL;
+    OVS_ARGUMENT_GROUP* pPacketInfoArgs = NULL, *pActionsArgs = NULL;
+
+    UNREFERENCED_PARAMETER(pFileObject);
+
+    pOnbArg = FindArgument(pArgGroup, OVS_ARGTYPE_PACKET_BUFFER);
+    OVS_CHECK(pOnbArg);
+
+    //i.e. packet info
+    pPacketInfoArgs = FindArgumentGroup(pArgGroup, OVS_ARGTYPE_PACKET_PI_GROUP);
+    OVS_CHECK(!pPacketInfoArgs);
+
+    pActionsArgs = FindArgumentGroup(pArgGroup, OVS_ARGTYPE_PACKET_ACTIONS_GROUP);
+    OVS_CHECK(pActionsArgs);
+
+    pOvsNb = _CreateONBFromArg(pOnbArg);
+    OVS_CHECK_GC(pOvsNb);
+
+    pFlow = _CreateFlowFromArgs(pOvsNb, pPacketInfoArgs, pActionsArgs);
+    OVS_CHECK_GC(pFlow);
+
+    OVS_REFCOUNT_REFERENCE(pFlow->pActions)
+
+    //while we will process the packet, we do not allow its actions to be destroyed
+    _SetOnbMetadata(pOvsNb, pFlow, pSwitchInfo, pDatapath);
+
     ok = ExecuteActions(pOvsNb, OutputPacketToPort);
 
-    FlowTable_Unlock(&lockState);
-
 Cleanup:
-    Flow_Free(pFlow);
+    if (pFlow)
+    {
+        OVS_REFCOUNT_DEREF_AND_DESTROY(pFlow->pActions);
+
+        Flow_DestroyNow_Unsafe(pFlow);
+    }
+
+    OVS_REFCOUNT_DEREFERENCE(pOvsNb->pSourcePort);
 
     if (ok)
     {
         //NOTE: the NET_BUFFER_LIST and NET_BUFFER and MDL are destroyed on NDIS callback
         KFree(pOvsNb);
     }
-
     else
     {
-        ONB_Destroy(g_pSwitchInfo, &pOvsNb);
+        ONB_Destroy(pSwitchInfo, &pOvsNb);   
     }
 }
 
-static OVS_ERROR _QueueUserspacePacket(NET_BUFFER* pNb, const OVS_UPCALL_INFO* pUpcallInfo)
+static OVS_ERROR _QueueUserspacePacket(OVS_DATAPATH* pDatapath, _In_ NET_BUFFER* pNb, _In_ const OVS_UPCALL_INFO* pUpcallInfo)
 {
-    BOOLEAN dbgPrintPacket = FALSE;
     OVS_ERROR error = OVS_ERROR_NOERROR;
     OVS_MESSAGE msg = { 0 };
     UINT16 countArgs = 0;
     OVS_ARGUMENT* pPacketInfoArg = NULL, *pNbArg = NULL, *pUserDataArg = NULL;
-    UINT i = 0;
-    OVS_ETHERNET_HEADER* pEthHeader = NULL;
+    ULONG i = 0;
     VOID* nbBuffer = NULL;
     ULONG bufLen = NET_BUFFER_DATA_LENGTH(pNb);
+    countArgs = (pUpcallInfo->pUserData ? 3 : 2);
+    UINT32 sequence = _NextUpcallSequence();
 
     nbBuffer = NdisGetDataBuffer(pNb, bufLen, NULL, 1, 0);
-    OVS_CHECK(nbBuffer);
 
-    if (!nbBuffer)
-    {
-        error = OVS_ERROR_INVAL;
-        goto Out;
-    }
+    CHECK_B_E(nbBuffer, OVS_ERROR_INVAL);
+    CHECK_B_E(bufLen > USHORT_MAX, OVS_ERROR_INVAL);
 
-    if (dbgPrintPacket)
-    {
-        DbgPrintNbFrames(pNb, "buffer sent to userspace");
-    }
+    CHECK_E(CreateMsg(&msg, pUpcallInfo->portId, sequence, sizeof(OVS_MESSAGE), OVS_MESSAGE_TARGET_PACKET, pUpcallInfo->command,
+        pDatapath->switchIfIndex, countArgs));
 
-    pEthHeader = nbBuffer;
+    pPacketInfoArg = CreateArgFromPacketInfo(pUpcallInfo->pPacketInfo, NULL, OVS_ARGTYPE_PACKET_PI_GROUP);
+    CHECK_B_E(pPacketInfoArg, OVS_ERROR_INVAL);
 
-    UNREFERENCED_PARAMETER(pEthHeader);
-
-    if (bufLen > USHORT_MAX)
-    {
-        error = OVS_ERROR_INVAL;
-        goto Out;
-    }
-
-    msg.length = sizeof(OVS_MESSAGE);
-    msg.type = OVS_MESSAGE_TARGET_PACKET;
-    msg.flags = 0;
-    msg.sequence = _NextUpcallSequence();
-    msg.pid = pUpcallInfo->portId;
-
-    msg.command = pUpcallInfo->command;
-    msg.version = 1;
-    msg.reserved = 0;
-
-    msg.dpIfIndex = g_pSwitchInfo->datapathIfIndex;
-
-    msg.pArgGroup = AllocArgumentGroup();
-
-    if (!msg.pArgGroup)
-    {
-        error = OVS_ERROR_INVAL;
-        goto Out;
-    }
-
-    countArgs = (pUpcallInfo->pUserData ? 3 : 2);
-
-    AllocateArgumentsToGroup(countArgs, msg.pArgGroup);
-
-    pPacketInfoArg = CreateArgFromPacketInfo(pUpcallInfo->pPacketInfo, NULL, OVS_ARGTYPE_GROUP_PI);
-    OVS_CHECK(pPacketInfoArg);
-
-    i = 0;
-    msg.pArgGroup->args[i] = *pPacketInfoArg;
-    msg.pArgGroup->groupSize += pPacketInfoArg->length;
-    ++i;
+    AddArgToArgGroup(msg.pArgGroup, pPacketInfoArg, &i);
 
     if (pUpcallInfo->pUserData)
     {
-        pUserDataArg = CreateArgumentWithSize(OVS_ARGTYPE_NETBUFFER_USERDATA, pUpcallInfo->pUserData->data, pUpcallInfo->pUserData->length);
+        pUserDataArg = CreateArgumentWithSize(OVS_ARGTYPE_PACKET_USERDATA, pUpcallInfo->pUserData->data, pUpcallInfo->pUserData->length);
+        CHECK_B_E(pUserDataArg, OVS_ERROR_NOMEM);
 
-        if (pUserDataArg)
-        {
-            msg.pArgGroup->args[i] = *pUserDataArg;
-            msg.pArgGroup->groupSize += pUserDataArg->length;
-            ++i;
-        }
-        else
-        {
-            OVS_CHECK(pUserDataArg);
-            DEBUGP(LOG_ERROR, __FUNCTION__ "failed to create user data arg!\n");
-        }
+        AddArgToArgGroup(msg.pArgGroup, pUserDataArg, &i);
     }
 
     //we send the net buffer data and only it: starting from eth -> payload.
-    pNbArg = CreateArgumentWithSize(OVS_ARGTYPE_NETBUFFER, nbBuffer, bufLen);
-    msg.pArgGroup->args[i] = *pNbArg;
-    msg.pArgGroup->groupSize += pNbArg->length;
+    pNbArg = CreateArgumentWithSize(OVS_ARGTYPE_PACKET_BUFFER, nbBuffer, bufLen);
+    CHECK_B_E(pNbArg, OVS_ERROR_NOMEM);
+
+    AddArgToArgGroup(msg.pArgGroup, pNbArg, &i);
 
     OVS_CHECK(msg.type == OVS_MESSAGE_TARGET_PACKET);
     OVS_CHECK(msg.command == OVS_MESSAGE_COMMAND_PACKET_UPCALL_ACTION ||
@@ -313,83 +237,48 @@ static OVS_ERROR _QueueUserspacePacket(NET_BUFFER* pNb, const OVS_UPCALL_INFO* p
         }
     }
 
-Out:
+Cleanup:
     if (msg.pArgGroup)
     {
         DestroyArgumentGroup(msg.pArgGroup);
-        msg.pArgGroup = NULL;
 
-        if (pNbArg)
-        {
-            FreeArgument(pNbArg);
-        }
-
-        if (pUserDataArg)
-        {
-            FreeArgument(pUserDataArg);
-        }
-
-        if (pPacketInfoArg)
-        {
-            FreeArgument(pPacketInfoArg);
-        }
+        KFree(pNbArg);
+        KFree(pUserDataArg);
+        KFree(pPacketInfoArg);
     }
-
     else
     {
-        if (pNbArg)
-        {
-            //we free, not destroy: the nb inside was not duplicated
-            FreeArgument(pNbArg);
-        }
+        //we free, not destroy: the nb inside was not duplicated
+        KFree(pNbArg);
 
-        if (pUserDataArg)
-        {
-            DestroyArgument(pUserDataArg);
-        }
-
-        if (pPacketInfoArg)
-        {
-            DestroyArgument(pPacketInfoArg);
-        }
+        DestroyArgument(pUserDataArg);
+        DestroyArgument(pPacketInfoArg);
     }
 
     return error;
 }
 
-BOOLEAN QueuePacketToUserspace(NET_BUFFER* pNb, const OVS_UPCALL_INFO* pUpcallInfo)
+BOOLEAN QueuePacketToUserspace(OVS_DATAPATH* pDatapath, _In_ NET_BUFFER* pNb, _In_ const OVS_UPCALL_INFO* pUpcallInfo)
 {
     int dpifindex = 0;
     BOOLEAN ok = TRUE;
-    OVS_DATAPATH* pDatapath = GetDefaultDatapath();
 
-    //__DONT_QUEUE_BY_DEFAULT is used for debugging purposes only
-#define __DONT_QUEUE_BY_DEFAULT 0
-
-#if __DONT_QUEUE_BY_DEFAULT
-    BOOLEAN queuePacket = FALSE;
-#endif
-
-    if (pUpcallInfo->portId == 0) {
+    if (pUpcallInfo->portId == 0)
+    {
         ok = FALSE;
         goto Cleanup;
     }
 
     dpifindex = pDatapath->switchIfIndex;
 
-#if __DONT_QUEUE_BY_DEFAULT
-    if (queuePacket)
-#endif
+    OVS_ERROR error = _QueueUserspacePacket(pDatapath, pNb, pUpcallInfo);
+    if (error != OVS_ERROR_NOERROR)
     {
-        OVS_ERROR error = _QueueUserspacePacket(pNb, pUpcallInfo);
-        if (error != OVS_ERROR_NOERROR)
-        {
-            //no other kind of error except 'no space' (for queued buffers) normally happen.
-            //or NOENT = file not found (where to write the info to)
-            OVS_CHECK(error == OVS_ERROR_NOSPC || error == OVS_ERROR_NOENT);
+        //no other kind of error except 'no space' (for queued buffers) normally happen.
+        //or NOENT = file not found (where to write the info to)
+        OVS_CHECK(error == OVS_ERROR_NOSPC || error == OVS_ERROR_NOENT);
 
-            goto Cleanup;
-        }
+        goto Cleanup;
     }
 
 Cleanup:
@@ -397,11 +286,11 @@ Cleanup:
     {
         LOCK_STATE_EX lockState = { 0 };
 
-        Rwlock_LockWrite(pDatapath->pStatsRwLock, &lockState);
+        DATAPATH_LOCK_WRITE(pDatapath, &lockState);
 
         ++pDatapath->statistics.countLost;
 
-        Rwlock_Unlock(pDatapath->pStatsRwLock, &lockState);
+        DATAPATH_UNLOCK(pDatapath, &lockState);
     }
 
     return ok;

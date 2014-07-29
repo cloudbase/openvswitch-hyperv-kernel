@@ -19,8 +19,8 @@ limitations under the License.
 #include "precomp.h"
 
 ///"Fragment Offset" part of FlagsAndOffset
-#define OVS_IPV4_OFFSET       0x1FFF
-#define OVS_IPV4_ADDRESS_LENGTH		4
+#define OVS_IPV4_OFFSET                0x1FFF
+#define OVS_IPV4_ADDRESS_LENGTH        4
 
 #define IPV4_GET_OPTION_COPIED(optionType) (optionType & 0x80) /*1000 0000*/
 #define IPV4_GET_OPTION_CLASS(optionType) (optionType & 0x60) /*0110 0000*/
@@ -45,26 +45,36 @@ typedef struct _OVS_TRANSPORT_PSEUDO_HEADER_IPV4 OVS_TRANSPORT_PSEUDO_HEADER_IPV
 // 3168 redefine the unused 2 bits in the traffic class octet as used by
 // ECN.
 //
-typedef struct _OVS_IPV4_HEADER {
-    union {
+typedef struct _OVS_IPV4_HEADER
+{
+    union
+    {
         UINT8 VersionAndHeaderLength;   // Version and header length.
-        struct {
+        struct
+        {
             UINT8 HeaderLength : 4;
             UINT8 Version : 4;
         };
     };
-    union {
+
+    union
+    {
         UINT8 TypeOfServiceAndEcnField; // Type of service & ECN (RFC 3168).
-        struct {
+        struct
+        {
             UINT8 EcnField : 2;
             UINT8 TypeOfService : 6;
         };
     };
+
     UINT16 TotalLength;                 // Total length of datagram.
     UINT16 Identification;
-    union {
+
+    union
+    {
         UINT16 FlagsAndOffset;          // Flags and fragment offset.
-        struct {
+        struct
+        {
             UINT16 DontUse1 : 5;        // High bits of fragment offset.
             UINT16 MoreFragments : 1;
             UINT16 DontFragment : 1;
@@ -83,7 +93,16 @@ C_ASSERT(sizeof(OVS_IPV4_HEADER) == 20);
 
 /*********************************/
 
-enum { OVS_IPPROTO_ICMP = 0x01, OVS_IPPROTO_IGMP = 0x02, OVS_IPPROTO_TCP = 0x06, OVS_IPPROTO_UDP = 0x11, OVS_IPPROTO_GRE = 0x2F, OVS_IPPROTO_SCTP = 0x84 };
+enum
+{
+    OVS_IPPROTO_ICMP = 0x01,
+    OVS_IPPROTO_IGMP = 0x02,
+    OVS_IPPROTO_TCP = 0x06,
+    OVS_IPPROTO_UDP = 0x11,
+    OVS_IPPROTO_GRE = 0x2F,
+    OVS_IPPROTO_SCTP = 0x84
+};
+
 enum { OVS_IPPROTO_VERSION_4 = 0x04 };
 
 /*********************************/
@@ -94,7 +113,9 @@ static __inline ULONG Ipv4_GetOptionLength(BYTE* pOption)
 {
     BYTE optionType = *pOption;
 
-    optionType &= 0xEF; //remove the copy flag
+    //remove the copy flag, so we can compare the option type
+    //(the copy flag is normally part of the option type)
+    optionType &= 0x7F;
 
     switch (optionType)
     {
@@ -155,11 +176,16 @@ static __inline ULONG GetTransportLength_FromIpv4(_In_ const OVS_IPV4_HEADER* pI
 
 static __inline VOID Ipv4_SetFragmentOffset(OVS_IPV4_HEADER* pIpv4Header, UINT16 offset)
 {
+    UINT16 allFlags = 0xE0;
+
     OVS_CHECK(offset <= 0x1FFF); //i.e. 13 bits
 
     //cccb bbba 000d dddc -> 000d dddc cccb bbba
     offset = RtlUshortByteSwap(offset);
+    //we clear the old offset
+    pIpv4Header->FlagsAndOffset &= allFlags;
 
+    //set new offset
     pIpv4Header->FlagsAndOffset |= offset;
 }
 
@@ -174,8 +200,20 @@ static __inline UINT16 Ipv4_GetFragmentOffset(_In_ const OVS_IPV4_HEADER* pIpv4H
     return offset;
 }
 
+static __inline LONG Ipv4_GetHeaderSize(_In_ const OVS_IPV4_HEADER* pIpv4Header)
+{
+    ULONG headerLength = 0;
+
+    OVS_CHECK(pIpv4Header);
+
+    headerLength = pIpv4Header->HeaderLength * sizeof(DWORD);
+    OVS_CHECK(headerLength >= sizeof(OVS_IPV4_HEADER));
+
+    return headerLength;
+}
+
 //copies the header options that have the copied flag set. returns ptr to buffer; pFragHeaderSize = on return it is the size of the buffer
-BYTE* Ipv4_CopyHeaderOptions(_In_ const OVS_IPV4_HEADER* pIpv4Header, _Inout_ ULONG* pFragHeaderSize);
+BYTE* Ipv4_CopyHeaderOptions(_In_ const OVS_IPV4_HEADER* pIpv4Header, _Inout_ ULONG* pOptionsSize);
 
 #ifdef DBG
 void DbgPrintIpv4(_In_ const OVS_IPV4_HEADER* pIpv4Header);

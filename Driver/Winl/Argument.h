@@ -19,9 +19,14 @@ limitations under the License.
 #include "precomp.h"
 #include "ArgumentType.h"
 
+#define OVS_SIZE_ALIGNED_N(dataSize, N)        (((dataSize) / (N)) * (N) + ((dataSize) % (N) ? (N) : 0))
+#define OVS_SIZE_ALIGNED_4(dataSize)            OVS_SIZE_ALIGNED_N(dataSize, 4)
+#define OVS_NLA_DATA(nlAttr)                ((BYTE*)nlAttr + sizeof(OVS_NL_ATTRIBUTE))
+
 #define STRUCT_FIELD_SIZE(structType, fieldName) sizeof(((structType*)0)->fieldName)
 
-typedef struct _OVS_ARGUMENT {
+typedef struct _OVS_ARGUMENT
+{
     UINT16 length;
     UINT16 type;
 
@@ -44,7 +49,8 @@ C_ASSERT(sizeof(OVS_ARGUMENT) == 16);
 
 typedef struct _OVS_ARGUMENT OVS_ATTRIBUTE;
 
-typedef struct _OVS_ARGUMENT_GROUP {
+typedef struct _OVS_ARGUMENT_GROUP
+{
     //the number of args in the group
     UINT16 count;
     //the total size of the group: sizeof each OVS_ARGUMENT + length of allocated "data" of each arg
@@ -59,76 +65,45 @@ typedef struct _OVS_ARGUMENT_GROUP {
 C_ASSERT(OVS_ARGUMENT_GROUP_HEADER_SIZE == 4);
 C_ASSERT(sizeof(OVS_ARGUMENT_GROUP) == 16);
 
-typedef struct _OVS_ARGUMENT_SLIST_ENTRY {
-    OVS_ARGUMENT* pArg;
-    struct _OVS_ARGUMENT_SLIST_ENTRY* pNext;
-} OVS_ARGUMENT_SLIST_ENTRY;
-
 #define COMPARE_ARGUMENT_SIMPLE(arg, value, typeOfValue) \
-	(*(typeOfValue*)arg->data == value ? TRUE : FALSE)
+    (*(typeOfValue*)arg->data == value ? TRUE : FALSE)
 
 #define GET_ARG_DATA(arg, typeOfDest) \
 (*(typeOfDest*)arg->data)
 
 #define GET_ARG_DATA_PTR(arg, ptrType) \
-	((ptrType*)arg->data)
+    ((ptrType*)arg->data)
+
+#define OVS_FOR_EACH_ARG(pGroup, pArg, argType, code)            \
+    for (UINT i = 0; i < (pGroup)->count; ++i)    \
+{                                            \
+    OVS_ARGUMENT* pArg = (pGroup)->args + i;        \
+    OVS_ARGTYPE argType = pArg->type;            \
+    code;                                        \
+}
+
+#define OVS_PARSE_ARGS_QUICK(group, pGroup, args)                       \
+    OVS_ARGUMENT* args[OVS_ARGTYPE_COUNT(group)] = {0};                 \
+                                                                        \
+    OVS_FOR_EACH_ARG((pGroup), pArg, argType,                           \
+                                                                        \
+    OVS_ARGUMENT** ppCurArg = args + OVS_ARG_TOINDEX(argType, group);   \
+    OVS_CHECK(!*ppCurArg);                                              \
+    *ppCurArg = pArg                                                    \
+    );
 
 /******************************************* ALLOC & FREE FUNCTIONS **********************************************************************/
-
-#define AllocArgumentData(size) ExAllocatePoolWithTag(NonPagedPool, size, g_extAllocationTag)
-
-//frees the pArg->data of an OVS_ARGUMENT
-static __inline VOID FreeArgumentData(VOID* pData)
-{
-    ExFreePoolWithTag(pData, g_extAllocationTag);
-}
-
-//allocates an OVS_ARGUMENT and initializes it
-static __inline OVS_ARGUMENT* AllocArgument()
-{
-    OVS_ARGUMENT* pArg = ExAllocatePoolWithTag(NonPagedPool, sizeof(OVS_ARGUMENT), g_extAllocationTag);
-    if (!pArg)
-    {
-        return NULL;
-    }
-
-    pArg->data = NULL;
-    pArg->length = 0;
-    pArg->type = OVS_ARGTYPE_INVALID;
-
-    return pArg;
-}
-
-static __inline VOID FreeArgument(OVS_ARGUMENT* pArg)
-{
-    OVS_CHECK(pArg);
-    ExFreePoolWithTag(pArg, g_extAllocationTag);
-}
-
-//allocates an array of count OVS_ARGUMENT-s and returns the array.
-OVS_ARGUMENT* AllocateArguments(int count);
 
 //allocates an array of count OVS_ARGUMENT-s, and assigns it to pGroup->args
 BOOLEAN AllocateArgumentsToGroup(UINT16 count, _Out_ OVS_ARGUMENT_GROUP* pGroup);
 
-//frees the array of OVS_ARGUMENT-s of an OVS_ARGUMENT_GROUP struct
-static __inline VOID FreeArguments(_Inout_ OVS_ARGUMENT_GROUP* pGroup)
+static __inline VOID FreeGroupWithArgs(_Inout_ OVS_ARGUMENT_GROUP* pGroup)
 {
-    OVS_CHECK(pGroup);
-
-    ExFreePoolWithTag(pGroup->args, g_extAllocationTag);
-    pGroup->args = NULL;
-    pGroup->count = 0;
-}
-
-#define AllocArgumentGroup() ExAllocatePoolWithTag(NonPagedPool, sizeof(OVS_ARGUMENT_GROUP), g_extAllocationTag)
-
-//frees an OVS_ARGUMENT_GROUP: it does not free pGroup->args
-static __inline VOID FreeArgGroup(_Inout_ OVS_ARGUMENT_GROUP* pGroup)
-{
-    OVS_CHECK(pGroup);
-
-    ExFreePoolWithTag(pGroup, g_extAllocationTag);
+    if (pGroup)
+    {
+        KFree(pGroup->args);
+        KFree(pGroup);
+    }
 }
 
 /******************************************* CREATION & DESTRUCTION FUNCTIONS **********************************************************************/
@@ -151,6 +126,8 @@ OVS_ARGUMENT* CreateArgument_Alloc(OVS_ARGTYPE argType, const VOID* buffer);
 //allocates an OVS_ARGUMENT and encapsulates the OVS_ARGUMENT_GROUP as its pArg->data (NOTE: not a copy of it)
 OVS_ARGUMENT* CreateArgumentFromGroup(OVS_ARGTYPE argType, const OVS_ARGUMENT_GROUP* pData);
 
+OVS_ARGUMENT_GROUP* CreateGroupFromArgArray(OVS_ARGUMENT* argArray, UINT16 countArgs, UINT16 totalSize);
+
 //allocates an OVS_ARGUMENT and stores the ASCII string "buffer" as its data (NOTE: it does not use a copy of buffer)
 OVS_ARGUMENT* CreateArgumentStringA(OVS_ARGTYPE argType, const char* buffer);
 
@@ -159,9 +136,6 @@ OVS_ARGUMENT* CreateArgumentStringA_Alloc(OVS_ARGTYPE argType, const char* buffe
 
 //destroys the OVS_ARGUMENT-s of pGroup (i.e. pGroup->args) and frees pGroup
 VOID DestroyArgumentGroup(_In_ OVS_ARGUMENT_GROUP* pGroup);
-
-//destroys pArg->data of each argument in group, then it frees pGroup->args array
-VOID DestroyArgumentsFromGroup(_In_ OVS_ARGUMENT_GROUP* pGroup);
 
 //count: the number of OVS_ARGUMENT-s in the array
 //destroys pArg->data of count args, then frees the argArray.
@@ -188,71 +162,6 @@ OVS_ARGUMENT_GROUP* FindArgumentGroup(_In_ OVS_ARGUMENT_GROUP* pArgGroup, OVS_AR
 //NOTE: it is equivalent to FindArgument
 OVS_ARGUMENT* FindArgumentGroupAsArg(_In_ OVS_ARGUMENT_GROUP* pArgGroup, OVS_ARGTYPE groupType);
 
-/******************************************* VALIDATION FUNCTIONS **********************************************************************/
-
-static __inline BOOLEAN IsArgumentValid(_In_ OVS_ARGUMENT* pArg)
-{
-    OVS_CHECK(pArg);
-
-    return (pArg->data && pArg->length || !pArg->data && !pArg->length);
-}
-
-BOOLEAN VerifyArgumentGroup(_In_ OVS_ARGUMENT_GROUP* pArgs, OVS_ARGTYPE groupType);
-
-//calculates the size the group should have, based on the sizes of its args and the data and the data sizes of its args - it goes recursively
-//OVS_CHECK-s that pGroup->size == expected size
-//returns pGroup->size
-UINT VerifyArgGroupSize(OVS_ARGUMENT_GROUP* pGroup);
-
-BOOLEAN VerifyArgNoDuplicates(OVS_ARGUMENT_GROUP* pGroup, OVS_ARGTYPE groupType);
-
-BOOLEAN VerifyArg_Flow_Stats(OVS_ARGUMENT* pArg);
-BOOLEAN VerifyArg_Flow_TcpFlags(OVS_ARGUMENT* pArg);
-BOOLEAN VerifyArg_Flow_TimeUsed(OVS_ARGUMENT* pArg);
-BOOLEAN VerifyArg_Flow_Clear(OVS_ARGUMENT* pArg);
-BOOLEAN VerifyGroup_PacketInfo(BOOLEAN isMask, BOOLEAN isRequest, _In_ OVS_ARGUMENT* pParentArg, BOOLEAN checkTransportLayer, BOOLEAN seekIp);
-BOOLEAN VerifyGroup_PacketActions(OVS_ARGUMENT* pArg, BOOLEAN isRequest);
-
-/******************************************* ARGUMENT LIST FUNCTIONS **********************************************************************/
-
-#define AllocateArgListItem() ExAllocatePoolWithTag(NonPagedPool, sizeof(OVS_ARGUMENT_SLIST_ENTRY), g_extAllocationTag)
-
-static __inline VOID FreeArgListItem(OVS_ARGUMENT_SLIST_ENTRY* pArgHead)
-{
-    ExFreePoolWithTag(pArgHead, sizeof(OVS_ARGUMENT_SLIST_ENTRY));
-}
-
-//creates an OVS_ARGUMENT with a copy of buffer; allocates a list item; sets the arg as the listItem->pArg, and listItem->next = NULL
-OVS_ARGUMENT_SLIST_ENTRY* CreateArgumentListEntry(OVS_ARGTYPE argType, const VOID* buffer);
-OVS_ARGUMENT_SLIST_ENTRY* CreateArgumentListEntry_WithSize(OVS_ARGTYPE argType, const VOID* buffer, UINT16 size);
-
-//allocates an array of OVS_ARGUMENT-s, of count = the total number of OVS_ARGUMENT-s in list
-//shallow copies the OVS_ARGUMENT-s from list to array items (i.e. pArrayArgItem->data == pListArgItem->data -- the buffer is not copied, only the pointer to it)
-//NOTE: after this, you may need to free all args and arg list items from the list (this function does not do this)
-//returns the arg array; countArgs = number of args; pSize = total size (including OVS_ARGUMENT_HEADER_SIZE-s)
-OVS_ARGUMENT* ArgumentListToArray(_In_ OVS_ARGUMENT_SLIST_ENTRY* pHeadArg, _Inout_ UINT16* pCountArgs, _Inout_ UINT* pSize);
-
-//crates an OVS_ARGUMENT with a copy of the buffer, creates a list item for it, and appends it to *pLastArg;
-//*ppLastArg will point to the last (now-created) list item
-BOOLEAN CreateArgInList(OVS_ARGTYPE argType, const VOID* buffer, _Inout_ OVS_ARGUMENT_SLIST_ENTRY** ppLastArg);
-
-BOOLEAN CreateArgInList_WithSize(OVS_ARGTYPE argType, const VOID* buffer, UINT16 size, _Inout_ OVS_ARGUMENT_SLIST_ENTRY** ppLastArg);
-
-//allocates an arg list item, sets pArg as its listItem->pArg, and appends it to *ppLastEntry;
-//*ppLastEntry then points to the appended listItem
-BOOLEAN AppendArgumentToList(OVS_ARGUMENT* pArg, _Inout_ OVS_ARGUMENT_SLIST_ENTRY** ppLastEntry);
-
-//destroys each OVS_ARGUMENT in the list, and frees all list items
-VOID DestroyArgList(_Inout_ OVS_ARGUMENT_SLIST_ENTRY** ppFirstEntry);
-
-//also frees the OVS_ARGUMENT-s within (the OVS_ARGUMENT::data is not freed)
-VOID FreeArgList(_Inout_ OVS_ARGUMENT_SLIST_ENTRY** ppHeadEntry);
-
-//creates an OVS_ARGUMENT array, argArray, with the args of the list, whose head is *pHeadArg
-//creates an OVS_ARGUMENT_GROUP to have pGroup->args = argArray, and encapsulates it in an OVS_ARGUMENT, pArg
-//on success, it frees the arg list with FreeArgList and returns the pArg.
-OVS_ARGUMENT* CreateGroupArgFromList(OVS_ARGTYPE groupType, _Inout_ OVS_ARGUMENT_SLIST_ENTRY** ppHeadArg);
-
 /******************************************* COPY FUNCTIONS **********************************************************************/
 
 //argsMore: pDest will be allocated for "pSource->count + argsMore" arguments.
@@ -265,9 +174,20 @@ BOOLEAN CopyArgument(_Out_ OVS_ARGUMENT* pDest, _In_ const OVS_ARGUMENT* pSource
 
 /******************************************* DbgPrint for args **********************************************************************/
 
-VOID DbgPrintArgType(OVS_ARGTYPE argType, const char* padding, int index);
-VOID DbgPrintArg(_In_ OVS_ARGUMENT* pArg, int depth, int index);
-VOID DbgPrintArgGroup(_In_ OVS_ARGUMENT_GROUP* pGroup, int depth);
+#if OVS_DBGPRINT_ARG
+VOID DbgPrintArgType(ULONG logLevel, OVS_ARGTYPE argType, const char* padding, int index);
+VOID DbgPrintArg(ULONG logLevel, _In_ OVS_ARGUMENT* pArg, int depth, int index);
+VOID DbgPrintArgGroup(ULONG logLevel, _In_ OVS_ARGUMENT_GROUP* pGroup, int depth);
+
+#define DBGPRINT_ARG(logLevel, pArg, depth, index)          DbgPrintArg(logLevel, pArg, depth, index)
+#define DBGPRINT_ARGTYPE(logLevel, argType, padding, index) DbgPrintArgType(logLevel, argType, padding, index)
+#define DBGPRINT_ARGGROUP(logLevel, pGroup, depth)          DbgPrintArgGroup(logLevel, pGroup, depth)
+#else
+#define DBGPRINT_ARG(logLevel, pArg, depth, index)
+#define DBGPRINT_ARGTYPE(logLevel, argType, padding, index)
+#define DBGPRINT_ARGGROUP(logLevel, pGroup, depth)
+
+#endif
 
 /******************************************* ARG SIZE FUNCTIONS **********************************************************************/
 
@@ -275,3 +195,11 @@ VOID DbgPrintArgGroup(_In_ OVS_ARGUMENT_GROUP* pGroup, int depth);
 //returns TRUE on success, FALSE on failure.
 BOOLEAN GetArgumentExpectedSize(OVS_ARGTYPE argumentType, _Inout_ UINT* pSize);
 OVS_ARGTYPE GetParentGroupType(OVS_ARGTYPE childArgType);
+
+static __inline AddArgToArgGroup(OVS_ARGUMENT_GROUP* pArgGroup, OVS_ARGUMENT* pArg, _Inout_ ULONG* pIndex)
+{
+    pArgGroup->args[*pIndex] = *pArg;
+    pArgGroup->groupSize += pArg->length;
+
+    ++pIndex;
+}

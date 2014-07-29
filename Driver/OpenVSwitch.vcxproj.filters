@@ -50,7 +50,7 @@
     <ClCompile Include="Protocol\Icmp.c">
       <Filter>Protocol</Filter>
     </ClCompile>
-	<ClCompile Include="Protocol\Vlan.c">
+    <ClCompile Include="Protocol\Vlan.c">
       <Filter>Protocol</Filter>
     </ClCompile>
     <ClCompile Include="Protocol\Icmp6.c">
@@ -122,7 +122,7 @@
     <ClCompile Include="OpenFlow\OFFlow.c">
       <Filter>OpenFlow</Filter>
     </ClCompile>
-	<ClCompile Include="OpenFlow\OFFlowTable.c">
+    <ClCompile Include="OpenFlow\OFFlowTable.c">
       <Filter>OpenFlow</Filter>
     </ClCompile>
     <ClCompile Include="OpenFlow\PacketInfo.c">
@@ -152,17 +152,29 @@
     <ClCompile Include="OID\OIDRequest.c">
       <Filter>OID</Filter>
     </ClCompile>
-    <ClCompile Include="OpenFlow\OFPort.c">
-      <Filter>OpenFlow</Filter>
-    </ClCompile>
-    <ClCompile Include="OpenFlow\PersistentPort.c">
-      <Filter>OpenFlow</Filter>
-    </ClCompile>
     <ClCompile Include="Core\Debug.c">
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="SwitchObjInfo\Sctx_Port.c">
       <Filter>SwitchObjInfo</Filter>
+    </ClCompile>
+    <ClCompile Include="Winl\ArgVerification.c">
+      <Filter>Winl</Filter>
+    </ClCompile>
+    <ClCompile Include="Winl\ArgumentList.c">
+      <Filter>Winl</Filter>
+    </ClCompile>
+    <ClCompile Include="Winl\MsgVerification.c">
+      <Filter>Winl</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\SpookyHash.c">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\FixedSizedArray.c">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="OpenFlow\OFPort.c">
+      <Filter>OpenFlow</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -174,9 +186,6 @@
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Core\OvsCore.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Cache.h">
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Core\List.h">
@@ -213,9 +222,6 @@
       <Filter>Transfer</Filter>
     </ClInclude>
     <ClInclude Include="Transfer\Nbls.h">
-      <Filter>Transfer</Filter>
-    </ClInclude>
-    <ClInclude Include="Transfer\ProcessNBLs.h">
       <Filter>Transfer</Filter>
     </ClInclude>
     <ClInclude Include="Transfer\Vxlan.h">
@@ -260,7 +266,7 @@
     <ClInclude Include="Protocol\Icmp6.h">
       <Filter>Protocol</Filter>
     </ClInclude>
-	<ClInclude Include="Protocol\Vlan.h">
+    <ClInclude Include="Protocol\Vlan.h">
       <Filter>Protocol</Filter>
     </ClInclude>
     <ClInclude Include="Protocol\Sctp.h">
@@ -272,7 +278,7 @@
     <ClInclude Include="OpenFlow\OFFlow.h">
       <Filter>OpenFlow</Filter>
     </ClInclude>
-	<ClInclude Include="OpenFlow\OFFlowTable.h">
+    <ClInclude Include="OpenFlow\OFFlowTable.h">
       <Filter>OpenFlow</Filter>
     </ClInclude>
     <ClInclude Include="OpenFlow\PacketInfo.h">
@@ -335,12 +341,6 @@
     <ClInclude Include="OpenFlow\OFDatapath.h">
       <Filter>OpenFlow</Filter>
     </ClInclude>
-    <ClInclude Include="OpenFlow\OFPort.h">
-      <Filter>OpenFlow</Filter>
-    </ClInclude>
-    <ClInclude Include="OpenFlow\PersistentPort.h">
-      <Filter>OpenFlow</Filter>
-    </ClInclude>
     <ClInclude Include="OID\OidNic.h">
       <Filter>OID</Filter>
     </ClInclude>
@@ -358,6 +358,28 @@
     </ClInclude>
     <ClInclude Include="SwitchObjInfo\Sctx_Port.h">
       <Filter>SwitchObjInfo</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="Core\OvsRefCount.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Winl\ArgVerification.h">
+      <Filter>Winl</Filter>
+    </ClInclude>
+    <ClInclude Include="Winl\ArgumentList.h">
+      <Filter>Winl</Filter>
+    </ClInclude>
+    <ClInclude Include="Winl\MsgVerification.h">
+      <Filter>Winl</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\SpookyHash.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\FixedSizedArray.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenFlow\OFPort.h">
+      <Filter>OpenFlow</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -397,8 +419,5 @@
     <Filter Include="OID">
       <UniqueIdentifier>{90b976b5-2e54-4281-8f40-691cf4b0b1f7}</UniqueIdentifier>
     </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Forwarding.htm" />
   </ItemGroup>
 </Project>

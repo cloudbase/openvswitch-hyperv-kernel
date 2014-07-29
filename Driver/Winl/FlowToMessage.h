@@ -18,12 +18,13 @@ limitations under the License.
 
 #include "precomp.h"
 #include "Argument.h"
+#include "Error.h"
 
 typedef struct _OVS_FLOW OVS_FLOW;
 typedef struct _OVS_MESSAGE OVS_MESSAGE;
 typedef struct _OVS_OFPACKET_INFO OVS_OFPACKET_INFO;
 
-BOOLEAN CreateMsgFromFlow(OVS_FLOW* pFlow, UINT8 command, _Inout_ OVS_MESSAGE* pMsg, UINT32 sequence, UINT32 dpIfIndex, UINT32 portId);
+OVS_ERROR CreateMsgFromFlow(_In_ const OVS_FLOW* pFlow, const OVS_MESSAGE* pInMsg, _Out_ OVS_MESSAGE* pOutMsg, UINT8 command);
 
 //if you don't have a mask => pMask == NULL
 //if you do have a mask, pPacketInfo is the masked key, while pMask is the "key" of the mask

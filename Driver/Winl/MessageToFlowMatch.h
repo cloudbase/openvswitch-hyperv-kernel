@@ -22,5 +22,3 @@ limitations under the License.
 typedef struct _OVS_ARGUMENT_GROUP OVS_ARGUMENT_GROUP;
 
 BOOLEAN GetFlowMatchFromArguments(_Inout_ OVS_FLOW_MATCH* pFlowMatch, _In_ const OVS_ARGUMENT_GROUP* pPacketInfo, const OVS_ARGUMENT_GROUP* pPacketInfoMask);
-
-BOOLEAN GetPacketContextFromPIArgs(_In_ const OVS_ARGUMENT_GROUP* pArgGroup, _Inout_ OVS_OFPACKET_INFO* pPacketInfo);

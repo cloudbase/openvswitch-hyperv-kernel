@@ -25,7 +25,6 @@ typedef struct _OVS_NET_BUFFER OVS_NET_BUFFER;
 
 /****************************************/
 
-void FreeFrameBuffer(_In_ void* buffer);
 BOOLEAN ReadProtocolFrame(_In_ NET_BUFFER* pNb);
 
 VOID DbgPrintOnbFrames(OVS_NET_BUFFER* pNb, const char* msg);

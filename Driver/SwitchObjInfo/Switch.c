@@ -25,8 +25,7 @@ NDIS_STATUS Switch_CreateForwardInfo(NDIS_HANDLE filterHandle, OVS_GLOBAL_FORWAR
     NDIS_STATUS status = NDIS_STATUS_SUCCESS;
     OVS_GLOBAL_FORWARD_INFO* pForwardInfo = NULL;
 
-    pForwardInfo = ExAllocatePoolWithTag(NonPagedPool, sizeof(OVS_GLOBAL_FORWARD_INFO), g_extAllocationTag);
-
+    pForwardInfo = KAlloc(sizeof(OVS_GLOBAL_FORWARD_INFO));
     if (pForwardInfo == NULL)
     {
         status = NDIS_STATUS_RESOURCES;
@@ -44,6 +43,7 @@ NDIS_STATUS Switch_CreateForwardInfo(NDIS_HANDLE filterHandle, OVS_GLOBAL_FORWAR
         goto Cleanup;
     }
 
+    pForwardInfo->ofPorts.pRwLock = NdisAllocateRWLock(filterHandle);
     pForwardInfo->isInitialRestart = TRUE;
 
     *ppForwardInfo = pForwardInfo;
@@ -51,10 +51,7 @@ NDIS_STATUS Switch_CreateForwardInfo(NDIS_HANDLE filterHandle, OVS_GLOBAL_FORWAR
 Cleanup:
     if (status != NDIS_STATUS_SUCCESS)
     {
-        if (pForwardInfo != NULL)
-        {
-            ExFreePoolWithTag(pForwardInfo, g_extAllocationTag);
-        }
+        KFree(pForwardInfo);
     }
 
     return status;
@@ -65,8 +62,9 @@ VOID Switch_DeleteForwardInfo(OVS_GLOBAL_FORWARD_INFO* pForwardInfo)
 {
     Sctx_ClearNicListUnsafe(pForwardInfo);
 
+    NdisFreeRWLock(pForwardInfo->ofPorts.pRwLock);
     NdisFreeRWLock(pForwardInfo->pRwLock);
-    ExFreePoolWithTag(pForwardInfo, g_extAllocationTag);
+    KFree(pForwardInfo);
 }
 
 _Use_decl_annotations_
@@ -111,10 +109,8 @@ NDIS_STATUS Switch_Restart(OVS_SWITCH_INFO* pSwitchInfo)
     }
 
 Cleanup:
-    if (pSwitchParameters)
-    {
-        KFree(pSwitchParameters);
-    }
+    KFree(pSwitchParameters);
+
     return status;
 }
 

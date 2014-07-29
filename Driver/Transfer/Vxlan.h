@@ -195,7 +195,8 @@ VXLAN tunneling, the encapsulating VTEP SHOULD strip the VLAN tag
 unless configured otherwise.
 */
 
-typedef struct _OVS_VXLAN_HEADER {
+typedef struct _OVS_VXLAN_HEADER
+{
     //|R|R|R|R|I|R|R|R|  -- the bit I must be 1, the rest must be 0, i.e. flags & 0x8 == 1
     BYTE flags;
     //reserved 24 bits

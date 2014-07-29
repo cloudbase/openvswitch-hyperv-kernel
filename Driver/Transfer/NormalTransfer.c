@@ -27,7 +27,7 @@ BOOLEAN ProcessPacket_Normal_SendUnicast(OVS_NET_BUFFER* pOvsNb, const BYTE* des
     OVS_NBL_FAIL_REASON failReason = OVS_NBL_FAIL_SUCCESS;
     OVS_GLOBAL_FORWARD_INFO* pForwardInfo = pOvsNb->pSwitchInfo->pForwardInfo;
 
-    mustTransfer = GetDestinationInfo(pForwardInfo, destMac, pOvsNb->pSourceNic->portId, &curDestination, &failReason);
+    mustTransfer = GetDestinationInfo(pForwardInfo, destMac, pOvsNb->pSourcePort->portId, &curDestination, &failReason);
     if (!mustTransfer)
     {
         if (failReason != OVS_NBL_FAIL_DESTINATION_IS_SOURCE)
@@ -41,7 +41,7 @@ BOOLEAN ProcessPacket_Normal_SendUnicast(OVS_NET_BUFFER* pOvsNb, const BYTE* des
     DEBUGP(LOG_LOUD, "Sending unicast to: nic index: %d; port id: %d; adap name: \"%s\"; vm name: \"%s\"\n",
         curDestination.nicIndex, curDestination.portId, curDestination.nicName, curDestination.vmName);
 
-    mustTransfer = SetOneDestination(pOvsNb->pSwitchInfo, pOvsNb->pNbl, &failReason, /*in*/ &curDestination);
+    mustTransfer = SetOneDestination(pOvsNb->pSwitchInfo, pOvsNb->pNbl, &failReason, /*in*/ curDestination.portId, curDestination.nicIndex);
     if (!mustTransfer)
     {
         DEBUGP(LOG_ERROR, "set one destination failed. returning FALSE. Fail Reason:%s\n", FailReasonMessageA(failReason));
@@ -64,7 +64,7 @@ BOOLEAN ProcessPacket_Normal_SendMulticast(OVS_NET_BUFFER* pOvsNb)
     pForwardDetail = NET_BUFFER_LIST_SWITCH_FORWARDING_DETAIL(pOvsNb->pNbl);
 
     pMultipleDestinations = FindMultipleDestinations(pOvsNb->pSwitchInfo, pForwardDetail->NumAvailableDestinations,
-        pOvsNb->pSourceNic, pOvsNb->pNbl, &failReason, &mtu, &portsAdded);
+        pOvsNb->pSourcePort, pOvsNb->pNbl, &failReason, &mtu, &portsAdded);
 
     //Make sure that the NumDestinations > 0
     if (!pMultipleDestinations || !portsAdded)
@@ -78,7 +78,9 @@ BOOLEAN ProcessPacket_Normal_SendMulticast(OVS_NET_BUFFER* pOvsNb)
     OVS_CHECK(status == NDIS_STATUS_SUCCESS);
 
     if (status != NDIS_STATUS_SUCCESS)
+    {
         return FALSE;
+    }
 
     return TRUE;
 }

@@ -150,7 +150,6 @@ OVS_ETHERNET_HEADER* GetEthernetHeader(_In_ VOID* buffer, _Out_ ULONG* pEthSize)
     {
         *pEthSize = sizeof(OVS_ETHERNET_HEADER_TAGGED);
     }
-
     else
     {
         *pEthSize = sizeof(OVS_ETHERNET_HEADER);

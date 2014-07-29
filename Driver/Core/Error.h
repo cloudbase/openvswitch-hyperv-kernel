@@ -30,7 +30,8 @@ Defining Custom Error Types
 http://msdn.microsoft.com/en-us/library/windows/hardware/ff543017%28v=vs.85%29.aspx
 */
 
-typedef enum _OVS_ERROR {
+typedef enum _OVS_ERROR
+{
     OVS_ERROR_NOERROR = 0,
     // The operation is not permitted
     OVS_ERROR_PERM = ((ULONG)-1),

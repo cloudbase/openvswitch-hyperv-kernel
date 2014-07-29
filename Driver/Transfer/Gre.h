@@ -34,8 +34,10 @@ typedef struct _OVS_TUNNELING_PORT_OPTIONS OVS_TUNNELING_PORT_OPTIONS;
    */
 
 //NOTE: deprecated; use 2784 for send, but receive 1701 as well, for interoperability.
-typedef struct _OVS_GRE_HEADER_1701 {
-    struct{
+typedef struct _OVS_GRE_HEADER_1701
+{
+    struct
+    {
         //the number of additional encapsulations which are permissible.  This SHOULD default to zero.
         UINT8 recursionControl : 3;
         //Should be set to 1 if all of the the Routing Information consists of Strict Source Routes.
@@ -50,7 +52,8 @@ typedef struct _OVS_GRE_HEADER_1701 {
         UINT8 haveChecksum : 1;
     };
 
-    struct {
+    struct
+    {
         //MUST contain the value 0
         UINT8 versionNumber : 3;
 
@@ -115,7 +118,8 @@ address family of type 0x0000 and a length of 0.
 
 C_ASSERT(sizeof(OVS_GRE_HEADER_1701) == 4);
 
-typedef struct _OVS_GRE_SOURCE_ROUTE_ENTRY {
+typedef struct _OVS_GRE_SOURCE_ROUTE_ENTRY
+{
     //the syntax and semantics of the Routing Information field
     //for payload protocol = ipv4: value = 0x800
     /*
@@ -146,8 +150,10 @@ C_ASSERT(sizeof(OVS_GRE_SOURCE_ROUTE_ENTRY) == 4);
 
 /**********************************************************/
 
-typedef struct _OVS_GRE_HEADER_2784 {
-    struct {
+typedef struct _OVS_GRE_HEADER_2784
+{
+    struct
+    {
         /*A receiver MUST discard a packet where any of bits 1-5 are non-zero,
         unless that receiver implements RFC 1701.*/
         UINT8 reserved0_b6_7 : 2; //bits 6->7
@@ -160,7 +166,7 @@ typedef struct _OVS_GRE_HEADER_2784 {
         UINT8 haveChecksum : 1; // bit 0
 
         //MUST contain the value zero.
-        UINT8 versionNumber : 3;		// bits 13-15
+        UINT8 versionNumber : 3;        // bits 13-15
 
         /*Bits 6-12 are reserved for future use.
         These bits MUST be sent as zero and MUST be ignored on receipt*/
@@ -195,8 +201,10 @@ one).
 
 C_ASSERT(sizeof(OVS_GRE_HEADER_2784) == 4);
 
-typedef struct _OVS_GRE_HEADER_2890 {
-    struct{
+typedef struct _OVS_GRE_HEADER_2890
+{
+    struct
+    {
         UINT8 reserved0_bit7 : 1;
         UINT8 reserved0_bit6 : 1;
         UINT8 reserved0_bit5 : 1;
@@ -212,7 +220,8 @@ typedef struct _OVS_GRE_HEADER_2890 {
         UINT8 haveChecksum : 1;//bit 0
     };
 
-    struct {
+    struct
+    {
         //MUST contain the value 0
         UINT8 versionNumber : 3;//bits 13->15
 

@@ -20,609 +20,183 @@ limitations under the License.
 #include "Message.h"
 #include "Attribute.h"
 
-static BOOLEAN _Reply_SetAttrType_Datapath_New(_Inout_ OVS_ARGUMENT* pArg, OVS_ARGTYPE parentArgType)
+static const int s_argsToAttribsDatapath[] =
 {
-    OVS_ARGTYPE argType = pArg->type;
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_DATAPATH_NAME, DATAPATH)] = OVS_USPACE_DP_ATTRIBUTE_NAME,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_DATAPATH_STATS, DATAPATH)] = OVS_USPACE_DP_ATTRIBUTE_STATS,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_DATAPATH_UPCALL_PORT_ID, DATAPATH)] = OVS_USPACE_DP_ATTRIBUTE_UPCALL_PID,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_DATAPATH_MEGAFLOW_STATS, DATAPATH)] = OVS_USPACE_DP_ATTRIBUTE_MEGAFLOW_STATS,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_DATAPATH_USER_FEATURES, DATAPATH)] = OVS_USPACE_DP_ATTRIBUTE_USER_FEATURES,
+};
 
-    UNREFERENCED_PARAMETER(parentArgType);
-    OVS_CHECK(parentArgType == OVS_ARGTYPE_GROUP_MAIN);
+static const int s_argsToAttribsTunnel[] =
+{
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_TUNNEL_ID, PI_TUNNEL)] = OVS_USPACE_TUNNEL_KEY_ATTRIBUTE_ID,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_TUNNEL_IPV4_SRC, PI_TUNNEL)] = OVS_USPACE_TUNNEL_KEY_ATTRIBUTE_IPV4_SRC,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_TUNNEL_IPV4_DST, PI_TUNNEL)] = OVS_USPACE_TUNNEL_KEY_ATTRIBUTE_IPV4_DST,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_TUNNEL_TOS, PI_TUNNEL)] = OVS_USPACE_TUNNEL_KEY_ATTRIBUTE_TOS,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_TUNNEL_TTL, PI_TUNNEL)] = OVS_USPACE_TUNNEL_KEY_ATTRIBUTE_TTL,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_TUNNEL_DONT_FRAGMENT, PI_TUNNEL)] = OVS_USPACE_TUNNEL_KEY_ATTRIBUTE_DONT_FRAGMENT,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_TUNNEL_CHECKSUM, PI_TUNNEL)] = OVS_USPACE_TUNNEL_KEY_ATTRIBUTE_CSUM,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_TUNNEL_OAM, PI_TUNNEL)] = OVS_USPACE_TUNNEL_KEY_ATTRIBUTE_OAM,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_TUNNEL_GENEVE_OPTIONS, PI_TUNNEL)] = OVS_USPACE_TUNNEL_KEY_ATTRIBUTE_GENEVE_OPTIONS,
+};
 
-    switch (argType)
+static const int s_argsToAttribsPI[] =
+{
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_PACKET_PRIORITY, PI)] = OVS_USPACE_KEY_ATTRIBUTE_PRIORITY,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_DP_INPUT_PORT, PI)] = OVS_USPACE_KEY_ATTRIBUTE_IN_PORT,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_ETH_ADDRESS, PI)] = OVS_USPACE_KEY_ATTRIBUTE_ETHERNET,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_ETH_TYPE, PI)] = OVS_USPACE_KEY_ATTRIBUTE_ETHERTYPE,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_VLAN_TCI, PI)] = OVS_USPACE_KEY_ATTRIBUTE_VLAN,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_IPV4, PI)] = OVS_USPACE_KEY_ATTRIBUTE_IPV4,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_IPV6, PI)] = OVS_USPACE_KEY_ATTRIBUTE_IPV6,
+
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_TCP, PI)] = OVS_USPACE_KEY_ATTRIBUTE_TCP,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_TCP_FLAGS, PI)] = OVS_USPACE_KEY_ATTRIBUTE_TCP_FLAGS,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_UDP, PI)] = OVS_USPACE_KEY_ATTRIBUTE_UDP,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_SCTP, PI)] = OVS_USPACE_KEY_ATTRIBUTE_SCTP,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_ICMP, PI)] = OVS_USPACE_KEY_ATTRIBUTE_ICMP,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_ICMP6, PI)] = OVS_USPACE_KEY_ATTRIBUTE_ICMPV6,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_ARP, PI)] = OVS_USPACE_KEY_ATTRIBUTE_ARP,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_NEIGHBOR_DISCOVERY, PI)] = OVS_USPACE_KEY_ATTRIBUTE_ND,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_MPLS, PI)] = OVS_USPACE_KEY_ATTRIBUTE_MPLS,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_DATAPATH_HASH, PI)] = OVS_USPACE_KEY_ATTRIBUTE_DP_HASH,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_DATAPATH_RECIRCULATION_ID, PI)] = OVS_USPACE_KEY_ATTRIBUTE_RECIRC_ID,
+
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_PACKET_MARK, PI)] = OVS_USPACE_KEY_ATTRIBUTE_SKB_MARK,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_TUNNEL_GROUP, PI)] = OVS_USPACE_KEY_ATTRIBUTE_TUNNEL,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_MPLS, PI)] = OVS_USPACE_KEY_ATTRIBUTE_MPLS,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PI_ENCAP_GROUP, PI)] = OVS_USPACE_KEY_ATTRIBUTE_ENCAP,
+};
+
+static const int s_argsToAttribsFlow[] =
+{
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_FLOW_STATS, FLOW)] = OVS_USPACE_FLOW_ATTRIBUTE_STATS,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_FLOW_TCP_FLAGS, FLOW)] = OVS_USPACE_FLOW_ATTRIBUTE_TCP_FLAGS,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_FLOW_TIME_USED, FLOW)] = OVS_USPACE_FLOW_ATTRIBUTE_USED,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_FLOW_CLEAR, FLOW)] = OVS_USPACE_FLOW_ATTRIBUTE_CLEAR,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_FLOW_PI_GROUP, FLOW)] = OVS_USPACE_FLOW_ATTRIBUTE_KEY,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_FLOW_ACTIONS_GROUP, FLOW)] = OVS_USPACE_FLOW_ATTRIBUTE_ACTIONS,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_FLOW_MASK_GROUP, FLOW)] = OVS_USPACE_FLOW_ATTRIBUTE_MASK
+};
+
+static const int s_argsToAttribsUpcall[] =
+{
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_ACTION_UPCALL_PORT_ID, ACTION_UPCALL)] = OVS_USPACE_UPCALL_ATTRIBUTE_PID,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_ACTION_UPCALL_DATA, ACTION_UPCALL)] = OVS_USPACE_UPCALL_ATTRIBUTE_USERDATA,
+};
+
+static const int s_argsToAttribsSample[] =
+{
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_ACTION_SAMPLE_PROBABILITY, ACTION_SAMPLE)] = OVS_USPACE_SAMPLE_ATTRIBUTE_PROBABILITY,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_ACTION_SAMPLE_ACTIONS_GROUP, ACTION_SAMPLE)] = OVS_USPACE_SAMPLE_ATTRIBUTE_ACTIONS,
+};
+
+static const int s_argsToAttribsActions[] =
+{
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_ACTION_OUTPUT_TO_PORT, ACTION)] = OVS_USPACE_ACTION_ATTRIBUTE_OUTPUT,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_ACTION_UPCALL_GROUP, ACTION)] = OVS_USPACE_ACTION_ATTRIBUTE_USERSPACE,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_ACTION_SETINFO_GROUP, ACTION)] = OVS_USPACE_ACTION_ATTRIBUTE_SET,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_ACTION_PUSH_VLAN, ACTION)] = OVS_USPACE_ACTION_ATTRIBUTE_PUSH_VLAN,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_ACTION_POP_VLAN, ACTION)] = OVS_USPACE_ACTION_ATTRIBUTE_POP_VLAN,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_ACTION_SAMPLE_GROUP, ACTION)] = OVS_USPACE_ACTION_ATTRIBUTE_SAMPLE,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_ACTION_PUSH_MPLS, ACTION)] = OVS_USPACE_ACTION_ATTRIBUTE_PUSH_MPLS,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_ACTION_POP_MPLS, ACTION)] = OVS_USPACE_ACTION_ATTRIBUTE_POP_MPLS,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_ACTION_RECIRCULATION, ACTION)] = OVS_USPACE_ACTION_ATTRIBUTE_RECIRC,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_ACTION_HASH, ACTION)] = OVS_USPACE_ACTION_ATTRIBUTE_HASH
+};
+
+static const int s_argsToAttribsPacket[] =
+{
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PACKET_BUFFER, PACKET)] = OVS_USPACE_PACKET_ATTRIBUTE_PACKET,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PACKET_PI_GROUP, PACKET)] = OVS_USPACE_PACKET_ATTRIBUTE_KEY,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PACKET_ACTIONS_GROUP, PACKET)] = OVS_USPACE_PACKET_ATTRIBUTE_ACTIONS,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_PACKET_USERDATA, PACKET)] = OVS_USPACE_PACKET_ATTRIBUTE_USERDATA
+};
+
+static const int s_argsToAttribsPortOptions[] =
+{
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_OFPORT_OPTION_DESTINATION_PORT, OFPORT_OPTION)] = OVS_USPACE_TUNNEL_ATTRIBUTE_DST_PORT,
+};
+
+static const int s_argsToAttribsPort[] =
+{
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_OFPORT_NUMBER, OFPORT)] = OVS_USPACE_VPORT_ATTRIBUTE_PORT_NO,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_OFPORT_NAME, OFPORT)] = OVS_USPACE_VPORT_ATTRIBUTE_NAME,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_OFPORT_STATS, OFPORT)] = OVS_USPACE_VPORT_ATTRIBUTE_STATS,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_OFPORT_TYPE, OFPORT)] = OVS_USPACE_VPORT_ATTRIBUTE_TYPE,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_OFPORT_UPCALL_PORT_ID, OFPORT)] = OVS_USPACE_VPORT_ATTRIBUTE_UPCALL_PID,
+    [OVS_ARG_TOINDEX(OVS_ARGTYPE_OFPORT_OPTIONS_GROUP, OFPORT)] = OVS_USPACE_VPORT_ATTRIBUTE_OPTIONS,
+};
+
+typedef struct _OVS_ARG_GROUP_INFO
+{
+    OVS_ARGTYPE parent;
+    const int* group;
+    OVS_ARGTYPE min;
+    OVS_ARGTYPE max;
+}OVS_ARG_GROUP_INFO, *POVS_ARG_GROUP_INFO;
+
+static const OVS_ARG_GROUP_INFO s_argsToAttribs[OVS_ARG_GROUP_COUNT] =
+{
+    { OVS_ARGTYPE_PSEUDOGROUP_DATAPATH, s_argsToAttribsDatapath, OVS_ARGTYPE_FIRST_DATAPATH, OVS_ARGTYPE_LAST_DATAPATH },
+    { OVS_ARGTYPE_PSEUDOGROUP_FLOW, s_argsToAttribsFlow, OVS_ARGTYPE_FIRST_FLOW, OVS_ARGTYPE_LAST_FLOW },
+    { OVS_ARGTYPE_PSEUDOGROUP_OFPORT, s_argsToAttribsPort, OVS_ARGTYPE_FIRST_OFPORT, OVS_ARGTYPE_LAST_OFPORT },
+    { OVS_ARGTYPE_PSEUDOGROUP_PACKET, s_argsToAttribsPacket, OVS_ARGTYPE_FIRST_PACKET, OVS_ARGTYPE_LAST_PACKET },
+
+    { OVS_ARGTYPE_FLOW_PI_GROUP, s_argsToAttribsPI, OVS_ARGTYPE_FIRST_PI, OVS_ARGTYPE_LAST_PI },
+    { OVS_ARGTYPE_FLOW_MASK_GROUP, s_argsToAttribsPI, OVS_ARGTYPE_FIRST_PI, OVS_ARGTYPE_LAST_PI },
+    { OVS_ARGTYPE_FLOW_ACTIONS_GROUP, s_argsToAttribsActions, OVS_ARGTYPE_FIRST_ACTION, OVS_ARGTYPE_LAST_ACTION },
+
+    { OVS_ARGTYPE_PI_ENCAP_GROUP, s_argsToAttribsPI, OVS_ARGTYPE_FIRST_PI, OVS_ARGTYPE_LAST_PI },
+    { OVS_ARGTYPE_PI_TUNNEL_GROUP, s_argsToAttribsTunnel, OVS_ARGTYPE_FIRST_PI_TUNNEL, OVS_ARGTYPE_LAST_PI_TUNNEL },
+
+    { OVS_ARGTYPE_PACKET_PI_GROUP, s_argsToAttribsPI, OVS_ARGTYPE_FIRST_PI, OVS_ARGTYPE_LAST_PI },
+    { OVS_ARGTYPE_PACKET_ACTIONS_GROUP, s_argsToAttribsActions, OVS_ARGTYPE_FIRST_ACTION, OVS_ARGTYPE_LAST_ACTION },
+
+    { OVS_ARGTYPE_ACTION_UPCALL_GROUP, s_argsToAttribsUpcall, OVS_ARGTYPE_FIRST_ACTION_UPCALL, OVS_ARGTYPE_LAST_ACTION_UPCALL },
+    { OVS_ARGTYPE_ACTION_SETINFO_GROUP, s_argsToAttribsPI, OVS_ARGTYPE_FIRST_PI, OVS_ARGTYPE_LAST_PI },
+    { OVS_ARGTYPE_ACTION_SAMPLE_GROUP, s_argsToAttribsSample, OVS_ARGTYPE_FIRST_ACTION_SAMPLE, OVS_ARGTYPE_LAST_ACTION_SAMPLE },
+   
+    { OVS_ARGTYPE_ACTION_SAMPLE_ACTIONS_GROUP, s_argsToAttribsActions, OVS_ARGTYPE_FIRST_ACTION, OVS_ARGTYPE_LAST_ACTION },
+    { OVS_ARGTYPE_OFPORT_OPTIONS_GROUP, s_argsToAttribsPortOptions, OVS_ARGTYPE_FIRST_OFPORT_OPTION, OVS_ARGTYPE_LAST_OFPORT_OPTION },
+};
+
+static const OVS_ARG_GROUP_INFO* _FindGroup(OVS_ARGTYPE parentArgType, _Out_ OVS_ARGTYPE* pMin, _Out_ OVS_ARGTYPE* pMax)
+{
+    for (int i = 0; i < OVS_ARG_GROUP_COUNT; ++i)
     {
-    case OVS_ARGTYPE_DATAPATH_STATS:
-        pArg->type = OVS_USPACE_DP_ATTRIBUTE_STATS;
-        break;
+        const OVS_ARG_GROUP_INFO* pGroup = s_argsToAttribs + i;
 
-    case OVS_ARGTYPE_DATAPATH_NAME:
-        pArg->type = OVS_USPACE_DP_ATTRIBUTE_NAME;
-        break;
+        if (parentArgType == pGroup->parent)
+        {
+            *pMin = pGroup->min;
+            *pMax = pGroup->max;
 
-    default:
-        return FALSE;
+            return pGroup;
+        }
     }
+
+    OVS_CHECK(__UNEXPECTED__);
+    return NULL;
+}
+
+BOOLEAN Reply_SetAttrType(OVS_ARGTYPE parentArgType, _Inout_ OVS_ARGUMENT* pArg)
+{
+    const OVS_ARG_GROUP_INFO* pGroup = NULL;
+    OVS_ARGTYPE minArg = OVS_ARGTYPE_INVALID, maxArg = OVS_ARGTYPE_INVALID;
+    ULONG attrType = 0;
+
+    pGroup = _FindGroup(parentArgType, &minArg, &maxArg);
+
+    OVS_CHECK_RET(pGroup, FALSE);
+    OVS_CHECK_RET(pArg->type >= minArg && pArg->type <= maxArg, FALSE);
+
+    attrType = pGroup->group[ArgTypeToIndex(pArg->type)];
+    OVS_CHECK_RET(attrType > 0 && attrType <= MAXUINT16, FALSE);
+
+    pArg->type = (UINT16)attrType;
 
     return TRUE;
-}
-
-static BOOLEAN _Reply_SetAttrType_Datapath_Set(_Inout_ OVS_ARGUMENT* pArg, OVS_ARGTYPE parentArgType)
-{
-    OVS_ARGTYPE argType = pArg->type;
-
-    UNREFERENCED_PARAMETER(parentArgType);
-    OVS_CHECK(parentArgType == OVS_ARGTYPE_GROUP_MAIN);
-
-    switch (argType)
-    {
-    case OVS_ARGTYPE_DATAPATH_STATS:
-        pArg->type = OVS_USPACE_DP_ATTRIBUTE_STATS;
-        break;
-
-    default:
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
-static BOOLEAN _Reply_SetAttrType_Datapath_Get(_Inout_ OVS_ARGUMENT* pArg, OVS_ARGTYPE parentArgType)
-{
-    OVS_ARGTYPE argType = pArg->type;
-
-    UNREFERENCED_PARAMETER(parentArgType);
-
-    OVS_CHECK(parentArgType == OVS_ARGTYPE_GROUP_MAIN);
-
-    switch (argType)
-    {
-    case OVS_ARGTYPE_DATAPATH_STATS:
-        pArg->type = OVS_USPACE_DP_ATTRIBUTE_STATS;
-        break;
-
-    case OVS_ARGTYPE_DATAPATH_NAME:
-        pArg->type = OVS_USPACE_DP_ATTRIBUTE_NAME;
-        break;
-
-    default:
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
-static BOOLEAN _Reply_SetAttrType_Datapath_Delete(_Inout_ OVS_ARGUMENT* pArg, OVS_ARGTYPE parentArgType)
-{
-    OVS_ARGTYPE argType = pArg->type;
-
-    UNREFERENCED_PARAMETER(parentArgType);
-    OVS_CHECK(parentArgType == OVS_ARGTYPE_GROUP_MAIN);
-
-    switch (argType)
-    {
-    case OVS_ARGTYPE_DATAPATH_STATS:
-        pArg->type = OVS_USPACE_DP_ATTRIBUTE_STATS;
-        break;
-
-    default:
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
-static BOOLEAN _Reply_SetAttrType_Datapath_Dump(_Inout_ OVS_ARGUMENT* pArg, OVS_ARGTYPE parentArgType)
-{
-    OVS_ARGTYPE argType = pArg->type;
-
-    UNREFERENCED_PARAMETER(parentArgType);
-    OVS_CHECK(parentArgType == OVS_ARGTYPE_GROUP_MAIN);
-
-    switch (argType)
-    {
-    case OVS_ARGTYPE_DATAPATH_STATS:
-        pArg->type = OVS_USPACE_DP_ATTRIBUTE_STATS;
-        break;
-
-    default:
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
-static BOOLEAN _Reply_SetAttrType_Datapath(OVS_MESSAGE_COMMAND_TYPE cmd, OVS_ARGTYPE parentArgType, _Inout_ OVS_ARGUMENT* pArg)
-{
-    switch (cmd)
-    {
-    case OVS_MESSAGE_COMMAND_NEW:
-        return _Reply_SetAttrType_Datapath_New(pArg, parentArgType);
-
-    case OVS_MESSAGE_COMMAND_SET:
-        return _Reply_SetAttrType_Datapath_Set(pArg, parentArgType);
-
-    case OVS_MESSAGE_COMMAND_GET:
-        return _Reply_SetAttrType_Datapath_Get(pArg, parentArgType);
-
-    case OVS_MESSAGE_COMMAND_DELETE:
-        return _Reply_SetAttrType_Datapath_Delete(pArg, parentArgType);
-
-    case OVS_MESSAGE_COMMAND_DUMP:
-        return _Reply_SetAttrType_Datapath_Dump(pArg, parentArgType);
-
-    default:
-        return FALSE;
-    }
-}
-
-static BOOLEAN _Reply_SetAttrType_PITunnel(OVS_ARGUMENT* pArg)
-{
-    OVS_ARGTYPE argType = pArg->type;
-
-    switch (argType)
-    {
-    case OVS_ARGTYPE_PI_TUNNEL_ID:
-
-        pArg->type = OVS_USPACE_TUNNEL_KEY_ATTRIBUTE_ID;
-        break;
-
-    case OVS_ARGTYPE_PI_TUNNEL_IPV4_SRC:
-
-        pArg->type = OVS_USPACE_TUNNEL_KEY_ATTRIBUTE_IPV4_SRC;
-        break;
-
-    case OVS_ARGTYPE_PI_TUNNEL_IPV4_DST:
-
-        pArg->type = OVS_USPACE_TUNNEL_KEY_ATTRIBUTE_IPV4_DST;
-        break;
-
-    case OVS_ARGTYPE_PI_TUNNEL_TOS:
-
-        pArg->type = OVS_USPACE_TUNNEL_KEY_ATTRIBUTE_TOS;
-        break;
-
-    case OVS_ARGTYPE_PI_TUNNEL_TTL:
-
-        pArg->type = OVS_USPACE_TUNNEL_KEY_ATTRIBUTE_TTL;
-        break;
-
-    case OVS_ARGTYPE_PI_TUNNEL_DONT_FRAGMENT:
-
-        pArg->type = OVS_USPACE_TUNNEL_KEY_ATTRIBUTE_DONT_FRAGMENT;
-        break;
-
-    case OVS_ARGTYPE_PI_TUNNEL_CHECKSUM:
-
-        pArg->type = OVS_USPACE_TUNNEL_KEY_ATTRIBUTE_CSUM;
-        break;
-
-    default:
-    {
-        DEBUGP(LOG_ERROR, "unexpected flow/key/tunnel arg: %u\n", pArg->type);
-        return FALSE;
-    }
-    }
-
-    return TRUE;
-}
-
-static BOOLEAN _Reply_SetAttrType_PacketInfo(OVS_ARGUMENT* pArg)
-{
-    OVS_ARGTYPE argType = pArg->type;
-
-    switch (argType)
-    {
-    case OVS_ARGTYPE_PI_PACKET_PRIORITY:
-
-        pArg->type = OVS_USPACE_KEY_ATTRIBUTE_PRIORITY;
-        break;
-
-    case OVS_ARGTYPE_PI_DP_INPUT_PORT:
-
-        pArg->type = OVS_USPACE_KEY_ATTRIBUTE_IN_PORT;
-        break;
-
-    case OVS_ARGTYPE_PI_ETH_ADDRESS:
-
-        pArg->type = OVS_USPACE_KEY_ATTRIBUTE_ETHERNET;
-        break;
-
-    case OVS_ARGTYPE_PI_ETH_TYPE:
-
-        pArg->type = OVS_USPACE_KEY_ATTRIBUTE_ETHERTYPE;
-        break;
-
-    case OVS_ARGTYPE_PI_VLAN_TCI:
-
-        pArg->type = OVS_USPACE_KEY_ATTRIBUTE_VLAN;
-        break;
-
-    case OVS_ARGTYPE_PI_IPV4:
-
-        pArg->type = OVS_USPACE_KEY_ATTRIBUTE_IPV4;
-        break;
-
-    case OVS_ARGTYPE_PI_IPV6:
-
-        pArg->type = OVS_USPACE_KEY_ATTRIBUTE_IPV6;
-        break;
-
-    case OVS_ARGTYPE_PI_TCP:
-
-        pArg->type = OVS_USPACE_KEY_ATTRIBUTE_TCP;
-        break;
-
-    case OVS_ARGTYPE_PI_UDP:
-
-        pArg->type = OVS_USPACE_KEY_ATTRIBUTE_UDP;
-        break;
-
-    case OVS_ARGTYPE_PI_SCTP:
-
-        pArg->type = OVS_USPACE_KEY_ATTRIBUTE_SCTP;
-        break;
-
-    case OVS_ARGTYPE_PI_ICMP:
-
-        pArg->type = OVS_USPACE_KEY_ATTRIBUTE_ICMP;
-        break;
-
-    case OVS_ARGTYPE_PI_ICMP6:
-
-        pArg->type = OVS_USPACE_KEY_ATTRIBUTE_ICMPV6;
-        break;
-
-    case OVS_ARGTYPE_PI_ARP:
-
-        pArg->type = OVS_USPACE_KEY_ATTRIBUTE_ARP;
-        break;
-
-    case OVS_ARGTYPE_PI_NEIGHBOR_DISCOVERY:
-
-        pArg->type = OVS_USPACE_KEY_ATTRIBUTE_ND;
-        break;
-
-    case OVS_ARGTYPE_PI_PACKET_MARK:
-
-        pArg->type = OVS_USPACE_KEY_ATTRIBUTE_SKB_MARK;
-        break;
-
-    case OVS_ARGTYPE_GROUP_PI_TUNNEL:
-        pArg->type = OVS_USPACE_KEY_ATTRIBUTE_TUNNEL;
-        break;
-
-    case OVS_ARGTYPE_PI_IPV4_TUNNEL:
-
-        //NOT SUPPORTED - it's a kernel attr only!
-        OVS_CHECK(__UNEXPECTED__);
-        break;
-
-    case OVS_ARGTYPE_PI_MPLS:
-
-        pArg->type = OVS_USPACE_KEY_ATTRIBUTE_MPLS;
-        OVS_CHECK(__NOT_IMPLEMENTED__);
-        break;
-
-    case OVS_ARGTYPE_GROUP_PI_ENCAPSULATION:
-        pArg->type = OVS_USPACE_KEY_ATTRIBUTE_ENCAP;
-        break;
-
-    default:
-        DEBUGP(LOG_ERROR, "unexpected flow/key arg: %u", pArg->type);
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
-static BOOLEAN _Reply_SetAttrType_PacketActions(_Inout_ OVS_ARGUMENT* pArg);
-static BOOLEAN _Reply_SetAttrType_PacketActionsSample(_Inout_ OVS_ARGUMENT* pArg);
-static BOOLEAN _Reply_SetAttrType_PacketActionsUpcall(_Inout_ OVS_ARGUMENT* pArg);
-
-static BOOLEAN _Reply_SetAttrType_Flow(OVS_MESSAGE_COMMAND_TYPE cmd, OVS_ARGTYPE parentArgType, _Inout_ OVS_ARGUMENT* pArg)
-{
-    OVS_ARGTYPE argType = pArg->type;
-
-    UNREFERENCED_PARAMETER(cmd);
-    OVS_CHECK(cmd == OVS_MESSAGE_COMMAND_NEW);
-
-    if (parentArgType == OVS_ARGTYPE_GROUP_PI)
-    {
-        return _Reply_SetAttrType_PacketInfo(pArg);
-    }
-    else if (parentArgType == OVS_ARGTYPE_GROUP_PI_TUNNEL)
-    {
-        return _Reply_SetAttrType_PITunnel(pArg);
-    }
-    else if (parentArgType == OVS_ARGTYPE_GROUP_PI_ENCAPSULATION)
-    {
-        return _Reply_SetAttrType_PacketInfo(pArg);
-    }
-    else if (parentArgType == OVS_ARGTYPE_GROUP_ACTIONS)
-    {
-        return _Reply_SetAttrType_PacketActions(pArg);
-    }
-    else if (parentArgType == OVS_ARGTYPE_GROUP_ACTIONS_SAMPLE)
-    {
-        return _Reply_SetAttrType_PacketActionsSample(pArg);
-    }
-    else if (parentArgType == OVS_ARGTYPE_GROUP_ACTIONS_SETINFO)
-    {
-        return _Reply_SetAttrType_PacketInfo(pArg);
-    }
-    else if (parentArgType == OVS_ARGTYPE_GROUP_ACTIONS_UPCALL)
-    {
-        return _Reply_SetAttrType_PacketActionsUpcall(pArg);
-    }
-    else if (parentArgType == OVS_ARGTYPE_GROUP_MASK)
-    {
-        return _Reply_SetAttrType_PacketInfo(pArg);
-    }
-
-    OVS_CHECK(parentArgType == OVS_ARGTYPE_GROUP_MAIN);
-
-    switch (argType)
-    {
-    case OVS_ARGTYPE_FLOW_STATS:
-        pArg->type = OVS_USPACE_FLOW_ATTRIBUTE_STATS;
-        break;
-
-    case OVS_ARGTYPE_FLOW_TCP_FLAGS:
-        pArg->type = OVS_USPACE_FLOW_ATTRIBUTE_TCP_FLAGS;
-        break;
-
-    case OVS_ARGTYPE_FLOW_TIME_USED:
-        pArg->type = OVS_USPACE_FLOW_ATTRIBUTE_USED;
-        break;
-
-    case OVS_ARGTYPE_FLOW_CLEAR:
-        pArg->type = OVS_USPACE_FLOW_ATTRIBUTE_CLEAR;
-        break;
-
-    case OVS_ARGTYPE_GROUP_PI:
-        pArg->type = OVS_USPACE_FLOW_ATTRIBUTE_KEY;
-        break;
-
-    case OVS_ARGTYPE_GROUP_ACTIONS:
-        pArg->type = OVS_USPACE_FLOW_ATTRIBUTE_ACTIONS;
-        break;
-
-    case OVS_ARGTYPE_GROUP_MASK:
-        pArg->type = OVS_USPACE_FLOW_ATTRIBUTE_MASK;
-        break;
-
-    default:
-        DEBUGP(LOG_ERROR, "unexpected flow arg: %u\n", pArg->type);
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
-static BOOLEAN _Reply_SetAttrType_PacketActionsUpcall(_Inout_ OVS_ARGUMENT* pArg)
-{
-    OVS_ARGTYPE argType = pArg->type;
-
-    switch (argType)
-    {
-    case OVS_ARGTYPE_ACTION_UPCALL_PORT_ID:
-        pArg->type = OVS_USPACE_UPCALL_ATTRIBUTE_PID;
-        break;
-
-    case OVS_ARGTYPE_ACTION_UPCALL_DATA:
-        pArg->type = OVS_USPACE_UPCALL_ATTRIBUTE_USERDATA;
-        break;
-
-    default:
-        DEBUGP(LOG_ERROR, "unexpected packet/actions/upcall arg: %u\n", pArg->type);
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
-static BOOLEAN _Reply_SetAttrType_PacketActionsSample(_Inout_ OVS_ARGUMENT* pArg)
-{
-    OVS_ARGTYPE argType = pArg->type;
-
-    switch (argType)
-    {
-    case OVS_ARGTYPE_ACTION_SAMPLE_PROBABILITY:
-        pArg->type = OVS_USPACE_SAMPLE_ATTRIBUTE_PROBABILITY;
-        break;
-
-    case OVS_ARGTYPE_GROUP_ACTIONS:
-        pArg->type = OVS_USPACE_SAMPLE_ATTRIBUTE_ACTIONS;
-        break;
-
-    default:
-        DEBUGP(LOG_ERROR, "unexpected packet/actions/sample arg: %u\n", pArg->type);
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
-static BOOLEAN _Reply_SetAttrType_PacketActions(_Inout_ OVS_ARGUMENT* pArg)
-{
-    OVS_ARGTYPE argType = pArg->type;
-
-    switch (argType)
-    {
-    case OVS_ARGTYPE_ACTION_OUTPUT_TO_PORT:
-        pArg->type = OVS_USPACE_ACTION_ATTRIBUTE_OUTPUT;
-        break;
-
-    case OVS_ARGTYPE_GROUP_ACTIONS_UPCALL:
-        pArg->type = OVS_USPACE_ACTION_ATTRIBUTE_USERSPACE;
-        break;
-
-    case OVS_ARGTYPE_GROUP_ACTIONS_SETINFO:
-        pArg->type = OVS_USPACE_ACTION_ATTRIBUTE_SET;
-        break;
-
-    case OVS_ARGTYPE_ACTION_PUSH_VLAN:
-        pArg->type = OVS_USPACE_ACTION_ATTRIBUTE_PUSH_VLAN;
-        break;
-
-    case OVS_ARGTYPE_ACTION_POP_VLAN:
-        pArg->type = OVS_USPACE_ACTION_ATTRIBUTE_POP_VLAN;
-        break;
-
-    case OVS_ARGTYPE_GROUP_ACTIONS_SAMPLE:
-        pArg->type = OVS_USPACE_ACTION_ATTRIBUTE_SAMPLE;
-        break;
-
-    default:
-        DEBUGP(LOG_ERROR, "unexpected packet/actions arg: %u\n", pArg->type);
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
-static BOOLEAN _Reply_SetAttrType_Packet(OVS_MESSAGE_COMMAND_TYPE cmd, OVS_ARGTYPE parentArgType, _Inout_ OVS_ARGUMENT* pArg)
-{
-    OVS_ARGTYPE argType = pArg->type;
-
-    UNREFERENCED_PARAMETER(cmd);
-
-    if (parentArgType == OVS_ARGTYPE_GROUP_PI)
-    {
-        return _Reply_SetAttrType_PacketInfo(pArg);
-    }
-    else if (parentArgType == OVS_ARGTYPE_GROUP_PI_TUNNEL)
-    {
-        return _Reply_SetAttrType_PITunnel(pArg);
-    }
-    else if (parentArgType == OVS_ARGTYPE_GROUP_PI_ENCAPSULATION)
-    {
-        return _Reply_SetAttrType_PacketInfo(pArg);
-    }
-    else if (parentArgType == OVS_ARGTYPE_GROUP_ACTIONS)
-    {
-        return _Reply_SetAttrType_PacketActions(pArg);
-    }
-    else if (parentArgType == OVS_ARGTYPE_GROUP_ACTIONS_UPCALL)
-    {
-        return _Reply_SetAttrType_PacketActionsUpcall(pArg);
-    }
-    else if (parentArgType == OVS_ARGTYPE_GROUP_ACTIONS_SETINFO)
-    {
-        return _Reply_SetAttrType_PacketInfo(pArg);
-    }
-    else if (parentArgType == OVS_ARGTYPE_GROUP_ACTIONS_SAMPLE)
-    {
-        return _Reply_SetAttrType_PacketActionsSample(pArg);
-    }
-
-    OVS_CHECK(parentArgType == OVS_ARGTYPE_GROUP_MAIN);
-
-    switch (argType)
-    {
-    case OVS_ARGTYPE_NETBUFFER:
-        pArg->type = OVS_USPACE_PACKET_ATTRIBUTE_PACKET;
-        break;
-
-    case OVS_ARGTYPE_GROUP_PI:
-        pArg->type = OVS_USPACE_PACKET_ATTRIBUTE_KEY;
-        break;
-
-    case OVS_ARGTYPE_GROUP_ACTIONS:
-        pArg->type = OVS_USPACE_PACKET_ATTRIBUTE_ACTIONS;
-        break;
-
-    case OVS_ARGTYPE_NETBUFFER_USERDATA:
-        pArg->type = OVS_USPACE_PACKET_ATTRIBUTE_USERDATA;
-        break;
-
-    default:
-        DEBUGP(LOG_ERROR, "unexpected packet arg: %u\n", pArg->type);
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
-static BOOLEAN _Reply_SetAttrType_Port_Options(_Inout_ OVS_ARGUMENT* pArg)
-{
-    OVS_ARGTYPE argType = pArg->type;
-
-    switch (argType)
-    {
-    case OVS_ARGTYPE_OFPORT_OPTION_DESTINATION_PORT:
-        pArg->type = OVS_USPACE_TUNNEL_ATTRIBUTE_DST_PORT;
-        break;
-
-    default:
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
-static BOOLEAN _Reply_SetAttrType_Port(OVS_MESSAGE_COMMAND_TYPE cmd, OVS_ARGTYPE parentArgType, _Inout_ OVS_ARGUMENT* pArg)
-{
-    OVS_ARGTYPE argType = pArg->type;
-
-    UNREFERENCED_PARAMETER(cmd);
-    OVS_CHECK(cmd == OVS_MESSAGE_COMMAND_NEW);
-
-    if (parentArgType == OVS_ARGTYPE_GROUP_OFPORT_OPTIONS)
-    {
-        return _Reply_SetAttrType_Port_Options(pArg);
-    }
-
-    OVS_CHECK(parentArgType == OVS_ARGTYPE_GROUP_MAIN);
-
-    switch (argType)
-    {
-    case OVS_ARGTYPE_OFPORT_NUMBER:
-        pArg->type = OVS_USPACE_VPORT_ATTRIBUTE_PORT_NO;
-        break;
-
-    case OVS_ARGTYPE_OFPORT_NAME:
-        pArg->type = OVS_USPACE_VPORT_ATTRIBUTE_NAME;
-        break;
-
-    case OVS_ARGTYPE_OFPORT_STATS:
-        pArg->type = OVS_USPACE_VPORT_ATTRIBUTE_STATS;
-        break;
-
-    case OVS_ARGTYPE_OFPORT_TYPE:
-        pArg->type = OVS_USPACE_VPORT_ATTRIBUTE_TYPE;
-        break;
-
-    case OVS_ARGTYPE_OFPORT_UPCALL_PORT_ID:
-        pArg->type = OVS_USPACE_VPORT_ATTRIBUTE_UPCALL_PID;
-        break;
-
-    case OVS_ARGTYPE_GROUP_OFPORT_OPTIONS:
-        pArg->type = OVS_USPACE_VPORT_ATTRIBUTE_OPTIONS;
-        break;
-
-    default:
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
-BOOLEAN Reply_SetAttrType(OVS_MESSAGE_TARGET_TYPE targetType, OVS_MESSAGE_COMMAND_TYPE cmd, OVS_ARGTYPE parentArgType, _Inout_ OVS_ARGUMENT* pArg)
-{
-    switch (targetType)
-    {
-    case OVS_MESSAGE_TARGET_DATAPATH:
-        return _Reply_SetAttrType_Datapath(cmd, parentArgType, pArg);
-
-    case OVS_MESSAGE_TARGET_FLOW:
-        return _Reply_SetAttrType_Flow(cmd, parentArgType, pArg);
-
-    case OVS_MESSAGE_TARGET_PACKET:
-        return _Reply_SetAttrType_Packet(cmd, parentArgType, pArg);
-
-    case OVS_MESSAGE_TARGET_PORT:
-        return _Reply_SetAttrType_Port(cmd, parentArgType, pArg);
-
-    default:
-        return FALSE;
-    }
 }

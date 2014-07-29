@@ -26,12 +26,40 @@ typedef struct _OVS_ARGUMENT_GROUP OVS_ARGUMENT_GROUP;
 typedef struct _OVS_SWITCH_INFO OVS_SWITCH_INFO;
 typedef struct _OVS_NIC_INFO OVS_NIC_INFO;
 
-typedef struct _OVS_ACTION_PUSH_VLAN {
+typedef struct _OVS_ACTIONS
+{
+    //must be the first field in the struct
+    OVS_REF_COUNT refCount;
+
+    //once set, it cannot be modified. Also, the pointer cannot be changed, unless the OVS_ACTIONS struct is destroyed
+    OVS_ARGUMENT_GROUP* pActionGroup;
+} OVS_ACTIONS, *POVS_ACTIONS;
+
+typedef struct _OVS_ACTION_PUSH_VLAN
+{
     //usually / normally OVS_ETHERTYPE_QTAG
     BE16 protocol;
     //802.1Q TCI (user priority + cfi + vlan id).
     BE16 vlanTci;
 } OVS_ACTION_PUSH_VLAN;
+
+typedef struct _OVS_ACTION_PUSH_MPLS
+{
+    BE32 labelStackEntry;
+    //OVS_ETHERTYPE_MPLS_UNICAST or OVS_ETHERTYPE_MPLS_MULTICAST
+    BE16 etherType;
+}OVS_ACTION_PUSH_MPLS, *POVS_ACTION_PUSH_MPLS;
+
+typedef enum _OVS_HASH_ALGORITHM_TYPE {
+    //i.e. the fields used for computing the hash are the Layer 4 (Transport) fields
+    OVS_HASH_ALGORITHM_TRANSPORT,
+}OVS_HASH_ALGORITHM_TYPE;
+
+typedef struct _OVS_ACTION_FLOW_HASH {
+    //values: constant(s) of enum OVS_HASH_ALGORITHM_TYPE
+    UINT32        hashAlgorithm;
+    UINT32        basis;
+}OVS_ACTION_FLOW_HASH, *POVS_ACTION_FLOW_HASH;
 
 /**********************************************/
 
@@ -40,3 +68,6 @@ typedef BOOLEAN(*OutputToPortCallback)(_Inout_ OVS_NET_BUFFER* pOvsNb);
 BOOLEAN ExecuteActions(_Inout_ OVS_NET_BUFFER* pOvsNb, _In_ const OutputToPortCallback outputToPort);
 
 BOOLEAN ProcessReceivedActions(_Inout_ OVS_ARGUMENT_GROUP* pActionGroup, const OVS_OFPACKET_INFO* pPacketInfo, int recursivityDepth);
+
+OVS_ACTIONS* Actions_Create();
+VOID Actions_DestroyNow_Unsafe(_Inout_ OVS_ACTIONS* pActions);

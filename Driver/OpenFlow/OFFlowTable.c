@@ -16,40 +16,70 @@ limitations under the License.
 
 #include "OFFlowTable.h"
 #include "OFFlow.h"
+#include "List.h"
+
+#include "SpookyHash.h"
+
+#define OVS_FLOW_TABLE_AT(lists, hash)  (lists + (hash & (OVS_FLOW_TABLE_HASH_COUNT - 1)));
+
+static __inline UINT32 _Flow_HashPacketInfo_Offset(_In_ const VOID* pPacketInfo, SIZE_T offset, SIZE_T size)
+{
+    const BYTE* data = pPacketInfo;
+    
+    data += offset;
+    size -= offset;
+
+    return Spooky_Hash32(data, size, 0);
+}
 
 //pUnmaskedPacketInfo: extracted packet info
-static OVS_FLOW* _FindFlowMatchingMaskedPI(OVS_FLOW_TABLE* pFlowTable, const OVS_OFPACKET_INFO* pUnmaskedPacketInfo, OVS_FLOW_MASK* pFlowMask)
+//unsafe = does not lock pFlowTable
+static OVS_FLOW* _FindFlowMatchingMaskedPI_Unsafe(OVS_FLOW_TABLE* pFlowTable, const OVS_OFPACKET_INFO* pUnmaskedPacketInfo, OVS_FLOW_MASK* pFlowMask)
 {
-    OVS_FLOW* pFlow = NULL;
     SIZE_T startRange = pFlowMask->piRange.startRange;
     SIZE_T endRange = pFlowMask->piRange.endRange;
     OVS_OFPACKET_INFO maskedPacketInfo = { 0 };
-
-    LIST_ENTRY* pFlowEntry = NULL;
+    UINT32 hash = 0;
+    OVS_FLOW* pCurFlow = NULL;
+    LIST_ENTRY* pList = NULL;
 
     ApplyMaskToPacketInfo(&maskedPacketInfo, pUnmaskedPacketInfo, pFlowMask);
 
-    pFlowEntry = pFlowTable->pFlowList->Flink;
+    hash = _Flow_HashPacketInfo_Offset(&maskedPacketInfo, startRange, endRange - startRange);
+    pList = OVS_FLOW_TABLE_AT(pFlowTable->pFlowLists, hash);
 
-    while (pFlowEntry != pFlowTable->pFlowList)
+    OVS_LIST_FOR_EACH(OVS_FLOW, pCurFlow, pList)
     {
-        pFlow = CONTAINING_RECORD(pFlowEntry, OVS_FLOW, entryInTable);
+        LOCK_STATE_EX lockState = { 0 };
 
-        if (pFlow->pMask == pFlowMask)
+        FLOW_LOCK_READ(pCurFlow, &lockState);
+
+        if (pCurFlow->pMask == pFlowMask)
         {
-            if (PacketInfo_EqualAtRange(&pFlow->maskedPacketInfo, &maskedPacketInfo, startRange, endRange))
+            if (PacketInfo_EqualAtRange(&pCurFlow->maskedPacketInfo, &maskedPacketInfo, startRange, endRange))
             {
-                return pFlow;
+                FLOW_UNLOCK(pCurFlow, &lockState);
+
+                return pCurFlow;
             }
         }
 
-        pFlowEntry = pFlowEntry->Flink;
+        FLOW_UNLOCK(pCurFlow, &lockState);
     }
 
     return NULL;
 }
 
-VOID FlowTable_Destroy(OVS_FLOW_TABLE* pFlowTable)
+static __inline VOID _FlowTable_Free(OVS_FLOW_TABLE* pFlowTable)
+{
+    OVS_CHECK(pFlowTable);
+
+    KFree(pFlowTable->pFlowLists);
+    KFree(pFlowTable->pMaskList);
+    KFree(pFlowTable);
+}
+
+VOID FlowTable_DestroyNow_Unsafe(OVS_FLOW_TABLE* pFlowTable)
 {
     LIST_ENTRY* pFlowEntry = NULL;
 
@@ -58,22 +88,25 @@ VOID FlowTable_Destroy(OVS_FLOW_TABLE* pFlowTable)
         return;
     }
 
-    while (!IsListEmpty(pFlowTable->pFlowList))
+    for (ULONG i = 0; i < OVS_FLOW_TABLE_HASH_COUNT; ++i)
     {
-        pFlowEntry = RemoveHeadList(pFlowTable->pFlowList);
+        LIST_ENTRY* pList = OVS_FLOW_TABLE_AT(pFlowTable->pFlowLists, i);
 
-        OVS_FLOW* pFlow = CONTAINING_RECORD(pFlowEntry, OVS_FLOW, entryInTable);
-        Flow_Free(pFlow);
+        while (!IsListEmpty(pList))
+        {
+            pFlowEntry = RemoveHeadList(pList);
+
+            OVS_FLOW* pFlow = CONTAINING_RECORD(pFlowEntry, OVS_FLOW, listEntry);
+            OVS_REFCOUNT_DESTROY(pFlow);
+        }
     }
-    ExFreePoolWithTag(pFlowTable->pFlowList, g_extAllocationTag);
 
-    OVS_CHECK(IsListEmpty(pTable->pMaskList));
-    ExFreePoolWithTag(pFlowTable->pMaskList, g_extAllocationTag);
+    OVS_CHECK(IsListEmpty(pFlowTable->pMaskList));
 
-    ExFreePoolWithTag(pFlowTable, g_extAllocationTag);
+    _FlowTable_Free(pFlowTable);
 }
 
-OVS_FLOW* FlowTable_FindFlowMatchingMaskedPI(OVS_FLOW_TABLE* pFlowTable, const OVS_OFPACKET_INFO* pPacketInfo)
+OVS_FLOW* FlowTable_FindFlowMatchingMaskedPI_Unsafe(OVS_FLOW_TABLE* pFlowTable, const OVS_OFPACKET_INFO* pPacketInfo)
 {
     OVS_FLOW* pFlow = NULL;
     OVS_FLOW_MASK* pFlowMask = NULL;
@@ -82,7 +115,7 @@ OVS_FLOW* FlowTable_FindFlowMatchingMaskedPI(OVS_FLOW_TABLE* pFlowTable, const O
 
     while (&pFlowMask->listEntry != pFlowTable->pMaskList)
     {
-        pFlow = _FindFlowMatchingMaskedPI(pFlowTable, pPacketInfo, pFlowMask);
+        pFlow = _FindFlowMatchingMaskedPI_Unsafe(pFlowTable, pPacketInfo, pFlowMask);
         if (pFlow)
         {
             break;
@@ -95,55 +128,161 @@ OVS_FLOW* FlowTable_FindFlowMatchingMaskedPI(OVS_FLOW_TABLE* pFlowTable, const O
     return pFlow;
 }
 
-OVS_FLOW_MASK* FlowTable_FindFlowMask(const OVS_FLOW_TABLE* pFlowTable, const OVS_FLOW_MASK* pFlowMask)
+OVS_FLOW* FlowTable_FindFlowMatchingMaskedPI_Ref(OVS_FLOW_TABLE* pFlowTable, const OVS_OFPACKET_INFO* pPacketInfo)
 {
-    LIST_ENTRY* listEntry = NULL;
+    OVS_FLOW* pFlow = NULL;
+    LOCK_STATE_EX lockState;
 
-    listEntry = pFlowTable->pMaskList->Flink;
+    FLOWTABLE_LOCK_READ(pFlowTable, &lockState);
 
-    while (listEntry != pFlowTable->pMaskList)
+    pFlow = FlowTable_FindFlowMatchingMaskedPI_Unsafe(pFlowTable, pPacketInfo);
+    pFlow = OVS_REFCOUNT_REFERENCE(pFlow);
+
+    FLOWTABLE_UNLOCK(pFlowTable, &lockState);
+
+    return pFlow;
+}
+
+OVS_FLOW* _FlowTable_FindExactFlow_Unsafe(OVS_FLOW_TABLE* pFlowTable, OVS_FLOW_MATCH* pFlowMatch)
+{
+    OVS_FLOW* pFlow = NULL;
+    OVS_FLOW_MASK* pFlowMask = NULL;
+
+    OVS_LIST_FOR_EACH(OVS_FLOW_MASK, pFlowMask, pFlowTable->pMaskList)
     {
-        OVS_FLOW_MASK* pFlowMaskInList = CONTAINING_RECORD(listEntry, OVS_FLOW_MASK, listEntry);
-        if (FlowMask_Equal(pFlowMask, pFlowMaskInList))
-            return pFlowMaskInList;
-
-        listEntry = listEntry->Flink;
+        pFlow = _FindFlowMatchingMaskedPI_Unsafe(pFlowTable, &(pFlowMatch->packetInfo), pFlowMask);
+        if (pFlow)
+        {
+            if (PacketInfo_Equal(&pFlow->unmaskedPacketInfo, &(pFlowMatch->packetInfo), pFlowMatch->piRange.endRange))
+            {
+                break;
+            }
+        }
     }
 
-    return NULL;
+    return pFlow;
+}
+
+OVS_FLOW* FlowTable_FindExactFlow_Ref(OVS_FLOW_TABLE* pFlowTable, OVS_FLOW_MATCH* pFlowMatch)
+{
+    OVS_FLOW* pFlow = NULL;
+    LOCK_STATE_EX lockState;
+
+    FLOWTABLE_LOCK_READ(pFlowTable, &lockState);
+
+    pFlow = _FlowTable_FindExactFlow_Unsafe(pFlowTable, pFlowMatch);
+    pFlow = OVS_REFCOUNT_REFERENCE(pFlow);
+
+    FLOWTABLE_UNLOCK(pFlowTable, &lockState);
+
+    return pFlow;
+}
+
+UINT32 FlowTable_CountMasks(const OVS_FLOW_TABLE* pFlowTable)
+{
+    LIST_ENTRY* pListEntry = NULL;
+    LIST_ENTRY* pHeadEntry = NULL;
+    LOCK_STATE_EX lockState = { 0 };
+    UINT32 count = 0;
+
+    FLOWTABLE_LOCK_READ(pFlowTable, &lockState);
+
+    pHeadEntry = pFlowTable->pMaskList;
+    pListEntry = pHeadEntry->Flink;
+
+    while (pListEntry != pHeadEntry)
+    {
+        ++count;
+
+        pListEntry = pListEntry->Flink;
+    }
+
+    FLOWTABLE_UNLOCK(pFlowTable, &lockState);
+
+    return count;
+}
+
+OVS_FLOW_MASK* FlowTable_FindFlowMask(const OVS_FLOW_TABLE* pFlowTable, const OVS_FLOW_MASK* pFlowMask)
+{
+    OVS_FLOW_MASK* pOutFlowMask = NULL;
+    LOCK_STATE_EX lockState = {0};
+    OVS_FLOW_MASK* pCurFlowMask = NULL;
+
+    FLOWTABLE_LOCK_READ(pFlowTable, &lockState);
+
+    OVS_LIST_FOR_EACH(OVS_FLOW_MASK, pCurFlowMask, pFlowTable->pMaskList)
+    {
+        if (FlowMask_Equal(pFlowMask, pCurFlowMask))
+        {
+            pOutFlowMask = pCurFlowMask;
+            break;
+        }
+    }
+
+    FLOWTABLE_UNLOCK(pFlowTable, &lockState);
+
+    return pOutFlowMask;
 }
 
 void FlowTable_InsertFlowMask(OVS_FLOW_TABLE* pFlowTable, OVS_FLOW_MASK* pFlowMask)
 {
+    LOCK_STATE_EX lockState;
+
+    OVS_CHECK(pFlowTable);
+    OVS_CHECK(pFlowMask);
+
+    FLOWTABLE_LOCK_WRITE(pFlowTable, &lockState);
     InsertHeadList(pFlowTable->pMaskList, &pFlowMask->listEntry);
+    FLOWTABLE_UNLOCK(pFlowTable, &lockState);
 }
 
-void FlowTable_InsertFlow_Unsafe(OVS_FLOW_TABLE* pFlowTable, OVS_FLOW* pFlow)
+void FlowTable_InsertFlow_Unsafe(_Inout_ OVS_FLOW_TABLE* pFlowTable, _In_ OVS_FLOW* pFlow)
 {
-    InsertHeadList(pFlowTable->pFlowList, &pFlow->entryInTable);
+    LOCK_STATE_EX lockState;
+    OVS_OFPACKET_INFO* pPacketInfo = NULL;
+    SIZE_T startRange = 0;
+    SIZE_T endRange = 0;
+    UINT32 hash = 0;
+    LIST_ENTRY* pList = NULL;
+
+    OVS_CHECK(pFlowTable);
+    OVS_CHECK(pFlow);
+
+    pPacketInfo = &(pFlow->maskedPacketInfo);
+    startRange = pFlow->pMask->piRange.startRange;
+    endRange = pFlow->pMask->piRange.endRange;
+
+    FLOWTABLE_LOCK_WRITE(pFlowTable, &lockState);
+
+    hash = _Flow_HashPacketInfo_Offset(pPacketInfo, startRange, endRange - startRange);
+    pList = OVS_FLOW_TABLE_AT(pFlowTable->pFlowLists, hash);
+
+    InsertHeadList(pList, &pFlow->listEntry);
     pFlowTable->countFlows++;
+    FLOWTABLE_UNLOCK(pFlowTable, &lockState);
 }
 
-void FlowTable_RemoveFlow(OVS_FLOW_TABLE* pFlowTable, OVS_FLOW* pFlow)
+void FlowTable_RemoveFlow_Unsafe(OVS_FLOW_TABLE* pFlowTable, OVS_FLOW* pFlow)
 {
     OVS_CHECK(pFlowTable->countFlows > 0);
 
-    RemoveEntryList(&pFlow->entryInTable);
+    RemoveEntryList(&pFlow->listEntry);
     pFlowTable->countFlows--;
 }
 
 OVS_FLOW_TABLE* FlowTable_Create()
 {
     BOOLEAN ok = TRUE;
+    OVS_FLOW_TABLE* pFlowTable = NULL;
 
-    OVS_FLOW_TABLE* pFlowTable = KZAlloc(sizeof(OVS_FLOW_TABLE));
+    pFlowTable = KZAlloc(sizeof(OVS_FLOW_TABLE));
     if (!pFlowTable)
     {
         return NULL;
     }
 
-    pFlowTable->pFlowList = KAlloc(sizeof(LIST_ENTRY));
-    if (!pFlowTable->pFlowList)
+    pFlowTable->pFlowLists = KAlloc(OVS_FLOW_TABLE_HASH_COUNT * sizeof(LIST_ENTRY));
+    if (!pFlowTable->pFlowLists)
     {
         ok = FALSE;
         goto Cleanup;
@@ -156,26 +295,23 @@ OVS_FLOW_TABLE* FlowTable_Create()
         goto Cleanup;
     }
 
-    InitializeListHead(pFlowTable->pFlowList);
+    for (ULONG i = 0; i < OVS_FLOW_TABLE_HASH_COUNT; ++i)
+    {
+        LIST_ENTRY* pList = pFlowTable->pFlowLists + i;
+
+        InitializeListHead(pList);
+    }
+
     InitializeListHead(pFlowTable->pMaskList);
+    pFlowTable->refCount.Destroy = FlowTable_DestroyNow_Unsafe;
+    pFlowTable->pRwLock = NdisAllocateRWLock(NULL);
 
 Cleanup:
     if (!ok)
     {
-        if (pFlowTable)
-        {
-            if (pFlowTable->pFlowList)
-            {
-                KFree(pFlowTable->pFlowList);
-            }
+        OVS_CHECK_RET(pFlowTable, NULL);
 
-            if (pFlowTable->pMaskList)
-            {
-                KFree(pFlowTable->pMaskList);
-            }
-
-            KFree(pFlowTable);
-        }
+        _FlowTable_Free(pFlowTable);
 
         return NULL;
     }
